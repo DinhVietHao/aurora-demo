@@ -1,5 +1,49 @@
-# Maven build
+# Maven / build outputs
 /target/
 /dist/
 /build/
 /out/
+
+# Java artifacts
+*.class
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# Heap/crash dumps
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# IDEs
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code (giữ lại file cấu hình cần share)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# OS cruft
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Jetty/Tomcat work dirs (phòng trường hợp sinh ngoài target)
+# (thường đã nằm trong /target/, dòng dưới chỉ là dự phòng)
+work/
+temp/
+logs/
