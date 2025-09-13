@@ -1,0 +1,5 @@
+# Maven build
+/target/
+/dist/
+/build/
+/out/
