@@ -134,6 +134,8 @@
         <artifactId>jetty-ee10-maven-plugin</artifactId>
         <version>${jetty.version}</version>
         <configuration>
+          <!-- Bật chế độ quét tự động -->
+          <scan>1</scan>
           <httpConnector>
             <port>8080</port>
           </httpConnector>

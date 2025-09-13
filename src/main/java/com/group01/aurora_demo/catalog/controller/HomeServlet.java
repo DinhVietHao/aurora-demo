@@ -29,6 +29,9 @@ public class HomeServlet extends HttpServlet {
 
         // Forward request to home.jsp view
         req.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(req, resp);
+
+        // Temporary: Forward to index.jsp for testing purposes
+        // req.getRequestDispatcher("/index.jsp").forward(req, resp);
     }
 
 }
