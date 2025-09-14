@@ -53,10 +53,10 @@ CREATE TABLE Users (
   Password   NVARCHAR(255) NOT NULL,
   FullName   NVARCHAR(150) NOT NULL,
   Phone      NVARCHAR(20)  NULL,
-  Points     INT NOT NULL,
+  Points     INT NOT NULL DEFAULT (0),
   NationalID NVARCHAR(20) NULL,
   AvatarUrl  NVARCHAR(2000) NULL,
-  CreatedAt  DATETIME2(7) NOT NULL,
+  CreatedAt  DATETIME2(7) NOT NULL DEFAULT (SYSUTCDATETIME()),
   AuthProvider  NVARCHAR(20) NOT NULL
 );
 
@@ -618,3 +618,5 @@ INSERT INTO Shippers (UserID, Status, Area, HireDate) VALUES
 -- Shipment
 INSERT INTO Shipments (OrderShopID, ShipperID, TrackingCode, Status, PickedAt, DeliveredAt, CODCollected) VALUES
  (1, 1, N'TRACK123', N'AWAIT_PICKUP', NULL, NULL, 0);
+
+ SELECT * FROM Authors

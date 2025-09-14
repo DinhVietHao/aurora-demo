@@ -185,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Gọi API /auth/register (trả JSON)
-            const res = await fetch("/aurora/auth/register", {
+            const res = await fetch("/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),

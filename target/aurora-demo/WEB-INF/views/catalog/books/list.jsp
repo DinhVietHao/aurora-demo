@@ -10,7 +10,7 @@
     <head>
         <jsp:include page="/WEB-INF/views/layouts/_head.jsp"/>
         <!-- CSS riêng của trang -->
-        <link rel="stylesheet" href="${ctx}/assets/css/book.css?v=1.0.1">
+        <link rel="stylesheet" href="${ctx}/assets/css/catalog/book.css?v=1.0.1">
     </head>
     <body>
         <jsp:include page="/WEB-INF/views/layouts/_header.jsp"/>
@@ -19,7 +19,7 @@
             <div class="row">
                 <!-- FILTER -->
                 <div class="col-md-3">
-                    <jsp:include page="/WEB-INF/views/books/_filters.jsp"/>
+                    <jsp:include page="/WEB-INF/views/catalog/books/partials/_filters.jsp"/>
                 </div>
 
                 <!-- CONTENT -->

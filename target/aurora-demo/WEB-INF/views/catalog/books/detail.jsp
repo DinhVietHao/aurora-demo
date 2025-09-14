@@ -10,11 +10,10 @@
     <head>
         <jsp:include page="/WEB-INF/views/layouts/_head.jsp"/>
 
-        <link rel="stylesheet" href="${ctx}/assets/css/book_detail.css?v=1.0.1">   
+        <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css?v=1.0.1">   
 
         <!-- CSS của thông báo Toast -->
-        <link rel="stylesheet" href="${ctx}/assets/css/toast.css?v=1.0.1">
-
+        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1">
 
     </head>
 
@@ -167,13 +166,12 @@
             <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
             <div class="book-introduction container">
                 <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-                <jsp:include page="/WEB-INF/views/books/_intro_carousel.jsp">
+                <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
                     <jsp:param name="carouselId" value="bookIntroduction"/>
                 </jsp:include>
             </div>
 
         </div>
-
 
         <!-- Toast notification Add To Cart -->
         <div id="notify-toast"></div>
@@ -182,12 +180,10 @@
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp"/>
 
         <!-- JS của thông báo Toast -->
-        <script src="${ctx}/assets/js/toast.js?v=1.0.1"></script>
+        <script src="${ctx}/assets/js/common/toast.js?v=1.0.1"></script>
 
         <!-- JS riêng của trang -->
-        <script src="${ctx}/assets/js/book_detail.js"></script>
-
-
+        <script src="${ctx}/assets/js/catalog/book_detail.js"></script>
 
         <!--Send AJAX to controller-->
         <script>

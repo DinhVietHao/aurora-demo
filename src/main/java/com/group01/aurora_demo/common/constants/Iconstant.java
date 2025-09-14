@@ -6,7 +6,7 @@ public class Iconstant {
 
     public static final String GOOGLE_CLIENT_SECRET = "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";
 
-    public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/aurora/auth/login";
+    public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/auth/login";
 
     public static final String GOOGLE_GRANT_TYPE = "authorization_code";
 
