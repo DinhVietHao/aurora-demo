@@ -200,74 +200,74 @@ public class CartItemDAO {
         return 0.0;
     }
 
-    /**
-     * Lấy danh sách CartItems của một user.
-     * Join nhiều bảng để lấy thêm thông tin sản phẩm, hình ảnh, tác giả.
-     * 
-     * @param userId id của user
-     * @return danh sách cart items
-     */
-    public List<CartItem> getCartItemsByUserId(long userId) {
-        List<CartItem> cartItems = new ArrayList<>();
-        String sql = """
-                SELECT
-                    ci.CartItemID,
-                    ci.CartID,
-                    ci.Quantity,
-                    ci.UnitPrice,
-                    ci.Subtotal,
-                    ci.IsChecked,
-                    p.ProductID,
-                    p.Title,
-                    p.Price,
-                    p.Discount,
-                    pi.Url AS ImageUrl,
-                    b.Author
-                FROM CartItems ci
-                JOIN Carts c ON ci.CartID = c.CartID
-                JOIN Products p ON ci.ProductID = p.ProductID
-                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
-                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
-                WHERE c.UserID = ?
-                """;
-        try (Connection cn = DataSourceProvider.get().getConnection();) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, userId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                CartItem cartItem = new CartItem();
-                cartItem.setCartItemId(rs.getLong("CartItemID"));
-                cartItem.setCartId(rs.getLong("CartID"));
-                cartItem.setQuantity(rs.getInt("Quantity"));
-                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
-                cartItem.setSubtotal(rs.getDouble("Subtotal"));
-                cartItem.setIsChecked(rs.getBoolean("IsChecked"));
+    // /**
+    //  * Lấy danh sách CartItems của một user.
+    //  * Join nhiều bảng để lấy thêm thông tin sản phẩm, hình ảnh, tác giả.
+    //  * 
+    //  * @param userId id của user
+    //  * @return danh sách cart items
+    //  */
+    // public List<CartItem> getCartItemsByUserId(long userId) {
+    //     List<CartItem> cartItems = new ArrayList<>();
+    //     String sql = """
+    //             SELECT
+    //                 ci.CartItemID,
+    //                 ci.CartID,
+    //                 ci.Quantity,
+    //                 ci.UnitPrice,
+    //                 ci.Subtotal,
+    //                 ci.IsChecked,
+    //                 p.ProductID,
+    //                 p.Title,
+    //                 p.Price,
+    //                 p.Discount,
+    //                 pi.Url AS ImageUrl,
+    //                 b.Author
+    //             FROM CartItems ci
+    //             JOIN Carts c ON ci.CartID = c.CartID
+    //             JOIN Products p ON ci.ProductID = p.ProductID
+    //             LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+    //             LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
+    //             WHERE c.UserID = ?
+    //             """;
+    //     try (Connection cn = DataSourceProvider.get().getConnection();) {
+    //         PreparedStatement ps = cn.prepareStatement(sql);
+    //         ps.setLong(1, userId);
+    //         ResultSet rs = ps.executeQuery();
+    //         while (rs.next()) {
+    //             CartItem cartItem = new CartItem();
+    //             cartItem.setCartItemId(rs.getLong("CartItemID"));
+    //             cartItem.setCartId(rs.getLong("CartID"));
+    //             cartItem.setQuantity(rs.getInt("Quantity"));
+    //             cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
+    //             cartItem.setSubtotal(rs.getDouble("Subtotal"));
+    //             cartItem.setIsChecked(rs.getBoolean("IsChecked"));
 
-                // Mapping thông tin sản phẩm
-                Product product = new Product();
-                product.setProductId(rs.getLong("ProductID"));
-                product.setTitle(rs.getString("Title"));
-                product.setPrice(rs.getDouble("Price"));
-                product.setDiscount(rs.getDouble("Discount"));
+    //             // Mapping thông tin sản phẩm
+    //             Product product = new Product();
+    //             product.setProductId(rs.getLong("ProductID"));
+    //             product.setTitle(rs.getString("Title"));
+    //             product.setPrice(rs.getDouble("Price"));
+    //             product.setDiscount(rs.getDouble("Discount"));
 
-                // Lấy ảnh chính của sản phẩm
-                ProductImages productImages = new ProductImages();
-                productImages.setImageUrl(rs.getString("ImageUrl"));
-                product.setImages(List.of(productImages));
+    //             // Lấy ảnh chính của sản phẩm
+    //             ProductImages productImages = new ProductImages();
+    //             productImages.setImageUrl(rs.getString("ImageUrl"));
+    //             product.setImages(List.of(productImages));
 
-                // Lấy thông tin chi tiết sách (nếu có)
-                BookDetail bookDetail = new BookDetail();
-                bookDetail.setAuthor(rs.getString("Author"));
-                product.setBookDetail(bookDetail);
+    //             // Lấy thông tin chi tiết sách (nếu có)
+    //             BookDetail bookDetail = new BookDetail();
+    //             bookDetail.setAuthor(rs.getString("Author"));
+    //             product.setBookDetail(bookDetail);
 
-                cartItem.setProduct(product);
-                cartItems.add(cartItem);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return cartItems;
-    }
+    //             cartItem.setProduct(product);
+    //             cartItems.add(cartItem);
+    //         }
+    //     } catch (Exception e) {
+    //         System.out.println(e.getMessage());
+    //     }
+    //     return cartItems;
+    // }
 
     /**
      * Lấy tổng số lượng items (sản phẩm) trong giỏ hàng.

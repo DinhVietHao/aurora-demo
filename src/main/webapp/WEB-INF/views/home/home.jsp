@@ -96,25 +96,28 @@
                                         <a href="${ctx}/book?id=${p.productId}">
                                             <div class="product-card">
                                                 <div class="product-img">
-                                                    <c:if test="${p.discount != null && p.discount > 0}">
+                                                    <c:if test="${p.originalPrice != null && p.salePrice != null && p.originalPrice > p.salePrice}">
                                                         <span class="discount">
-                                                            -<fmt:formatNumber value="${(p.discount / p.price) * 100}" maxFractionDigits="0"/>%
+                                                            -<fmt:formatNumber value="${((p.originalPrice - p.salePrice) / p.originalPrice) * 100}" maxFractionDigits="0"/>%
                                                         </span>
                                                     </c:if>
-                                                    <img src="http://localhost:8080/aurora/assets/images/${p.primaryImageUrl}">
+                                                    <img src="http://localhost:8080/assets/images/catalog/thumbnails/${p.primaryImageUrl}">
                                                 </div>
                                                 <div class="product-body">
                                                     <h6 class="price">
                                                         <c:choose>
-                                                            <c:when test="${p.discount != null}">
-                                                                <fmt:formatNumber value="${p.price - p.discount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                            <c:when test="${p.salePrice != null && p.originalPrice != null && p.salePrice < p.originalPrice}">
+                                                                <fmt:formatNumber value="${p.salePrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                                <span class="text-muted text-decoration-line-through ms-2">
+                                                                    <fmt:formatNumber value="${p.originalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                                </span>
                                                             </c:when>
                                                             <c:otherwise>
-                                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                                <fmt:formatNumber value="${p.originalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                                             </c:otherwise>
                                                         </c:choose>
                                                     </h6>
-                                                    <small class="author">${p.publisher}</small>
+                                                    <small class="author">${p.publisher.publisherName}</small>
                                                     <p class="title">${p.title}</p>
                                                     <div class="rating">
                                                         <i class="bi bi-star-fill text-warning small"></i>

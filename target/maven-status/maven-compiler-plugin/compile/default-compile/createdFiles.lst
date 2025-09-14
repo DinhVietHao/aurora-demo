@@ -1,3 +1,4 @@
+com\group01\aurora_demo\catalog\model\Publisher.class
 com\group01\aurora_demo\shipping\controller\ShippingAddressServlet.class
 com\group01\aurora_demo\catalog\model\BookDetail.class
 com\group01\aurora_demo\auth\controller\InvalidateOtpServlet.class
@@ -28,6 +29,7 @@ com\group01\aurora_demo\catalog\model\ProductImages.class
 com\group01\aurora_demo\common\service\EmailService$1.class
 com\group01\aurora_demo\auth\model\GoogleAccount.class
 com\group01\aurora_demo\auth\model\User.class
+com\group01\aurora_demo\catalog\model\Author.class
 com\group01\aurora_demo\auth\controller\ForgotPassServlet.class
 com\group01\aurora_demo\auth\controller\SendOtpServlet.class
 com\group01\aurora_demo\cart\controller\DeleteCartItemServlet.class
