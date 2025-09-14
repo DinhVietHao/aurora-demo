@@ -1,0 +1,12 @@
+{
+  "printWidth": 100,
+  "tabWidth": 2,
+  "singleQuote": false,
+  "plugins": ["prettier-plugin-jsp"],
+  "overrides": [
+    {
+      "files": ["*.jsp"],
+      "options": { "parser": "jsp" }
+    }
+  ]
+}

@@ -1,24 +1,36 @@
-# Maven / build outputs
+# =========================================
+# Build outputs (Java / Maven / Gradle)
+# =========================================
 /target/
 /dist/
 /build/
 /out/
 
+# Jetty/Tomcat work dirs (dự phòng)
+work/
+temp/
+logs/
+
+# =========================================
 # Java artifacts
+# =========================================
 *.class
+*.jar
+*.war
+*.ear
 *.log
 *.tmp
 *.bak
 *.swp
 *.swo
 *~
-
-# Heap/crash dumps
 *.hprof
 hs_err_pid*
 replay_pid*
 
+# =========================================
 # IDEs
+# =========================================
 # IntelliJ IDEA
 .idea/
 *.iml
@@ -35,15 +47,35 @@ replay_pid*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+!.vscode/extensions.json
 
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =========================================
+# Node / Prettier
+# =========================================
+node_modules/
+/npm-debug.log*
+/yarn-error.log
+/package-lock.json
+/pnpm-lock.yaml
+/yarn.lock
+
+# =========================================
 # OS cruft
+# =========================================
 .DS_Store
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Jetty/Tomcat work dirs (phòng trường hợp sinh ngoài target)
-# (thường đã nằm trong /target/, dòng dưới chỉ là dự phòng)
-work/
-temp/
-logs/
+# =========================================
+# Misc
+# =========================================
+*.orig
+*.rej
