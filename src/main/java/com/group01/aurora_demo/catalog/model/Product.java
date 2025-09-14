@@ -7,31 +7,19 @@ public class Product {
 
     private Long productId;
     private Long shopId;
-    private String sku;
     private String title;
-    private String shortDescription;
     private String description;
-    private Double price;
-    private Double discount;
-    private Integer soldCount;
+    private Double originalPrice;
+    private Double salePrice;
+    private Long soldCount;
     private Integer stock;
+    private Boolean isBundle;
     private Long categoryId;
-    private String publisher;
     private LocalDate publishedDate;
-    private BookDetail bookDetail;
     private String primaryImageUrl;
     private List<ProductImages> images;
-
-    public Product() {
-    }
-
-    public String getShortDescription() {
-        return shortDescription;
-    }
-
-    public void setShortDescription(String shortDescription) {
-        this.shortDescription = shortDescription;
-    }
+    private List<Author> authors;
+    private Publisher publisher; 
 
     public Long getProductId() {
         return productId;
@@ -47,14 +35,6 @@ public class Product {
 
     public void setShopId(Long shopId) {
         this.shopId = shopId;
-    }
-
-    public String getSku() {
-        return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
     }
 
     public String getTitle() {
@@ -73,27 +53,27 @@ public class Product {
         this.description = description;
     }
 
-    public Double getPrice() {
-        return price;
+    public Double getOriginalPrice() {
+        return originalPrice;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setOriginalPrice(Double originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
-    public Double getDiscount() {
-        return discount;
+    public Double getSalePrice() {
+        return salePrice;
     }
 
-    public void setDiscount(Double discount) {
-        this.discount = discount;
+    public void setSalePrice(Double salePrice) {
+        this.salePrice = salePrice;
     }
 
-    public Integer getSoldCount() {
+    public Long getSoldCount() {
         return soldCount;
     }
 
-    public void setSoldCount(Integer soldCount) {
+    public void setSoldCount(Long soldCount) {
         this.soldCount = soldCount;
     }
 
@@ -105,6 +85,14 @@ public class Product {
         this.stock = stock;
     }
 
+    public Boolean getIsBundle() {
+        return isBundle;
+    }
+
+    public void setIsBundle(Boolean isBundle) {
+        this.isBundle = isBundle;
+    }
+
     public Long getCategoryId() {
         return categoryId;
     }
@@ -113,28 +101,12 @@ public class Product {
         this.categoryId = categoryId;
     }
 
-    public String getPublisher() {
-        return publisher;
-    }
-
-    public void setPublisher(String publisher) {
-        this.publisher = publisher;
-    }
-
     public LocalDate getPublishedDate() {
         return publishedDate;
     }
 
     public void setPublishedDate(LocalDate publishedDate) {
         this.publishedDate = publishedDate;
-    }
-
-    public BookDetail getBookDetail() {
-        return bookDetail;
-    }
-
-    public void setBookDetail(BookDetail bookDetail) {
-        this.bookDetail = bookDetail;
     }
 
     public String getPrimaryImageUrl() {
@@ -153,12 +125,19 @@ public class Product {
         this.images = images;
     }
 
-    @Override
-    public String toString() {
-        return "Product{" + "productId=" + productId + ", shopId=" + shopId + ", sku=" + sku + ", title=" + title
-                + ", shortDescription=" + shortDescription + ", description=" + description + ", price=" + price
-                + ", discount=" + discount + ", soldCount=" + soldCount + ", stock=" + stock + ", categoryId="
-                + categoryId + ", publisher=" + publisher + ", publishedDate=" + publishedDate + ", bookDetail="
-                + bookDetail + ", images=" + images + '}';
+    public List<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
+    public Publisher getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
     }
 }

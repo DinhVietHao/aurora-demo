@@ -22,9 +22,7 @@ public class DataSourceProvider {
         // Server.
         // Note: encrypt=false is convenient for local dev; enable encryption in
         // production.
-        cfg.setJdbcUrl(System.getProperty("AURORA_JDBC_URL",
-                "jdbc:sqlserver://localhost:1433;databaseName=AuroraDemo;encrypt=false"));
-
+        cfg.setJdbcUrl(System.getProperty("AURORA_JDBC_URL","jdbc:sqlserver://localhost:1433;databaseName=AuroraDemo;encrypt=false"));
         // DB username: can be overridden with -DAURORA_DB_USER=...
         cfg.setUsername(System.getProperty("AURORA_DB_USER", "sa"));
 
