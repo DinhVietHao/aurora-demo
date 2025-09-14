@@ -20,7 +20,7 @@
                 <div id="carouselExample" class="carousel slide banner-book" data-bs-ride="carousel">
                     <div class="carousel-inner">
                         <div class="carousel-item active">
-                            <img src="${ctx}/assets/images/banner-book.png" class="d-block w-100 banner-image" alt="...">
+                            <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100 banner-image" alt="...">
                             <div class="container">
                                 <div class="row align-items-center banner-content">
                                     <div class="col-lg-6 col-md-12 text-white px-4">
@@ -33,7 +33,7 @@
                             </div>
                         </div>
                         <div class="carousel-item">
-                            <img src="${ctx}/assets/images/banner-book.png" class="d-block w-100" alt="...">
+                            <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100" alt="...">
                             <div class="container">
                                 <div class="row align-items-center banner-content">
                                     <div class="col-lg-6 col-md-12 text-white">
@@ -46,7 +46,7 @@
                             </div>
                         </div>
                         <div class="carousel-item">
-                            <img src="${ctx}/assets/images/banner-book.png" class="d-block w-100" alt="...">
+                            <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100" alt="...">
                             <div class="container">
                                 <div class="row align-items-center banner-content">
                                     <div class="col-lg-6 col-md-12 text-white">
@@ -72,10 +72,10 @@
 
                 <!-- Ads -->
                 <div class="banner-advertisemet row my-4">
-                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/advertisement-1.png" alt="advertisement"></a></div>
-                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/advertisement-2.png" alt="advertisement"></a></div>
-                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/advertisement-3.png" alt="advertisement"></a></div>
-                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/advertisement-4.png" alt="advertisement"></a></div>
+                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/catalog/banners/advertisement-1.png" alt="advertisement"></a></div>
+                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/catalog/banners/advertisement-2.png" alt="advertisement"></a></div>
+                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/catalog/banners/advertisement-3.png" alt="advertisement"></a></div>
+                    <div class="col-6 col-md-4 col-lg-3"><a><img src="${ctx}/assets/images/catalog/banners/advertisement-4.png" alt="advertisement"></a></div>
                 </div>
             </div>
 
@@ -159,7 +159,7 @@
                         <div class="product-card">
                             <div class="product-img">
                                 <span class="discount">-16%</span>
-                                <img src="${ctx}/assets/images/product-2.jpg" alt="Sách">
+                                <img src="${ctx}/assets/images/catalog/products/product-2.jpg" alt="Sách">
                             </div>
                             <div class="product-body">
                                 <h6 class="price">128.300 ₫</h6>
@@ -184,7 +184,7 @@
                         <div class="product-card">
                             <div class="product-img">
                                 <span class="discount">-16%</span>
-                                <img src="${ctx}/assets/images/product-1.png" alt="Sách">
+                                <img src="${ctx}/assets/images/catalog/products/product-1.png" alt="Sách">
                             </div>
                             <div class="product-body">
                                 <h6 class="price">128.300 ₫</h6>

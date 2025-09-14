@@ -5,10 +5,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <!-- Handle loose and open of Login and registration -->
-<script src="<c:url value='/assets/js/auth_form.js'/>?v=1.0.1"></script>
+<script src="<c:url value='/assets/js/auth/auth_form.js'/>?v=1.0.1"></script>
 
 <!-- Check Input Register  -->
-<script src="<c:url value='/assets/js/validator.js'/>?v=1.0.1"></script>
+<script src="<c:url value='/assets/js/common/validator.js'/>?v=1.0.1"></script>
 
 <%-- Tạo redirect_uri động, đúng host/port/context hiện tại --%>
 <c:set var="redirectUri"
@@ -126,10 +126,10 @@
 </script>
 
 <!--Gửi mã OTP-->
-<script src="<c:url value='/assets/js/send_otp.js'/>?v=1.0.2" defer></script>
+<script src="<c:url value='/assets/js/auth/send_otp.js'/>?v=1.0.2" defer></script>
 <!--Đăng ký-->
-<script src="<c:url value='/assets/js/register.js'/>?v=1.0.2" defer></script>
+<script src="<c:url value='/assets/js/auth/register.js'/>?v=1.0.2" defer></script>
 <!--Đăng nhập-->
-<script src="<c:url value='/assets/js/login.js'/>?v=1.0.2" defer></script>
+<script src="<c:url value='/assets/js/auth/login.js'/>?v=1.0.2" defer></script>
 <!--Quên mật khẩu-->
-<script src="<c:url value='/assets/js/forgot-password.js'/>?v=1.0.2" defer></script>
+<script src="<c:url value='/assets/js/auth/forgot-password.js'/>?v=1.0.2" defer></script>

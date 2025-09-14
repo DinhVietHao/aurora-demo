@@ -43,6 +43,6 @@ public class ListBooksServlet extends HttpServlet {
         req.setAttribute("totalPages", totalPages);
 
         // Forward request to the JSP view
-        req.getRequestDispatcher("/WEB-INF/views/books/list.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/views/catalog/books/list.jsp").forward(req, resp);
     }
 }

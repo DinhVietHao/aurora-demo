@@ -8,7 +8,7 @@
 
             <div class="col-6 col-md-3">
                 <a href="${ctx}/" class="d-flex align-items-center">
-                    <img src="<c:url value='/assets/images/logo-footer.png'/>" alt="Logo" class="footer-logo">
+                    <img src="<c:url value='/assets/images/branding/logo-footer.png'/>" alt="Logo" class="footer-logo">
                 </a>
                 <p>Điểm đến lý tưởng cho người yêu sách. Khám phá, tìm hiểu và mua sắm từ bộ sưu tập phong phú thuộc mọi thể loại.</p>
                 <div class="d-flex gap-3">
