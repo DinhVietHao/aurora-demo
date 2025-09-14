@@ -31,10 +31,12 @@ E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\common\servi
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\cart\controller\ViewCartServlet.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\catalog\model\Product.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\cart\controller\DeleteCartItemServlet.java
+E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\catalog\model\Publisher.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\auth\controller\LoginServlet.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\common\config\DataSourceProvider.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\common\util\Json.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\cart\controller\UpdateCartAllCheckedServlet.java
+E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\catalog\model\Author.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\common\filter\AuthRequiredFilter.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\auth\dao\RememberMeTokenDAO.java
 E:\Aurora_Project\aurora-demo\src\main\java\com\group01\aurora_demo\auth\controller\InvalidateOtpServlet.java
