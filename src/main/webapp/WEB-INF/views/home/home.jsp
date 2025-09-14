@@ -142,6 +142,7 @@
                     </button>
                 </div>
             </div>
+            
             <!-- FLASH SALES -->
             <div class="container my-4 flash-sale">
                 <div class="text-center mb-4">
