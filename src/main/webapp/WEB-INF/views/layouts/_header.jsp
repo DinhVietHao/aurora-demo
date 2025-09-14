@@ -7,7 +7,7 @@
         <div class="row header-content">
             <div class="col-3 col-md-1">
                 <a href="${ctx}/" class="header-logo">
-                    <img src="${ctx}/assets/images/logo-header.png" alt="Logo" style="height:60px; width:auto;">
+                    <img src="${ctx}/assets/images/branding/logo-header.png" alt="Logo" style="height:60px; width:auto;">
                 </a>
             </div>
 

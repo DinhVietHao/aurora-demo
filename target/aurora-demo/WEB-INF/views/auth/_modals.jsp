@@ -26,7 +26,7 @@
                         <a href="./home.html">
                             <img
                                 class="auth-form-logo"
-                                src="<c:url value='/assets/images/logo-header.png'/>"
+                                src="<c:url value='/assets/images/branding/logo-header.png'/>"
                                 alt="Aurora"
                             />
                             <h4 class="auth-form-title text-center">
@@ -176,7 +176,7 @@
                         <a href="./home.html">
                             <img
                                 class="auth-form-logo"
-                                src="<c:url value='/assets/images/logo-header.png'/>"
+                                src="<c:url value='/assets/images/branding/logo-header.png'/>"
                                 alt="Aurora"
                             />
                             <h4 class="auth-form-title text-center">
