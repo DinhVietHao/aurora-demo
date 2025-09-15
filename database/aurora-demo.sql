@@ -223,6 +223,7 @@ CREATE TABLE CartItems (
   CartID     BIGINT NOT NULL,
   ProductID  BIGINT NOT NULL,
   Quantity   INT    NOT NULL,
+  IsChecked BIT NOT NULL DEFAULT 1, -- THÊM MỚI THUỘC TÍNH IS CHECKED
   UnitPrice  DECIMAL(12,2) NOT NULL,
   Subtotal   DECIMAL(12,2) NOT NULL,
   CONSTRAINT FK_CartItems_Cart    FOREIGN KEY (CartID)    REFERENCES Carts(CartID),
@@ -234,6 +235,7 @@ CREATE TABLE Vouchers (
   Code           NVARCHAR(40) NOT NULL,
   DiscountType   NVARCHAR(20) NOT NULL,
   Value          DECIMAL(12,2) NOT NULL,
+  MaxAmount		 DECIMAL(12,2) NULL, -- THÊM MỚI THUỘC TÍNH MAX AMOUNT 
   MinOrderAmount DECIMAL(12,2) NOT NULL,
   StartAt        DATETIME2(7) NOT NULL,
   EndAt          DATETIME2(7) NOT NULL,
