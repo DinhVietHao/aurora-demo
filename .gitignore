@@ -31,16 +31,6 @@ replay_pid*
 # =========================================
 # IDEs
 # =========================================
-# IntelliJ IDEA
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# Eclipse
-.project
-.classpath
-.settings/
 
 # VS Code (giữ lại file cấu hình cần share)
 .vscode/*
@@ -48,23 +38,6 @@ replay_pid*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
-# NetBeans
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# =========================================
-# Node / Prettier
-# =========================================
-node_modules/
-/npm-debug.log*
-/yarn-error.log
-/package-lock.json
-/pnpm-lock.yaml
-/yarn.lock
 
 # =========================================
 # OS cruft
