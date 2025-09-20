@@ -12,8 +12,8 @@
         </jsp:include>
 
         <!-- CSS riêng trang Cart -->
-        <link rel="stylesheet" href="<c:url value='/assets/css/globals.css?v=1.0.1'/>">
-        <link rel="stylesheet" href="<c:url value='/assets/css/cart.css?v=1.0.1'/>">
+        <link rel="stylesheet" href="<c:url value='/assets/css/common/globals.css?v=1.0.1'/>">
+        <link rel="stylesheet" href="<c:url value='/assets/css/cart/cart.css?v=1.0.1'/>">
     </head>
     <body>
 
@@ -187,9 +187,9 @@
             </div>
 
             <!-- Modals tách riêng để có thể reuse -->
-            <jsp:include page="/WEB-INF/views/products/_cart_delete_modal.jsp"/>
-            <jsp:include page="/WEB-INF/views/products/_cart_voucher_modal.jsp"/>            
-            <jsp:include page="/WEB-INF/views/products/cart_empty_selection_modal.jsp"/>
+            <jsp:include page="/WEB-INF/views/cart/partials/_cart_delete_modal.jsp"/>
+            <jsp:include page="/WEB-INF/views/cart/partials/_cart_voucher_modal.jsp"/>            
+            <jsp:include page="/WEB-INF/views/cart/partials/_cart_empty_selection_modal.jsp"/>
 
             
         </div>

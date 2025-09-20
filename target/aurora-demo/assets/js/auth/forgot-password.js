@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Gọi servlet gộp với action=start
-            const res = await fetch("/aurora/auth/forgot", {
+            const res = await fetch("/auth/forgot", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "start", email }),
@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function () {
         e.preventDefault();
         if (!workingEmail) return; // chưa qua bước start
         try {
-            const res = await fetch("/aurora/auth/forgot", {
+            const res = await fetch("/auth/forgot", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ action: "resend", email: workingEmail }),
@@ -339,7 +339,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Gọi servlet gộp với action=complete
-            const res = await fetch("/aurora/auth/forgot", {
+            const res = await fetch("/auth/forgot", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

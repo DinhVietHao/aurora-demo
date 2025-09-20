@@ -5,13 +5,13 @@
 <header class="header">
     <div class="container">
         <div class="row header-content">
-            <div class="col-3 col-md-1">
+            <div class="col-3 col-md-2">
                 <a href="${ctx}/" class="header-logo">
                     <img src="${ctx}/assets/images/branding/logo-header.png" alt="Logo" style="height:60px; width:auto;">
                 </a>
             </div>
 
-            <div class="col-6 col-md-6">
+            <div class="col-6 col-md-5">
                 <div class="header-search">
                     <span class="icon"><i class="bi bi-search"></i></span>
                     <input type="text" class="form-control rounded-pill" placeholder="Hôm nay bạn mua gì ...">
@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <div class="col-3 col-md-4">
+            <div class="col-3 col-md-5">
                 <nav class="header-nav">
                     <a href="${ctx}/" class="header-nav-item header-mobile-disable">
                         <i class="bi bi-house"></i> <span>Trang chủ</span>

@@ -66,6 +66,6 @@ public class PayServlet extends HttpServlet {
         req.setAttribute("shipTag", "Nhà");
         req.setAttribute("shipAddress", "Đường số 1, Phường An Khánh, Quận Ninh Kiều, Cần Thơ");
 
-        req.getRequestDispatcher("/WEB-INF/views/pay.jsp").forward(req, resp);
+        req.getRequestDispatcher("/WEB-INF/views/payment/pay.jsp").forward(req, resp);
     }
 }

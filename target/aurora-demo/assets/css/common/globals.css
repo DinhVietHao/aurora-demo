@@ -29,3 +29,6 @@ a {
 h4 {
     margin: 0px;
 }
+.cursor-pointer {
+    cursor: pointer;
+}

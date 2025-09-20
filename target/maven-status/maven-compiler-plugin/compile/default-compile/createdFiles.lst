@@ -21,6 +21,7 @@ com\group01\aurora_demo\cart\model\Cart.class
 com\group01\aurora_demo\auth\controller\LoginServlet.class
 com\group01\aurora_demo\auth\dao\RememberMeTokenDAO$TokenRow.class
 com\group01\aurora_demo\cart\controller\ViewCartServlet.class
+com\group01\aurora_demo\catalog\model\ProductCategory.class
 com\group01\aurora_demo\common\constants\Iconstant.class
 com\group01\aurora_demo\common\filter\RememberMeFilter.class
 com\group01\aurora_demo\payment\controller\PayServlet$ItemVM.class
