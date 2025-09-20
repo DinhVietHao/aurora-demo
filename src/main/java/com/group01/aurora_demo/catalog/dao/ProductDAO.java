@@ -105,71 +105,84 @@ public class ProductDAO {
         return products;
     }
 
-    // public Product getProductById(long productId) {
-    // Product product = null;
-    // String sql = "SELECT p.ProductID, p.ShopID, p.SKU, p.Title,
-    // p.ShortDescription, p.Description, p.Price, p.Discount, p.SoldCount, p.Stock,
-    // p.CategoryID, p.Publisher, p.PublishedDate, "
-    // + "b.Author, b.Translator, b.Version, b.CoverType, b.Pages, b.Language,
-    // b.[Size], b.ISBN, i.ImageID, i.Url "
-    // + "FROM Products p "
-    // + "JOIN BookDetails b ON p.ProductID = b.ProductID "
-    // + "JOIN ProductImages i ON p.ProductID = i.ProductID "
-    // + "WHERE p.ProductID = ?";
+    public Product getProductById(long productId) {
+        Product product = null;
+        String sql = """
+                SELECT p.ProductID, p.ShopID, p.Title, p.Description,
+                    p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, p.CategoryID,
+                    pub.Name AS PublisherName, p.PublishedDate,
+                    b.Translator, b.Version, b.CoverType, b.Pages, l.LanguageName, b.[Size], b.ISBN,
+                    a.AuthorName AS Author
+                FROM Products p
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
+                LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
+                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
+                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID
+                WHERE p.ProductID = ?
+                """;
 
-    // try (Connection cn = DataSourceProvider.get().getConnection()) {
-    // PreparedStatement ps = cn.prepareStatement(sql);
-    // ps.setLong(1, productId);
-    // ResultSet rs = ps.executeQuery();
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                product = new Product();
+                product.setProductId(rs.getLong("ProductID"));
+                product.setShopId(rs.getLong("ShopID"));
+                product.setTitle(rs.getString("Title"));
+                product.setDescription(rs.getString("Description"));
+                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setSoldCount(rs.getLong("SoldCount"));
+                product.setStock(rs.getInt("Stock"));
+                product.setIsBundle(rs.getBoolean("IsBundle"));
+                product.setCategoryId(rs.getLong("CategoryID"));
+                product.setPublisherString(rs.getString("PublisherName"));
 
-    // List<ProductImages> images = new ArrayList<>();
-    // while (rs.next()) {
-    // if (product == null) {
-    // product = new Product();
-    // product.setProductId(rs.getLong("ProductID"));
-    // product.setShopId(rs.getLong("ShopID"));
-    // product.setSku(rs.getString("SKU"));
-    // product.setTitle(rs.getString("Title"));
-    // product.setShortDescription(rs.getString("ShortDescription"));
-    // product.setDescription(rs.getString("Description"));
-    // product.setPrice(rs.getDouble("Price"));
-    // product.setDiscount(rs.getDouble("Discount"));
-    // product.setSoldCount(rs.getInt("SoldCount"));
-    // product.setStock(rs.getInt("Stock"));
-    // product.setCategoryId(rs.getLong("CategoryID"));
-    // product.setPublisher(rs.getString("Publisher"));
-    // product.setPublishedDate(rs.getDate("PublishedDate").toLocalDate());
+                if (rs.getDate("PublishedDate") != null) {
+                    product.setPublishedDate(rs.getDate("PublishedDate").toLocalDate());
+                }
+                BookDetail bookDetail = new BookDetail();
 
-    // BookDetail bookDetail = new BookDetail();
-    // bookDetail.setProductId(product.getProductId());
-    // bookDetail.setAuthor(rs.getString("Author"));
-    // bookDetail.setTranslator(rs.getString("Translator"));
-    // bookDetail.setVersion(rs.getString("Version"));
-    // bookDetail.setCoverType(rs.getString("CoverType"));
-    // bookDetail.setPages(rs.getInt("Pages"));
-    // bookDetail.setLanguage(rs.getString("Language"));
-    // bookDetail.setSize(rs.getString("Size"));
-    // bookDetail.setISBN(rs.getString("ISBN"));
+                bookDetail.setProductId(product.getProductId());
+                bookDetail.setAuthor(rs.getString("Author"));
+                bookDetail.setTranslator(rs.getString("Translator"));
+                bookDetail.setVersion(rs.getString("Version"));
+                bookDetail.setCoverType(rs.getString("CoverType"));
+                bookDetail.setPages(rs.getInt("Pages"));
+                bookDetail.setLanguage(rs.getString("LanguageName"));
+                bookDetail.setSize(rs.getString("Size"));
+                bookDetail.setISBN(rs.getString("ISBN"));
 
-    // product.setBookDetail(bookDetail);
-    // }
+                product.setBookDetail(bookDetail);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
 
-    // ProductImages productImages = new ProductImages();
-    // productImages.setImageId(rs.getLong("ImageID"));
-    // productImages.setProductId(product.getProductId());
-    // productImages.setImageUrl(rs.getString("Url"));
-    // images.add(productImages);
-    // }
+        if (product != null) {
+            List<ProductImages> images = new ArrayList<>();
+            String imgSql = "SELECT ImageID, Url FROM ProductImages WHERE ProductID = ? ORDER BY IsPrimary DESC";
+            try (Connection cn = DataSourceProvider.get().getConnection()) {
+                PreparedStatement ps = cn.prepareStatement(imgSql);
+                ps.setLong(1, productId);
+                ResultSet rs = ps.executeQuery();
+                while (rs.next()) {
+                    ProductImages productImages = new ProductImages();
+                    productImages.setImageId(rs.getLong("ImageID"));
+                    productImages.setProductId(productId);
+                    productImages.setImageUrl(rs.getString("Url"));
+                    images.add(productImages);
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+                product.setImages(images);
+            }
 
-    // if (product != null) {
-    // product.setImages(images);
-    // }
-
-    // } catch (Exception e) {
-    // System.out.println(e.getMessage());
-    // }
-    // return product;
-    // }
+        return product;
+    }
 
     /**
      * Count total number of products in the database.

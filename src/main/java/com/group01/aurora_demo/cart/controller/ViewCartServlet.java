@@ -48,29 +48,31 @@ public class ViewCartServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        // HttpSession session = req.getSession();
-        // User user = (User) session.getAttribute("AUTH_USER");
+        HttpSession session = req.getSession();
+        User user = (User) session.getAttribute("AUTH_USER");
 
-        // // Nếu chưa đăng nhập thì chuyển hướng sang trang login
-        // if (user == null) {
-        //     resp.sendRedirect(req.getContextPath() + "/login");
-        //     return;
-        // }
+        // Nếu chưa đăng nhập thì chuyển hướng sang trang login
+        if (user == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
 
-        // CartDAO cartDAO = new CartDAO();
-        // CartItemDAO cartItemDAO = new CartItemDAO();
+        CartDAO cartDAO = new CartDAO();
+        CartItemDAO cartItemDAO = new CartItemDAO();
 
-        // // Lấy giỏ hàng của user theo userId
-        // Cart cart = cartDAO.getCartByUserId(user.getId());
-        // if (cart != null) {
-        //     // Nếu có giỏ hàng -> lấy danh sách sản phẩm trong giỏ
-        //     List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(user.getId());
-        //     req.setAttribute("cartItems", cartItems);
-        //     req.getRequestDispatcher("/WEB-INF/views/cart.jsp").forward(req, resp);
-        // } else {
-        //     // Nếu chưa có giỏ hàng -> set null để JSP xử lý giỏ trống
-        //     req.setAttribute("cartItems", null);
-        //     req.getRequestDispatcher("/WEB-INF/views/cart.jsp").forward(req, resp);
-        // }
+        // Lấy giỏ hàng của user theo userId
+        Cart cart = cartDAO.getCartByUserId(user.getId());
+        if (cart != null) {
+            // Nếu có giỏ hàng -> lấy danh sách sản phẩm trong giỏ
+            List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(user.getId());
+            System.out.println(">>>>>>>>>>> Checked cartItems" + cartItems);
+            req.setAttribute("cartItems", cartItems);
+            req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
+        } else {
+            // Nếu chưa có giỏ hàng -> set null để JSP xử lý giỏ trống
+            req.setAttribute("cartItems", null);
+            req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
+
+        }
     }
 }
