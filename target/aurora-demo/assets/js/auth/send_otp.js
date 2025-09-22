@@ -117,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (verifyController) verifyController.abort();
             verifyController = new AbortController();
 
-            const res = await fetch("/aurora/auth/verify-otp", {
+            const res = await fetch("/auth/verify-otp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ otp, email }),
@@ -185,8 +185,9 @@ document.addEventListener("DOMContentLoaded", function () {
         setBtnDisabled(true);
 
         try {
+            console.log("Hello DinhVietHao");
             // Gọi servlet gửi OTP (AJAX, JSON)
-            const res = await fetch("/aurora/auth/send-otp", {
+            const res = await fetch("/auth/send-otp", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email }),
@@ -244,7 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
             otpInput && (otpInput.value = "");
             showMessageForInput(otpInput, "", "");
             try {
-                await fetch("/aurora/auth/invalidate-otp", { method: "POST" });
+                await fetch("/auth/invalidate-otp", { method: "POST" });
             } catch (_) {}
         });
     }

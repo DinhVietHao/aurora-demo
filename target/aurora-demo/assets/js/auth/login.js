@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             // Gọi API đăng nhập LOCAL (POST JSON)
-            const res = await fetch("/aurora/auth/login", {
+            const res = await fetch("/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
