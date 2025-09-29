@@ -10,7 +10,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8"/>
-  <title>Aurora Demo – Index</title>
+  <title>Aurora Demo</title>
 
   <!-- Static assets (dùng c:url để tự thêm contextPath) -->
   <link rel="stylesheet" href="<c:url value='/assets/css/common/globals.css'/>">
