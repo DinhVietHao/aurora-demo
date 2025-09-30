@@ -12,6 +12,6 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 <!-- Project CSS -->
-<link rel="stylesheet" href="${ctx}/assets/css/common/globals.css?v=1.0.1">
-<link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" >
+<link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
+<link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" >
 <link rel="stylesheet" href="${ctx}/assets/css/auth/auth_form.css?v=1.0.1" >

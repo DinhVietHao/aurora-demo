@@ -20,6 +20,8 @@ public class Product {
     private List<ProductImages> images;
     private List<Author> authors;
     private Publisher publisher; 
+    private String publisherString; 
+    private BookDetail bookDetail;
 
     public Long getProductId() {
         return productId;
@@ -101,6 +103,14 @@ public class Product {
         this.categoryId = categoryId;
     }
 
+    public String getPublisherString() {
+        return publisherString;
+    }
+
+    public void setPublisherString(String publisherString) {
+        this.publisherString = publisherString;
+    }
+
     public LocalDate getPublishedDate() {
         return publishedDate;
     }
@@ -140,4 +150,23 @@ public class Product {
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
     }
+
+    public BookDetail getBookDetail() {
+        return bookDetail;
+    }
+
+    public void setBookDetail(BookDetail bookDetail) {
+        this.bookDetail = bookDetail;
+    }
+
+    @Override
+    public String toString() {
+        return "Product [productId=" + productId + ", shopId=" + shopId + ", title=" + title + ", description="
+                + description + ", originalPrice=" + originalPrice + ", salePrice=" + salePrice + ", soldCount="
+                + soldCount + ", stock=" + stock + ", isBundle=" + isBundle + ", categoryId=" + categoryId
+                + ", publishedDate=" + publishedDate + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
+                + ", authors=" + authors + ", publisher=" + publisher + ", bookDetail=" + bookDetail + "]";
+    }
+
+    
 }

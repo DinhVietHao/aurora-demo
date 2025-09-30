@@ -13,7 +13,7 @@
                             <div class="row g-3 product">
                             </c:if>
 
-                                <jsp:include page="/WEB-INF/views/products/_card.jsp">
+                                <jsp:include page="/WEB-INF/views/cart/partials/_card.jsp">
                                     <jsp:param name="id"       value="${p.id}"/>
                                     <jsp:param name="title"    value="${p.title}"/>
                                     <jsp:param name="author"   value="${p.author}"/>
@@ -34,7 +34,7 @@
                 <div class="carousel-item active">
                     <div class="row g-3 product">
                         <c:forEach begin="1" end="6">
-                                <jsp:include page="/WEB-INF/views/products/_card.jsp">
+                                <jsp:include page="/WEB-INF/views/cart/partials/_card.jsp">
                                     <jsp:param name="id" value="1"/>
                                     <jsp:param name="title" value="Nơi Khu Rừng Chạm Tới Những Vì Sao"/>
                                     <jsp:param name="author" value="GLENDY VANDERAH"/>
@@ -49,7 +49,7 @@
                 <div class="carousel-item">
                     <div class="row g-3 product">
                         <c:forEach begin="1" end="6">
-                            <jsp:include page="/WEB-INF/views/products/_card.jsp">
+                            <jsp:include page="/WEB-INF/views/cart/partials/_card.jsp">
                                 <jsp:param name="id" value="2"/>
                                 <jsp:param name="title" value="Tựa sách khác (demo)"/>
                                 <jsp:param name="author" value="Tác giả"/>
