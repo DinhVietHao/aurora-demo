@@ -5,6 +5,7 @@ import com.group01.aurora_demo.catalog.model.ProductImages;
 import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.cart.model.Shop;
 
 import java.sql.PreparedStatement;
 import java.sql.Connection;
@@ -28,14 +29,13 @@ public class CartItemDAO {
      * @return true nếu thêm thành công, false nếu thất bại
      */
     public boolean addCartItem(CartItem cartItem) {
-        String sql = "INSERT INTO CartItems (CartID, ProductID, Quantity, UnitPrice, Subtotal) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO CartItems (UserID, ProductID, Quantity, UnitPrice) VALUES (?, ?, ?, ?)";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, cartItem.getCartId());
+            ps.setLong(1, cartItem.getUserId());
             ps.setLong(2, cartItem.getProductId());
             ps.setInt(3, cartItem.getQuantity());
             ps.setDouble(4, cartItem.getUnitPrice());
-            ps.setDouble(5, cartItem.getSubtotal());
 
             int result = ps.executeUpdate();
             return result > 0;
@@ -71,17 +71,17 @@ public class CartItemDAO {
      * @param productId id sản phẩm
      * @return CartItem nếu tồn tại, null nếu không có
      */
-    public CartItem getCartItem(long cartId, long productId) {
-        String sql = "SELECT * FROM CartItems WHERE CartID = ? AND ProductID = ?";
+    public CartItem getCartItem(long userId, long productId) {
+        String sql = "SELECT * FROM CartItems WHERE UserID = ? AND ProductID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, cartId);
+            ps.setLong(1, userId);
             ps.setLong(2, productId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 CartItem cartItem = new CartItem();
                 cartItem.setCartItemId(rs.getLong("CartItemID"));
-                cartItem.setCartId(rs.getLong("CartID"));
+                cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setProductId(rs.getLong("ProductID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
                 cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
@@ -108,7 +108,7 @@ public class CartItemDAO {
             if (rs.next()) {
                 CartItem cartItem = new CartItem();
                 cartItem.setCartItemId(rs.getLong("CartItemID"));
-                cartItem.setCartId(rs.getLong("CartID"));
+                cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setProductId(rs.getLong("ProductID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
                 cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
@@ -128,12 +128,11 @@ public class CartItemDAO {
      * @return true nếu thành công
      */
     public boolean updateQuantity(CartItem cartItem) {
-        String sql = "UPDATE CartItems SET Quantity = ?, Subtotal = ? WHERE CartItemID = ?";
+        String sql = "UPDATE CartItems SET Quantity = ?, CreatedAt = SYSUTCDATETIME() WHERE CartItemID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setInt(1, cartItem.getQuantity());
-            ps.setDouble(2, cartItem.getSubtotal());
-            ps.setLong(3, cartItem.getCartItemId());
+            ps.setLong(2, cartItem.getCartItemId());
             int result = ps.executeUpdate();
             return result > 0;
         } catch (Exception e) {
@@ -183,16 +182,13 @@ public class CartItemDAO {
      * @return giá sau khi giảm
      */
     public double getUnitPriceByProductId(long productId) {
-        String sql = "SELECT Price, Discount FROM Products WHERE ProductID = ?";
+        String sql = "SELECT SalePrice FROM Products WHERE ProductID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setLong(1, productId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                double price = rs.getDouble("Price");
-                double discount = rs.getDouble("Discount");
-                double finalPrice = price - discount; // áp dụng giảm giá
-                return finalPrice;
+                return rs.getDouble("SalePrice");
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -210,26 +206,27 @@ public class CartItemDAO {
     public List<CartItem> getCartItemsByUserId(long userId) {
         List<CartItem> cartItems = new ArrayList<>();
         String sql = """
-                 SELECT
-                    ci.CartItemID,
-                    ci.CartID,
-                    ci.Quantity,
-                    ci.UnitPrice,
-                    ci.Subtotal,
-                    ci.IsChecked,
-                    p.ProductID,
-                    p.Title,
-                    p.OriginalPrice,
-                    p.SalePrice,
-                    pi.Url AS ImageUrl,
-                    a.AuthorName AS Author
+                SELECT
+                     ci.CartItemID,
+                     ci.UserID,
+                     ci.ProductID,
+                     ci.Quantity,
+                     ci.UnitPrice,
+                     ci.Subtotal,
+                     ci.IsChecked,
+                     p.Title ,
+                     p.OriginalPrice,
+                     p.SalePrice,
+                	 s.ShopID,
+                     s.Name AS ShopName,
+                     img.Url AS ImageUrl,
+                     a.AuthorName AS Author
                 FROM CartItems ci
-                JOIN Carts c ON ci.CartID = c.CartID
                 JOIN Products p ON ci.ProductID = p.ProductID
-                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                JOIN Shops s ON p.ShopID = s.ShopID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON a.AuthorID = ba.AuthorID
-                WHERE c.UserID = ?
+                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -238,7 +235,7 @@ public class CartItemDAO {
             while (rs.next()) {
                 CartItem cartItem = new CartItem();
                 cartItem.setCartItemId(rs.getLong("CartItemID"));
-                cartItem.setCartId(rs.getLong("CartID"));
+                cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
                 cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
                 cartItem.setSubtotal(rs.getDouble("Subtotal"));
@@ -248,8 +245,13 @@ public class CartItemDAO {
                 Product product = new Product();
                 product.setProductId(rs.getLong("ProductID"));
                 product.setTitle(rs.getString("Title"));
-                 product.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                 product.setSalePrice(rs.getDouble("SalePrice"));
+
+                Shop shop = new Shop();
+                shop.setShopId(rs.getLong("ShopID"));
+                shop.setName(rs.getString("ShopName"));
+                product.setShop(shop);
 
                 // Lấy ảnh chính của sản phẩm
                 ProductImages productImages = new ProductImages();
@@ -276,11 +278,11 @@ public class CartItemDAO {
      * @param cartId id giỏ hàng
      * @return số lượng items
      */
-    public int getDistinctItemCount(long cartId) {
-        String sql = "SELECT COUNT(ProductID) AS ProductCount FROM CartItems WHERE CartID = ?";
+    public int getDistinctItemCount(long userId) {
+        String sql = "SELECT COUNT(ProductID) AS ProductCount FROM CartItems WHERE UserID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, cartId);
+            ps.setLong(1, userId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return rs.getInt("ProductCount");
@@ -292,16 +294,9 @@ public class CartItemDAO {
     }
 
     public static void main(String[] args) {
-        // Test cập nhật số lượng cart item
-        CartItemDAO c = new CartItemDAO();
-        CartItem cartItem = new CartItem();
-        cartItem.setCartItemId(1);
-        cartItem.setCartId(1);
-        cartItem.setProductId(1);
-        cartItem.setQuantity(2);
-        cartItem.setUnitPrice(95000);
-        cartItem.setSubtotal(190000);
-        boolean test = c.updateQuantity(cartItem);
-        System.out.println(test);
+        CartItemDAO cartItemDAO = new CartItemDAO();
+
+        List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(6);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>" + cartItems);
     }
 }

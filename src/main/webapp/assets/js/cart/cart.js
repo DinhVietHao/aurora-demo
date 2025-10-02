@@ -1,11 +1,10 @@
-/* global bootstrap */
-
 // ====================== CART CALCULATION ======================
 const minusBtn = document.querySelectorAll(".minus");
 const plusBtn = document.querySelectorAll(".plus");
+const cartBodies = document.querySelectorAll(".cart-body .cart-body__item");
 
 const totalProductPrice = document.querySelector(
-    ".cart-pay .total-product-price"
+  ".cart-pay .total-product-price"
 );
 const discountElement = document.querySelector(".cart-pay .discount");
 const shipElement = document.querySelector(".cart-pay .ship-discount");
@@ -14,237 +13,245 @@ const shippingFeePayment = document.querySelector(".cart-pay .shipping-fee");
 const buyButton = document.querySelector(".cart-pay #cart-pay-button");
 
 const selectAllCheckbox = document.querySelector(
-    ".cart-header .cart-checkboxAll"
+  ".cart-header .cart-checkboxAll"
 );
 const productCheckboxes = document.querySelectorAll(
-    ".cart-body .cart-checkbox"
+  ".cart-body .cart-checkbox"
 );
-
-const deleteCartItem = document.querySelectorAll(".button-delete");
-const confirmDeleteCartItem = document.getElementById("confirmDeleteCartItem");
 
 // ====================== FORMAT PRICE ======================
 function formatCurrency(num) {
-    return num.toLocaleString("vi-VN") + "đ";
+  return num.toLocaleString("vi-VN") + "đ";
 }
 
 // ====================== CALCULATE TOTAL ======================
 function calculateTotalProduct() {
-    let total = 0;
-    const cartBodies = document.querySelectorAll(".cart-body");
-    cartBodies.forEach((row) => {
-        const priceElement = row.querySelector(".unit-price");
-        const quantityElement = row.querySelector(".number");
-        const subtotalElement = row.querySelector(".subtotal");
-        const checkbox = row.querySelector(".cart-checkbox");
+  let total = 0;
+  cartBodies.forEach((row) => {
+    const priceElement = row.querySelector(".unit-price");
+    const quantityElement = row.querySelector(".number");
+    const subtotalElement = row.querySelector(".subtotal");
+    const checkbox = row.querySelector(".cart-checkbox");
 
-        if (
-            priceElement &&
-            quantityElement &&
-            subtotalElement &&
-            checkbox &&
-            checkbox.checked
-        ) {
-            let price = parseInt(
-                priceElement.textContent.replace(/\D/g, "") || 0
-            );
-            let quantity = parseInt(quantityElement.textContent) || 1;
-            let subtotal = price * quantity;
-            subtotalElement.textContent = formatCurrency(subtotal);
-            total += subtotal;
-        }
-    });
-    return total;
+    if (
+      priceElement &&
+      quantityElement &&
+      subtotalElement &&
+      checkbox &&
+      checkbox.checked
+    ) {
+      let price = parseInt(priceElement.textContent.replace(/\D/g, "") || 0);
+      let quantity = parseInt(quantityElement.textContent) || 1;
+      let subtotal = price * quantity;
+      subtotalElement.textContent = formatCurrency(subtotal);
+      total += subtotal;
+    }
+  });
+  return total;
 }
 
 // ====================== VOUCHER CALCULATION ======================
 function calculateDiscount(total) {
-    const selectedDiscount = document.querySelector(
-        'input[name="voucherDiscount"]:checked'
-    );
-    if (selectedDiscount) {
-        let type = selectedDiscount.dataset.type;
-        if (type === "percent") {
-            let percent = parseInt(selectedDiscount.dataset.discount) || 0;
-            let max = parseInt(selectedDiscount.dataset.max) || 0;
-            return Math.min((total * percent) / 100, max);
-        } else {
-            return parseInt(selectedDiscount.dataset.discount) || 0;
-        }
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+
+  if (selectedDiscount) {
+    const minOrderAmount =
+      parseInt(selectedDiscount.dataset.minOrderAmount) || 0;
+    if (total < minOrderAmount) {
+      return 0;
     }
-    return 0;
+    let type = selectedDiscount.dataset.type;
+    if (type === "percent") {
+      let percent = parseInt(selectedDiscount.dataset.discount) || 0;
+      let max = parseInt(selectedDiscount.dataset.max) || 0;
+      return Math.min((total * percent) / 100, max);
+    } else {
+      return parseInt(selectedDiscount.dataset.discount) || 0;
+    }
+  }
+  return 0;
 }
 
-function calculateShipDiscount() {
-    const selectedShip = document.querySelector(
-        'input[name="voucherShip"]:checked'
-    );
-    if (selectedShip) {
-        return parseInt(selectedShip.dataset.ship) || 0;
+function calculateShipDiscount(total) {
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+  if (selectedShip) {
+    const minOrderAmount = parseInt(selectedShip.dataset.minOrderAmount) || 0;
+    if (total < minOrderAmount) {
+      return 0;
     }
-    return 0;
+    return parseInt(selectedShip.dataset.ship) || 0;
+  }
+  return 0;
 }
 
 // ====================== PRODUCT QUANTITY CALCULATION ======================
 
-function calculateTotalProducts() {
-    let totalProducts = 0;
-    const cartBodies = document.querySelectorAll(".cart-body");
-    cartBodies.forEach((row) => {
-        const checkbox = row.querySelector(".cart-checkbox");
-        if (checkbox && checkbox.checked) {
-            totalProducts++;
-        }
-    });
-    return totalProducts;
+function calculateTotalQuantityProducts() {
+  let totalProducts = 0;
+  cartBodies.forEach((row) => {
+    const checkbox = row.querySelector(".cart-checkbox");
+    if (checkbox && checkbox.checked) {
+      totalProducts++;
+    }
+  });
+  return totalProducts;
 }
 
 function updateBuyButton() {
-    const totalItems = calculateTotalProducts();
-    buyButton.textContent = `Mua Hàng (${totalItems})`;
+  const totalItems = calculateTotalQuantityProducts();
+  buyButton.textContent = `Mua Hàng (${totalItems})`;
 }
+// ====================== GET ALL DISCOUNTS ======================
+function getAllDiscounts(total) {
+  let systemDiscount = calculateDiscount(total);
+  let shipDiscount = calculateShipDiscount(total);
 
+  let allShopDiscount = 0;
+  const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
+  allShop.forEach((shopElement) => {
+    const shopId = shopElement.getAttribute("data-shop-id");
+    const selectedShopDiscount = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+
+    if (selectedShopDiscount && shopId) {
+      const shopTotal = calculateShopTotal(shopId);
+      const shopDiscount = calculateShopDiscount(shopTotal, shopId);
+      allShopDiscount += shopDiscount;
+      const shopVoucher = document.querySelector(
+        `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+      );
+      if (shopVoucher) {
+        shopVoucher.innerText =
+          shopDiscount > 0
+            ? `Đã giảm ${formatCurrency(shopDiscount)}`
+            : "Chưa áp dụng";
+      }
+    }
+  });
+
+  return { systemDiscount, shipDiscount, allShopDiscount };
+}
 // ====================== UPDATE SUMMARY ======================
 function updateCartSummary() {
-    let total = calculateTotalProduct();
-    let discount = calculateDiscount(total);
-    let ship = calculateShipDiscount();
+  let total = calculateTotalProduct();
+  let { systemDiscount, shipDiscount, allShopDiscount } =
+    getAllDiscounts(total);
 
-    discountElement.innerText = "-" + formatCurrency(discount);
-    shipElement.innerText = "-" + formatCurrency(ship);
+  discountElement.innerText =
+    "-" + formatCurrency(systemDiscount + allShopDiscount);
+  shipElement.innerText = "-" + formatCurrency(shipDiscount);
 
-    // Shipping Fee
-    let shippingFee =
-        parseInt(shippingFeePayment.textContent.replace(/\D/g, "")) || 30000;
+  // Shipping Fee
+  let shippingFee =
+    parseInt(shippingFeePayment.textContent.replace(/\D/g, "")) || 30000;
 
-    totalProductPrice.textContent = formatCurrency(total);
-    let sum = Math.max(total + shippingFee - discount - ship, 0);
-    totalPayment.textContent = formatCurrency(sum);
+  totalProductPrice.textContent = formatCurrency(total);
+  let sum = Math.max(
+    total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
+    0
+  );
+  totalPayment.textContent = formatCurrency(sum);
 
-    updateBuyButton();
+  // refresh lại voucher của tất cả shop mỗi lần update
+  refreshShopVoucher();
+  updateBuyButton();
 }
 
 // ====================== CHECKBOX HANDLER ======================
 selectAllCheckbox.addEventListener("change", () => {
-    const checked = selectAllCheckbox.checked;
-    const cartBody = document.querySelector(".cart-body");
-    const cartId = cartBody.dataset.cartid;
+  productCheckboxes.forEach((cb) => {
+    cb.checked = selectAllCheckbox.checked;
+  });
 
-    productCheckboxes.forEach((cb) => (cb.checked = checked));
+  updateCartSummary();
+});
 
-    fetch("update-cart-all-checked", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `cartId=${cartId}&checked=${checked}`,
-    });
-
+productCheckboxes.forEach((cb) => {
+  cb.addEventListener("change", () => {
+    const allChecked = [...productCheckboxes].every((cb) => cb.checked);
+    selectAllCheckbox.checked = allChecked;
     updateCartSummary();
-});
-
-document.addEventListener("change", (e) => {
-    if (e.target.matches(".cart-checkbox")) {
-        const checkbox = e.target;
-        const row = checkbox.closest(".cart-body");
-        const cartItemId = row.dataset.cartitemid;
-        const cartId = row.dataset.cartid;
-        const checked = checkbox.checked;
-
-        fetch("update-cart-item-checked", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `cartItemId=${cartItemId}&checked=${checked}`,
-        });
-
-        const allChecked = [...productCheckboxes].every((cb) => cb.checked);
-        selectAllCheckbox.checked = allChecked;
-
-        updateCartSummary();
-    }
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-    if (productCheckboxes.length > 0) {
-        const allChecked = [...productCheckboxes].every((cb) => cb.checked);
-        selectAllCheckbox.checked = allChecked;
-    } else {
-        selectAllCheckbox.checked = false;
-    }
+  });
 });
 
 // ====================== QUANTITY HANDLER ======================
 minusBtn.forEach((btn) => {
-    btn.addEventListener("click", () => {
-        const number = btn.nextElementSibling;
-        let quantity = parseInt(number.textContent);
-        if (quantity > 1) {
-            quantity--;
+  btn.addEventListener("click", () => {
+    const number = btn.nextElementSibling;
+    let quantity = parseInt(number.textContent);
+    if (quantity > 1) {
+      quantity--;
+      const row = btn.closest(".cart-body__item");
+      const cartItemId = row.dataset.cartitemid;
 
-            const row = btn.closest(".cart-body");
-            const cartItemId = row.dataset.cartitemid;
+      fetch("update-cart-item-quantity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `cartItemId=${cartItemId}&quantity=${quantity}`,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            number.textContent = quantity;
+            updateCartSummary();
+          } else {
+            alert(data.message);
+          }
+        });
+    } else {
+      const deleteCartModalEl =
+        document.getElementById("deleteCartModal");
+      deleteCartModalEl.dataset.cartitemid = btn.dataset.cartitemid;
+      deleteCartModalEl.dataset.cartid = btn.dataset.cartid;
 
-            fetch("update-cart-item-quantity", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: `cartItemId=${cartItemId}&quantity=${quantity}`,
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    if (data.success) {
-                        number.textContent = quantity;
-                        updateCartSummary();
-                    } else {
-                        alert(data.message);
-                    }
-                });
-        } else {
-            const deleteCartModalEl =
-                document.getElementById("deleteCartModal");
-            deleteCartModalEl.dataset.cartitemid = btn.dataset.cartitemid;
-            deleteCartModalEl.dataset.cartid = btn.dataset.cartid;
+      const deleteCartModal = new bootstrap.Modal(deleteCartModalEl);
+      deleteCartModal.show();
 
-            const deleteCartModal = new bootstrap.Modal(deleteCartModalEl);
-            deleteCartModal.show();
-        }
-    });
+    }
+
+
+  });
 });
 
 plusBtn.forEach((btn) => {
-    btn.addEventListener("click", () => {
-        const number = btn.previousElementSibling;
-        let quantity = parseInt(number.textContent);
-        quantity++;
+  btn.addEventListener("click", () => {
+    const number = btn.previousElementSibling;
+    let quantity = parseInt(number.textContent);
+    quantity++;
+    const row = btn.closest(".cart-body__item");
+    const cartItemId = row.dataset.cartitemid;
 
-        const row = btn.closest(".cart-body");
-        const cartItemId = row.dataset.cartitemid;
-
-        fetch("update-cart-item-quantity", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: `cartItemId=${cartItemId}&quantity=${quantity}`,
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.success) {
-                    number.textContent = quantity;
-                    updateCartSummary();
-                } else {
-                    alert(data.message);
-                }
-            });
-    });
+    fetch("update-cart-item-quantity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `cartItemId=${cartItemId}&quantity=${quantity}`,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          number.textContent = quantity;
+          updateCartSummary();
+        } else {
+          alert(data.message);
+        }
+      });
+  });
 });
-
-updateCartSummary();
 
 // ====================== VOUCHER HANDLER ======================
 const confirmVoucher = document.getElementById("confirmVoucher");
 
 const appliedVoucherDiscount = document.getElementById(
-    "appliedVoucherDiscount"
+  "appliedVoucherDiscount"
 );
 const voucherTextDiscount = document.getElementById("voucherTextDiscount");
 
@@ -255,108 +262,284 @@ const removeVoucherDiscount = document.getElementById("removeVoucherDiscount");
 const removeVoucherShip = document.getElementById("removeVoucherShip");
 
 confirmVoucher.addEventListener("click", () => {
-    const selectedDiscount = document.querySelector(
-        'input[name="voucherDiscount"]:checked'
-    );
-    const selectedShip = document.querySelector(
-        'input[name="voucherShip"]:checked'
-    );
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
 
-    let textDiscount = "";
-    let textShip = "";
+  let textDiscount = "";
+  let textShip = "";
 
-    if (selectedDiscount) {
-        textDiscount = selectedDiscount.dataset.text;
-        voucherTextDiscount.innerText = textDiscount;
-        appliedVoucherDiscount.classList.remove("d-none");
-    }
+  if (selectedDiscount) {
+    textDiscount = selectedDiscount.dataset.text;
+    voucherTextDiscount.innerText = textDiscount;
+    appliedVoucherDiscount.classList.remove("d-none");
+  }
 
-    if (selectedShip) {
-        textShip = selectedShip.dataset.text;
-        voucherTextShip.innerText = textShip;
-        appliedVoucherShip.classList.remove("d-none");
-    }
-    const VoucherModal = bootstrap.Modal.getInstance(
-        document.getElementById("voucherModal")
-    );
-    VoucherModal.hide();
-    updateCartSummary();
+  if (selectedShip) {
+    textShip = selectedShip.dataset.text;
+    voucherTextShip.innerText = textShip;
+    appliedVoucherShip.classList.remove("d-none");
+  }
+  const VoucherModal = bootstrap.Modal.getInstance(
+    document.getElementById("voucherModal")
+  );
+  VoucherModal.hide();
+  updateCartSummary();
 });
 
 removeVoucherDiscount.addEventListener("click", () => {
-    const selectedDiscount = document.querySelector(
-        'input[name="voucherDiscount"]:checked'
-    );
-    if (selectedDiscount) selectedDiscount.checked = false;
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  if (selectedDiscount) selectedDiscount.checked = false;
 
-    voucherTextDiscount.innerText = "";
-    appliedVoucherDiscount.classList.add("d-none");
-    discountElement.innerText = "-0đ";
-    updateCartSummary();
+  voucherTextDiscount.innerText = "";
+  appliedVoucherDiscount.classList.add("d-none");
+  updateCartSummary();
 });
 
 removeVoucherShip.addEventListener("click", () => {
-    const selectedShip = document.querySelector(
-        'input[name="voucherShip"]:checked'
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+  if (selectedShip) selectedShip.checked = false;
+
+  voucherTextShip.innerText = "";
+  appliedVoucherShip.classList.add("d-none");
+  updateCartSummary();
+});
+
+// ====================== CALCULATE SHOP TOTAL ======================
+function calculateShopTotal(shopId) {
+  const shopElement = document.querySelector(
+    `.cart-body[data-shop-id="${shopId}"]`
+  );
+  if (!shopElement) return 0;
+
+  let shopTotal = 0;
+
+  const items = shopElement.querySelectorAll(".cart-body__item");
+
+  items.forEach((item) => {
+    const checkbox = item.querySelector(".cart-checkbox");
+    const priceElement = item.querySelector(".unit-price");
+    const quantityElement = item.querySelector(".number");
+
+    if (checkbox && checkbox.checked && priceElement && quantityElement) {
+      let price = parseInt(priceElement.textContent.replace(/\D/g, "")) || 0;
+      let quantity = parseInt(quantityElement.textContent) || 1;
+      shopTotal += price * quantity;
+    }
+  });
+  return shopTotal;
+}
+// ====================== VOUCHER SHOP CALCULATION ======================
+function calculateShopDiscount(total, shopId) {
+  const selectedShopDiscount = document.querySelector(
+    `input[name="voucherShopDiscount_${shopId}"]:checked`
+  );
+  if (selectedShopDiscount) {
+    const minOrderAmount =
+      parseInt(selectedShopDiscount.dataset.minOrderAmount) || 0;
+    if (total < minOrderAmount) {
+      return 0;
+    }
+    let type = selectedShopDiscount.dataset.type;
+    if (type === "percent") {
+      let percent = parseInt(selectedShopDiscount.dataset.discount) || 0;
+      let max = parseInt(selectedShopDiscount.dataset.max) || 0;
+      return Math.min((total * percent) / 100, max);
+    } else {
+      return parseInt(selectedShopDiscount.dataset.discount) || 0;
+    }
+  }
+  return 0;
+}
+
+// ====================== VOUCHER SHOP HANDLER ======================
+const confirmShopVoucher = document.querySelectorAll(".confirmShopVoucher");
+const shopVoucherModal = document.querySelectorAll('[data-bs-toggle="modal"]');
+
+shopVoucherModal.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const shopId = btn.getAttribute("data-shop-id");
+    toggleVoucherAvailability(shopId);
+  });
+});
+
+confirmShopVoucher.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const shopId = btn.getAttribute("data-shop-id");
+    const selectedShopDiscount = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
-    if (selectedShip) selectedShip.checked = false;
 
-    voucherTextShip.innerText = "";
-    appliedVoucherShip.classList.add("d-none");
-    shipElement.innerText = "-0đ";
+    if (selectedShopDiscount) {
+      const shopVoucher = document.querySelector(
+        `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+      );
+      if (shopVoucher) {
+        const shopTotal = calculateShopTotal(shopId);
+        const discount = calculateShopDiscount(shopTotal, shopId);
+        shopVoucher.innerText =
+          discount > 0 ? `Đã giảm ${formatCurrency(discount)}` : "Chưa áp dụng";
+      }
+    }
+    const shopVoucherModalEl = document.getElementById(
+      `shopVoucherModal_${shopId}`
+    );
+    const shopVoucherModal = bootstrap.Modal.getInstance(shopVoucherModalEl);
+    shopVoucherModal.hide();
+
     updateCartSummary();
+  });
 });
+// ====================== Check if user is condition to apply Voucher ======================
+function toggleVoucherAvailability(shopId) {
+  const shopTotal = calculateShopTotal(shopId);
+  const vouchers = document.querySelectorAll(
+    `input[name="voucherShopDiscount_${shopId}"]`
+  );
 
-// ====================== DELETE CARTITEM HANDLER ======================
+  vouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
 
-deleteCartItem.forEach((btn) => {
-    btn.addEventListener("click", () => {
-        const deleteCartModal = document.getElementById("deleteCartModal");
-        deleteCartModal.dataset.cartitemid = btn.dataset.cartitemid;
-        deleteCartModal.dataset.cartid = btn.dataset.cartid;
-    });
-});
-confirmDeleteCartItem.addEventListener("click", () => {
-    const deleteCartModalEl = document.getElementById("deleteCartModal");
-    const cartItemId = deleteCartModalEl.dataset.cartitemid;
-    const cartId = deleteCartModalEl.dataset.cartid;
+    const label = voucher.closest("label");
+    if (shopTotal < minOrderAmount) {
+      if (voucher.checked) {
+        const shopVoucher = document.querySelector(
+          `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+        );
+        if (shopVoucher) shopVoucher.innerText = "Chưa đủ điều kiện";
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+    }
+  });
+}
 
-    fetch("delete-cart-item", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `cartItemId=${cartItemId}&cartId=${cartId}`,
-    })
-        .then((res) => res.json())
-        .then((data) => {
-            if (data.success) {
-                const deleteCartModal =
-                    bootstrap.Modal.getInstance(deleteCartModalEl);
-                deleteCartModal.hide();
+// ================== TOGGLE SYSTEM VOUCHERS ==================
+function toggleSystemVoucherAvailability() {
+  const total = calculateTotalProduct();
+  const discountVouchers = document.querySelectorAll(
+    'input[name="voucherDiscount"]'
+  );
 
-                const rowCartBody = document.getElementById(
-                    `cartItemId${cartItemId}`
-                );
-                if (rowCartBody) {
-                    rowCartBody.remove();
-                }
+  // Xử lý voucher giảm giá sản phẩm
+  discountVouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
+    const label = voucher.closest("label");
+    if (total < minOrderAmount) {
+      if (voucher.checked) {
+        voucherTextDiscount.innerText = "Chưa đủ điều kiện";
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+      if (voucher.checked) {
+        voucherTextDiscount.innerText = voucher.dataset.text;
+      }
+    }
+  });
 
-                const cartCountBadge =
-                    document.getElementById("cartCountBadge");
-                if (cartCountBadge) {
-                    cartCountBadge.innerText = data.cartCount;
-                }
+  // Xử lý voucher giảm phí ship
+  const shipVouchers = document.querySelectorAll('input[name="voucherShip"]');
+  shipVouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
+    const label = voucher.closest("label");
+    if (total < minOrderAmount) {
+      if (voucher.checked) {
+        voucherTextShip.innerText = "Chưa đủ điều kiện ";
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+      if (voucher.checked) {
+        voucherTextShip.innerText = voucher.dataset.text;
+      }
+    }
+  });
+}
 
-                updateCartSummary();
-            }
-        });
-});
-
+// ====================== REFRESH SHOP VOUCHER ======================
+function refreshShopVoucher() {
+  const shopVouchers = document.querySelectorAll(".cart-body[data-shop-id]");
+  shopVouchers.forEach((shop) => {
+    const shopId = shop.getAttribute("data-shop-id");
+    toggleVoucherAvailability(shopId);
+  });
+  toggleSystemVoucherAvailability();
+}
 // ====================== Handling when users buy without selecting a product ======================
 buyButton.addEventListener("click", () => {
-    const hasChecked = [...productCheckboxes].some((cb) => cb.checked);
-    if (!hasChecked) {
-        const emptySelection = document.getElementById("emptySelectionModal");
-        const emptySelectionModal = new bootstrap.Modal(emptySelection);
-        emptySelectionModal.show();
-    }
+  const hasChecked = [...productCheckboxes].some((cb) => cb.checked);
+  if (!hasChecked) {
+    const emptySelection = document.getElementById("emptySelectionModal");
+    const emptySelectionModal = new bootstrap.Modal(emptySelection);
+    emptySelectionModal.show();
+  }
+});
+
+updateCartSummary();
+
+
+// ====================== DELETE CARTITEM HANDLER ======================
+const deleteCartItem = document.querySelectorAll(".button-delete");
+const confirmDeleteCartItem = document.getElementById("confirmDeleteCartItem");
+deleteCartItem.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const deleteCartModal = document.getElementById("deleteCartModal");
+    deleteCartModal.dataset.cartitemid = btn.dataset.cartitemid;
+  });
+});
+confirmDeleteCartItem.addEventListener("click", () => {
+  const deleteCartModalEl = document.getElementById("deleteCartModal");
+  const cartItemId = deleteCartModalEl.dataset.cartitemid;
+
+  fetch("delete-cart-item", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `cartItemId=${cartItemId}`,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        const deleteCartModal =
+          bootstrap.Modal.getInstance(deleteCartModalEl);
+        deleteCartModal.hide();
+
+        const rowCartBodyItem = document.getElementById(
+          `cartItemId${cartItemId}`
+        );
+        if (rowCartBodyItem) {
+          const shopBody = rowCartBodyItem.closest(".cart-body");
+          rowCartBodyItem.remove();
+          if (shopBody.querySelectorAll(".cart-body__item").length === 0) {
+            shopBody.remove();
+          }
+
+          if (document.querySelectorAll(".cart-body").length === 0) {
+            console.log(">>>> CHECKK ", document.querySelectorAll(".cart-body").length === 0);
+
+            const cartLeft = document.querySelector(".cart-left");
+            cartLeft.innerHTML = `
+            <div class="text-center">
+              <img src="http://localhost:8080/assets/images/common/cartEmpty.png" alt="Cart Empty">
+              <p class="text-muted">Giỏ hàng trống</p>
+              <p>Bạn tham khảo thêm các sản phẩm được Aurora gợi ý bên dưới nhé!</p>
+            </div>`;
+          }
+        }
+
+        const cartCountBadge = document.getElementById("cartCountBadge");
+        if (cartCountBadge) {
+          cartCountBadge.innerText = data.cartCount;
+        }
+        updateCartSummary();
+      }
+    });
 });

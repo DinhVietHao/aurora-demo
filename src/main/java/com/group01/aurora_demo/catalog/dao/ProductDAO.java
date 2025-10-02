@@ -109,7 +109,7 @@ public class ProductDAO {
         Product product = null;
         String sql = """
                 SELECT p.ProductID, p.ShopID, p.Title, p.Description,
-                    p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, p.CategoryID,
+                    p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.BundleID,
                     pub.Name AS PublisherName, p.PublishedDate,
                     b.Translator, b.Version, b.CoverType, b.Pages, l.LanguageName, b.[Size], b.ISBN,
                     a.AuthorName AS Author
@@ -136,8 +136,7 @@ public class ProductDAO {
                 product.setSalePrice(rs.getDouble("SalePrice"));
                 product.setSoldCount(rs.getLong("SoldCount"));
                 product.setStock(rs.getInt("Stock"));
-                product.setIsBundle(rs.getBoolean("IsBundle"));
-                product.setCategoryId(rs.getLong("CategoryID"));
+                // product.setBundleId(productId);(rs.getBoolean("BundleID"));
                 product.setPublisherString(rs.getString("PublisherName"));
 
                 if (rs.getDate("PublishedDate") != null) {
@@ -178,8 +177,8 @@ public class ProductDAO {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-                product.setImages(images);
-            }
+            product.setImages(images);
+        }
 
         return product;
     }

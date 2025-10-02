@@ -15,46 +15,69 @@
 }
 
 .cart .cart-body {
-    align-items: center;
     background-color: #fff;
     margin-top: 20px;
     border-radius: 5px;
-    padding: 10px;
 }
 
-.cart .cart-body img {
+.cart .cart-body .cart-body__header {
+    padding: 15px 25px;
+    border-bottom: 1px solid rgba(0, 0, 0, .09);
+    margin-bottom: 10px;
+}
+
+.cart .cart-body .cart-body__footer {
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 10px;
+    padding-left: 40px;
+}
+
+.cart .cart-body .cart-body__footer i {
+    color: var(--color-three);
+}
+
+.cart .cart-body .cart-body__item {
+    align-items: center;
+    padding: 10px;
+    margin: 10px 0px;
+    border-top: 1px solid rgba(0, 0, 0, .09);
+    border-bottom: 1px solid rgba(0, 0, 0, .09);
+}
+
+.cart .cart-body .cart-body__item img {
     width: 100px;
     height: 140px;
     object-fit: cover;
 }
 
-.cart .cart-body .cart-checkbox {
+.cart .cart-body .cart-body__item .cart-checkbox {
     margin-right: 30px;
 }
 
-.cart .cart-body .cart-book-title {
+.cart .cart-body .cart-body__item .cart-book-title {
     font-size: 16px;
     font-weight: 500;
 }
 
-.cart .cart-body .price {
-    color: 16px;
+.cart .cart-body .cart-body__item .price {
+    font-size: 16px;
     font-weight: 600;
     color: var(--color-three);
 }
 
-.cart .cart-body .author {
+.cart .cart-body .cart-body__item .author {
     font-size: 14px;
     color: var(--color-font);
 }
 
-.cart .cart-body .number {
-    color: 16px;
-    font-weight: 550;
+.cart .cart-body .cart-body__item .number {
+    font-size: 16px;
+    font-weight: 500;
     color: #000;
 }
 
-.cart .cart-body .button-delete {
+.cart .cart-body .cart-body__item .button-delete {
     border: none;
     background-color: transparent;
 }
@@ -100,4 +123,10 @@
     color: var(--color-three);
     font-size: 16px;
     font-weight: 650;
+}
+.cart-shop-voucher .disabled {
+    opacity: 0.7;
+}
+.cart-system-voucher .disabled {
+    opacity: 0.7;
 }

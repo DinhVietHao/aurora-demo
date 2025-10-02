@@ -3,6 +3,8 @@ package com.group01.aurora_demo.catalog.model;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.group01.aurora_demo.cart.model.Shop;
+
 public class Product {
 
     private Long productId;
@@ -19,9 +21,10 @@ public class Product {
     private String primaryImageUrl;
     private List<ProductImages> images;
     private List<Author> authors;
-    private Publisher publisher; 
-    private String publisherString; 
+    private Publisher publisher;
+    private String publisherString;
     private BookDetail bookDetail;
+    private Shop shop;
 
     public Long getProductId() {
         return productId;
@@ -159,14 +162,22 @@ public class Product {
         this.bookDetail = bookDetail;
     }
 
+    public Shop getShop() {
+        return shop;
+    }
+
+    public void setShop(Shop shop) {
+        this.shop = shop;
+    }
+
     @Override
     public String toString() {
         return "Product [productId=" + productId + ", shopId=" + shopId + ", title=" + title + ", description="
                 + description + ", originalPrice=" + originalPrice + ", salePrice=" + salePrice + ", soldCount="
                 + soldCount + ", stock=" + stock + ", isBundle=" + isBundle + ", categoryId=" + categoryId
                 + ", publishedDate=" + publishedDate + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
-                + ", authors=" + authors + ", publisher=" + publisher + ", bookDetail=" + bookDetail + "]";
+                + ", authors=" + authors + ", publisher=" + publisher + ", publisherString=" + publisherString
+                + ", bookDetail=" + bookDetail + ", shop=" + shop + "]";
     }
 
-    
 }

@@ -1,7 +1,3 @@
 {
-
-  "java.configuration.updateBuildConfiguration": "automatic",
-  "editor.formatOnSave": false,
-  "[jsp]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "prettier.prettierPath": "./node_modules/prettier"
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

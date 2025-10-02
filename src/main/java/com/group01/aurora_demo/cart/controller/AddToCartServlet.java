@@ -77,22 +77,14 @@ public class AddToCartServlet extends HttpServlet {
             // Lấy productId từ request
             long productId = Long.parseLong(request.getParameter("productId"));
 
-            // Lấy giỏ hàng của user, nếu chưa có thì tạo mới
-            CartDAO cartDAO = new CartDAO();
-            Cart cart = cartDAO.getCartByUserId(user.getId());
-            if (cart == null) {
-                cart = cartDAO.createCart(user.getId());
-            }
-
             CartItemDAO cartItemDAO = new CartItemDAO();
+
             // Kiểm tra xem sản phẩm đã có trong giỏ chưa
-            CartItem existingItem = cartItemDAO.getCartItem(cart.getCartId(), productId);
+            CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
 
             if (existingItem != null) {
                 // Nếu có rồi -> tăng số lượng và cập nhật subtotal
                 existingItem.setQuantity(existingItem.getQuantity() + 1);
-                double subtotal = existingItem.getQuantity() * existingItem.getUnitPrice();
-                existingItem.setSubtotal(subtotal);
                 cartItemDAO.updateQuantity(existingItem);
                 json.put("success", true);
                 json.put("message", "Đã tăng số lượng sản phẩm trong giỏ hàng.");
@@ -100,21 +92,21 @@ public class AddToCartServlet extends HttpServlet {
             } else {
                 // Nếu chưa có -> tạo mới CartItem
                 CartItem newItem = new CartItem();
-                newItem.setCartId(cart.getCartId());
+                newItem.setUserId(user.getId());
                 newItem.setProductId(productId);
                 newItem.setQuantity(1);
 
                 // Lấy giá sản phẩm và set subtotal
                 double unitPrice = cartItemDAO.getUnitPriceByProductId(productId);
                 newItem.setUnitPrice(unitPrice);
-                newItem.setSubtotal(unitPrice);
+
                 cartItemDAO.addCartItem(newItem);
                 json.put("success", true);
                 json.put("message", "Đã thêm sản phẩm vào giỏ hàng.");
             }
 
             // Cập nhật số lượng item khác nhau trong giỏ và lưu vào session
-            int cartCount = cartItemDAO.getDistinctItemCount(cart.getCartId());
+            int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
             session.setAttribute("cartCount", cartCount);
             json.put("cartCount", cartCount);
 

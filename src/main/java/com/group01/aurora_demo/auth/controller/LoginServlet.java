@@ -56,9 +56,7 @@ public class LoginServlet extends HttpServlet {
 
         try {
             CartItemDAO cartItemDAO = new CartItemDAO();
-            CartDAO cartDAO = new CartDAO();
-            Cart cart = cartDAO.getCartByUserId(user.getId());
-            int cartCount = cartItemDAO.getDistinctItemCount(cart.getCartId());
+            int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
             session.setAttribute("cartCount", cartCount);
         } catch (Exception e) {
             System.out.println(e.getMessage());

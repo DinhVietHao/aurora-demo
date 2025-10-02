@@ -1,10 +1,10 @@
 package com.group01.aurora_demo.cart.controller;
 
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.cart.dto.ShopCartDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
-import com.group01.aurora_demo.cart.dao.CartDAO;
+import com.group01.aurora_demo.cart.model.Shop;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.model.Cart;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +13,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Servlet cho chức năng "Xem giỏ hàng"
@@ -57,22 +61,27 @@ public class ViewCartServlet extends HttpServlet {
             return;
         }
 
-        CartDAO cartDAO = new CartDAO();
         CartItemDAO cartItemDAO = new CartItemDAO();
 
-        // Lấy giỏ hàng của user theo userId
-        Cart cart = cartDAO.getCartByUserId(user.getId());
-        if (cart != null) {
-            // Nếu có giỏ hàng -> lấy danh sách sản phẩm trong giỏ
-            List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(user.getId());
-            System.out.println(">>>>>>>>>>> Checked cartItems" + cartItems);
-            req.setAttribute("cartItems", cartItems);
-            req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
-        } else {
-            // Nếu chưa có giỏ hàng -> set null để JSP xử lý giỏ trống
-            req.setAttribute("cartItems", null);
-            req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
+        // Nếu có giỏ hàng -> lấy danh sách sản phẩm trong giỏ
+        List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(user.getId());
 
+        if (cartItems.isEmpty()) {
+            req.setAttribute("shopCarts", null);
+        } else {
+            Map<Long, List<CartItem>> grouped = cartItems.stream()
+                    .collect(
+                            Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId(),
+                                    LinkedHashMap::new,
+                                    Collectors.toList()));
+            List<ShopCartDTO> shopCarts = grouped.entrySet().stream().map(entry -> {
+                ShopCartDTO shopCartDTO = new ShopCartDTO();
+                shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
+                shopCartDTO.setItems(entry.getValue());
+                return shopCartDTO;
+            }).toList();
+            req.setAttribute("shopCarts", shopCarts);
         }
+        req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
     }
 }

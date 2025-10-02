@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.cart.controller;
 
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.CartDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,10 +52,9 @@ public class DeleteCartItemServlet extends HttpServlet {
 
         try {
             HttpSession session = request.getSession();
-
+            User user = (User) session.getAttribute("AUTH_USER");
             // Lấy cartItemId và cartId từ request parameter
             long cartItemId = Long.parseLong(request.getParameter("cartItemId"));
-            long cartId = Long.parseLong(request.getParameter("cartId"));
 
             CartItemDAO cartItemDAO = new CartItemDAO();
 
@@ -62,17 +62,10 @@ public class DeleteCartItemServlet extends HttpServlet {
             boolean deleteCartItem = cartItemDAO.deleteCartItem(cartItemId);
 
             if (deleteCartItem) {
-                // Nếu còn item -> update lại cartCount, nếu giỏ rỗng -> xóa giỏ
-                int cartCount = cartItemDAO.getDistinctItemCount(cartId);
-                if (cartCount == 0) {
-                    CartDAO cartDAO = new CartDAO();
-                    cartDAO.deleteCart(cartId);
-                }
-
                 json.put("success", true);
+                int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
                 session.setAttribute("cartCount", cartCount);
                 json.put("cartCount", cartCount);
-
             } else {
                 // Xóa thất bại
                 json.put("success", false);
@@ -87,5 +80,4 @@ public class DeleteCartItemServlet extends HttpServlet {
         // Trả JSON response về client
         out.print(json.toString());
     }
-
 }
