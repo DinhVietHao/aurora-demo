@@ -33,9 +33,9 @@
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <div class="row">
+                            <div class="row cart-left">
                                 <!-- LEFT: danh sách sản phẩm -->
-                                <div class="col-md-9 cart-left">
+                                <div class="col-md-9 ">
                                     <div class="row cart-header">
                                         <div class="col-6">
                                             <input class="form-check-input me-2 cursor-pointer cart-checkboxAll"

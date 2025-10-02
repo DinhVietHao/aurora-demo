@@ -10,7 +10,7 @@ moreBtn.addEventListener("click", () => {
     } else {
         moreBtn.innerText = "Xem thêm";
         gradient.style.display = "block";
-        bookBody.style.maxHeight = "250px"; 
+        bookBody.style.maxHeight = "250px";
     }
 });
 // End View by and Collapse
