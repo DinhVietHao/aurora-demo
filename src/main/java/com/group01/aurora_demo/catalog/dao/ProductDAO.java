@@ -27,8 +27,6 @@ public class ProductDAO {
      */
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
-
-        // SQL: lấy sản phẩm, ảnh chính, nhà xuất bản, và tác giả
         String sql = "SELECT p.ProductID, p.ShopID, p.Title, p.Description, "
                 + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, "
                 + "p.CategoryID, p.PublishedDate, "
@@ -51,8 +49,6 @@ public class ProductDAO {
 
             while (rs.next()) {
                 Long currentProductId = rs.getLong("ProductID");
-
-                // Nếu sang sản phẩm mới thì tạo object mới
                 if (!currentProductId.equals(lastProductId)) {
                     product = new Product();
                     product.setProductId(currentProductId);
@@ -72,8 +68,6 @@ public class ProductDAO {
                     }
 
                     product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
-
-                    // Gán Publisher
                     Long publisherId = (Long) rs.getObject("PublisherID");
                     String publisherName = rs.getString("PublisherName");
                     if (publisherId != null) {
@@ -82,15 +76,11 @@ public class ProductDAO {
                         publisher.setPublisherName(publisherName);
                         product.setPublisher(publisher);
                     }
-
-                    // Init danh sách authors
                     product.setAuthors(new ArrayList<>());
 
                     products.add(product);
                     lastProductId = currentProductId;
                 }
-
-                // Thêm author nếu có
                 Long authorId = (Long) rs.getObject("AuthorID");
                 String authorName = rs.getString("AuthorName");
                 if (authorId != null && product != null) {
@@ -178,8 +168,8 @@ public class ProductDAO {
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
-                product.setImages(images);
-            }
+            product.setImages(images);
+        }
 
         return product;
     }
