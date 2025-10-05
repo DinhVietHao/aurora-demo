@@ -41,6 +41,17 @@ public class ProductServlet extends HttpServlet {
         if (action == null)
             action = "view";
 
+        String message = request.getParameter("message");
+        String error = request.getParameter("error");
+
+        if ("delete_success".equals(message)) {
+            request.setAttribute("successMessage", "Đã xóa sản phẩm thành công!");
+        }
+        if ("delete_failed".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Không thể xóa sản phẩm vì đang trong Flash Sale hoặc đang được giao hàng.");
+        }
+
         try {
             switch (action) {
                 case "view":
@@ -212,6 +223,26 @@ public class ProductServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                 }
 
+                break;
+            case "delete":
+                try {
+                    long productId = Long.parseLong(request.getParameter("productId"));
+                    ProductDAO productDAODelete = new ProductDAO();
+
+                    boolean success = productDAODelete.deleteProduct(productId);
+
+                    if (success) {
+                        response.sendRedirect(
+                                request.getContextPath() + "/shop/product?action=view&message=delete_success");
+                    } else {
+                        response.sendRedirect(
+                                request.getContextPath() + "/shop/product?action=view&message=delete_success");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình xóa sản phẩm.");
+                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                }
                 break;
             default:
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
