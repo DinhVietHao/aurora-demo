@@ -7,15 +7,18 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.dao.ProductDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.model.Product;
+import com.group01.aurora_demo.shop.service.ProductService;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebServlet("shop/product")
+@WebServlet("/shop/product")
+@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 20)
 public class ProductServlet extends HttpServlet {
 
     @Override
@@ -25,7 +28,7 @@ public class ProductServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect("/home");
             return;
         }
 
@@ -63,6 +66,9 @@ public class ProductServlet extends HttpServlet {
                     request.setAttribute("totalPages", totalPages);
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                     break;
+                case "create":
+
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;
@@ -76,9 +82,38 @@ public class ProductServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("AUTH_USER");
+
+        if (user == null) {
+            response.sendRedirect("/home");
+            return;
+        }
 
         String action = request.getParameter("action");
+        ProductService productService = new ProductService();
 
-        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+        switch (action) {
+            case "create":
+                try {
+
+                    productService.createProduct(request, user);
+
+                    response.sendRedirect(request.getContextPath() + "/shop/product?action=view");
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    request.setAttribute("errorMessage", "Không thể thêm sản phẩm: " + e.getMessage());
+                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                }
+
+                break;
+            default:
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
+                break;
+        }
     }
 }

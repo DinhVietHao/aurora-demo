@@ -5322,6 +5322,10 @@ textarea.form-control-lg {
   min-height: calc(100% - var(--bs-modal-margin) * 2);
 }
 
+.modal-backdrop {
+  z-index: 9 !important; 
+}
+
 .modal-content {
   position: relative;
   display: flex;
@@ -5336,7 +5340,7 @@ textarea.form-control-lg {
   outline: 0;
 }
 
-/* .modal-backdrop {
+.modal-backdrop {
   --bs-backdrop-zindex: 1050;
   --bs-backdrop-bg: #000;
   --bs-backdrop-opacity: 0.5;
@@ -5351,9 +5355,7 @@ textarea.form-control-lg {
 .modal-backdrop.fade {
   opacity: 0;
 }
-.modal-backdrop.show {
-  opacity: var(--bs-backdrop-opacity);
-} */
+
 
 .modal-header {
   display: flex;
