@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.cart.dao;
+package com.group01.aurora_demo.customer.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,8 +6,8 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.group01.aurora_demo.cart.model.Voucher;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.customer.model.Voucher;
 
 public class VoucherDAO {
     public List<Voucher> getShopVouchers(long shopId) {

@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.cart.model;
+package com.group01.aurora_demo.customer.model;
 
 /**
  * Model đại diện cho giỏ hàng (Cart).

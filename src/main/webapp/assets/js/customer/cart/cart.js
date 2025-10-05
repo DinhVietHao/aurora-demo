@@ -74,20 +74,6 @@ function calculateDiscount(total) {
   return 0;
 }
 
-function calculateShipDiscount(total) {
-  const selectedShip = document.querySelector(
-    'input[name="voucherShip"]:checked'
-  );
-  if (selectedShip) {
-    const minOrderAmount = parseInt(selectedShip.dataset.minOrderAmount) || 0;
-    if (total < minOrderAmount) {
-      return 0;
-    }
-    return parseInt(selectedShip.dataset.ship) || 0;
-  }
-  return 0;
-}
-
 // ====================== PRODUCT QUANTITY CALCULATION ======================
 
 function calculateTotalQuantityProducts() {
@@ -108,7 +94,6 @@ function updateBuyButton() {
 // ====================== GET ALL DISCOUNTS ======================
 function getAllDiscounts(total) {
   let systemDiscount = calculateDiscount(total);
-  let shipDiscount = calculateShipDiscount(total);
 
   let allShopDiscount = 0;
   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
@@ -134,27 +119,18 @@ function getAllDiscounts(total) {
     }
   });
 
-  return { systemDiscount, shipDiscount, allShopDiscount };
+  return { systemDiscount, allShopDiscount };
 }
 // ====================== UPDATE SUMMARY ======================
 function updateCartSummary() {
   let total = calculateTotalProduct();
-  let { systemDiscount, shipDiscount, allShopDiscount } =
-    getAllDiscounts(total);
+  let { systemDiscount, allShopDiscount } = getAllDiscounts(total);
 
   discountElement.innerText =
     "-" + formatCurrency(systemDiscount + allShopDiscount);
-  shipElement.innerText = "-" + formatCurrency(shipDiscount);
-
-  // Shipping Fee
-  let shippingFee =
-    parseInt(shippingFeePayment.textContent.replace(/\D/g, "")) || 30000;
 
   totalProductPrice.textContent = formatCurrency(total);
-  let sum = Math.max(
-    total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
-    0
-  );
+  let sum = Math.max(total - systemDiscount - allShopDiscount);
   totalPayment.textContent = formatCurrency(sum);
 
   // refresh lại voucher của tất cả shop mỗi lần update
@@ -177,7 +153,7 @@ selectAllCheckbox.addEventListener("change", () => {
 
   productCheckboxes.forEach((cb) => (cb.checked = checked));
 
-  fetch("update-cart-all-checked", {
+  fetch("cart/check-all", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `userId=${userId}&checked=${checked}`,
@@ -193,7 +169,7 @@ document.addEventListener("change", (e) => {
     const cartItemId = row.dataset.cartitemid;
     const checked = checkbox.checked;
 
-    fetch("update-cart-item-checked", {
+    fetch("cart/update-check", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: `cartItemId=${cartItemId}&checked=${checked}`,
@@ -214,7 +190,7 @@ minusBtn.forEach((btn) => {
       const row = btn.closest(".cart-body__item");
       const cartItemId = row.dataset.cartitemid;
 
-      fetch("update-cart-item-quantity", {
+      fetch("cart/update-quantity", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -249,7 +225,7 @@ plusBtn.forEach((btn) => {
     const row = btn.closest(".cart-body__item");
     const cartItemId = row.dataset.cartitemid;
 
-    fetch("update-cart-item-quantity", {
+    fetch("cart/update-quantity", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -522,7 +498,7 @@ confirmDeleteCartItem.addEventListener("click", () => {
   const deleteCartModalEl = document.getElementById("deleteCartModal");
   const cartItemId = deleteCartModalEl.dataset.cartitemid;
 
-  fetch("delete-cart-item", {
+  fetch("/cart/delete", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `cartItemId=${cartItemId}`,

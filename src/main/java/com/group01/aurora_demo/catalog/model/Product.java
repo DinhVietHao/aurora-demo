@@ -3,7 +3,7 @@ package com.group01.aurora_demo.catalog.model;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.group01.aurora_demo.cart.model.Shop;
+import com.group01.aurora_demo.customer.model.Shop;
 
 public class Product {
 

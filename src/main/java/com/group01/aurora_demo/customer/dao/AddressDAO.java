@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.customer.repository;
+package com.group01.aurora_demo.customer.dao;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.customer.model.Address;
 import com.group01.aurora_demo.customer.model.UserAddress;
 
-public class AddressRepository {
+public class AddressDAO {
 
     public List<Address> getAddressesByUserId(long userId) {
         List<Address> list = new ArrayList<>();

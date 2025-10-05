@@ -1,11 +1,11 @@
-package com.group01.aurora_demo.cart.dao;
+package com.group01.aurora_demo.customer.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.customer.model.CartItem;
+import com.group01.aurora_demo.customer.model.Shop;
 import com.group01.aurora_demo.catalog.model.ProductImages;
 import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.catalog.model.Product;
-import com.group01.aurora_demo.cart.model.CartItem;
-import com.group01.aurora_demo.cart.model.Shop;
 
 import java.sql.PreparedStatement;
 import java.sql.Connection;

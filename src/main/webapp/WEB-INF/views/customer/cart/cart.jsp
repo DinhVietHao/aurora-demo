@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="./assets/css/common/globals.css?v=1.0.1'">
-                <link rel="stylesheet" href="./assets/css/cart/cart.css?v=1.0.1">
+                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css?v=1.0.1">
             </head>
 
             <body>
@@ -257,17 +257,8 @@
                                             <span class="total-product-price">188.000đ</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span>Phí vận chuyển</span>
-                                            <span class="shipping-fee">30.000đ</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
                                             <span class="cart-pay-success">Tổng cộng Voucher giảm giá</span>
                                             <span class="cart-pay-success discount">0đ</span>
-                                        </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span class="cart-pay-success">Tổng tiền phí vận chuyển
-                                            </span>
-                                            <span class="cart-pay-success ship-discount">0đ</span>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between mb-2">
@@ -279,8 +270,8 @@
                                 </div>
                             </div>
                             <!-- Modals tách riêng để có thể reuse -->
-                            <jsp:include page="/WEB-INF/views/cart/partials/_cart_delete_modal.jsp" />
-                            <jsp:include page="/WEB-INF/views/cart/partials/_cart_empty_selection_modal.jsp" />
+                            <jsp:include page="/WEB-INF/views/customer/cart/partials/_cart_delete_modal.jsp" />
+                            <jsp:include page="/WEB-INF/views/customer/cart/partials/_cart_empty_selection_modal.jsp" />
                             <!-- Modal Voucher Cart -->
                             <div class="modal fade cart-system-voucher" id="voucherModal" tabindex="-1"
                                 aria-hidden="true">
@@ -425,7 +416,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/cart/cart.js'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
             </body>
 
             </html>

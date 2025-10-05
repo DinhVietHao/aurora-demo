@@ -2,14 +2,13 @@ package com.group01.aurora_demo.customer.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
 import java.util.List;
 
 import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.customer.dao.AddressDAO;
 import com.group01.aurora_demo.customer.model.Address;
-import com.group01.aurora_demo.customer.service.AddressService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,11 +18,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/address/*")
-public class AddressController extends HttpServlet {
-    private AddressService addressService;
+public class AddressServlet extends HttpServlet {
+    private AddressDAO addressDAO;
 
-    public AddressController() {
-        this.addressService = new AddressService();
+    public AddressServlet() {
+        this.addressDAO = new AddressDAO();
     }
 
     @Override
@@ -41,15 +40,14 @@ public class AddressController extends HttpServlet {
             return;
         }
         String path = req.getPathInfo();
-        System.out.println(">>>>>>>Check path " + path);
         if (path == null || path.equals("/")) {
-            List<Address> addresses = addressService.getAddressesByUserId(user.getId());
+            List<Address> addresses = this.addressDAO.getAddressesByUserId(user.getId());
             req.setAttribute("addresses", addresses);
             req.getRequestDispatcher("/WEB-INF/views/customer/address/address.jsp").forward(req, resp);
         } else if (path.equals("/update")) {
             try {
                 Long addressIdEdit = Long.parseLong(req.getParameter("addressId"));
-                Address address = this.addressService.getAddressById(user.getId(), addressIdEdit);
+                Address address = this.addressDAO.getAddressById(user.getId(), addressIdEdit);
                 json.put("addressId", address.getAddressId());
                 json.put("recipientName", address.getRecipientName());
                 json.put("phone", address.getPhone());
@@ -98,8 +96,8 @@ public class AddressController extends HttpServlet {
                     address.setCity(city);
                     address.setWard(ward);
                     address.setDescription(description);
-                    this.addressService.updateAddress(user.getId(), address, isDefault);
-                } catch (SQLException e) {
+                    this.addressDAO.updateAddress(user.getId(), address, isDefault);
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 resp.sendRedirect(req.getContextPath() + "/address");
@@ -119,13 +117,13 @@ public class AddressController extends HttpServlet {
                 address.setCity(city);
                 address.setWard(ward);
                 address.setDescription(description);
-                this.addressService.addAddress(user.getId(), address, isDefault);
+                this.addressDAO.addAddress(user.getId(), address, isDefault);
                 resp.sendRedirect(req.getContextPath() + "/address");
                 break;
             case "/delete":
                 try {
                     Long addressIdDelete = Long.parseLong(req.getParameter("addressId"));
-                    this.addressService.deleteAddress(user.getId(), addressIdDelete);
+                    this.addressDAO.deleteAddress(user.getId(), addressIdDelete);
                     json.put("success", true);
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
@@ -137,7 +135,7 @@ public class AddressController extends HttpServlet {
             case "/set-default":
                 try {
                     long addressId = Long.parseLong(req.getParameter("addressId"));
-                    addressService.setDefaultAddress(user.getId(), addressId);
+                    this.addressDAO.setDefaultAddress(user.getId(), addressId);
                     resp.sendRedirect(req.getContextPath() + "/address");
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
