@@ -63,7 +63,7 @@ function calculateDiscount(total) {
       return 0;
     }
     let type = selectedDiscount.dataset.type;
-    if (type === "percent") {
+    if (type === "PERCENT") {
       let percent = parseInt(selectedDiscount.dataset.discount) || 0;
       let max = parseInt(selectedDiscount.dataset.max) || 0;
       return Math.min((total * percent) / 100, max);
@@ -163,22 +163,47 @@ function updateCartSummary() {
 }
 
 // ====================== CHECKBOX HANDLER ======================
+document.addEventListener("DOMContentLoaded", () => {
+  const allChecked =
+    productCheckboxes.length > 0 &&
+    [...productCheckboxes].every((cb) => cb.checked);
+
+  selectAllCheckbox.checked = allChecked;
+});
 selectAllCheckbox.addEventListener("change", () => {
-  productCheckboxes.forEach((cb) => {
-    cb.checked = selectAllCheckbox.checked;
+  const checked = selectAllCheckbox.checked;
+  const row = document.querySelector(".cart-body__item");
+  const userId = row.dataset.userid;
+
+  productCheckboxes.forEach((cb) => (cb.checked = checked));
+
+  fetch("update-cart-all-checked", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `userId=${userId}&checked=${checked}`,
   });
 
   updateCartSummary();
 });
 
-productCheckboxes.forEach((cb) => {
-  cb.addEventListener("change", () => {
+document.addEventListener("change", (e) => {
+  if (e.target.matches(".cart-checkbox")) {
+    const checkbox = e.target;
+    const row = checkbox.closest(".cart-body__item");
+    const cartItemId = row.dataset.cartitemid;
+    const checked = checkbox.checked;
+
+    fetch("update-cart-item-checked", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `cartItemId=${cartItemId}&checked=${checked}`,
+    });
+
     const allChecked = [...productCheckboxes].every((cb) => cb.checked);
     selectAllCheckbox.checked = allChecked;
     updateCartSummary();
-  });
+  }
 });
-
 // ====================== QUANTITY HANDLER ======================
 minusBtn.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -206,17 +231,13 @@ minusBtn.forEach((btn) => {
           }
         });
     } else {
-      const deleteCartModalEl =
-        document.getElementById("deleteCartModal");
+      const deleteCartModalEl = document.getElementById("deleteCartModal");
       deleteCartModalEl.dataset.cartitemid = btn.dataset.cartitemid;
       deleteCartModalEl.dataset.cartid = btn.dataset.cartid;
 
       const deleteCartModal = new bootstrap.Modal(deleteCartModalEl);
       deleteCartModal.show();
-
     }
-
-
   });
 });
 
@@ -348,7 +369,7 @@ function calculateShopDiscount(total, shopId) {
       return 0;
     }
     let type = selectedShopDiscount.dataset.type;
-    if (type === "percent") {
+    if (type === "PERCENT") {
       let percent = parseInt(selectedShopDiscount.dataset.discount) || 0;
       let max = parseInt(selectedShopDiscount.dataset.max) || 0;
       return Math.min((total * percent) / 100, max);
@@ -376,6 +397,8 @@ confirmShopVoucher.forEach((btn) => {
     const selectedShopDiscount = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
+
+    console.log("check shopid ", shopId);
 
     if (selectedShopDiscount) {
       const shopVoucher = document.querySelector(
@@ -486,7 +509,6 @@ buyButton.addEventListener("click", () => {
 
 updateCartSummary();
 
-
 // ====================== DELETE CARTITEM HANDLER ======================
 const deleteCartItem = document.querySelectorAll(".button-delete");
 const confirmDeleteCartItem = document.getElementById("confirmDeleteCartItem");
@@ -508,8 +530,7 @@ confirmDeleteCartItem.addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        const deleteCartModal =
-          bootstrap.Modal.getInstance(deleteCartModalEl);
+        const deleteCartModal = bootstrap.Modal.getInstance(deleteCartModalEl);
         deleteCartModal.hide();
 
         const rowCartBodyItem = document.getElementById(
@@ -523,8 +544,6 @@ confirmDeleteCartItem.addEventListener("click", () => {
           }
 
           if (document.querySelectorAll(".cart-body").length === 0) {
-            console.log(">>>> CHECKK ", document.querySelectorAll(".cart-body").length === 0);
-
             const cartLeft = document.querySelector(".cart-left");
             cartLeft.innerHTML = `
             <div class="text-center">

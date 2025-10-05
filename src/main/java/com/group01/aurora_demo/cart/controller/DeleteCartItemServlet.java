@@ -2,7 +2,6 @@ package com.group01.aurora_demo.cart.controller;
 
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.dao.CartDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.annotation.WebServlet;

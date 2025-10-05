@@ -161,12 +161,12 @@ public class CartItemDAO {
     /**
      * Cập nhật trạng thái chọn/bỏ chọn toàn bộ cart items theo cartId.
      */
-    public boolean updateAllChecked(long cartId, boolean checked) {
-        String sql = "UPDATE CartItems SET IsChecked = ? WHERE CartID = ?";
+    public boolean updateAllChecked(long UserId, boolean checked) {
+        String sql = "UPDATE CartItems SET IsChecked = ? WHERE UserID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setBoolean(1, checked);
-            ps.setLong(2, cartId);
+            ps.setLong(2, UserId);
             int result = ps.executeUpdate();
             return result > 0;
         } catch (Exception e) {

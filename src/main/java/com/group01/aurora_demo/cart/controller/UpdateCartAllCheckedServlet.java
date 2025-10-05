@@ -43,12 +43,12 @@ public class UpdateCartAllCheckedServlet extends HttpServlet {
 
         try {
             // Lấy cartId và trạng thái checked từ request
-            long cartId = Long.parseLong(request.getParameter("cartId"));
+            long userId = Long.parseLong(request.getParameter("userId"));
             boolean isChecked = Boolean.parseBoolean(request.getParameter("checked"));
 
             CartItemDAO cartItemDAO = new CartItemDAO();
             // Update trạng thái checked cho tất cả item trong giỏ
-            boolean updateAllIsChecked = cartItemDAO.updateAllChecked(cartId, isChecked);
+            boolean updateAllIsChecked = cartItemDAO.updateAllChecked(userId, isChecked);
             if (updateAllIsChecked) {
                 json.put("success", true);
             } else {

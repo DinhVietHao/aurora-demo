@@ -1,9 +1,10 @@
 package com.group01.aurora_demo.cart.controller;
 
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.cart.dao.VoucherDAO;
 import com.group01.aurora_demo.cart.dto.ShopCartDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
-import com.group01.aurora_demo.cart.model.Shop;
+import com.group01.aurora_demo.cart.model.Voucher;
 import com.group01.aurora_demo.auth.model.User;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -62,6 +62,7 @@ public class ViewCartServlet extends HttpServlet {
         }
 
         CartItemDAO cartItemDAO = new CartItemDAO();
+        VoucherDAO voucherDAO = new VoucherDAO();
 
         // Nếu có giỏ hàng -> lấy danh sách sản phẩm trong giỏ
         List<CartItem> cartItems = cartItemDAO.getCartItemsByUserId(user.getId());
@@ -78,9 +79,15 @@ public class ViewCartServlet extends HttpServlet {
                 ShopCartDTO shopCartDTO = new ShopCartDTO();
                 shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                 shopCartDTO.setItems(entry.getValue());
+                shopCartDTO.setVouchers(voucherDAO.getShopVouchers(entry.getKey()));
                 return shopCartDTO;
             }).toList();
             req.setAttribute("shopCarts", shopCarts);
+
+            List<Voucher> systemVouchers = voucherDAO.getSystemVouchers();
+            System.out.println(">>>>>>>>>>>>>>>>> Check systemVouchers " + systemVouchers);
+            req.setAttribute("systemVouchers", systemVouchers);
+
         }
         req.getRequestDispatcher("/WEB-INF/views/cart/cart.jsp").forward(req, resp);
     }

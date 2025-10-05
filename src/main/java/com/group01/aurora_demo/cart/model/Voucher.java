@@ -1,5 +1,7 @@
 package com.group01.aurora_demo.cart.model;
 
+import java.util.Date;
+
 public class Voucher {
     private long voucherId;
     private String code;
@@ -13,6 +15,8 @@ public class Voucher {
     private int usageCount;
     private boolean isShopVoucher;
     private Long shopId;
+    private Date startAt;
+    private Date endAt;
 
     public long getVoucherId() {
         return voucherId;
@@ -108,6 +112,22 @@ public class Voucher {
 
     public void setShopId(Long shopId) {
         this.shopId = shopId;
+    }
+
+    public Date getStartAt() {
+        return startAt;
+    }
+
+    public void setStartAt(Date startAt) {
+        this.startAt = startAt;
+    }
+
+    public Date getEndAt() {
+        return endAt;
+    }
+
+    public void setEndAt(Date endAt) {
+        this.endAt = endAt;
     }
 
     @Override
