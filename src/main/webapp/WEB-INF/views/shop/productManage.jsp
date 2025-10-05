@@ -22,7 +22,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css">
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -33,6 +33,14 @@
 
                         <div id="layoutSidenav_content">
                             <main>
+                                <c:if test="${not empty successMessage}">
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                        ${fn:escapeXml(successMessage)}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Đóng"></button>
+                                    </div>
+                                </c:if>
+
                                 <c:if test="${not empty errorMessage}">
                                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                                         ${fn:escapeXml(errorMessage)}
@@ -217,8 +225,8 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
-                                                            <!-- Thao tác -->1<td>
-
+                                                            <!-- Thao tác -->
+                                                            <td>
                                                                 <!-- Xem chi tiết -->
                                                                 <button class="btn btn-sm btn-outline-info me-1"
                                                                     title="Xem chi tiết" data-bs-toggle="modal"
@@ -263,8 +271,11 @@
                                                                 </button>
 
                                                                 <!-- Xóa -->
-                                                                <button class="btn btn-sm btn-outline-danger"
-                                                                    title="Xóa" data-product-id="${p.productId}">
+                                                                <button class="btn btn-sm btn-outline-danger btn-delete"
+                                                                    title="Xóa" data-product-id="${p.productId}"
+                                                                    data-product-title="${p.title}"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#confirmDeleteModal">
                                                                     <i class="bi bi-trash"></i>
                                                                 </button>
                                                             </td>
@@ -284,6 +295,36 @@
                         </div>
                     </div>
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
+
+
+                    <!-- Modal xác nhận xóa -->
+                    <div class="modal fade" id="confirmDeleteModal" tabindex="-1"
+                        aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header custom-delete">
+                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Xác nhận xóa sản phẩm</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p id="deleteMessage">Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <!-- Nút Hủy: chỉ đóng modal -->
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+
+                                    <!-- Nút Xóa -->
+                                    <form id="deleteForm" action="/shop/product?action=delete" method="post">
+                                        <input type="hidden" name="productId" id="deleteProductId">
+                                        <button type="submit" class="btn btn-confirm-delete">Xóa</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Add Product Modal -->
                     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
                         aria-hidden="true">

@@ -233,3 +233,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const deleteButtons = document.querySelectorAll(".btn-delete");
+  const deleteMessage = document.getElementById("deleteMessage");
+  const deleteProductId = document.getElementById("deleteProductId");
+
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const productTitle = this.getAttribute("data-product-title");
+      const productId = this.getAttribute("data-product-id");
+
+      deleteMessage.innerHTML = `Bạn có chắc chắn muốn xóa sản phẩm <strong>"${productTitle}"</strong> này không?`;
+      deleteProductId.value = productId;
+    });
+  });
+});
