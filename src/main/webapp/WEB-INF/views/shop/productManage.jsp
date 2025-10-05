@@ -331,7 +331,7 @@
                                                 <label for="productOriginalPrice" class="form-label">
                                                     Giá gốc <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" step="0.01" class="form-control"
+                                                <input type="number" min="1" step="0.01" class="form-control"
                                                     id="productOriginalPrice" name="OriginalPrice" placeholder="140000"
                                                     required>
                                             </div>
@@ -339,26 +339,27 @@
                                                 <label for="productSalePrice" class="form-label">
                                                     Giá bán <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" step="0.01" class="form-control"
+                                                <input type="number" min="1" step="0.01" class="form-control"
                                                     id="productSalePrice" name="SalePrice" placeholder="122000"
                                                     required>
-                                                <div id="priceError" class="text-danger mt-1"
-                                                    style="display:none; font-size: 0.9rem;"></div>
+
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productStock" class="form-label">
                                                     Số lượng tồn kho <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" class="form-control" id="productStock" name="Stock"
-                                                    placeholder="0" required>
+                                                <input type="number" min="1" class="form-control" id="productStock"
+                                                    name="Stock" placeholder="0" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="weight" class="form-label">
                                                     Khối lượng (gram) <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="number" step="0.01" class="form-control" id="weight"
-                                                    name="Weight" placeholder="500" required>
+                                                <input type="number" min="1" step="0.01" class="form-control"
+                                                    id="weight" name="Weight" placeholder="500" required>
                                             </div>
+                                            <span id="priceError" class="text-danger mt-1"
+                                                style="display:none; font-size: 0.9rem;"></span>
                                         </div>
 
                                         <!-- Nhà xuất bản & Phát hành -->
@@ -471,7 +472,7 @@
 
                                                 <!-- Nút thêm ô nhập -->
                                                 <button type="button" class="btn btn-outline-primary btn-sm mt-2"
-                                                    onclick="addAuthor()">+ Thêm tác giả</button>
+                                                    onclick="addAuthorCreate()">+ Thêm tác giả</button>
                                             </div>
                                         </div>
 
@@ -692,20 +693,18 @@
                                             </button>
                                         </div>
                                     </form>
-
-
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Update Product Modal -->
-                    <div class="modal fade" id="updateProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
-                        aria-hidden="true">
+                    <div class="modal fade" id="updateProductModal" tabindex="-1"
+                        aria-labelledby="updateProductModalLabel" aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="addProductModalLabel">Update sản phẩm mới</h5>
+                                    <h5 class="modal-title" id="updateProductModalLabel">Update sản phẩm mới</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
@@ -882,7 +881,7 @@
 
                                                 <!-- Nút thêm ô nhập -->
                                                 <button type="button" class="btn btn-outline-primary btn-sm mt-2"
-                                                    onclick="addAuthor()">+ Thêm tác giả</button>
+                                                    onclick="addAuthorUpdate()">+ Thêm tác giả</button>
                                             </div>
                                         </div>
 
@@ -1094,7 +1093,7 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="addProductForm" class="btn btn-success">
+                                            <button type="submit" form="updateProductForm" class="btn btn-success">
                                                 <i class="bi bi-check-circle me-1"></i>
                                                 Lưu sản phẩm
                                             </button>

@@ -40,6 +40,9 @@ public class ProductDAO {
             ps.setLong(1, shopId);
             ps.setInt(2, offset);
             ps.setInt(3, limit);
+            CategoryDAO cateDAO = new CategoryDAO();
+            AuthorDAO authorDAO = new AuthorDAO();
+            ImageDAO imageDAO = new ImageDAO();
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Product p = new Product();
@@ -51,8 +54,8 @@ public class ProductDAO {
                     p.setSalePrice(rs.getDouble("SalePrice"));
                     p.setSoldCount(rs.getLong("SoldCount"));
                     p.setStock(rs.getInt("Stock"));
-                    p.setAuthors(getAuthorsByProductId(p.getProductId()));
-                    p.setCategories(getCategoriesByProductId(p.getProductId()));
+                    p.setAuthors(authorDAO.getAuthorsByProductId(p.getProductId()));
+                    p.setCategories(cateDAO.getCategoriesByProductId(p.getProductId()));
                     p.setStatus(rs.getString("status"));
 
                     long publisherId = rs.getLong("PublisherID");
@@ -78,76 +81,13 @@ public class ProductDAO {
                     p.setBookDetail(b);
 
                     // Danh sách ảnh (nếu bạn vẫn muốn lấy thêm ảnh phụ)
-                    p.setImageUrls(getProductImages(p.getProductId()));
+                    p.setImageUrls(imageDAO.getProductImages(p.getProductId()));
 
                     list.add(p);
                 }
             }
         }
         return list;
-    }
-
-    private List<String> getProductImages(long productId) throws SQLException {
-        List<String> urls = new ArrayList<>();
-        String sql = "SELECT Url FROM ProductImages WHERE ProductID = ?";
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    urls.add(rs.getString("Url"));
-                }
-            }
-        }
-        return urls;
-    }
-
-    private List<Author> getAuthorsByProductId(long productId) throws SQLException {
-        List<Author> authors = new ArrayList<>();
-        String sql = """
-                SELECT a.AuthorID, a.AuthorName
-                FROM BookAuthors ba
-                JOIN Authors a ON ba.AuthorID = a.AuthorID
-                WHERE ba.ProductID = ?
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setLong(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Author author = new Author();
-                    author.setAuthorId(rs.getLong("AuthorID"));
-                    author.setName(rs.getString("AuthorName"));
-                    authors.add(author);
-                }
-            }
-        }
-        return authors;
-    }
-
-    private List<Category> getCategoriesByProductId(long productId) throws SQLException {
-        List<Category> categories = new ArrayList<>();
-        String sql = """
-                SELECT c.CategoryID, c.Name
-                FROM ProductCategory pc
-                JOIN Category c ON pc.CategoryID = c.CategoryID
-                WHERE pc.ProductID = ?
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setLong(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Category category = new Category();
-                    category.setCategoryId(rs.getLong("CategoryID"));
-                    category.setName(rs.getString("Name"));
-                    categories.add(category);
-                }
-            }
-        }
-        return categories;
     }
 
     public int countProductsByShopId(long shopId) throws SQLException {

@@ -1,15 +1,46 @@
 package com.group01.aurora_demo.shop.dao;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.shop.model.Category;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
+
 public class CategoryDAO {
+    public List<Category> getCategoriesByProductId(long productId) throws SQLException {
+        List<Category> categories = new ArrayList<>();
+        String sql = """
+                SELECT c.CategoryID, c.Name
+                FROM ProductCategory pc
+                JOIN Category c ON pc.CategoryID = c.CategoryID
+                WHERE pc.ProductID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Category category = new Category();
+                    category.setCategoryId(rs.getLong("CategoryID"));
+                    category.setName(rs.getString("Name"));
+                    categories.add(category);
+                }
+            }
+        }
+        return categories;
+    }
+
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT CategoryID, Name FROM Category ORDER BY Name ASC";
