@@ -1,13 +1,18 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.shop.dao.ImageDAO;
 import com.group01.aurora_demo.shop.dao.ProductDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
+import com.group01.aurora_demo.shop.model.Author;
+import com.group01.aurora_demo.shop.model.BookDetail;
+import com.group01.aurora_demo.shop.model.Category;
 import com.group01.aurora_demo.shop.model.Product;
-import com.group01.aurora_demo.shop.service.ProductService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -94,15 +99,112 @@ public class ProductServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-        ProductService productService = new ProductService();
 
         switch (action) {
             case "create":
+                ShopDAO shopDAO = new ShopDAO();
+                ProductDAO productDAO = new ProductDAO();
+                ImageDAO imageDAO = new ImageDAO();
+
                 try {
 
-                    productService.createProduct(request, user);
+                    long shopId = shopDAO.getShopIdByUserId(user.getId());
+                    String title = request.getParameter("Title");
+                    String description = request.getParameter("Description");
+                    double originalPrice = Double.parseDouble(request.getParameter("OriginalPrice"));
+                    double salePrice = Double.parseDouble(request.getParameter("SalePrice"));
+                    int stock = Integer.parseInt(request.getParameter("Stock"));
+                    double weight = Double.parseDouble(request.getParameter("Weight"));
+                    String translator = request.getParameter("Translator");
+                    String version = request.getParameter("Version");
+                    String coverType = request.getParameter("CoverType");
+                    int pages = Integer.parseInt(request.getParameter("Pages"));
+                    String size = request.getParameter("Size");
+                    String languageCode = request.getParameter("LanguageCode");
+                    String isbn = request.getParameter("ISBN");
 
-                    response.sendRedirect(request.getContextPath() + "/shop/product?action=view");
+                    String[] authorNames = request.getParameterValues("authors");
+                    String[] categoryIdParams = request.getParameterValues("CategoryIDs");
+
+                    String publisherId = request.getParameter("PublisherID");
+                    String publishedDateStr = request.getParameter("PublishedDate");
+                    Date publishedDate = (publishedDateStr != null && !publishedDateStr.isEmpty())
+                            ? Date.valueOf(publishedDateStr)
+                            : null;
+
+                    if (salePrice > originalPrice) {
+                        throw new ServletException("Giá bán phải nhỏ hơn hoặc bằng giá gốc.");
+                    }
+
+                    // ===== Xử lý upload ảnh =====
+                    List<String> imagePaths = imageDAO.handleImageUpload(request);
+
+                    // ===== Tạo Product =====
+                    Product product = new Product();
+                    product.setShopId(shopId);
+                    product.setTitle(title);
+                    product.setDescription(description);
+                    product.setOriginalPrice(originalPrice);
+                    product.setSalePrice(salePrice);
+                    product.setStock(stock);
+                    product.setWeight(weight);
+                    product.setPublisherId(
+                            publisherId != null && !publisherId.isEmpty() ? Long.parseLong(publisherId) : null);
+                    product.setPublishedDate(publishedDate);
+                    product.setImageUrls(imagePaths);
+                    product.setPrimaryImageUrl(imagePaths.get(0));
+
+                    // ===== Tạo BookDetail =====
+                    BookDetail bookDetail = new BookDetail();
+                    bookDetail.setTranslator(translator);
+                    bookDetail.setVersion(version);
+                    bookDetail.setCoverType(coverType);
+                    bookDetail.setPages(pages);
+                    bookDetail.setSize(size);
+                    bookDetail.setLanguageCode(languageCode);
+                    bookDetail.setIsbn(isbn);
+                    product.setBookDetail(bookDetail);
+
+                    // ===== Tác giả =====
+                    List<Author> authors = new ArrayList<>();
+                    if (authorNames != null) {
+                        for (String raw : authorNames) {
+                            if (raw == null)
+                                continue;
+                            String name = raw.trim();
+                            if (name.isEmpty())
+                                continue;
+                            Long id = productDAO.findAuthorIdByName(name);
+                            if (id == null) {
+                                id = productDAO.insertAuthor(name);
+                            }
+                            Author a = new Author();
+                            a.setAuthorId(id);
+                            a.setName(name);
+                            authors.add(a);
+                        }
+                    }
+                    product.setAuthors(authors);
+
+                    // ===== Thể loại =====
+                    List<Category> categoryList = new ArrayList<>();
+                    if (categoryIdParams != null) {
+                        for (String cid : categoryIdParams) {
+                            if (cid != null && !cid.isBlank()) {
+                                Category c = new Category();
+                                c.setCategoryId(Long.parseLong(cid));
+                                categoryList.add(c);
+                            }
+                        }
+                    }
+                    product.setCategories(categoryList);
+                    if (productDAO.insertProduct(product) != 0) {
+                        response.sendRedirect(request.getContextPath() + "/shop/product?action=view");
+                    } else {
+                        request.setAttribute("errorMessage", "Không thể thêm sản phẩm?");
+                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
+                                response);
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();

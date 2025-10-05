@@ -5322,10 +5322,6 @@ textarea.form-control-lg {
   min-height: calc(100% - var(--bs-modal-margin) * 2);
 }
 
-.modal-backdrop {
-  z-index: 9 !important; 
-}
-
 .modal-content {
   position: relative;
   display: flex;
@@ -5352,10 +5348,6 @@ textarea.form-control-lg {
   height: 100vh;
   background-color: var(--bs-backdrop-bg);
 }
-.modal-backdrop.fade {
-  opacity: 0;
-}
-
 
 .modal-header {
   display: flex;
