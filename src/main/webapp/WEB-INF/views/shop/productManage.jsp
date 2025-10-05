@@ -21,7 +21,7 @@
                     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/style.min.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
                 </head>
 
@@ -33,6 +33,13 @@
 
                         <div id="layoutSidenav_content">
                             <main>
+                                <c:if test="${not empty errorMessage}">
+                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                        ${fn:escapeXml(errorMessage)}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Đóng"></button>
+                                    </div>
+                                </c:if>
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h1 class="mt-4 product-management-title">Quản lý Sản phẩm</h1>
@@ -138,7 +145,7 @@
                                                             <!-- Cột Sản phẩm -->
                                                             <td>
                                                                 <div class="d-flex align-items-center">
-                                                                    <img src="http://localhost:8080/assets/images/catalog/thumbnails/${p.primaryImageUrl}"
+                                                                    <img src="http://localhost:8080/assets/images/catalog/products/${p.primaryImageUrl}"
                                                                         alt="${p.title}" class="product-thumb me-3">
                                                                     <div>
                                                                         <div class="fw-bold">${p.title}</div>
@@ -221,14 +228,37 @@
                                                                 </button>
 
                                                                 <!-- Chỉnh sửa -->
-                                                                <button class="btn btn-sm btn-outline-primary me-1 btn-update"
-                                                                    title="Chỉnh sửa"
+                                                                <button
+                                                                    class="btn btn-sm btn-outline-primary me-1 btn-update"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#updateProductModal"
                                                                     data-product-id="${p.productId}"
                                                                     data-product-title="${p.title}"
                                                                     data-product-description="${p.description}"
-                                                                    data-product-originalPrice="${p.originalPrice}"
-                                                                    <% /*Làm tương tự...*/ %>
-                                                                    >
+                                                                    data-product-originalprice="${p.originalPrice}"
+                                                                    data-product-saleprice="${p.salePrice}"
+                                                                    data-product-stock="${p.stock}"
+                                                                    data-product-weight="${p.weight}"
+                                                                    data-product-publisherid="${p.publisherId}"
+                                                                    data-product-publisheddate="${p.publishedDate}"
+                                                                    data-product-translator="${p.bookDetail.translator}"
+                                                                    data-product-version="${p.bookDetail.version}"
+                                                                    data-product-covertype="${p.bookDetail.coverType}"
+                                                                    data-product-pages="${p.bookDetail.pages}"
+                                                                    data-product-size="${p.bookDetail.size}"
+                                                                    data-product-languagecode="${p.bookDetail.languageCode}"
+                                                                    data-product-isbn="${p.bookDetail.isbn}"
+                                                                    data-product-authors="<c:forEach var='a'
+                                                                        items='${p.authors}' varStatus='st'>${a.name}
+                                                                        <c:if test='${!st.last}'>|</c:if>
+                                                                    </c:forEach>" data-product-categories="<c:forEach var='c'
+                                                                        items='${p.categories}' varStatus='st'>
+                                                                        ${c.categoryId}<c:if test='${!st.last}'>,</c:if>
+                                                                    </c:forEach>" data-product-images="<c:forEach var='img'
+                                                                        items='${p.imageUrls}' varStatus='st'>
+                                                                        ${img}*${img == p.primaryImageUrl ? '1':'0'}
+                                                                        <c:if test='${!st.last}'>|</c:if>
+                                                                    </c:forEach>">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
 
@@ -265,7 +295,7 @@
                                         aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="addProductForm" action="/products/add" method="POST"
+                                    <form id="addProductForm" action="/shop/product?action=create" method="POST"
                                         enctype="multipart/form-data">
                                         <!-- Thông tin cơ bản -->
                                         <div class="row">
@@ -298,28 +328,34 @@
 
                                         <div class="row mb-3">
                                             <div class="col-md-3">
-                                                <label for="productOriginalPrice" class="form-label">Giá gốc <span
-                                                        class="text-danger">*</span></label>
+                                                <label for="productOriginalPrice" class="form-label">
+                                                    Giá gốc <span class="text-danger">*</span>
+                                                </label>
                                                 <input type="number" step="0.01" class="form-control"
                                                     id="productOriginalPrice" name="OriginalPrice" placeholder="140000"
                                                     required>
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="productSalePrice" class="form-label">Giá bán <span
-                                                        class="text-danger">*</span></label>
+                                                <label for="productSalePrice" class="form-label">
+                                                    Giá bán <span class="text-danger">*</span>
+                                                </label>
                                                 <input type="number" step="0.01" class="form-control"
                                                     id="productSalePrice" name="SalePrice" placeholder="122000"
                                                     required>
+                                                <div id="priceError" class="text-danger mt-1"
+                                                    style="display:none; font-size: 0.9rem;"></div>
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="productStock" class="form-label">Số lượng tồn kho <span
-                                                        class="text-danger">*</span></label>
+                                                <label for="productStock" class="form-label">
+                                                    Số lượng tồn kho <span class="text-danger">*</span>
+                                                </label>
                                                 <input type="number" class="form-control" id="productStock" name="Stock"
                                                     placeholder="0" required>
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="weight" class="form-label">Khối lượng (gram) <span
-                                                        class="text-danger">*</span></label>
+                                                <label for="weight" class="form-label">
+                                                    Khối lượng (gram) <span class="text-danger">*</span>
+                                                </label>
                                                 <input type="number" step="0.01" class="form-control" id="weight"
                                                     name="Weight" placeholder="500" required>
                                             </div>
@@ -403,9 +439,17 @@
                                                     required>
                                                     <option value="vi">Tiếng Việt</option>
                                                     <option value="en">Tiếng Anh</option>
-                                                    <option value="fr">Tiếng Pháp</option>
-                                                    <option value="jp">Tiếng Nhật</option>
                                                 </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="isbn" class="form-label">Mã ISBN <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="isbn" name="ISBN"
+                                                    placeholder="VD: 9786042109443" required>
+                                                <div class="form-text">Mã số của sách.</div>
                                             </div>
                                         </div>
 
@@ -431,8 +475,193 @@
                                             </div>
                                         </div>
 
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6 class="text-muted mb-3">Thể loại</h6>
+                                            </div>
+                                        </div>
 
-                                        <!-- Hình ảnh sản phẩm -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label">
+                                                    Chọn thể loại <span class="text-danger">*</span>
+                                                </label>
+
+                                                <div class="border rounded p-3"
+                                                    style="max-height: 220px; overflow-y: auto;">
+                                                    <!-- Cột chia nhóm checkbox -->
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="1" id="cat1">
+                                                                <label class="form-check-label" for="cat1">Sách Văn
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="2" id="cat2">
+                                                                <label class="form-check-label" for="cat2">Tiểu
+                                                                    thuyết</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="3" id="cat3">
+                                                                <label class="form-check-label" for="cat3">Truyện
+                                                                    ngắn</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="4" id="cat4">
+                                                                <label class="form-check-label" for="cat4">Thơ
+                                                                    ca</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="5" id="cat5">
+                                                                <label class="form-check-label" for="cat5">Văn
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="6" id="cat6">
+                                                                <label class="form-check-label" for="cat6">Truyện
+                                                                    tranh</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="7" id="cat7">
+                                                                <label class="form-check-label" for="cat7">Light
+                                                                    Novel</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="8" id="cat8">
+                                                                <label class="form-check-label" for="cat8">Sách giáo
+                                                                    khoa</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="9" id="cat9">
+                                                                <label class="form-check-label" for="cat9">Sách tham
+                                                                    khảo</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="10" id="cat10">
+                                                                <label class="form-check-label" for="cat10">Kinh
+                                                                    tế</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="11" id="cat11">
+                                                                <label class="form-check-label" for="cat11">Tài
+                                                                    chính</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="12" id="cat12">
+                                                                <label class="form-check-label" for="cat12">Phát triển
+                                                                    bản thân</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="13" id="cat13">
+                                                                <label class="form-check-label" for="cat13">Lịch
+                                                                    sử</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="14" id="cat14">
+                                                                <label class="form-check-label" for="cat14">Chính
+                                                                    trị</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="15" id="cat15">
+                                                                <label class="form-check-label" for="cat15">Pháp
+                                                                    luật</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="16" id="cat16">
+                                                                <label class="form-check-label" for="cat16">Khoa
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="17" id="cat17">
+                                                                <label class="form-check-label" for="cat17">Tâm
+                                                                    lý</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="18" id="cat18">
+                                                                <label class="form-check-label" for="cat18">Y
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="19" id="cat19">
+                                                                <label class="form-check-label" for="cat19">Ẩm
+                                                                    thực</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="20" id="cat20">
+                                                                <label class="form-check-label" for="cat20">Nuôi dạy
+                                                                    con</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="21" id="cat21">
+                                                                <label class="form-check-label" for="cat21">Du
+                                                                    lịch</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="22" id="cat22">
+                                                                <label class="form-check-label" for="cat22">Thời
+                                                                    trang</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="23" id="cat23">
+                                                                <label class="form-check-label" for="cat23">Nhà
+                                                                    cửa</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="24" id="cat24">
+                                                                <label class="form-check-label" for="cat24">Nghệ
+                                                                    thuật</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="25" id="cat25">
+                                                                <label class="form-check-label" for="cat25">Tôn
+                                                                    giáo</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="26" id="cat26">
+                                                                <label class="form-check-label" for="cat26">Trinh
+                                                                    Thám</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-text">
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                </div>
+                                            </div>
+                                        </div>
+
+
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Hình ảnh sản phẩm</h6>
@@ -442,11 +671,16 @@
                                         <div class="mb-3">
                                             <label for="productImages" class="form-label">Chọn hình ảnh</label>
                                             <input type="file" class="form-control" id="productImages"
-                                                name="ProductImages[]" multiple accept="image/*">
-                                            <div class="form-text">Chọn tối đa 5 hình ảnh. Kích thước tối đa mỗi file:
-                                                2MB</div>
+                                                name="ProductImages" multiple accept="image/*">
+                                            <div class="form-text text-secondary">
+                                                Có thể đăng từ <strong>2 đến 20 ảnh</strong>. Mỗi ảnh tối đa <strong>5
+                                                    MB</strong>.
+                                            </div>
+                                            <div id="imageError" class="text-danger mt-1" style="display:none;"></div>
                                         </div>
-                                        <div id="imagePreview" class="row mb-3"></div>
+
+                                        <!-- Preview -->
+                                        <div id="imagePreview" class="row mb-3 g-2"></div>
 
                                         <!-- Nút submit -->
                                         <div class="modal-footer">
@@ -476,7 +710,7 @@
                                         aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="updateProductForm" action="/products/add" method="POST"
+                                    <form id="updateProductForm" action="/products/create?action=create" method="POST"
                                         enctype="multipart/form-data">
                                         <!-- Thông tin cơ bản -->
                                         <div class="row">
@@ -489,15 +723,16 @@
                                             <div class="col-md-12">
                                                 <label for="productTitle" class="form-label">Tên sách <span
                                                         class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="productTitle" name="Title"
-                                                    placeholder="Nhập tên sách" required>
+                                                <input type="text" class="form-control" id="productTitleUpdate"
+                                                    name="Title" required>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
                                             <label for="productDescription" class="form-label">Mô tả sách</label>
-                                            <textarea class="form-control" id="productDescription" name="Description"
-                                                rows="4" placeholder="Mô tả chi tiết về nội dung sách..."></textarea>
+                                            <textarea class="form-control" id="productDescriptionUpdate"
+                                                name="Description" rows="4"
+                                                placeholder="Mô tả chi tiết về nội dung sách..."></textarea>
                                         </div>
 
                                         <!-- Giá và tồn kho -->
@@ -512,26 +747,26 @@
                                                 <label for="productOriginalPrice" class="form-label">Giá gốc <span
                                                         class="text-danger">*</span></label>
                                                 <input type="number" step="0.01" class="form-control"
-                                                    id="productOriginalPrice" name="OriginalPrice" placeholder="140000"
-                                                    required>
+                                                    id="productOriginalPriceUpdate" name="OriginalPrice"
+                                                    placeholder="140000" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productSalePrice" class="form-label">Giá bán <span
                                                         class="text-danger">*</span></label>
                                                 <input type="number" step="0.01" class="form-control"
-                                                    id="productSalePrice" name="SalePrice" placeholder="122000"
+                                                    id="productSalePriceUpdate" name="SalePrice" placeholder="122000"
                                                     required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productStock" class="form-label">Số lượng tồn kho <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="productStock" name="Stock"
-                                                    placeholder="0" required>
+                                                <input type="number" class="form-control" id="productStockUpdate"
+                                                    name="Stock" placeholder="0" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="weight" class="form-label">Khối lượng (gram) <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control" id="weight"
+                                                <input type="number" step="0.01" class="form-control" id="weightUpdate"
                                                     name="Weight" placeholder="500" required>
                                             </div>
                                         </div>
@@ -547,7 +782,7 @@
                                             <div class="col-md-6">
                                                 <label for="publisherId" class="form-label">Nhà xuất bản
                                                     (PublisherID)</label>
-                                                <select class="form-select" id="publisherId" name="PublisherID">
+                                                <select class="form-select" id="publisherIdUpdate" name="PublisherID">
                                                     <option value="">Chọn NXB</option>
                                                     <!-- render danh sách Publisher từ DB -->
                                                     <option value="1">NXB Trẻ</option>
@@ -556,7 +791,7 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="publishedDate" class="form-label">Ngày phát hành</label>
-                                                <input type="date" class="form-control" id="publishedDate"
+                                                <input type="date" class="form-control" id="publishedDateUpdate"
                                                     name="PublishedDate">
                                             </div>
                                         </div>
@@ -571,14 +806,14 @@
                                         <div class="row mb-3">
                                             <div class="col-md-6">
                                                 <label for="translator" class="form-label">Dịch giả</label>
-                                                <input type="text" class="form-control" id="translator"
+                                                <input type="text" class="form-control" id="translatorUpdate"
                                                     name="Translator" placeholder="Tên dịch giả (nếu có)">
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="version" class="form-label">Phiên bản <span
                                                         class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="version" name="Version"
-                                                    placeholder="Tái bản lần 1" required>
+                                                <input type="text" class="form-control" id="versionUpdate"
+                                                    name="Version" placeholder="Tái bản lần 1" required>
                                             </div>
                                         </div>
 
@@ -586,7 +821,8 @@
                                             <div class="col-md-6">
                                                 <label for="coverType" class="form-label">Loại bìa <span
                                                         class="text-danger">*</span></label>
-                                                <select class="form-select" id="coverType" name="CoverType" required>
+                                                <select class="form-select" id="coverTypeUpdate" name="CoverType"
+                                                    required>
                                                     <option value="Bìa mềm">Bìa mềm</option>
                                                     <option value="Bìa cứng">Bìa cứng</option>
                                                 </select>
@@ -594,7 +830,7 @@
                                             <div class="col-md-6">
                                                 <label for="pages" class="form-label">Số trang <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="pages" name="Pages"
+                                                <input type="number" class="form-control" id="pagesUpdate" name="Pages"
                                                     placeholder="250" required>
                                             </div>
                                         </div>
@@ -603,18 +839,236 @@
                                             <div class="col-md-6">
                                                 <label for="size" class="form-label">Kích thước (Size) <span
                                                         class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="size" name="Size"
+                                                <input type="text" class="form-control" id="sizeUpdate" name="Size"
                                                     placeholder="14x20 cm" required>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <label for="languageCode" class="form-label">Ngôn ngữ <span
                                                         class="text-danger">*</span></label>
-                                                <select class="form-select" id="languageCode" name="LanguageCode"
+                                                <select class="form-select" id="languageCodeUpdate" name="LanguageCode"
                                                     required>
                                                     <option value="vi">Tiếng Việt</option>
                                                     <option value="en">Tiếng Anh</option>
                                                 </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="isbn" class="form-label">Mã ISBN <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="isbnUpdate" name="ISBN"
+                                                    placeholder="VD: 9786042109443" required>
+                                                <div class="form-text">Mã số của sách.</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="authors" class="form-label">
+                                                    Tác giả <span class="text-danger">*</span>
+                                                </label>
+
+                                                <!-- Vùng chứa các ô nhập tác giả -->
+                                                <div id="authors-containerUpdate">
+                                                    <div class="input-group mb-2">
+                                                        <input type="text" class="form-control" name="authorsUpdate"
+                                                            placeholder="Tên tác giả" required>
+                                                        <button type="button" class="btn btn-outline-danger"
+                                                            onclick="removeAuthor(this)">🗑</button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Nút thêm ô nhập -->
+                                                <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                                                    onclick="addAuthor()">+ Thêm tác giả</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-3">
+                                            <div class="col-12">
+                                                <h6 class="text-muted mb-3">Thể loại</h6>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label">
+                                                    Chọn thể loại <span class="text-danger">*</span>
+                                                </label>
+
+                                                <div class="border rounded p-3"
+                                                    style="max-height: 220px; overflow-y: auto;">
+                                                    <!-- Cột chia nhóm checkbox -->
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="1" id="cat1">
+                                                                <label class="form-check-label" for="cat1">Sách Văn
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="2" id="cat2">
+                                                                <label class="form-check-label" for="cat2">Tiểu
+                                                                    thuyết</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="3" id="cat3">
+                                                                <label class="form-check-label" for="cat3">Truyện
+                                                                    ngắn</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="4" id="cat4">
+                                                                <label class="form-check-label" for="cat4">Thơ
+                                                                    ca</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="5" id="cat5">
+                                                                <label class="form-check-label" for="cat5">Văn
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="6" id="cat6">
+                                                                <label class="form-check-label" for="cat6">Truyện
+                                                                    tranh</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="7" id="cat7">
+                                                                <label class="form-check-label" for="cat7">Light
+                                                                    Novel</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="8" id="cat8">
+                                                                <label class="form-check-label" for="cat8">Sách giáo
+                                                                    khoa</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="9" id="cat9">
+                                                                <label class="form-check-label" for="cat9">Sách tham
+                                                                    khảo</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="10" id="cat10">
+                                                                <label class="form-check-label" for="cat10">Kinh
+                                                                    tế</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="11" id="cat11">
+                                                                <label class="form-check-label" for="cat11">Tài
+                                                                    chính</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="12" id="cat12">
+                                                                <label class="form-check-label" for="cat12">Phát triển
+                                                                    bản thân</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="13" id="cat13">
+                                                                <label class="form-check-label" for="cat13">Lịch
+                                                                    sử</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="14" id="cat14">
+                                                                <label class="form-check-label" for="cat14">Chính
+                                                                    trị</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="15" id="cat15">
+                                                                <label class="form-check-label" for="cat15">Pháp
+                                                                    luật</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="16" id="cat16">
+                                                                <label class="form-check-label" for="cat16">Khoa
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="17" id="cat17">
+                                                                <label class="form-check-label" for="cat17">Tâm
+                                                                    lý</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="18" id="cat18">
+                                                                <label class="form-check-label" for="cat18">Y
+                                                                    học</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="19" id="cat19">
+                                                                <label class="form-check-label" for="cat19">Ẩm
+                                                                    thực</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="20" id="cat20">
+                                                                <label class="form-check-label" for="cat20">Nuôi dạy
+                                                                    con</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="21" id="cat21">
+                                                                <label class="form-check-label" for="cat21">Du
+                                                                    lịch</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="22" id="cat22">
+                                                                <label class="form-check-label" for="cat22">Thời
+                                                                    trang</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="23" id="cat23">
+                                                                <label class="form-check-label" for="cat23">Nhà
+                                                                    cửa</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="24" id="cat24">
+                                                                <label class="form-check-label" for="cat24">Nghệ
+                                                                    thuật</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="25" id="cat25">
+                                                                <label class="form-check-label" for="cat25">Tôn
+                                                                    giáo</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="26" id="cat26">
+                                                                <label class="form-check-label" for="cat26">Trinh
+                                                                    Thám</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="form-text">
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                </div>
                                             </div>
                                         </div>
 
@@ -627,12 +1081,14 @@
 
                                         <div class="mb-3">
                                             <label for="productImages" class="form-label">Chọn hình ảnh</label>
-                                            <input type="file" class="form-control" id="productImages"
-                                                name="ProductImages[]" multiple accept="image/*">
+                                            <input type="file" class="form-control" id="productImagesUpdate"
+                                                name="ProductImagesUpdate" multiple accept="image/*">
                                             <div class="form-text">Chọn tối đa 5 hình ảnh. Kích thước tối đa mỗi file:
                                                 2MB</div>
+                                            <div id="imageErrorUpdate" class="text-danger mt-1" style="display:none;">
+                                            </div>
                                         </div>
-                                        <div id="imagePreview" class="row mb-3"></div>
+                                        <div id="imagePreviewUpdate" class="row mb-3"></div>
 
                                         <!-- Nút submit -->
                                         <div class="modal-footer">
