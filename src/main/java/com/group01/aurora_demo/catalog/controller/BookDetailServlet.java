@@ -18,7 +18,8 @@ public class BookDetailServlet extends HttpServlet {
         try {
             long id = Long.parseLong(idRaw);
             Product product = productDAO.getProductById(id);
-            int percentDiscount = (int) Math.round((1 - (double) product.getSalePrice() / product.getOriginalPrice()) * 100);
+            int percentDiscount = (int) Math
+                    .round((1 - (double) product.getSalePrice() / product.getOriginalPrice()) * 100);
             req.setAttribute("product", product);
             req.setAttribute("percentDiscount", percentDiscount);
             req.getRequestDispatcher("/WEB-INF/views/catalog/books/detail.jsp").forward(req, resp);

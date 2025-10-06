@@ -44,12 +44,9 @@
                                             <c:out value="${sessionScope.AUTH_USER.fullName}" />
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông tin tài
-                                                    khoản</a></li>
-                                            <li><a class="dropdown-item" href="<c:url value='/orders'/>">Đơn hàng của
-                                                    tôi</a></li>
-                                            <li><a class="dropdown-item" href="<c:url value='/support'/>">Trung tâm hỗ
-                                                    trợ</a></li>
+                                            <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông tin tài khoản</a></li>
+                                            <li><a class="dropdown-item" href="<c:url value='/orders'/>">Đơn hàng của tôi</a></li>
+                                            <li><a class="dropdown-item" href="<c:url value='/support'/>">Kênh người bán</a></li>
                                             <li>
                                                 <hr class="dropdown-divider">
                                             </li>

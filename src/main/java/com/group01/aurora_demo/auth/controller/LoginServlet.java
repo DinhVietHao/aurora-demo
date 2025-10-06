@@ -2,10 +2,10 @@ package com.group01.aurora_demo.auth.controller;
 
 import com.group01.aurora_demo.auth.service.GoogleLogin;
 import com.group01.aurora_demo.auth.model.GoogleAccount;
-import com.group01.aurora_demo.cart.dao.CartItemDAO;
-import com.group01.aurora_demo.cart.dao.CartDAO;
+
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.common.util.Json;
+import com.group01.aurora_demo.customer.dao.CartItemDAO;
 import com.group01.aurora_demo.auth.model.User;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,7 +17,6 @@ import jakarta.servlet.http.HttpServlet;
 import com.group01.aurora_demo.common.filter.AuthRequiredFilter;
 import com.group01.aurora_demo.auth.service.RememberMeService;
 import com.group01.aurora_demo.auth.dao.RememberMeTokenDAO;
-import com.group01.aurora_demo.cart.model.Cart;
 
 import org.mindrot.jbcrypt.BCrypt;
 import java.io.IOException;
@@ -56,9 +55,7 @@ public class LoginServlet extends HttpServlet {
 
         try {
             CartItemDAO cartItemDAO = new CartItemDAO();
-            CartDAO cartDAO = new CartDAO();
-            Cart cart = cartDAO.getCartByUserId(user.getId());
-            int cartCount = cartItemDAO.getDistinctItemCount(cart.getCartId());
+            int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
             session.setAttribute("cartCount", cartCount);
         } catch (Exception e) {
             System.out.println(e.getMessage());
