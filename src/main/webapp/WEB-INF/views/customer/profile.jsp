@@ -31,7 +31,7 @@
                             alt="avatar"
                             class="information-account__image"
                         />
-                        <p class="mt-2 fw-bold mb-0">Leminhkha220</p>
+                        <p class="mt-2 fw-bold mb-0">${user.fullName}</p>
                     </div>
 
                     <%-- sidebar profile --%>
@@ -99,12 +99,6 @@
                                     <h5 class="mb-3 profile-title">
                                         Hồ Sơ Của Tôi
                                     </h5>
-                                    <button
-                                        type="button"
-                                        class="profile-remove"
-                                    >
-                                        Xóa tài khoản
-                                    </button>
                                 </div>
                                 <p class="profile-des">
                                     Quản lý thông tin hồ sơ để bảo mật tài khoản
@@ -124,7 +118,7 @@
                                                     <input
                                                         type="text"
                                                         class="form-control"
-                                                        value="Minh Kha"
+                                                        value="${user.fullName}"
                                                     />
                                                 </div>
                                             </div>
@@ -141,7 +135,7 @@
                                                 >
                                                     <span
                                                         class="me-2 text-truncate"
-                                                        >le*********@gmail.com</span
+                                                        >${user.email}</span
                                                     >
                                                     <a
                                                         href="#"
@@ -163,7 +157,7 @@
                                                 >
                                                     <span
                                                         class="me-2 text-truncate"
-                                                        >********05</span
+                                                        >${user.phone}</span
                                                     >
                                                     <a
                                                         href="#"
