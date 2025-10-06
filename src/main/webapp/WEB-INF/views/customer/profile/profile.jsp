@@ -88,13 +88,6 @@
                                                     </div>
                                                     
                                                     <div class="mb-3 row align-items-center">
-                                                        <label class="col-sm-3 col-form-label">Số điện thoại:</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control" value="${user.phone}" placeholder="Chưa có số điện thoại">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Email:</label>
                                                         <div class="col-sm-9 d-flex align-items-center">
                                                             <span

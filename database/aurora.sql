@@ -8,8 +8,6 @@ CREATE TABLE Users (
   Email        NVARCHAR(255) NOT NULL,
   [Password]   NVARCHAR(255) NOT NULL,
   FullName     NVARCHAR(150) NOT NULL,
-  Phone        NVARCHAR(20)  NULL,
-  NationalID   NVARCHAR(20)  NULL,
   AvatarUrl    NVARCHAR(2000) NULL,
   [Status]     NVARCHAR(20),
   CreatedAt    DATETIME2(6)  NOT NULL DEFAULT SYSUTCDATETIME(),
