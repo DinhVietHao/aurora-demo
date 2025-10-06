@@ -19,20 +19,25 @@ function removeAuthor(btn) {
     }
 }
 
-const modal = document.getElementById("updateProductModal");
+document.addEventListener("DOMContentLoaded", () => {
 
-document.querySelectorAll(".btn-update").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-        e.preventDefault();
+    const modal = document.getElementById("updateProductModal");
+    let data = null;
 
-        const data = btn.dataset;
+    document.querySelectorAll(".btn-update").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
 
+            data = btn.dataset;
+
+            new bootstrap.Modal(modal).show();
+        });
+    });
+
+    modal.addEventListener("shown.bs.modal", () => {
         document.getElementById("productTitle").value = data.title;
         document.getElementById("productDescription").value = data.description;
         document.getElementById("productOriginalPrice").value =
             data.originalPrice;
-        // làm tương tự...
-
-        new bootstrap.Modal(modal).show();
     });
 });
