@@ -140,6 +140,21 @@
     font-size: 14px;
 }
 
+.form-message {
+    color: #dc3545; /* Màu đỏ */
+    font-size: 0.875em;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.form-group.invalid .form-message {
+    display: block; /* Đảm bảo hiển thị khi invalid */
+}
+
+.form-group.invalid input, .form-group.invalid select {
+    border-color: #dc3545; /* Viền đỏ */
+}
+
 /*End Message */
 
 /* Show or hide password */

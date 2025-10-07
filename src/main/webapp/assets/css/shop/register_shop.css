@@ -1,0 +1,19 @@
+.register-shop {
+    margin: auto;
+    display: flex;
+    max-width: 700px;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.register-shop-title {
+    color: var(--color-one);
+    font-size: 27px;
+    font-weight: 600;
+    margin: 20px 0;
+}
+
+.register-shop .button-four {
+    width: 30%;
+}

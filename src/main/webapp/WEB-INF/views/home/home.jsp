@@ -16,6 +16,9 @@
           <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
           <main>
+            <!-- Toast notification Add To Cart -->
+            <div id="notify-toast"></div>
+
             <%-- Banner --%>
               <div class="container banner">
                 <div id="carouselExample" class="carousel slide banner-book" data-bs-ride="carousel">
@@ -255,8 +258,11 @@
 
           <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
 
-          <%-- Scripts (Bootstrap + validator + auth_form) --%>
-            <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+          <!-- JS của thông báo Toast -->
+          <script src="${ctx}/assets/js/common/toast.js?v=1.0.1"></script>
+
+          <!-- Scripts (Bootstrap + validator + auth_form) -->
+          <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
         </body>
 
         </html>

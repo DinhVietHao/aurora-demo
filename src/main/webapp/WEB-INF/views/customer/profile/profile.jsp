@@ -12,7 +12,7 @@
                     <jsp:param name="title" value="Giỏ hàng - Aurora" />
                 </jsp:include>
 
-                <!-- CSS riêng trang Cart -->
+                <!-- CSS riêng trang Profile -->
                 <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
             </head>
 
