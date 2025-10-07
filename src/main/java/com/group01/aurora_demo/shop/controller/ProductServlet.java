@@ -8,6 +8,7 @@ import java.util.List;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.dao.ImageDAO;
 import com.group01.aurora_demo.shop.dao.ProductDAO;
+import com.group01.aurora_demo.shop.dao.PublisherDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.model.Author;
 import com.group01.aurora_demo.shop.model.BookDetail;
@@ -137,7 +138,7 @@ public class ProductServlet extends HttpServlet {
                     String[] authorNames = request.getParameterValues("authors");
                     String[] categoryIdParams = request.getParameterValues("CategoryIDs");
 
-                    String publisherId = request.getParameter("PublisherID");
+                    String publisherName = request.getParameter("PublisherName");
                     String publishedDateStr = request.getParameter("PublishedDate");
                     Date publishedDate = (publishedDateStr != null && !publishedDateStr.isEmpty())
                             ? Date.valueOf(publishedDateStr)
@@ -145,6 +146,12 @@ public class ProductServlet extends HttpServlet {
 
                     if (salePrice > originalPrice) {
                         throw new ServletException("Giá bán phải nhỏ hơn hoặc bằng giá gốc.");
+                    }
+
+                    PublisherDAO publisherDAO = new PublisherDAO();
+                    Long publisherId = null;
+                    if (publisherName != null && !publisherName.isBlank()) {
+                        publisherId = publisherDAO.findOrCreatePublisher(publisherName.trim());
                     }
 
                     // ===== Xử lý upload ảnh =====
@@ -159,8 +166,7 @@ public class ProductServlet extends HttpServlet {
                     product.setSalePrice(salePrice);
                     product.setStock(stock);
                     product.setWeight(weight);
-                    product.setPublisherId(
-                            publisherId != null && !publisherId.isEmpty() ? Long.parseLong(publisherId) : null);
+                    product.setPublisherId(publisherId);
                     product.setPublishedDate(publishedDate);
                     product.setImageUrls(imagePaths);
                     product.setPrimaryImageUrl(imagePaths.get(0));
