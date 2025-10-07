@@ -1,0 +1,66 @@
+/* Tổng thể */
+.order-management .order-content .order-tabs {
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: none;
+    border-radius: 5px;
+    padding: 0px 20px;
+}
+
+.order-management .order-content .order-tabs .nav-link {
+    border-color: transparent;
+    color: var(--color-font);
+    font-size: 16px;
+    padding: 10px;
+}
+
+.order-management .order-content .order-tabs .active {
+    border-color: transparent;
+    color: var(--color-one);
+    font-weight: 500;
+}
+
+.order-management .order-content .order-tabs .nav-link:hover {
+    border-color: transparent;
+    color: var(--color-one);
+}
+
+/* Body */
+.order-management .order-content .order-body .order-card {
+    background-color: #fff;
+    margin-top: 15px;
+    border-radius: 5px;
+    padding: 10px 10px 20px 10px
+}
+
+.order-management .order-content .order-body .order-card__header {
+    border-bottom: 2px solid var(--color-background);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.order-management .order-content .order-body .order-card__body {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--color-background);
+}
+
+.order-management .text-color {
+    color: var(--color-font);
+}
+
+.order-management .order-content .order-body .order-card__image {
+    width: 150px;
+    height: auto;
+}
+
+.order-management .order-content .order-body .order-card__price {
+    color: var(--color-two);
+    font-size: 18px;
+    font-weight: 550;
+}

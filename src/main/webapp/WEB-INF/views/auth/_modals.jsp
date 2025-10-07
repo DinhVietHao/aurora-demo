@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
-<!-- Modal Register -->
+<%-- Modal Register --%>
 <div
     class="modal fade authFormModal"
     id="registerModal"
@@ -26,7 +26,7 @@
                         <a href="./home.html">
                             <img
                                 class="auth-form-logo"
-                                src="<c:url value='/assets/images/branding/logo-header.png'/>"
+                                src="<c__colon__url value='/assets/images/branding/logo-header.png'/>"
                                 alt="Aurora"
                             />
                             <h4 class="auth-form-title text-center">
@@ -150,9 +150,9 @@
         </div>
     </div>
 </div>
-<!--End Modal Register -->
+<%-- End Modal Register --%>
 
-<!-- Modal Login -->
+<%-- Modal Login --%>
 <div
     class="modal fade authFormModal"
     id="loginModal"
@@ -176,7 +176,7 @@
                         <a href="./home.html">
                             <img
                                 class="auth-form-logo"
-                                src="<c:url value='/assets/images/branding/logo-header.png'/>"
+                                src="<c__colon__url value='/assets/images/branding/logo-header.png'/>"
                                 alt="Aurora"
                             />
                             <h4 class="auth-form-title text-center">
@@ -282,9 +282,9 @@
         </div>
     </div>
 </div>
-<!--End Modal Login -->
+<%-- End Modal Login --%>
 
-<!-- Modal Forget Password -->
+<%-- Modal Forget Password --%>
 <div
     class="modal fade authFormModal"
     id="forgetPasswordModal"
@@ -338,9 +338,9 @@
         </div>
     </div>
 </div>
-<!--End Modal Forget Password -->
+<%-- End Modal Forget Password --%>
 
-<!-- Modal Create Password -->
+<%-- Modal Create Password --%>
 <div
     class="modal fade authFormModal"
     id="createPasswordModal"
@@ -436,4 +436,4 @@
         </div>
     </div>
 </div>
-<!--End Modal Create Password -->
+<%-- End Modal Create Password --%>
