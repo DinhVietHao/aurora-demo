@@ -215,9 +215,9 @@
                                                                         <span class="badge bg-secondary">Ngừng
                                                                             bán</span>
                                                                     </c:when>
-                                                                    <c:when test="${p.status eq 'DRAFT'}">
-                                                                        <span
-                                                                            class="badge bg-info text-dark">Nháp</span>
+                                                                    <c:when test="${p.status eq 'PENDING'}">
+                                                                        <span class="badge bg-info text-dark">Chờ
+                                                                            Duyệt</span>
                                                                     </c:when>
                                                                     <c:otherwise>
                                                                         <span class="badge bg-dark">Không xác
@@ -412,15 +412,33 @@
 
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label for="publisherId" class="form-label">Nhà xuất bản
-                                                    (PublisherID)</label>
-                                                <select class="form-select" id="publisherId" name="PublisherID">
-                                                    <option value="">Chọn NXB</option>
-                                                    <!-- render danh sách Publisher từ DB -->
-                                                    <option value="1">NXB Trẻ</option>
-                                                    <option value="2">NXB Giáo dục</option>
-                                                </select>
+                                                <label for="publisherName" class="form-label">Nhà xuất bản</label>
+                                                <input list="publisherList" class="form-control" id="publisherName"
+                                                    name="PublisherName" placeholder="Nhập tên nhà xuất bản...">
                                             </div>
+                                            <datalist id="publisherList">
+                                                <option value="Nhà xuất bản Giáo dục Việt Nam">
+                                                <option value="Nhà xuất bản Trẻ">
+                                                <option value="Nhà xuất bản Kim Đồng">
+                                                <option value="Nhà xuất bản Tổng hợp Thành phố Hồ Chí Minh">
+                                                <option value="Nhà Xuất Bản TP.HCM">
+                                                <option value="Nhà xuất bản Hội Nhà văn">
+                                                <option value="Nhà xuất bản Chính trị Quốc gia Sự thật">
+                                                <option value="Nhà xuất bản Phụ nữ Việt Nam">
+                                                <option value="Nhà xuất bản Lao Động">
+                                                <option value="Nhà xuất bản Hồng Đức">
+                                                <option value="Nhà xuất bản Dân Trí">
+                                                <option value="Nhà xuất bản Tư pháp">
+                                                <option value="Nhà xuất bản Khoa học Xã hội">
+                                                <option value="Nhà xuất bản Khoa học và Kỹ thuật">
+                                                <option value="Nhà xuất bản Y học">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Hà Nội">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Thành phố Hồ Chí Minh">
+                                                <option value="Nhà xuất bản Xây dựng">
+                                                <option value="Nhà xuất bản Thông tin & Truyền thông">
+                                                <option value="Nhà xuất bản Tri thức">
+                                                <option value="Nhà xuất bản Hà Nội">
+                                            </datalist>
                                             <div class="col-md-6">
                                                 <label for="publishedDate" class="form-label">Ngày phát hành</label>
                                                 <input type="date" class="form-control" id="publishedDate"
@@ -1150,7 +1168,7 @@
                         src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
                     <script src="${ctx}/assets/js/shop/scripts.js"></script>
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
                 </body>
 
                 </html>

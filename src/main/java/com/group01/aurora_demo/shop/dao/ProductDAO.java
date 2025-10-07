@@ -107,7 +107,7 @@ public class ProductDAO {
         String sqlInsertProduct = """
                 INSERT INTO Products (ShopID, Title, Description, OriginalPrice, SalePrice, Stock, PublisherID,
                                       Weight, PublishedDate, [Status])
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
                 """;
 
         String sqlInsertBookDetail = """
@@ -253,24 +253,24 @@ public class ProductDAO {
     }
 
     public boolean deleteProduct(long productId) {
-    String sql = "DELETE FROM Products WHERE ProductID = ?";
-    try (Connection cn = DataSourceProvider.get().getConnection();
-         PreparedStatement stmt = cn.prepareStatement(sql)) {
+        String sql = "DELETE FROM Products WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = cn.prepareStatement(sql)) {
 
-        stmt.setLong(1, productId);
-        int affectedRows = stmt.executeUpdate();
+            stmt.setLong(1, productId);
+            int affectedRows = stmt.executeUpdate();
 
-        // Nếu trigger chặn, SQL Server sẽ không xóa dòng nào → affectedRows = 0
-        return affectedRows > 0;
+            // Nếu trigger chặn, SQL Server sẽ không xóa dòng nào → affectedRows = 0
+            return affectedRows > 0;
 
-    } catch (SQLException e) {
-        // Kiểm tra nếu lỗi do trigger RAISERROR gửi ra
-        if (e.getMessage().contains("Không thể xóa sản phẩm")) {
-            return false; // trigger gửi lỗi nghiệp vụ
+        } catch (SQLException e) {
+            // Kiểm tra nếu lỗi do trigger RAISERROR gửi ra
+            if (e.getMessage().contains("Không thể xóa sản phẩm")) {
+                return false; // trigger gửi lỗi nghiệp vụ
+            }
+            e.printStackTrace();
+            return false;
         }
-        e.printStackTrace();
-        return false;
     }
-}
 
 }

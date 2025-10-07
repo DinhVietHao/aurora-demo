@@ -1,20 +1,13 @@
 package com.group01.aurora_demo.shop.dao;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.shop.model.Category;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.Part;
 
 public class CategoryDAO {
     public List<Category> getCategoriesByProductId(long productId) throws SQLException {
