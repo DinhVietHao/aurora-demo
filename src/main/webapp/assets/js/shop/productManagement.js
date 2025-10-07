@@ -49,6 +49,10 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedFiles = selectedFiles.slice(0, 20);
     }
 
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach((f) => dataTransfer.items.add(f));
+    fileInput.files = dataTransfer.files;
+
     renderPreview();
   });
 
@@ -144,6 +148,10 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.innerText = "Chỉ được tải lên tối đa 20 ảnh.";
       selectedFiles = selectedFiles.slice(0, 20);
     }
+
+    const dataTransfer = new DataTransfer();
+    selectedFiles.forEach((f) => dataTransfer.items.add(f));
+    fileInput.files = dataTransfer.files;
 
     renderPreview();
   });

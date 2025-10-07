@@ -20,7 +20,7 @@ public class ShopServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect("/home");
             return;
         }
 
