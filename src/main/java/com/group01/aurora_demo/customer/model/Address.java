@@ -3,13 +3,13 @@ package com.group01.aurora_demo.customer.model;
 import java.sql.Date;
 
 public class Address {
-    private long addressId;
-    private String recipientName;
-    private String phone;
     private String city;
     private String ward;
-    private String description;
+    private String phone;
+    private long addressId;
     private Date createdAt;
+    private String description;
+    private String recipientName;
     private UserAddress userAddress;
 
     public long getAddressId() {

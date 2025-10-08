@@ -171,6 +171,17 @@ Validator.minLength = function (selector, min, message) {
   };
 };
 
+Validator.maxLength = function (selector, max, message) {
+  return {
+    selector: selector,
+    test: function (value) {
+      return value.length <= max
+        ? undefined
+        : message || `Vui lòng nhập tối đa ${max} ký tự`;
+    },
+  };
+};
+
 Validator.isConfirmed = function (selector, getConfirmValue, message) {
   return {
     selector: selector,
@@ -178,6 +189,28 @@ Validator.isConfirmed = function (selector, getConfirmValue, message) {
       return value === getConfirmValue()
         ? undefined
         : message || "Giá trị nhập vào không chính xác";
+    },
+  };
+};
+
+Validator.isName = function (selector, message) {
+  return {
+    selector: selector,
+    test: function (value) {
+      const regex = /^[a-zA-ZÀ-ỹ\s-]+$/;
+      return regex.test(value) ? undefined : message || "Tên không hợp lệ";
+    },
+  };
+};
+
+Validator.isPhone = function (selector, message) {
+  return {
+    selector: selector,
+    test: function (value) {
+      const regex = /^0\d{9,10}$/;
+      return regex.test(value)
+        ? undefined
+        : message || "Số điện thoại không hợp lệ";
     },
   };
 };

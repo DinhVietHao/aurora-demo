@@ -6,16 +6,15 @@ import java.time.LocalDateTime;
 public class Shop {
     private Long shopId;
     private String name;
-    private String description;
-    private BigDecimal ratingAvg;
     private String status;
     private Long ownerUserId;
-    private LocalDateTime createdAt;
-    private Long pickupAddressId;
-    private String invoiceEmail;
     private String avatarUrl;
+    private String description;
+    private String invoiceEmail;
     private String rejectReason;
-    private Address pickupAddress;
+    private BigDecimal ratingAvg;
+    private Long pickupAddressId;
+    private LocalDateTime createdAt;
 
     public Shop() {
     }
@@ -36,22 +35,6 @@ public class Shop {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getRatingAvg() {
-        return ratingAvg;
-    }
-
-    public void setRatingAvg(BigDecimal ratingAvg) {
-        this.ratingAvg = ratingAvg;
-    }
-
     public String getStatus() {
         return status;
     }
@@ -68,20 +51,20 @@ public class Shop {
         this.ownerUserId = ownerUserId;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
-    public Long getPickupAddressId() {
-        return pickupAddressId;
+    public String getDescription() {
+        return description;
     }
 
-    public void setPickupAddressId(Long pickupAddressId) {
-        this.pickupAddressId = pickupAddressId;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getInvoiceEmail() {
@@ -92,14 +75,6 @@ public class Shop {
         this.invoiceEmail = invoiceEmail;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
     public String getRejectReason() {
         return rejectReason;
     }
@@ -108,11 +83,28 @@ public class Shop {
         this.rejectReason = rejectReason;
     }
 
-    public Address getPickupAddress() {
-        return pickupAddress;
+    public BigDecimal getRatingAvg() {
+        return ratingAvg;
     }
 
-    public void setPickupAddress(Address pickupAddress) {
-        this.pickupAddress = pickupAddress;
+    public void setRatingAvg(BigDecimal ratingAvg) {
+        this.ratingAvg = ratingAvg;
     }
+
+    public Long getPickupAddressId() {
+        return pickupAddressId;
+    }
+
+    public void setPickupAddressId(Long pickupAddressId) {
+        this.pickupAddressId = pickupAddressId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
 }
