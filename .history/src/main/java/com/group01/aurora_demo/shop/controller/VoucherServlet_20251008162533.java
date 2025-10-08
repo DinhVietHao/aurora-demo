@@ -34,10 +34,10 @@ public class VoucherServlet extends HttpServlet {
             action = "view";
 
         try {
-            VoucherDAO voucherDAO = new VoucherDAO();
-            ShopDAO shopDAO = new ShopDAO();
             switch (action) {
                 case "view":
+                    VoucherDAO voucherDAO = new VoucherDAO();
+                    ShopDAO shopDAO = new ShopDAO();
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
 
                     Map<String, Integer> stats = voucherDAO.getVoucherStatsByShop(shopId);
@@ -46,11 +46,6 @@ public class VoucherServlet extends HttpServlet {
                     request.setAttribute("stats", stats);
                     request.setAttribute("listVoucher", listVoucher);
                     request.getRequestDispatcher("/WEB-INF/views/shop/voucherManage.jsp").forward(request, response);
-                    break;
-                case "detail":
-                    String voucherCode = request.getParameter("voucherCode");
-                    Voucher voucher = voucherDAO.getVoucherByVoucherCode(voucherCode);
-                    request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp").forward(request, response);
                     break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);

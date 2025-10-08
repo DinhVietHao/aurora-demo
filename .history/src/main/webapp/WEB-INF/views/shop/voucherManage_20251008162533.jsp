@@ -281,11 +281,12 @@
                                                                         <!-- Thao tác -->
                                                                         <td>
                                                                             <div class="action-buttons">
-                                                                                <a href="/shop/voucher?action=detail&voucherCode=${v.code}"
+                                                                                <button
                                                                                     class="btn btn-sm btn-outline-primary"
+                                                                                    onclick="viewVoucher('${v.code}')"
                                                                                     title="Xem chi tiết">
                                                                                     <i class="bi bi-eye"></i>
-                                                                                </a>
+                                                                                </button>
                                                                                 <button
                                                                                     class="btn btn-sm btn-outline-warning"
                                                                                     onclick="editVoucher('${v.code}')"
