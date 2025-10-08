@@ -50,7 +50,7 @@ public class VoucherServlet extends HttpServlet {
                 case "detail":
                     String voucherCode = request.getParameter("voucherCode");
                     Voucher voucher = voucherDAO.getVoucherByVoucherCode(voucherCode);
-                    request.setAttribute("voucher", voucher);
+                    request.setAttribute("voucher", action);
                     request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp").forward(request, response);
                     break;
                 default:
