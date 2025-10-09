@@ -47,7 +47,7 @@ public class CartServlet extends HttpServlet {
         String path = req.getPathInfo();
 
         if (path == null || path.equals("/") || path.equals("/view")) {
-            List<com.group01.aurora_demo.customer.model.CartItem> cartItems = cartItemDAO
+            List<CartItem> cartItems = cartItemDAO
                     .getCartItemsByUserId(user.getId());
             if (cartItems.isEmpty()) {
                 req.setAttribute("shopCarts", null);

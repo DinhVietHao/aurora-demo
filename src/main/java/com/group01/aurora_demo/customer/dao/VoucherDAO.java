@@ -110,6 +110,46 @@ public class VoucherDAO {
         return listVouchersSystem;
     }
 
+    public Voucher getVoucherByCode(String code, boolean isShopVoucher) {
+        String sql = """
+                    SELECT
+                        VoucherID, Code, DiscountType, Value, MaxAmount,
+                        MinOrderAmount, StartAt, EndAt, UsageLimit,
+                        PerUserLimit, Status, UsageCount, IsShopVoucher, ShopID
+                    FROM Vouchers
+                    WHERE Code = ?
+                    AND IsShopVoucher = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setString(1, code);
+            ps.setBoolean(2, isShopVoucher);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Voucher voucher = new Voucher();
+                voucher.setVoucherId(rs.getLong("VoucherID"));
+                voucher.setCode(rs.getString("Code"));
+                voucher.setDiscountType(rs.getString("DiscountType"));
+                voucher.setValue(rs.getDouble("Value"));
+                voucher.setMaxAmount(rs.getDouble("MaxAmount"));
+                voucher.setMinOrderAmount(rs.getDouble("MinOrderAmount"));
+                voucher.setStartAt(rs.getTimestamp("StartAt"));
+                voucher.setEndAt(rs.getTimestamp("EndAt"));
+                voucher.setUsageLimit(rs.getInt("UsageLimit"));
+                voucher.setPerUserLimit(rs.getInt("PerUserLimit"));
+                voucher.setStatus(rs.getString("Status"));
+                voucher.setUsageCount(rs.getInt("UsageCount"));
+                voucher.setShopVoucher(rs.getBoolean("IsShopVoucher"));
+                voucher.setShopId(rs.getLong("ShopID"));
+                return voucher;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
     public static void main(String[] args) {
         // Test thử chức năng tạo giỏ hàng
         VoucherDAO voucherDAO = new VoucherDAO();

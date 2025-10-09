@@ -11,6 +11,7 @@ public class Shop {
     private String invoiceEmail;
     private String avatarUrl;
     private String rejectReason;
+    private Address address;
 
     public long getShopId() {
         return shopId;
@@ -90,6 +91,14 @@ public class Shop {
 
     public void setRejectReason(String rejectReason) {
         this.rejectReason = rejectReason;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
     }
 
     @Override

@@ -18,6 +18,7 @@ public class Product {
     private Boolean isBundle;
     private Long categoryId;
     private LocalDate publishedDate;
+    private double weight;
     private String primaryImageUrl;
     private List<ProductImages> images;
     private List<Author> authors;
@@ -168,6 +169,14 @@ public class Product {
 
     public void setShop(Shop shop) {
         this.shop = shop;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
     }
 
     @Override

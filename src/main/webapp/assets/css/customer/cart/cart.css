@@ -130,3 +130,10 @@
 .cart-system-voucher .disabled {
     opacity: 0.7;
 }
+#addressModal .card-default {
+  color: var(--color-three);
+  font-weight: 500;
+  font-size: 12px;
+  padding: 1px 2px;
+  border: 1px solid var(--color-three);
+}

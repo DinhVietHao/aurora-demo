@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.customer.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.customer.model.Address;
 import com.group01.aurora_demo.customer.model.CartItem;
 import com.group01.aurora_demo.customer.model.Shop;
 import com.group01.aurora_demo.catalog.model.ProductImages;
@@ -21,6 +22,11 @@ import java.util.List;
  * @author Lê Minh Kha
  */
 public class CartItemDAO {
+    private AddressDAO addressDAO;
+
+    public CartItemDAO() {
+        this.addressDAO = new AddressDAO();
+    }
 
     /**
      * Thêm một CartItem mới vào giỏ hàng.
@@ -251,6 +257,155 @@ public class CartItemDAO {
                 Shop shop = new Shop();
                 shop.setShopId(rs.getLong("ShopID"));
                 shop.setName(rs.getString("ShopName"));
+                product.setShop(shop);
+
+                // Lấy ảnh chính của sản phẩm
+                ProductImages productImages = new ProductImages();
+                productImages.setImageUrl(rs.getString("ImageUrl"));
+                product.setImages(List.of(productImages));
+
+                // Lấy thông tin chi tiết sách (nếu có)
+                BookDetail bookDetail = new BookDetail();
+                bookDetail.setAuthor(rs.getString("Author"));
+                product.setBookDetail(bookDetail);
+
+                cartItem.setProduct(product);
+                cartItems.add(cartItem);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return cartItems;
+    }
+
+    public List<CartItem> getCheckedCartItems(long userId) {
+        List<CartItem> cartItems = new ArrayList<>();
+        String sql = """
+                SELECT
+                     ci.CartItemID,
+                     ci.UserID,
+                     ci.ProductID,
+                     ci.Quantity,
+                     ci.UnitPrice,
+                     ci.Subtotal,
+                     ci.IsChecked,
+                     p.Title ,
+                     p.OriginalPrice,
+                     p.SalePrice,
+                     p.Weight,
+                	 s.ShopID,
+                     s.Name AS ShopName,
+                     img.Url AS ImageUrl,
+                     a.AuthorName AS Author
+                FROM CartItems ci
+                JOIN Products p ON ci.ProductID = p.ProductID
+                JOIN Shops s ON p.ShopID = s.ShopID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
+                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CartItem cartItem = new CartItem();
+                cartItem.setCartItemId(rs.getLong("CartItemID"));
+                cartItem.setUserId(rs.getLong("UserID"));
+                cartItem.setQuantity(rs.getInt("Quantity"));
+                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
+                cartItem.setSubtotal(rs.getDouble("Subtotal"));
+                cartItem.setIsChecked(rs.getBoolean("IsChecked"));
+
+                // Mapping thông tin sản phẩm
+                Product product = new Product();
+                product.setProductId(rs.getLong("ProductID"));
+                product.setTitle(rs.getString("Title"));
+                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setWeight(rs.getDouble("Weight"));
+
+                Shop shop = new Shop();
+                shop.setShopId(rs.getLong("ShopID"));
+                shop.setName(rs.getString("ShopName"));
+
+                Address shopAddress = this.addressDAO.getAddressByShopId(rs.getLong("ShopID"));
+                shop.setAddress(shopAddress);
+                product.setShop(shop);
+
+                // Lấy ảnh chính của sản phẩm
+                ProductImages productImages = new ProductImages();
+                productImages.setImageUrl(rs.getString("ImageUrl"));
+                product.setImages(List.of(productImages));
+
+                // Lấy thông tin chi tiết sách (nếu có)
+                BookDetail bookDetail = new BookDetail();
+                bookDetail.setAuthor(rs.getString("Author"));
+                product.setBookDetail(bookDetail);
+
+                cartItem.setProduct(product);
+                cartItems.add(cartItem);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return cartItems;
+    }
+
+    public List<CartItem> getCheckedCartItemsByShop(long userId, long shopId) {
+        List<CartItem> cartItems = new ArrayList<>();
+        String sql = """
+                SELECT
+                     ci.CartItemID,
+                     ci.UserID,
+                     ci.ProductID,
+                     ci.Quantity,
+                     ci.UnitPrice,
+                     ci.Subtotal,
+                     ci.IsChecked,
+                     p.Title ,
+                     p.OriginalPrice,
+                     p.SalePrice,
+                     p.Weight,
+                	 s.ShopID,
+                     s.Name AS ShopName,
+                     img.Url AS ImageUrl,
+                     a.AuthorName AS Author
+                FROM CartItems ci
+                JOIN Products p ON ci.ProductID = p.ProductID
+                JOIN Shops s ON p.ShopID = s.ShopID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
+                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, shopId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                CartItem cartItem = new CartItem();
+                cartItem.setCartItemId(rs.getLong("CartItemID"));
+                cartItem.setUserId(rs.getLong("UserID"));
+                cartItem.setQuantity(rs.getInt("Quantity"));
+                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
+                cartItem.setSubtotal(rs.getDouble("Subtotal"));
+                cartItem.setIsChecked(rs.getBoolean("IsChecked"));
+
+                // Mapping thông tin sản phẩm
+                Product product = new Product();
+                product.setProductId(rs.getLong("ProductID"));
+                product.setTitle(rs.getString("Title"));
+                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setWeight(rs.getDouble("Weight"));
+
+                Shop shop = new Shop();
+                shop.setShopId(rs.getLong("ShopID"));
+                shop.setName(rs.getString("ShopName"));
+
+                Address shopAddress = this.addressDAO.getAddressByShopId(rs.getLong("ShopID"));
+                shop.setAddress(shopAddress);
                 product.setShop(shop);
 
                 // Lấy ảnh chính của sản phẩm
