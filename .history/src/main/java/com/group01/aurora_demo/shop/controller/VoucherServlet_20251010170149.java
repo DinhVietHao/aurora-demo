@@ -72,10 +72,9 @@ public class VoucherServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json;charset=UTF-8");
+                response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         JSONObject json = new JSONObject();
-
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
@@ -95,8 +94,8 @@ public class VoucherServlet extends HttpServlet {
                     Long shopId = shopDAO.getShopIdByUserId(user.getId());
                     String voucherCode = request.getParameter("voucherCode");
                     boolean isDuplicate = voucherDAO.checkVoucherCode(voucherCode, shopId);
-                    json.put("success", !isDuplicate);
-                    out.println(json.toString());
+                    request.setAttribute("isDuplicate", isDuplicate);
+                    request.getRequestDispatcher("/WEB-INF/views/shop/createVoucher.jsp").forward(request, response);
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;
