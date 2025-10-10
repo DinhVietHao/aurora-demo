@@ -65,7 +65,7 @@ function initializeFormValidation() {
   // Special validation for voucher code
   const voucherCode = document.getElementById("voucherCode");
   if (voucherCode) {
-    voucherCode.addEventListener("blur", function () {
+    voucherCode.addEventListener("input", function () {
       // Remove spaces and convert to uppercase
       this.value = this.value.replace(/\s/g, "").toUpperCase();
       validateVoucherCode();
@@ -184,6 +184,17 @@ function validateField(event) {
   }
 }
 
+// Xóa thông báo cũ (cả valid/invalid feedback)
+function clearFieldMessage(field) {
+  field.classList.remove("is-invalid", "is-valid");
+
+  const invalid = field.parentNode.querySelector(".invalid-feedback");
+  if (invalid) invalid.remove();
+
+  const valid = field.parentNode.querySelector(".valid-feedback");
+  if (valid) valid.remove();
+}
+
 // Clear field validation
 function clearValidation(event) {
   const field = event.target;
@@ -196,18 +207,20 @@ function clearValidation(event) {
 }
 
 // Validate voucher code
-function validateVoucherCode() {
+const validateVoucherCode = async () => {
   const field = document.getElementById("voucherCode");
   const value = field.value.trim();
 
+  clearFieldMessage(field);
+
   if (!value) {
     showFieldError(field, "Mã voucher không được để trống");
-    return false;
+    return;
   }
 
   if (value.length < 3) {
     showFieldError(field, "Mã voucher phải có ít nhất 3 ký tự");
-    return false;
+    return;
   }
 
   if (!/^[A-Z0-9]+$/.test(value)) {
@@ -215,28 +228,30 @@ function validateVoucherCode() {
       field,
       "Mã voucher chỉ được chứa chữ cái và số, không có khoảng trắng"
     );
-    return false;
+    return;
   }
 
-  fetch("/shop/voucher?action=checkVoucherCode", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "voucherCode=" + value,
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        showFieldSuccess(field, "Mã voucher hợp lệ");
-      } else {
-        showFieldError(field, "Mã voucher đã tồn tại");
-        return false;
-      }
+  try {
+    clearFieldMessage(field);
+
+    const res = await fetch("/shop/voucher?action=checkVoucherCode", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "voucherCode=" + value,
     });
 
-  return true;
-}
+    const data = await res.json();
+
+    if (data.success) {
+      showFieldSuccess(field, "Mã voucher hợp lệ");
+    } else {
+      showFieldError(field, "Mã voucher đã tồn tại");
+    }
+  } catch (err) {
+    showFieldError(field, "Lỗi kết nối đến máy chủ");
+    console.error(err);
+  }
+};
 
 // Validate discount value
 function validateDiscountValue() {
@@ -302,6 +317,7 @@ function validateDates() {
 
 // Show field error
 function showFieldError(field, message) {
+  clearFieldMessage(field);
   field.classList.remove("is-valid");
   field.classList.add("is-invalid");
 
@@ -316,6 +332,7 @@ function showFieldError(field, message) {
 
 // Show field success
 function showFieldSuccess(field, message) {
+  clearFieldMessage(field);
   field.classList.remove("is-invalid");
   field.classList.add("is-valid");
 
