@@ -66,32 +66,5 @@ public class VoucherServlet extends HttpServlet {
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
-        if (user == null) {
-            response.sendRedirect("/home");
-            return;
-        }
-
-        String action = request.getParameter("action");
-        if (action == null)
-            action = "view";
-
-        try {
-
-            switch (action) {
-                case "checkVoucherCode":
-
-                default:
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-    }
+    
 }

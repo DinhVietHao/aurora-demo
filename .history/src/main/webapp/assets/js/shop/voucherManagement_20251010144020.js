@@ -89,7 +89,7 @@ function createNewVoucher() {
   console.log("Creating new voucher...");
 
   // Navigate to create voucher page or show modal
-  window.location.href = "/shop/voucher?action=create";
+  window.location.href = "/";
 }
 
 // View voucher details
