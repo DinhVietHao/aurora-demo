@@ -89,14 +89,14 @@ public class VoucherServlet extends HttpServlet {
         ShopDAO shopDAO = new ShopDAO();
         VoucherDAO voucherDAO = new VoucherDAO();
         try {
-
             switch (action) {
                 case "checkVoucherCode":
                     Long shopId = shopDAO.getShopIdByUserId(user.getId());
                     String voucherCode = request.getParameter("voucherCode");
                     boolean isDuplicate = voucherDAO.checkVoucherCode(voucherCode, shopId);
                     json.put("success", !isDuplicate);
-                    out.println(json.toString());
+                    out.print(json.toString());
+                    break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;
