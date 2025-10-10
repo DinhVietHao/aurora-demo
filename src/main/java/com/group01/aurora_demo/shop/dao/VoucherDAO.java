@@ -162,7 +162,7 @@ public class VoucherDAO {
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, code);
-            ps.setLong(3, shopId);
+            ps.setLong(2, shopId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -171,7 +171,7 @@ public class VoucherDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return false;
     }
