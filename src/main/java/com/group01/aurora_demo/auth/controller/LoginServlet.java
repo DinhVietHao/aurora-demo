@@ -1,11 +1,10 @@
 package com.group01.aurora_demo.auth.controller;
 
 import com.group01.aurora_demo.auth.service.GoogleLogin;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
 import com.group01.aurora_demo.auth.model.GoogleAccount;
-
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.common.util.Json;
-import com.group01.aurora_demo.customer.dao.CartItemDAO;
 import com.group01.aurora_demo.auth.model.User;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,11 +12,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServlet;
-
-import com.group01.aurora_demo.common.filter.AuthRequiredFilter;
-import com.group01.aurora_demo.auth.service.RememberMeService;
-import com.group01.aurora_demo.auth.dao.RememberMeTokenDAO;
-
 import org.mindrot.jbcrypt.BCrypt;
 import java.io.IOException;
 import java.util.UUID;
@@ -63,36 +57,8 @@ public class LoginServlet extends HttpServlet {
 
         }
 
-        if (PROVIDER_LOCAL.equals(provider) && issueRemember) {
-            try {
-                RememberMeService svc = new RememberMeService(new RememberMeTokenDAO(), new UserDAO(), req::isSecure);
-                svc.issueToken(user, resp);
-            } catch (Exception ignore) {
-                System.out.println(ignore.getMessage());
-            }
-        }
-
-        String redirect = (String) session.getAttribute(AuthRequiredFilter.LOGIN_REDIRECT);
-        if (redirect != null) {
-            session.removeAttribute(AuthRequiredFilter.LOGIN_REDIRECT);
-
-            if (redirect.startsWith("http://") || redirect.startsWith("https://")) {
-                try {
-                    java.net.URI u = java.net.URI.create(redirect);
-                    String path = (u.getRawPath() != null) ? u.getRawPath() : "";
-                    String q = (u.getRawQuery() != null) ? ("?" + u.getRawQuery()) : "";
-                    redirect = path + q;
-                } catch (IllegalArgumentException ignore) {
-                    redirect = null;
-                }
-            }
-        }
-        if (redirect == null || redirect.isBlank()) {
-            redirect = req.getContextPath() + "/home";
-        }
-
         if (PROVIDER_LOCAL.equals(provider)) {
-            Json.sendOk(resp, java.util.Map.of("ok", true, "redirect", redirect));
+            Json.sendOk(resp, java.util.Map.of("ok", true, "redirect", req.getContextPath() + "/home"));
         } else {
             redirectHome(req, resp);
         }

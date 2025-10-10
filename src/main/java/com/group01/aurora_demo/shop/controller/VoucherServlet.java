@@ -44,7 +44,7 @@ public class VoucherServlet extends HttpServlet {
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
 
                     Map<String, Integer> stats = voucherDAO.getVoucherStatsByShop(shopId);
-                    List<Voucher> listVoucher = voucherDAO.getVouchersByShopId(shopId);
+                    List<Voucher> listVoucher = voucherDAO.getAllVouchersByShopId(shopId);
 
                     request.setAttribute("stats", stats);
                     request.setAttribute("listVoucher", listVoucher);

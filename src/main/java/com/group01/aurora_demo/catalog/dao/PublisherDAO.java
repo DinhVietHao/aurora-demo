@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.shop.dao;
+package com.group01.aurora_demo.catalog.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

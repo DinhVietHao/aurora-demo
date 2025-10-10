@@ -1,26 +1,23 @@
-package com.group01.aurora_demo.customer.controller;
+package com.group01.aurora_demo.cart.controller;
 
+import java.util.Map;
+import java.util.List;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.json.JSONObject;
-
-import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.customer.dao.CartItemDAO;
-import com.group01.aurora_demo.customer.dao.VoucherDAO;
-import com.group01.aurora_demo.customer.dao.dto.ShopCartDTO;
-import com.group01.aurora_demo.customer.model.CartItem;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.annotation.WebServlet;
+import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+import com.group01.aurora_demo.shop.dao.VoucherDAO;
+import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.cart.dao.dto.ShopCartDTO;
 
 @WebServlet("/cart/*")
 public class CartServlet extends HttpServlet {
@@ -47,7 +44,7 @@ public class CartServlet extends HttpServlet {
         String path = req.getPathInfo();
 
         if (path == null || path.equals("/") || path.equals("/view")) {
-            List<com.group01.aurora_demo.customer.model.CartItem> cartItems = cartItemDAO
+            List<com.group01.aurora_demo.cart.model.CartItem> cartItems = cartItemDAO
                     .getCartItemsByUserId(user.getId());
             if (cartItems.isEmpty()) {
                 req.setAttribute("shopCarts", null);
@@ -60,12 +57,12 @@ public class CartServlet extends HttpServlet {
                     ShopCartDTO shopCartDTO = new ShopCartDTO();
                     shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                     shopCartDTO.setItems(entry.getValue());
-                    shopCartDTO.setVouchers(voucherDAO.getShopVouchers(entry.getKey()));
+                    shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey()));
                     return shopCartDTO;
                 }).toList();
 
                 req.setAttribute("shopCarts", shopCarts);
-                req.setAttribute("systemVouchers", voucherDAO.getSystemVouchers());
+                req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
             }
             req.getRequestDispatcher("/WEB-INF/views/customer/cart/cart.jsp").forward(req, resp);
         }

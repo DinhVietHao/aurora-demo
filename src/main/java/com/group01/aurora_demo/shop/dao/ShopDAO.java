@@ -1,7 +1,7 @@
 package com.group01.aurora_demo.shop.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.shop.model.Address;
+import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.model.Shop;
 import java.sql.*;
 

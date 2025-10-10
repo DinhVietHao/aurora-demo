@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.customer.model;
+package com.group01.aurora_demo.cart.model;
 
 import java.time.LocalDateTime;
 

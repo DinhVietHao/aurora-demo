@@ -3,14 +3,13 @@ package com.group01.aurora_demo.catalog.model;
 public class BookDetail {
 
     private int pages;
-    private String ISBN;
     private String size;
-    private String author;
-    private long productId;
+    private String ISBN;
     private String version;
-    private String language;
+    private long productId;
     private String coverType;
     private String translator;
+    private String languageCode;
 
     public int getPages() {
         return pages;
@@ -18,14 +17,6 @@ public class BookDetail {
 
     public void setPages(int pages) {
         this.pages = pages;
-    }
-
-    public String getISBN() {
-        return ISBN;
-    }
-
-    public void setISBN(String iSBN) {
-        ISBN = iSBN;
     }
 
     public String getSize() {
@@ -36,20 +27,12 @@ public class BookDetail {
         this.size = size;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getISBN() {
+        return ISBN;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(long productId) {
-        this.productId = productId;
+    public void setISBN(String iSBN) {
+        ISBN = iSBN;
     }
 
     public String getVersion() {
@@ -60,12 +43,12 @@ public class BookDetail {
         this.version = version;
     }
 
-    public String getLanguage() {
-        return language;
+    public long getProductId() {
+        return productId;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setProductId(long productId) {
+        this.productId = productId;
     }
 
     public String getCoverType() {
@@ -82,6 +65,14 @@ public class BookDetail {
 
     public void setTranslator(String translator) {
         this.translator = translator;
+    }
+
+    public String getLanguageCode() {
+        return languageCode;
+    }
+
+    public void setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
     }
 
 }

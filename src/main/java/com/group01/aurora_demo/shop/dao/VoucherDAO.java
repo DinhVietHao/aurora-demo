@@ -1,20 +1,119 @@
 package com.group01.aurora_demo.shop.dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import com.group01.aurora_demo.common.config.DataSourceProvider;
+import java.util.List;
+import java.util.HashMap;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.sql.Connection;
+import java.util.ArrayList;
+import java.sql.SQLException;
+import java.sql.PreparedStatement;
 import com.group01.aurora_demo.shop.model.Voucher;
+import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class VoucherDAO {
-    public List<Voucher> getVouchersByShopId(long shopId) {
+    public List<Voucher> getActiveVouchersByShopId(long shopId) {
+        List<Voucher> listVouchersShop = new ArrayList<>();
+        String sql = """
+                      SELECT
+                          VoucherID,
+                          Code,
+                          DiscountType,
+                          Value,
+                          MaxAmount,
+                          MinOrderAmount,
+                          StartAt,
+                          EndAt,
+                          UsageLimit,
+                          PerUserLimit,
+                          Status,
+                          UsageCount,
+                          IsShopVoucher,
+                          ShopID
+                          FROM Vouchers
+                          WHERE IsShopVoucher = 1
+                            AND ShopID = ?
+                            AND StartAt <= SYSUTCDATETIME()
+                            AND EndAt   >= SYSUTCDATETIME()
+                            AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
+                            AND Status = 'ACTIVE'
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Voucher voucher = new Voucher();
+                voucher.setVoucherID(rs.getLong("VoucherID"));
+                voucher.setCode(rs.getString("Code"));
+                voucher.setDiscountType(rs.getString("DiscountType"));
+                voucher.setValue(rs.getDouble("Value"));
+                voucher.setMaxAmount(rs.getDouble("MaxAmount"));
+                voucher.setMinOrderAmount(rs.getDouble("MinOrderAmount"));
+                voucher.setStartAt(rs.getTimestamp("StartAt"));
+                voucher.setEndAt(rs.getTimestamp("EndAt"));
+                voucher.setUsageLimit(rs.getInt("UsageLimit"));
+                voucher.setPerUserLimit(rs.getInt("PerUserLimit"));
+                voucher.setStatus(rs.getString("Status"));
+                voucher.setUsageCount(rs.getInt("UsageCount"));
+                voucher.setShopVoucher(rs.getBoolean("IsShopVoucher"));
+                voucher.setShopID(rs.getObject("ShopID", Long.class));
+                listVouchersShop.add(voucher);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return listVouchersShop;
+    }
+
+    public List<Voucher> getActiveSystemVouchers() {
+        List<Voucher> listVouchersSystem = new ArrayList<>();
+        String sql = """
+                    SELECT
+                        VoucherID,
+                        Code,
+                        DiscountType,
+                        Value,
+                        MaxAmount,
+                        MinOrderAmount,
+                        StartAt,
+                        EndAt,
+                        UsageLimit,
+                        PerUserLimit,
+                        Status,
+                        UsageCount
+                    FROM Vouchers WHERE IsShopVoucher = 0
+                    AND StartAt <= SYSUTCDATETIME() AND EndAt >= SYSUTCDATETIME()
+                    AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
+                    AND [Status] = 'ACTIVE'
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Voucher voucher = new Voucher();
+                voucher.setVoucherID(rs.getLong("VoucherID"));
+                voucher.setCode(rs.getString("Code"));
+                voucher.setDiscountType(rs.getString("DiscountType"));
+                voucher.setValue(rs.getDouble("Value"));
+                voucher.setMaxAmount(rs.getDouble("MaxAmount"));
+                voucher.setMinOrderAmount(rs.getDouble("MinOrderAmount"));
+                voucher.setStartAt(rs.getTimestamp("StartAt"));
+                voucher.setEndAt(rs.getTimestamp("EndAt"));
+                voucher.setUsageLimit(rs.getInt("UsageLimit"));
+                voucher.setPerUserLimit(rs.getInt("PerUserLimit"));
+                voucher.setStatus(rs.getString("Status"));
+                voucher.setUsageCount(rs.getInt("UsageCount"));
+                listVouchersSystem.add(voucher);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return listVouchersSystem;
+    }
+
+    public List<Voucher> getAllVouchersByShopId(long shopId) {
         List<Voucher> list = new ArrayList<>();
         String sql = """
                     SELECT * FROM Vouchers
@@ -62,11 +161,9 @@ public class VoucherDAO {
                 v.setStatus(status);
                 list.add(v);
             }
-
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
-
         return list;
     }
 
@@ -99,7 +196,7 @@ public class VoucherDAO {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return stats;
     }
@@ -148,22 +245,18 @@ public class VoucherDAO {
                 }
                 v.setStatus(status);
             }
-
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
-
         return v;
     }
 
     public boolean checkVoucherCode(String code, Long shopId) {
         String sql = "SELECT COUNT(*) FROM Vouchers WHERE Code = ? AND ShopID = ?";
-
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, code);
             ps.setLong(2, shopId);
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
@@ -175,5 +268,4 @@ public class VoucherDAO {
         }
         return false;
     }
-
 }

@@ -1,8 +1,9 @@
-package com.group01.aurora_demo.customer.model;
+package com.group01.aurora_demo.profile.model;
 
 import java.sql.Date;
 
 public class Address {
+
     private String city;
     private String ward;
     private String phone;
@@ -11,30 +12,6 @@ public class Address {
     private String description;
     private String recipientName;
     private UserAddress userAddress;
-
-    public long getAddressId() {
-        return addressId;
-    }
-
-    public void setAddressId(long addressId) {
-        this.addressId = addressId;
-    }
-
-    public String getRecipientName() {
-        return recipientName;
-    }
-
-    public void setRecipientName(String recipientName) {
-        this.recipientName = recipientName;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
 
     public String getCity() {
         return city;
@@ -50,6 +27,22 @@ public class Address {
 
     public void setWard(String ward) {
         this.ward = ward;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public long getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(long addressId) {
+        this.addressId = addressId;
     }
 
     public Date getCreatedAt() {
@@ -68,19 +61,20 @@ public class Address {
         this.description = description;
     }
 
+    public String getRecipientName() {
+        return recipientName;
+    }
+
+    public void setRecipientName(String recipientName) {
+        this.recipientName = recipientName;
+    }
+
     public UserAddress getUserAddress() {
         return userAddress;
     }
 
     public void setUserAddress(UserAddress userAddress) {
         this.userAddress = userAddress;
-    }
-
-    @Override
-    public String toString() {
-        return "Address [addressId=" + addressId + ", recipientName=" + recipientName + ", phone=" + phone + ", city="
-                + city + ", ward=" + ward + ", description=" + description + ", createdAt=" + createdAt
-                + ", userAddress=" + userAddress + "]";
     }
 
 }

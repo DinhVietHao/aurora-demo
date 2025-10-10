@@ -1,8 +1,9 @@
 package com.group01.aurora_demo.catalog.model;
 
 public class Author {
+
     private Long authorId;
-    private String authorName;
+    private String name;
 
     public Long getAuthorId() {
         return authorId;
@@ -12,12 +13,12 @@ public class Author {
         this.authorId = authorId;
     }
 
-    public String getAuthorName() {
-        return authorName;
+    public String getName() {
+        return name;
     }
 
-    public void setAuthorName(String authorName) {
-        this.authorName = authorName;
+    public void setName(String name) {
+        this.name = name;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.catalog.model;
 
 public class Publisher {
+
     private Long publisherId;
     private String publisherName;
 
@@ -19,4 +20,5 @@ public class Publisher {
     public void setPublisherName(String publisherName) {
         this.publisherName = publisherName;
     }
+
 }

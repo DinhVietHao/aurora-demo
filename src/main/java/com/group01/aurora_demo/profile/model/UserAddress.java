@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.customer.model;
+package com.group01.aurora_demo.profile.model;
 
 public class UserAddress {
     private long userId;

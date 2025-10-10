@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.shop.dao;
+package com.group01.aurora_demo.catalog.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.shop.model.Author;
+import com.group01.aurora_demo.catalog.model.Author;
 
 public class AuthorDAO {
     public List<Author> getAuthorsByProductId(long productId) throws SQLException {

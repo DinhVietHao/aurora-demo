@@ -1,16 +1,16 @@
-package com.group01.aurora_demo.customer.dao;
+package com.group01.aurora_demo.cart.dao;
 
-import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.customer.model.CartItem;
-import com.group01.aurora_demo.customer.model.Shop;
-import com.group01.aurora_demo.catalog.model.ProductImages;
-import com.group01.aurora_demo.catalog.model.BookDetail;
+import com.group01.aurora_demo.shop.model.Shop;
+import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.catalog.model.BookDetail;
+import com.group01.aurora_demo.catalog.model.ProductImages;
+import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 import java.sql.PreparedStatement;
+import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -260,7 +260,7 @@ public class CartItemDAO {
 
                 // Lấy thông tin chi tiết sách (nếu có)
                 BookDetail bookDetail = new BookDetail();
-                bookDetail.setAuthor(rs.getString("Author"));
+                // bookDetail.setAuthors(rs.getString("Author")); --- !!! Error
                 product.setBookDetail(bookDetail);
 
                 cartItem.setProduct(product);

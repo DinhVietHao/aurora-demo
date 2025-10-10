@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.customer.controller;
+package com.group01.aurora_demo.profile.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,8 +7,8 @@ import java.util.List;
 import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.customer.dao.AddressDAO;
-import com.group01.aurora_demo.customer.model.Address;
+import com.group01.aurora_demo.profile.dao.AddressDAO;
+import com.group01.aurora_demo.profile.model.Address;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

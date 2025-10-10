@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Shop {
+
     private Long shopId;
     private String name;
     private String status;
@@ -15,9 +16,6 @@ public class Shop {
     private BigDecimal ratingAvg;
     private Long pickupAddressId;
     private LocalDateTime createdAt;
-
-    public Shop() {
-    }
 
     public Long getShopId() {
         return shopId;

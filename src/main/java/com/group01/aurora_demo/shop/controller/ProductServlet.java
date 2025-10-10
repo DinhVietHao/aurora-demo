@@ -1,26 +1,26 @@
 package com.group01.aurora_demo.shop.controller;
 
-import java.io.IOException;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.shop.dao.ImageDAO;
-import com.group01.aurora_demo.shop.dao.ProductDAO;
-import com.group01.aurora_demo.shop.dao.PublisherDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
-import com.group01.aurora_demo.shop.model.Author;
-import com.group01.aurora_demo.shop.model.BookDetail;
-import com.group01.aurora_demo.shop.model.Category;
-import com.group01.aurora_demo.shop.model.Product;
+import com.group01.aurora_demo.catalog.dao.ImageDAO;
+import com.group01.aurora_demo.catalog.model.Author;
+import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.catalog.model.Category;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.BookDetail;
+import com.group01.aurora_demo.catalog.dao.PublisherDAO;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/shop/product")
@@ -167,8 +167,8 @@ public class ProductServlet extends HttpServlet {
                     product.setQuantity(quantity);
                     product.setWeight(weight);
                     product.setPublisherId(publisherId);
-                    product.setPublishedDate(publishedDate);
-                    product.setImageUrls(imagePaths);
+                    // product.setPublishedDate(publishedDate);
+                    // product.setImageUrls(imagePaths);
                     product.setPrimaryImageUrl(imagePaths.get(0));
 
                     // ===== Tạo BookDetail =====
@@ -179,7 +179,7 @@ public class ProductServlet extends HttpServlet {
                     bookDetail.setPages(pages);
                     bookDetail.setSize(size);
                     bookDetail.setLanguageCode(languageCode);
-                    bookDetail.setIsbn(isbn);
+                    bookDetail.setISBN(isbn);
                     product.setBookDetail(bookDetail);
 
                     // ===== Tác giả =====

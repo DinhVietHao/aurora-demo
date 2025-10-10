@@ -1,6 +1,7 @@
-package com.group01.aurora_demo.shop.model;
+package com.group01.aurora_demo.catalog.model;
 
 public class Category {
+
     private long categoryId;
     private String name;
 

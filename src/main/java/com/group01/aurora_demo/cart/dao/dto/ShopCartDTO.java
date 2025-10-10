@@ -1,10 +1,9 @@
-package com.group01.aurora_demo.customer.dao.dto;
+package com.group01.aurora_demo.cart.dao.dto;
 
 import java.util.List;
-
-import com.group01.aurora_demo.customer.model.CartItem;
-import com.group01.aurora_demo.customer.model.Shop;
-import com.group01.aurora_demo.customer.model.Voucher;
+import com.group01.aurora_demo.shop.model.Shop;
+import com.group01.aurora_demo.shop.model.Voucher;
+import com.group01.aurora_demo.cart.model.CartItem;
 
 public class ShopCartDTO {
     private Shop shop;

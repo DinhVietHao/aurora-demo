@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.customer.controller;
+package com.group01.aurora_demo.profile.controller;
 
 import java.io.IOException;
 

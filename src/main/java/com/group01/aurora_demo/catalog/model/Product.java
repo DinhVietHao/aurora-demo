@@ -1,8 +1,8 @@
 package com.group01.aurora_demo.catalog.model;
 
 import java.util.List;
-import java.time.LocalDate;
-import com.group01.aurora_demo.customer.model.Shop;
+import java.sql.Timestamp;
+import com.group01.aurora_demo.shop.model.Shop;
 
 public class Product {
 
@@ -10,20 +10,24 @@ public class Product {
     private Long shopId;
     private String title;
     private String status;
-    private Integer stock;
+    private Double weight;
     private Long soldCount;
     private Long productId;
+    private Integer quantity;
     private Double avgRating;
     private Double salePrice;
     private Long publisherId;
     private String description;
     private String rejectReason;
+    private String returnReason;
     private Publisher publisher;
+    private Timestamp createdAt;
     private List<Author> authors;
     private Double originalPrice;
     private BookDetail bookDetail;
     private String primaryImageUrl;
-    private LocalDate publishedDate;
+    private Timestamp publishedDate;
+    private List<Category> categories;
     private List<ProductImages> images;
 
     public Shop getShop() {
@@ -58,12 +62,12 @@ public class Product {
         this.status = status;
     }
 
-    public Integer getStock() {
-        return stock;
+    public Double getWeight() {
+        return weight;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 
     public Long getSoldCount() {
@@ -80,6 +84,14 @@ public class Product {
 
     public void setProductId(Long productId) {
         this.productId = productId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
     public Double getAvgRating() {
@@ -122,12 +134,28 @@ public class Product {
         this.rejectReason = rejectReason;
     }
 
+    public String getReturnReason() {
+        return returnReason;
+    }
+
+    public void setReturnReason(String returnReason) {
+        this.returnReason = returnReason;
+    }
+
     public Publisher getPublisher() {
         return publisher;
     }
 
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
 
     public List<Author> getAuthors() {
@@ -162,12 +190,20 @@ public class Product {
         this.primaryImageUrl = primaryImageUrl;
     }
 
-    public LocalDate getPublishedDate() {
+    public Timestamp getPublishedDate() {
         return publishedDate;
     }
 
-    public void setPublishedDate(LocalDate publishedDate) {
+    public void setPublishedDate(Timestamp publishedDate) {
         this.publishedDate = publishedDate;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
     }
 
     public List<ProductImages> getImages() {
