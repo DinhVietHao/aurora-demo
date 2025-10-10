@@ -206,8 +206,10 @@
                                                                 <c:set var="progressPercent"
                                                                     value="${(voucher.usageCount * 100) / voucher.usageLimit}" />
                                                             </c:if>
+                                                            <% String width = request.getAttribute("progressPercent") + "%"; %>
                                                             <div class="progress-bar bg-success" role="progressbar"
-                                                                style="width: ${progressPercent}%" id=" usageProgress">
+                                                                style="width: <c:out value='${progressPercent}'/>%;"
+                                                                id="usageProgress">
                                                                 ${progressPercent}%
                                                             </div>
                                                         </div>
