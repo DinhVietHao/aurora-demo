@@ -60,7 +60,7 @@
                                                         </span>
                                                     </c:if>
 
-                                                    <img src="http://localhost:8080/assets/images/catalog/thumbnails/${p.primaryImageUrl}"
+                                                    <img src="http://localhost:8080/assets/images/catalog/products/${p.primaryImageUrl}"
                                                         alt="${p.title}">
                                                 </div>
                                                 <div class="product-body">
@@ -79,7 +79,7 @@
                                                     </h6>
 
                                                     <!-- Lấy tên nhà xuất bản từ object Publisher -->
-                                                    <small class="author">${p.publisher.publisherName}</small>
+                                                    <small class="author">${p.authors[0].name}</small>
 
                                                     <p class="title">${p.title}</p>
                                                     <div class="rating">

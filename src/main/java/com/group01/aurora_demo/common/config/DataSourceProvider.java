@@ -20,12 +20,18 @@ public class DataSourceProvider {
         // JDBC URL: reads system property AURORA_JDBC_URL, falls back to local SQL
         // Server.
         cfg.setJdbcUrl(System.getProperty("AURORA_JDBC_URL",
-                "jdbc:sqlserver://localhost:1433;databaseName=Aurora;encrypt=false"));
+                "jdbc:sqlserver://online-bookstore-dbserver.database.windows.net:1433;"
+                        + "database=OnlineBookstore;"
+                        + "encrypt=true;"
+                        + "trustServerCertificate=false;"
+                        + "hostNameInCertificate=*.database.windows.net;"
+                        + "loginTimeout=30;"));
+
         // DB username: can be overridden with -DAURORA_DB_USER=...
-        cfg.setUsername(System.getProperty("AURORA_DB_USER", "sa"));
+        cfg.setUsername(System.getProperty("AURORA_DB_USER", "bookstoredbadmin"));
 
         // DB password: can be overridden with -DAURORA_DB_PASSWORD=...
-        cfg.setPassword(System.getProperty("AURORA_DB_PASSWORD", "123"));
+        cfg.setPassword(System.getProperty("AURORA_DB_PASSWORD", "Aurora@2025!Group1"));
 
         // Pool size config
         cfg.setMaximumPoolSize(20); // Tăng từ 5 lên 20
