@@ -15,23 +15,17 @@ import java.util.List;
 @WebServlet("/home")
 public class HomeServlet extends HttpServlet {
 
-    // DAO instance used to interact with the Products table
-    private final ProductDAO productDAO = new ProductDAO();
+    private ProductDAO productDAO = new ProductDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        // Retrieve all products from the database
-        List<Product> products = productDAO.getAllProducts();
+        // List<Product> suggestedProducts = productDAO.getSuggestedProducts();
 
-        // Add products list to the request scope for JSP access
-        req.setAttribute("products", products);
+        // req.setAttribute("suggestedProducts", suggestedProducts);
 
-        // Forward request to home.jsp view
         req.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(req, resp);
 
-        // Temporary: Forward to index.jsp for testing purposes
-        // req.getRequestDispatcher("/index.jsp").forward(req, resp);
     }
 
 }

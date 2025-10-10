@@ -118,7 +118,7 @@
                             <c:if test="${empty products}">
                               <div class="alert alert-warning">Chưa có sản phẩm để hiển thị.</div>
                             </c:if>
-                            <c:forEach var="p" items="${products}">
+                            <c:forEach var="p" items="${suggestedProducts}">
                               <div class="col-6 col-md-4 col-lg-2">
                                 <a href="${ctx}/book?id=${p.productId}">
                                   <div class="product-card">
@@ -156,11 +156,19 @@
                                       <small class="author">${p.publisher.publisherName}</small>
                                       <p class="title">${p.title}</p>
                                       <div class="rating">
-                                        <i class="bi bi-star-fill text-warning small"></i>
-                                        <i class="bi bi-star-fill text-warning small"></i>
-                                        <i class="bi bi-star-fill text-warning small"></i>
-                                        <i class="bi bi-star-fill text-warning small"></i>
-                                        <i class="bi bi-star-half text-warning small"></i>
+                                        <c:forEach begin="1" end="5" var="i">
+                                          <c:choose>
+                                            <c:when test="${i <= p.avgRating}">
+                                              <i class="bi bi-star-fill text-warning small"></i>
+                                            </c:when>
+                                            <c:when test="${i - p.avgRating <= 0.5}">
+                                              <i class="bi bi-star-half text-warning small"></i>
+                                            </c:when>
+                                            <c:otherwise>
+                                              <i class="bi bi-star text-warning small"></i>
+                                            </c:otherwise>
+                                          </c:choose>
+                                        </c:forEach>
                                         <span>Đã bán ${p.soldCount}</span>
                                       </div>
                                     </div>

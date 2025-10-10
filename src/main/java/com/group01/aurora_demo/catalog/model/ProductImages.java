@@ -2,24 +2,24 @@ package com.group01.aurora_demo.catalog.model;
 
 public class ProductImages {
 
-    private long imageId;
-    private long productId;
+    private Long imageId;
+    private Long productId;
     private String imageUrl;
     private boolean isPrimary;
 
-    public long getImageId() {
+    public Long getImageId() {
         return imageId;
     }
 
-    public void setImageId(long imageId) {
+    public void setImageId(Long imageId) {
         this.imageId = imageId;
     }
 
-    public long getProductId() {
+    public Long getProductId() {
         return productId;
     }
 
-    public void setProductId(long productId) {
+    public void setProductId(Long productId) {
         this.productId = productId;
     }
 
@@ -37,14 +37,6 @@ public class ProductImages {
 
     public void setPrimary(boolean isPrimary) {
         this.isPrimary = isPrimary;
-
     }
 
-    @Override
-    public String toString() {
-        return "ProductImages{" + "imageId=" + imageId
-                + ", productId=" + productId
-                + ", imageUrl=" + imageUrl + '}';
-
-    }
 }

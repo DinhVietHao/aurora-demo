@@ -1,37 +1,37 @@
 package com.group01.aurora_demo.catalog.model;
 
-import java.time.LocalDate;
 import java.util.List;
-
+import java.time.LocalDate;
 import com.group01.aurora_demo.customer.model.Shop;
 
 public class Product {
 
-    private Long productId;
+    private Shop shop;
     private Long shopId;
     private String title;
-    private String description;
-    private Double originalPrice;
-    private Double salePrice;
-    private Long soldCount;
+    private String status;
     private Integer stock;
-    private Boolean isBundle;
-    private Long categoryId;
-    private LocalDate publishedDate;
-    private String primaryImageUrl;
-    private List<ProductImages> images;
-    private List<Author> authors;
+    private Long soldCount;
+    private Long productId;
+    private Double avgRating;
+    private Double salePrice;
+    private Long publisherId;
+    private String description;
+    private String rejectReason;
     private Publisher publisher;
-    private String publisherString;
+    private List<Author> authors;
+    private Double originalPrice;
     private BookDetail bookDetail;
-    private Shop shop;
+    private String primaryImageUrl;
+    private LocalDate publishedDate;
+    private List<ProductImages> images;
 
-    public Long getProductId() {
-        return productId;
+    public Shop getShop() {
+        return shop;
     }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
+    public void setShop(Shop shop) {
+        this.shop = shop;
     }
 
     public Long getShopId() {
@@ -50,36 +50,12 @@ public class Product {
         this.title = title;
     }
 
-    public String getDescription() {
-        return description;
+    public String getStatus() {
+        return status;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Double getOriginalPrice() {
-        return originalPrice;
-    }
-
-    public void setOriginalPrice(Double originalPrice) {
-        this.originalPrice = originalPrice;
-    }
-
-    public Double getSalePrice() {
-        return salePrice;
-    }
-
-    public void setSalePrice(Double salePrice) {
-        this.salePrice = salePrice;
-    }
-
-    public Long getSoldCount() {
-        return soldCount;
-    }
-
-    public void setSoldCount(Long soldCount) {
-        this.soldCount = soldCount;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public Integer getStock() {
@@ -90,60 +66,60 @@ public class Product {
         this.stock = stock;
     }
 
-    public Boolean getIsBundle() {
-        return isBundle;
+    public Long getSoldCount() {
+        return soldCount;
     }
 
-    public void setIsBundle(Boolean isBundle) {
-        this.isBundle = isBundle;
+    public void setSoldCount(Long soldCount) {
+        this.soldCount = soldCount;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
+    public Long getProductId() {
+        return productId;
     }
 
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
-    public String getPublisherString() {
-        return publisherString;
+    public Double getAvgRating() {
+        return avgRating;
     }
 
-    public void setPublisherString(String publisherString) {
-        this.publisherString = publisherString;
+    public void setAvgRating(Double avgRating) {
+        this.avgRating = avgRating;
     }
 
-    public LocalDate getPublishedDate() {
-        return publishedDate;
+    public Double getSalePrice() {
+        return salePrice;
     }
 
-    public void setPublishedDate(LocalDate publishedDate) {
-        this.publishedDate = publishedDate;
+    public void setSalePrice(Double salePrice) {
+        this.salePrice = salePrice;
     }
 
-    public String getPrimaryImageUrl() {
-        return primaryImageUrl;
+    public Long getPublisherId() {
+        return publisherId;
     }
 
-    public void setPrimaryImageUrl(String primaryImageUrl) {
-        this.primaryImageUrl = primaryImageUrl;
+    public void setPublisherId(Long publisherId) {
+        this.publisherId = publisherId;
     }
 
-    public List<ProductImages> getImages() {
-        return images;
+    public String getDescription() {
+        return description;
     }
 
-    public void setImages(List<ProductImages> images) {
-        this.images = images;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public List<Author> getAuthors() {
-        return authors;
+    public String getRejectReason() {
+        return rejectReason;
     }
 
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 
     public Publisher getPublisher() {
@@ -154,6 +130,22 @@ public class Product {
         this.publisher = publisher;
     }
 
+    public List<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
+    public Double getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Double originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
     public BookDetail getBookDetail() {
         return bookDetail;
     }
@@ -162,22 +154,28 @@ public class Product {
         this.bookDetail = bookDetail;
     }
 
-    public Shop getShop() {
-        return shop;
+    public String getPrimaryImageUrl() {
+        return primaryImageUrl;
     }
 
-    public void setShop(Shop shop) {
-        this.shop = shop;
+    public void setPrimaryImageUrl(String primaryImageUrl) {
+        this.primaryImageUrl = primaryImageUrl;
     }
 
-    @Override
-    public String toString() {
-        return "Product [productId=" + productId + ", shopId=" + shopId + ", title=" + title + ", description="
-                + description + ", originalPrice=" + originalPrice + ", salePrice=" + salePrice + ", soldCount="
-                + soldCount + ", stock=" + stock + ", isBundle=" + isBundle + ", categoryId=" + categoryId
-                + ", publishedDate=" + publishedDate + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
-                + ", authors=" + authors + ", publisher=" + publisher + ", publisherString=" + publisherString
-                + ", bookDetail=" + bookDetail + ", shop=" + shop + "]";
+    public LocalDate getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(LocalDate publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+
+    public List<ProductImages> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImages> images) {
+        this.images = images;
     }
 
 }

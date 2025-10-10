@@ -3,7 +3,6 @@ package com.group01.aurora_demo.catalog.model;
 public class Publisher {
     private Long publisherId;
     private String publisherName;
-    
 
     public Long getPublisherId() {
         return publisherId;
