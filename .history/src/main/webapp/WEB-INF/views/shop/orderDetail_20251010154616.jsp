@@ -20,7 +20,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.10">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.3">
                 </head>
 
                 <body class="sb-nav-fixed">

@@ -81,10 +81,10 @@ public class VoucherServlet extends HttpServlet {
             action = "view";
 
         try {
-
+            
             switch (action) {
-                case "checkVoucherCode":
-
+                case "view":
+                    
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;

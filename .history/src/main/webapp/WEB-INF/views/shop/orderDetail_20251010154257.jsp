@@ -20,7 +20,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.10">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.3">
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -316,7 +316,7 @@
                     </div>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/orderDetails.js?v=1.0.2"></script>
+                    <script src="${ctx}/assets/js/shop/orderDetails.js?v=1.0.1"></script>
                 </body>
 
                 </html>
