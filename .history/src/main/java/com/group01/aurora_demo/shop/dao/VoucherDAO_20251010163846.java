@@ -156,24 +156,6 @@ public class VoucherDAO {
         return v;
     }
 
-    public boolean checkVoucherCode(String code, Long shopId) {
-        String sql = "SELECT COUNT(*) FROM Vouchers WHERE Code = ? AND ShopID = ?";
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, code);
-            ps.setLong(3, shopId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    return count > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+    public
 
 }

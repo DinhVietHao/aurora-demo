@@ -159,15 +159,20 @@ public class VoucherDAO {
     public boolean checkVoucherCode(String code, Long shopId) {
         String sql = "SELECT COUNT(*) FROM Vouchers WHERE Code = ? AND ShopID = ?";
 
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, code);
-            ps.setLong(3, shopId);
+            if (shopId != null) {
+                ps.setLong(2, shopId);
+                ps.setLong(3, shopId);
+            } else {
+                ps.setNull(2, java.sql.Types.BIGINT);
+                ps.setNull(3, java.sql.Types.BIGINT);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    return count > 0;
+                    return count > 0; // true nếu bị trùng
                 }
             }
         } catch (SQLException e) {
