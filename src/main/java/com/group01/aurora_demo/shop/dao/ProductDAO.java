@@ -7,8 +7,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.group01.aurora_demo.catalog.model.Publisher;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.shop.model.Author;
 import com.group01.aurora_demo.shop.model.BookDetail;
@@ -16,6 +19,22 @@ import com.group01.aurora_demo.shop.model.Category;
 import com.group01.aurora_demo.shop.model.Product;
 
 public class ProductDAO {
+
+    public int countProducts() {
+        String sql = "SELECT COUNT(*) FROM Products";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return 0;
+    }
+
     public List<Product> getProductsByShopId(long shopId, int offset, int limit) throws SQLException {
         List<Product> list = new ArrayList<>();
 
@@ -273,4 +292,76 @@ public class ProductDAO {
         }
     }
 
+    public List<Product> getProductsByPage(int offset, int limit) {
+        List<Product> list = new ArrayList<>();
+
+        String sql = """
+                        SELECT p.ProductID, p.ShopID, p.Title, p.Description,
+                        p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
+                        p.PublisherID, p.PublishedDate, p.Weight, p.CreatedAt, p.status,
+                        b.Translator, b.[Version], b.CoverType, b.Pages,
+                        b.LanguageCode, b.[Size], b.ISBN,
+                        pi.Url AS PrimaryImageUrl
+                FROM Products p
+                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                ORDER BY p.CreatedAt DESC
+                OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+                        """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setInt(1, offset);
+            ps.setInt(2, limit);
+            CategoryDAO cateDAO = new CategoryDAO();
+            AuthorDAO authorDAO = new AuthorDAO();
+            ImageDAO imageDAO = new ImageDAO();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product p = new Product();
+                    p.setProductId(rs.getLong("ProductID"));
+                    p.setShopId(rs.getLong("ShopID"));
+                    p.setTitle(rs.getString("Title"));
+                    p.setDescription(rs.getString("Description"));
+                    p.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    p.setSalePrice(rs.getDouble("SalePrice"));
+                    p.setSoldCount(rs.getLong("SoldCount"));
+                    p.setQuantity(rs.getInt("Quantity"));
+                    p.setAuthors(authorDAO.getAuthorsByProductId(p.getProductId()));
+                    p.setCategories(cateDAO.getCategoriesByProductId(p.getProductId()));
+                    p.setStatus(rs.getString("status"));
+
+                    long publisherId = rs.getLong("PublisherID");
+                    if (!rs.wasNull()) {
+                        p.setPublisherId(publisherId);
+                    }
+
+                    p.setPublishedDate(rs.getDate("PublishedDate"));
+                    p.setWeight(rs.getDouble("Weight"));
+                    p.setCreatedAt(rs.getDate("CreatedAt"));
+                    p.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+
+                    // Gán BookDetail
+                    BookDetail b = new BookDetail();
+                    b.setProductId(rs.getLong("ProductID"));
+                    b.setTranslator(rs.getString("Translator"));
+                    b.setVersion(rs.getString("Version"));
+                    b.setCoverType(rs.getString("CoverType"));
+                    b.setPages(rs.getInt("Pages"));
+                    b.setLanguageCode(rs.getString("LanguageCode"));
+                    b.setSize(rs.getString("Size"));
+                    b.setIsbn(rs.getString("ISBN"));
+                    p.setBookDetail(b);
+
+                    p.setImageUrls(imageDAO.getProductImages(p.getProductId()));
+
+                    list.add(p);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error while loading products", e);
+        }
+        return list;
+    }
 }
