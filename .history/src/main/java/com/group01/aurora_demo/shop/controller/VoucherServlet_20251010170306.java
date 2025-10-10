@@ -75,7 +75,6 @@ public class VoucherServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         JSONObject json = new JSONObject();
-
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {

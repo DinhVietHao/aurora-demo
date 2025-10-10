@@ -162,12 +162,13 @@ public class VoucherDAO {
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, code);
+
             ps.setLong(3, shopId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    return count > 0;
+                    return count > 0; // true nếu bị trùng
                 }
             }
         } catch (SQLException e) {

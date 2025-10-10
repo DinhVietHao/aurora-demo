@@ -8,11 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
-
-import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
@@ -72,10 +69,6 @@ public class VoucherServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json;charset=UTF-8");
-        PrintWriter out = response.getWriter();
-        JSONObject json = new JSONObject();
-
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
@@ -86,17 +79,13 @@ public class VoucherServlet extends HttpServlet {
         String action = request.getParameter("action");
         if (action == null)
             action = "view";
-        ShopDAO shopDAO = new ShopDAO();
-        VoucherDAO voucherDAO = new VoucherDAO();
+        ShopDAO shopDAO = new ShopDAO();    
         try {
 
             switch (action) {
                 case "checkVoucherCode":
                     Long shopId = shopDAO.getShopIdByUserId(user.getId());
-                    String voucherCode = request.getParameter("voucherCode");
-                    boolean isDuplicate = voucherDAO.checkVoucherCode(voucherCode, shopId);
-                    json.put("success", !isDuplicate);
-                    out.println(json.toString());
+                    
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;

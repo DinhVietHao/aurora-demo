@@ -157,23 +157,28 @@ public class VoucherDAO {
     }
 
     public boolean checkVoucherCode(String code, Long shopId) {
-        String sql = "SELECT COUNT(*) FROM Vouchers WHERE Code = ? AND ShopID = ?";
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, code);
+    String sql = "SELECT COUNT(*) FROM Vouchers WHERE Code = ? AND (ShopID = ? OR (ShopID IS NULL AND ? IS NULL))";
+    
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+        ps.setString(1, code);
+        if (shopId != null) {
+            ps.setLong(2, shopId);
             ps.setLong(3, shopId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    int count = rs.getInt(1);
-                    return count > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } else {
+            ps.setNull(2, java.sql.Types.BIGINT);
+            ps.setNull(3, java.sql.Types.BIGINT);
         }
-        return false;
+
+        try (ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                return count > 0; // true nếu bị trùng
+            }
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return false;
+}
 
 }

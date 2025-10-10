@@ -167,7 +167,7 @@ public class VoucherDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     int count = rs.getInt(1);
-                    return count > 0;
+                    return count > 0; // true nếu bị trùng
                 }
             }
         } catch (SQLException e) {
