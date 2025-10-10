@@ -207,7 +207,7 @@
                                                                     value="${(voucher.usageCount * 100) / voucher.usageLimit}" />
                                                             </c:if>
                                                             <div class="progress-bar bg-success" role="progressbar"
-                                                                style="width: ${progressPercent}%" id=" usageProgress">
+                                                                style=`width: ${progressPercent}%` id="usageProgress">
                                                                 ${progressPercent}%
                                                             </div>
                                                         </div>
