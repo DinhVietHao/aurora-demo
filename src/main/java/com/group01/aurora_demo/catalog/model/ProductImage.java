@@ -1,11 +1,13 @@
 package com.group01.aurora_demo.catalog.model;
 
-public class ProductImages {
-
+public class ProductImage {
     private Long imageId;
     private Long productId;
-    private String imageUrl;
-    private boolean isPrimary;
+    private String url;
+    private Boolean isPrimary;
+
+    public ProductImage() {
+    }
 
     public Long getImageId() {
         return imageId;
@@ -23,20 +25,19 @@ public class ProductImages {
         this.productId = productId;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getUrl() {
+        return url;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public boolean isPrimary() {
+    public Boolean getIsPrimary() {
         return isPrimary;
     }
 
-    public void setPrimary(boolean isPrimary) {
+    public void setIsPrimary(Boolean isPrimary) {
         this.isPrimary = isPrimary;
     }
-
 }

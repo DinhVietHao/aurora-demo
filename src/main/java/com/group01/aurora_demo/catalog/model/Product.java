@@ -1,41 +1,60 @@
 package com.group01.aurora_demo.catalog.model;
 
-import java.util.List;
-import java.sql.Timestamp;
 import com.group01.aurora_demo.shop.model.Shop;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
 
 public class Product {
-
-    private Shop shop;
+    // Basic fields
+    private Long productId;
     private Long shopId;
     private String title;
-    private String status;
-    private Double weight;
-    private Long soldCount;
-    private Long productId;
-    private Integer quantity;
-    private Double avgRating;
-    private Double salePrice;
-    private Long publisherId;
     private String description;
+    private Double originalPrice;
+    private Double salePrice;
+    private Long soldCount;
+    private Integer quantity;
+    private String status;
+    private LocalDate publishedDate;
+    private Double weight;
     private String rejectReason;
     private String returnReason;
-    private Publisher publisher;
-    private Timestamp createdAt;
-    private List<Author> authors;
-    private Double originalPrice;
-    private BookDetail bookDetail;
-    private String primaryImageUrl;
-    private Timestamp publishedDate;
-    private List<Category> categories;
-    private List<ProductImages> images;
+    private LocalDateTime createdAt;
 
-    public Shop getShop() {
-        return shop;
+    // Publisher relationship (N:1)
+    private Long publisherId;
+    private Publisher publisher;
+
+    // Shop relationship (N:1)
+    private Shop shop;
+
+    // Images relationship (1:N)
+    private String primaryImageUrl;
+    private List<ProductImage> images;
+
+    // Categories relationship (N:N)
+    private List<Category> categories;
+
+    // Authors relationship (N:N)
+    private List<Author> authors;
+
+    // BookDetails relationship (1:1)
+    private BookDetail bookDetail;
+
+    // Computed fields (for display)
+    private Double avgRating;
+    private int discountPercent;
+
+    public Product() {
     }
 
-    public void setShop(Shop shop) {
-        this.shop = shop;
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public Long getShopId() {
@@ -54,52 +73,20 @@ public class Product {
         this.title = title;
     }
 
-    public String getStatus() {
-        return status;
+    public String getDescription() {
+        return description;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public Double getWeight() {
-        return weight;
+    public Double getOriginalPrice() {
+        return originalPrice;
     }
 
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
-
-    public Long getSoldCount() {
-        return soldCount;
-    }
-
-    public void setSoldCount(Long soldCount) {
-        this.soldCount = soldCount;
-    }
-
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Double getAvgRating() {
-        return avgRating;
-    }
-
-    public void setAvgRating(Double avgRating) {
-        this.avgRating = avgRating;
+    public void setOriginalPrice(Double originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public Double getSalePrice() {
@@ -110,20 +97,44 @@ public class Product {
         this.salePrice = salePrice;
     }
 
-    public Long getPublisherId() {
-        return publisherId;
+    public Long getSoldCount() {
+        return soldCount;
     }
 
-    public void setPublisherId(Long publisherId) {
-        this.publisherId = publisherId;
+    public void setSoldCount(Long soldCount) {
+        this.soldCount = soldCount;
     }
 
-    public String getDescription() {
-        return description;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDate getPublishedDate() {
+        return publishedDate;
+    }
+
+    public void setPublishedDate(LocalDate publishedDate) {
+        this.publishedDate = publishedDate;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 
     public String getRejectReason() {
@@ -142,6 +153,22 @@ public class Product {
         this.returnReason = returnReason;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Long getPublisherId() {
+        return publisherId;
+    }
+
+    public void setPublisherId(Long publisherId) {
+        this.publisherId = publisherId;
+    }
+
     public Publisher getPublisher() {
         return publisher;
     }
@@ -150,36 +177,12 @@ public class Product {
         this.publisher = publisher;
     }
 
-    public Timestamp getCreatedAt() {
-        return createdAt;
+    public Shop getShop() {
+        return shop;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<Author> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
-    }
-
-    public Double getOriginalPrice() {
-        return originalPrice;
-    }
-
-    public void setOriginalPrice(Double originalPrice) {
-        this.originalPrice = originalPrice;
-    }
-
-    public BookDetail getBookDetail() {
-        return bookDetail;
-    }
-
-    public void setBookDetail(BookDetail bookDetail) {
-        this.bookDetail = bookDetail;
+    public void setShop(Shop shop) {
+        this.shop = shop;
     }
 
     public String getPrimaryImageUrl() {
@@ -190,12 +193,12 @@ public class Product {
         this.primaryImageUrl = primaryImageUrl;
     }
 
-    public Timestamp getPublishedDate() {
-        return publishedDate;
+    public List<ProductImage> getImages() {
+        return images;
     }
 
-    public void setPublishedDate(Timestamp publishedDate) {
-        this.publishedDate = publishedDate;
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
     }
 
     public List<Category> getCategories() {
@@ -206,12 +209,35 @@ public class Product {
         this.categories = categories;
     }
 
-    public List<ProductImages> getImages() {
-        return images;
+    public List<Author> getAuthors() {
+        return authors;
     }
 
-    public void setImages(List<ProductImages> images) {
-        this.images = images;
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
+    public BookDetail getBookDetail() {
+        return bookDetail;
+    }
+
+    public void setBookDetail(BookDetail bookDetail) {
+        this.bookDetail = bookDetail;
+    }
+
+    public Double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(Double avgRating) {
+        this.avgRating = avgRating;
+    }
+
+    public Integer getDiscountPercent() {
+        if (originalPrice != null && salePrice != null && originalPrice > salePrice) {
+            this.discountPercent = (int) (((originalPrice - salePrice) / originalPrice) * 100);
+        }
+        return discountPercent;
     }
 
 }

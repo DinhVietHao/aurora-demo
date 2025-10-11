@@ -1,62 +1,27 @@
 package com.group01.aurora_demo.catalog.model;
 
 public class BookDetail {
-
-    private int pages;
-    private String size;
-    private String ISBN;
-    private String version;
-    private long productId;
-    private String coverType;
+    private Long productId;
     private String translator;
+    private String version;
+    private String coverType;
+    private Integer pages;
     private String languageCode;
+    private String size;
+    private String isbn;
 
-    public int getPages() {
-        return pages;
+    // Language relationship (optional)
+    private Language language;
+
+    public BookDetail() {
     }
 
-    public void setPages(int pages) {
-        this.pages = pages;
-    }
-
-    public String getSize() {
-        return size;
-    }
-
-    public void setSize(String size) {
-        this.size = size;
-    }
-
-    public String getISBN() {
-        return ISBN;
-    }
-
-    public void setISBN(String iSBN) {
-        ISBN = iSBN;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public long getProductId() {
+    public Long getProductId() {
         return productId;
     }
 
-    public void setProductId(long productId) {
+    public void setProductId(Long productId) {
         this.productId = productId;
-    }
-
-    public String getCoverType() {
-        return coverType;
-    }
-
-    public void setCoverType(String coverType) {
-        this.coverType = coverType;
     }
 
     public String getTranslator() {
@@ -67,6 +32,30 @@ public class BookDetail {
         this.translator = translator;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getCoverType() {
+        return coverType;
+    }
+
+    public void setCoverType(String coverType) {
+        this.coverType = coverType;
+    }
+
+    public Integer getPages() {
+        return pages;
+    }
+
+    public void setPages(Integer pages) {
+        this.pages = pages;
+    }
+
     public String getLanguageCode() {
         return languageCode;
     }
@@ -75,4 +64,27 @@ public class BookDetail {
         this.languageCode = languageCode;
     }
 
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
+    public Language getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
 }
