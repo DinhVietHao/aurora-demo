@@ -211,6 +211,7 @@
                                                                                     type="radio"
                                                                                     name="voucherShopDiscount_${shopCart.shop.shopId}"
                                                                                     value="${voucher.code}"
+                                                                                    data-value="${voucher.code}"
                                                                                     data-text="Giảm 8% tối đa 30K"
                                                                                     data-discount="${voucher.value}"
                                                                                     data-type="${voucher.discountType}"
@@ -306,6 +307,7 @@
 
                                         <div id="appliedVoucherShip"
                                             class="d-flex justify-content-between align-items-center border p-2 rounded mb-2 d-none">
+                                            <span class="badge bg-primary">FREESHIP</span>
                                             <span id="voucherTextShip"></span>
                                             <button id="removeVoucherShip" class="btn btn-primary btn-sm">Bỏ
                                                 chọn</button>
@@ -448,6 +450,7 @@
                                                                     </c:choose>
                                                                     <input type="radio" name="voucherDiscount"
                                                                         value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
                                                                         data-text="${voucherText}"
                                                                         data-discount="${systemVoucher.value}"
                                                                         data-type="${systemVoucher.discountType}"
@@ -483,6 +486,7 @@
                                                                     </div>
                                                                     <input type="radio" name="voucherShip"
                                                                         value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
                                                                         data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
                                                                         data-ship="${systemVoucher.value}"
                                                                         data-min-order-amount="${systemVoucher.minOrderAmount}">

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
@@ -17,7 +18,9 @@ import com.group01.aurora_demo.customer.dao.VoucherDAO;
 import com.group01.aurora_demo.customer.dao.dto.ShopCartDTO;
 import com.group01.aurora_demo.customer.model.Address;
 import com.group01.aurora_demo.customer.model.CartItem;
+import com.group01.aurora_demo.customer.model.Shop;
 import com.group01.aurora_demo.customer.model.Voucher;
+import com.group01.aurora_demo.customer.service.GHNShippingService;
 import com.group01.aurora_demo.customer.utils.ShippingCalculator;
 
 import jakarta.servlet.ServletException;
@@ -33,12 +36,14 @@ public class CheckoutServlet extends HttpServlet {
     private VoucherDAO voucherDAO;
     private AddressDAO addressDAO;
     private ShippingCalculator shippingCalculator;
+    private GHNShippingService ghnShippingService;
 
     public CheckoutServlet() {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.addressDAO = new AddressDAO();
         this.shippingCalculator = new ShippingCalculator();
+        this.ghnShippingService = new GHNShippingService();
     }
 
     @Override
@@ -169,18 +174,35 @@ public class CheckoutServlet extends HttpServlet {
                         String code = entry.getValue();
                         if (code != null && !code.isEmpty()) {
                             Voucher voucher = this.voucherDAO.getVoucherByCode(code, true);
-                            if (voucher != null && voucher.getShopId() == entry.getKey()
-                                    && totalShop >= voucher.getMinOrderAmount()) {
-                                double discountValue = 0;
-                                if (voucher.getDiscountType().equalsIgnoreCase("PERCENT")) {
-                                    discountValue = totalShop * voucher.getValue() / 100;
-                                    if (discountValue > voucher.getMaxAmount()) {
-                                        discountValue = voucher.getMaxAmount();
-                                    }
+                            if (voucher == null || voucher.getShopId() != entry.getKey()) {
+                                json.put("success", false);
+                                json.put("message", "Mã giảm giá không tồn tại.");
+                            } else if (voucher.getStatus().equalsIgnoreCase("EXPIRED")) {
+                                json.put("success", false);
+                                json.put("message", "Mã giảm giá đã hết hạn.");
+                            } else if (voucher.getStatus().equalsIgnoreCase("UPCOMING")) {
+                                json.put("success", false);
+                                json.put("message", "Mã giảm giá chưa đến thời gian áp dụng.");
+                            } else if (voucher.getUsageLimit() > 0
+                                    && voucher.getUsageCount() >= voucher.getUsageLimit()) {
+                                json.put("success", false);
+                                json.put("message", "Mã giảm giá đã đạt giới hạn sử dụng.");
+                            } else {
+                                if (totalShop < voucher.getMinOrderAmount()) {
+                                    json.put("success", false);
+                                    json.put("message", "Đơn hàng chưa đạt mức tối thiểu để dùng mã này.");
                                 } else {
-                                    discountValue = voucher.getValue();
+                                    double discountValue = 0;
+                                    if (voucher.getDiscountType().equalsIgnoreCase("PERCENT")) {
+                                        discountValue = totalShop * voucher.getValue() / 100;
+                                        if (discountValue > voucher.getMaxAmount()) {
+                                            discountValue = voucher.getMaxAmount();
+                                        }
+                                    } else {
+                                        discountValue = voucher.getValue();
+                                    }
+                                    totalDiscount += discountValue;
                                 }
-                                totalDiscount += discountValue;
                             }
                         }
                     }
@@ -191,51 +213,99 @@ public class CheckoutServlet extends HttpServlet {
 
                     if (systemVoucherDiscountCode != null && !systemVoucherDiscountCode.isEmpty()) {
                         Voucher systemVoucher = this.voucherDAO.getVoucherByCode(systemVoucherDiscountCode, false);
-                        double discountValueSystem = 0;
-                        if (systemVoucher != null && totalProduct >= systemVoucher.getMinOrderAmount()) {
-                            if (systemVoucher.getDiscountType().equalsIgnoreCase("PERCENT")) {
-                                discountValueSystem = totalProduct * systemVoucher.getValue() / 100;
-                                if (discountValueSystem > systemVoucher.getMaxAmount()) {
-                                    discountValueSystem = systemVoucher.getMaxAmount();
-                                }
+                        if (systemVoucher == null) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá không tồn tại.");
+                        } else if (systemVoucher.getStatus().equalsIgnoreCase("EXPIRED")) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá đã hết hạn.");
+                        } else if (systemVoucher.getStatus().equalsIgnoreCase("UPCOMING")) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá chưa đến thời gian áp dụng.");
+                        } else if (systemVoucher.getUsageLimit() > 0
+                                && systemVoucher.getUsageCount() >= systemVoucher.getUsageLimit()) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá đã đạt giới hạn sử dụng.");
+                        } else {
+                            if (totalProduct < systemVoucher.getMinOrderAmount()) {
+                                json.put("success", false);
+                                json.put("message", "Đơn hàng chưa đạt mức tối thiểu để dùng mã này.");
                             } else {
-                                discountValueSystem = systemVoucher.getValue();
+                                double discountValueSystem = 0;
+                                if (systemVoucher.getDiscountType().equalsIgnoreCase("PERCENT")) {
+                                    discountValueSystem = totalProduct * systemVoucher.getValue() / 100;
+                                    if (discountValueSystem > systemVoucher.getMaxAmount()) {
+                                        discountValueSystem = systemVoucher.getMaxAmount();
+                                    }
+                                } else {
+                                    discountValueSystem = systemVoucher.getValue();
+                                }
+                                totalDiscount += discountValueSystem;
                             }
-                            totalDiscount += discountValueSystem;
+                        }
+
+                    }
+                    double shipDiscount = 0;
+                    if (systemVoucherShipCode != null && !systemVoucherShipCode.isEmpty()) {
+                        Voucher systemVoucherShip = voucherDAO.getVoucherByCode(systemVoucherShipCode, false);
+                        if (systemVoucherShip == null) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá không tồn tại.");
+                        } else if (systemVoucherShip.getStatus().equalsIgnoreCase("EXPIRED")) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá đã hết hạn.");
+                        } else if (systemVoucherShip.getStatus().equalsIgnoreCase("UPCOMING")) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá chưa đến thời gian áp dụng.");
+                        } else if (systemVoucherShip.getUsageLimit() > 0
+                                && systemVoucherShip.getUsageCount() >= systemVoucherShip.getUsageLimit()) {
+                            json.put("success", false);
+                            json.put("message", "Mã giảm giá đã đạt giới hạn sử dụng.");
+                        } else {
+                            if (totalProduct < systemVoucherShip.getMinOrderAmount()) {
+                                json.put("success", false);
+                                json.put("message", "Đơn hàng chưa đạt mức tối thiểu để dùng mã này.");
+                            } else {
+                                shipDiscount = systemVoucherShip.getValue();
+                            }
                         }
                     }
 
                     Map<Long, List<CartItem>> grouped = cartItems.stream()
                             .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
-                    long totalShippingFee = 0;
+                    double totalShippingFee = 0;
                     if (selectedAddress != null) {
                         for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
-                            var items = entry.getValue();
-                            var shop = items.get(0).getProduct().getShop();
+                            List<CartItem> items = entry.getValue();
+                            Shop shop = items.get(0).getProduct().getShop();
                             double shopWeight = items.stream()
                                     .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
                                     .sum();
-
-                            double fee = shippingCalculator.calculateShippingFee(
-                                    shop.getAddress().getCity(),
-                                    selectedAddress.getCity(),
-                                    shopWeight);
+                            JSONArray jsonItems = new JSONArray();
+                            for (CartItem ci : items) {
+                                JSONObject item = new JSONObject();
+                                item.put("name", ci.getProduct().getTitle());
+                                item.put("quantity", ci.getQuantity());
+                                item.put("weight", ci.getProduct().getWeight() * ci.getQuantity());
+                                jsonItems.put(item);
+                            }
+                            double fee = this.ghnShippingService.calculateFee(
+                                    1454,
+                                    "21211",
+                                    1452,
+                                    "21012", shopWeight,
+                                    jsonItems,
+                                    53320, null);
 
                             totalShippingFee += fee;
-                        }
-                    }
-                    double shipDiscount = 0;
-                    if (systemVoucherShipCode != null && !systemVoucherShipCode.isEmpty()) {
-                        var shipVoucher = voucherDAO.getVoucherByCode(systemVoucherShipCode, false);
-                        if (shipVoucher != null && totalProduct >= shipVoucher.getMinOrderAmount()) {
-                            shipDiscount = shipVoucher.getValue();
                         }
                     }
 
                     double finalAmount = totalProduct + totalShippingFee - shipDiscount - totalDiscount;
                     System.out.println("Check " + totalProduct + " " + totalShippingFee + " " + totalDiscount + " "
                             + shipDiscount + " " + finalAmount);
+
                     json.put("success", true);
                     json.put("totalProduct", totalProduct);
                     json.put("totalShippingFee", totalShippingFee);
@@ -336,6 +406,7 @@ public class CheckoutServlet extends HttpServlet {
                                 discountValue = voucher.getValue();
                             }
                             json.put("success", true);
+                            json.put("type", voucher.getDiscountType());
                             json.put("discountValue", discountValue);
                             json.put("shipValue", shipValue);
                         }

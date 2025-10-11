@@ -1,6 +1,4 @@
 // ====================== CART CALCULATION ======================
-const minusBtn = document.querySelectorAll(".minus");
-const plusBtn = document.querySelectorAll(".plus");
 const cartBodies = document.querySelectorAll(".cart-body .cart-body__item");
 
 const totalProductPrice = document.querySelector(
@@ -85,95 +83,59 @@ function calculateShipDiscount(total) {
 }
 
 // ====================== GET ALL DISCOUNTS ======================
-function getAllDiscounts(total) {
-  let systemDiscount = calculateDiscount(total);
-  let shipDiscount = calculateShipDiscount(total);
+// function getAllDiscounts(total) {
+//   let systemDiscount = calculateDiscount(total);
+//   let shipDiscount = calculateShipDiscount(total);
 
-  let allShopDiscount = 0;
-  const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
-  allShop.forEach((shopElement) => {
-    const shopId = shopElement.getAttribute("data-shop-id");
-    const selectedShopDiscount = document.querySelector(
-      `input[name="voucherShopDiscount_${shopId}"]:checked`
-    );
+//   let allShopDiscount = 0;
+//   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
+//   allShop.forEach((shopElement) => {
+//     const shopId = shopElement.getAttribute("data-shop-id");
+//     const selectedShopDiscount = document.querySelector(
+//       `input[name="voucherShopDiscount_${shopId}"]:checked`
+//     );
 
-    if (selectedShopDiscount && shopId) {
-      const shopTotal = calculateShopTotal(shopId);
-      const shopDiscount = calculateShopDiscount(shopTotal, shopId);
-      allShopDiscount += shopDiscount;
-      const shopVoucher = document.querySelector(
-        `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
-      );
-      if (shopVoucher) {
-        shopVoucher.innerText =
-          shopDiscount > 0
-            ? `Đã giảm ${formatCurrency(shopDiscount)}`
-            : "Chưa áp dụng";
-      }
-    }
-  });
+//     if (selectedShopDiscount && shopId) {
+//       const shopTotal = calculateShopTotal(shopId);
+//       const shopDiscount = calculateShopDiscount(shopTotal, shopId);
+//       allShopDiscount += shopDiscount;
+//       const shopVoucher = document.querySelector(
+//         `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+//       );
+//       if (shopVoucher) {
+//         shopVoucher.innerText =
+//           shopDiscount > 0
+//             ? `Đã giảm ${formatCurrency(shopDiscount)}`
+//             : "Chưa áp dụng";
+//       }
+//     }
+//   });
 
-  return { systemDiscount, shipDiscount, allShopDiscount };
-}
+//   return { systemDiscount, shipDiscount, allShopDiscount };
+// }
 // ====================== UPDATE SUMMARY ======================
-function updateCartSummary() {
-  let total = calculateTotalProduct();
-  let { systemDiscount, shipDiscount, allShopDiscount } =
-    getAllDiscounts(total);
+// function updateCartSummary() {
+//   let total = calculateTotalProduct();
+//   let { systemDiscount, shipDiscount, allShopDiscount } =
+//     getAllDiscounts(total);
 
-  discountElement.innerText =
-    "-" + formatCurrency(systemDiscount + allShopDiscount);
-  shipElement.innerText = "-" + formatCurrency(shipDiscount);
+//   discountElement.innerText =
+//     "-" + formatCurrency(systemDiscount + allShopDiscount);
+//   shipElement.innerText = "-" + formatCurrency(shipDiscount);
 
-  // Shipping Fee
-  let shippingFee = parseInt(shippingFeePayment.textContent.replace(/\D/g, ""));
+//   // Shipping Fee
+//   let shippingFee = parseInt(shippingFeePayment.textContent.replace(/\D/g, ""));
 
-  totalProductPrice.textContent = formatCurrency(total);
-  let sum = Math.max(
-    total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
-    0
-  );
-  totalPayment.textContent = formatCurrency(sum);
+//   totalProductPrice.textContent = formatCurrency(total);
+//   let sum = Math.max(
+//     total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
+//     0
+//   );
+//   totalPayment.textContent = formatCurrency(sum);
 
-  // refresh lại voucher của tất cả shop mỗi lần update
-  refreshShopVoucher();
-  syncWithServer();
-}
-
-// ====================== CHECKBOX HANDLER ======================
-
-productCheckboxes.forEach((cb) => {
-  cb.addEventListener("change", () => {
-    const allChecked = [...productCheckboxes].every((cb) => cb.checked);
-    selectAllCheckbox.checked = allChecked;
-    updateCartSummary();
-  });
-});
-
-// ====================== QUANTITY HANDLER ======================
-minusBtn.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const number = btn.nextElementSibling;
-    let quantity = parseInt(number.textContent);
-    if (quantity > 1) {
-      quantity--;
-      number.textContent = quantity;
-
-      updateCartSummary();
-    }
-  });
-});
-
-plusBtn.forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const number = btn.previousElementSibling;
-    let quantity = parseInt(number.textContent);
-    quantity++;
-    number.textContent = quantity;
-
-    updateCartSummary();
-  });
-});
+//   // refresh lại voucher của tất cả shop mỗi lần update
+//   refreshShopVoucher();
+// }
 
 // ====================== VOUCHER HANDLER ======================
 const confirmVoucher = document.getElementById("confirmVoucher");
@@ -201,12 +163,17 @@ confirmVoucher.addEventListener("click", () => {
   let textShip = "";
 
   if (selectedDiscount) {
+    localStorage.setItem(
+      "systemVoucherDiscount",
+      selectedDiscount.dataset.value
+    );
     textDiscount = selectedDiscount.dataset.text;
     voucherTextDiscount.innerText = textDiscount;
     appliedVoucherDiscount.classList.remove("d-none");
   }
 
   if (selectedShip) {
+    localStorage.setItem("systemVoucherShip", selectedShip.dataset.value);
     textShip = selectedShip.dataset.text;
     voucherTextShip.innerText = textShip;
     appliedVoucherShip.classList.remove("d-none");
@@ -215,29 +182,34 @@ confirmVoucher.addEventListener("click", () => {
     document.getElementById("voucherModal")
   );
   VoucherModal.hide();
-  updateCartSummary();
+  syncWithServer();
 });
 
 removeVoucherDiscount.addEventListener("click", () => {
   const selectedDiscount = document.querySelector(
     'input[name="voucherDiscount"]:checked'
   );
-  if (selectedDiscount) selectedDiscount.checked = false;
-
+  if (selectedDiscount) {
+    selectedDiscount.checked = false;
+    localStorage.removeItem("systemVoucherDiscount");
+  }
   voucherTextDiscount.innerText = "";
   appliedVoucherDiscount.classList.add("d-none");
-  updateCartSummary();
+  syncWithServer();
 });
 
 removeVoucherShip.addEventListener("click", () => {
   const selectedShip = document.querySelector(
     'input[name="voucherShip"]:checked'
   );
-  if (selectedShip) selectedShip.checked = false;
+  if (selectedShip) {
+    selectedShip.checked = false;
+    localStorage.removeItem("systemVoucherShip");
+  }
 
   voucherTextShip.innerText = "";
   appliedVoucherShip.classList.add("d-none");
-  updateCartSummary();
+  syncWithServer();
 });
 
 // ====================== CALCULATE SHOP TOTAL ======================
@@ -301,8 +273,16 @@ shopVoucherModal.forEach((btn) => {
 confirmShopVoucher.forEach((btn) => {
   btn.addEventListener("click", () => {
     const shopId = btn.getAttribute("data-shop-id");
-    const code = btn.dataset.value;
-    localStorage.setItem(`shopVoucher_${shopId}`, code);
+    const selectedVoucher = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+    console.log("Check selectedVoucher ", selectedVoucher);
+
+    if (selectedVoucher) {
+      const code = selectedVoucher.dataset.value;
+      localStorage.setItem(`shopVoucher_${shopId}`, code);
+    }
+
     const selectedShopDiscount = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
@@ -323,8 +303,6 @@ confirmShopVoucher.forEach((btn) => {
     );
     const shopVoucherModal = bootstrap.Modal.getInstance(shopVoucherModalEl);
     shopVoucherModal.hide();
-
-    updateCartSummary();
   });
 });
 // ====================== Check if user is condition to apply Voucher ======================
@@ -404,7 +382,6 @@ function refreshShopVoucher() {
   });
   toggleSystemVoucherAvailability();
 }
-updateCartSummary();
 
 // Check payment method selection when clicking "Pay" button, if not selected then report error, if VNPAY is selected then open VNPAY modal.
 const PayBtn = document.getElementById("btnPay");
@@ -500,8 +477,8 @@ applyVoucherShops.forEach((btn) => {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          syncWithServer();
           localStorage.setItem(`shopVoucher_${shopId}`, code);
+          loadSavedVouchers();
           const modalEl = document.getElementById(`shopVoucherModal_${shopId}`);
           if (modalEl) {
             const modal = bootstrap.Modal.getInstance(modalEl);
@@ -555,12 +532,19 @@ applySystemVoucher.addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        syncWithServer();
+        console.log("Check type ", data.type);
+
+        if (data.type === "SHIPPING") {
+          localStorage.setItem("systemVoucherShip", code);
+        } else if (data.type === "AMOUNT" || data.type === "PERCENT") {
+          localStorage.setItem("systemVoucherDiscount", code);
+        }
         const modalEl = document.getElementById("voucherModal");
         if (modalEl) {
           const modal = bootstrap.Modal.getInstance(modalEl);
           modal.hide();
         }
+        loadSystemVouchers();
       } else {
         msg.classList.remove("text-success");
         msg.classList.add("text-danger");
@@ -572,17 +556,18 @@ applySystemVoucher.addEventListener("click", () => {
     });
 });
 // ====================== KHÔI PHỤC VOUCHER SAU KHI RELOAD ======================
-window.addEventListener("DOMContentLoaded", () => {
+function loadSavedVouchers() {
   document.querySelectorAll(".voucher-input-shop").forEach((input) => {
     const shopId = input.dataset.shopId;
     const savedCode = localStorage.getItem(`shopVoucher_${shopId}`);
     if (savedCode) {
-      input.value = savedCode;
       const radio = document.querySelector(
         `input[name="voucherShopDiscount_${shopId}"][value="${savedCode}"]`
       );
+
       if (radio) {
         radio.checked = true;
+
         const selectedShopDiscount = document.querySelector(
           `input[name="voucherShopDiscount_${shopId}"]:checked`
         );
@@ -591,17 +576,64 @@ window.addEventListener("DOMContentLoaded", () => {
           const shopVoucher = document.querySelector(
             `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
           );
+
           if (shopVoucher) {
             const shopTotal = calculateShopTotal(shopId);
             const discount = calculateShopDiscount(shopTotal, shopId);
+
             shopVoucher.innerText =
               discount > 0
                 ? `Đã giảm ${formatCurrency(discount)}`
                 : "Chưa áp dụng";
           }
         }
-        updateCartSummary();
       }
     }
   });
+
+  syncWithServer();
+}
+
+function loadSystemVouchers() {
+  const discountCode = localStorage.getItem("systemVoucherDiscount");
+  const shipCode = localStorage.getItem("systemVoucherShip");
+  let textDiscount = "";
+  let textShip = "";
+  if (discountCode) {
+    const discountRadio = document.querySelector(
+      `input[name="voucherDiscount"][value="${discountCode}"]`
+    );
+    if (discountRadio) {
+      discountRadio.checked = true;
+
+      textDiscount = discountRadio.dataset.text;
+      voucherTextDiscount.innerText = textDiscount;
+      appliedVoucherDiscount.classList.remove("d-none");
+    }
+  }
+
+  if (shipCode) {
+    const shipRadio = document.querySelector(
+      `input[name="voucherShip"][value="${shipCode}"]`
+    );
+    if (shipRadio) {
+      shipRadio.checked = true;
+      textShip = shipRadio.dataset.text;
+      voucherTextShip.innerText = textShip;
+      appliedVoucherShip.classList.remove("d-none");
+    }
+    const voucherModal = bootstrap.Modal.getInstance(
+      document.getElementById("voucherModal")
+    );
+    if (voucherModal) {
+      voucherModal.hide();
+    }
+  }
+  syncWithServer();
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  loadSavedVouchers();
+  loadSystemVouchers();
+  refreshShopVoucher();
 });
