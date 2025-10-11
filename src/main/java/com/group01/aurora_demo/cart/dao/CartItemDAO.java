@@ -4,6 +4,8 @@ import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.ProductImage;
+import com.group01.aurora_demo.catalog.dao.AuthorDAO;
+import com.group01.aurora_demo.catalog.model.Author;
 import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
@@ -24,9 +26,11 @@ import java.util.List;
  */
 public class CartItemDAO {
     private AddressDAO addressDAO;
+    private AuthorDAO authorDAO;
 
     public CartItemDAO() {
         this.addressDAO = new AddressDAO();
+        this.authorDAO = new AuthorDAO();
     }
 
     /**
@@ -226,14 +230,13 @@ public class CartItemDAO {
                      p.SalePrice,
                 	 s.ShopID,
                      s.Name AS ShopName,
-                     img.Url AS ImageUrl,
-                     a.AuthorName AS Author
+                     img.Url AS ImageUrl
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -265,10 +268,8 @@ public class CartItemDAO {
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
 
-                // Lấy thông tin chi tiết sách (nếu có)
-                BookDetail bookDetail = new BookDetail();
-                bookDetail.setAuthors(rs.getString("Author"));
-                product.setBookDetail(bookDetail);
+                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
+                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);
@@ -296,14 +297,13 @@ public class CartItemDAO {
                      p.Weight,
                 	 s.ShopID,
                      s.Name AS ShopName,
-                     img.Url AS ImageUrl,
-                     a.AuthorName AS Author
+                     img.Url AS ImageUrl
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -339,10 +339,8 @@ public class CartItemDAO {
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
 
-                // Lấy thông tin chi tiết sách (nếu có)
-                BookDetail bookDetail = new BookDetail();
-                bookDetail.setAuthor(rs.getString("Author"));
-                product.setBookDetail(bookDetail);
+                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
+                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);
@@ -370,14 +368,12 @@ public class CartItemDAO {
                      p.Weight,
                 	 s.ShopID,
                      s.Name AS ShopName,
-                     img.Url AS ImageUrl,
-                     a.AuthorName AS Author
+                     img.Url AS ImageUrl
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -414,10 +410,8 @@ public class CartItemDAO {
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
 
-                // Lấy thông tin chi tiết sách (nếu có)
-                BookDetail bookDetail = new BookDetail();
-                bookDetail.setAuthor(rs.getString("Author"));
-                product.setBookDetail(bookDetail);
+                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
+                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);

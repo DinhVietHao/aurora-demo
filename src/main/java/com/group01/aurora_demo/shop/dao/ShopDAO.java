@@ -101,7 +101,7 @@ public class ShopDAO {
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setName(rs.getString("Name"));
                     shop.setDescription(rs.getString("Description"));
-                    shop.setRatingAvg(rs.getBigDecimal("RatingAvg"));
+                    shop.setRatingAvg(rs.getDouble("RatingAvg"));
                     shop.setStatus(rs.getString("Status"));
                     shop.setOwnerUserId(rs.getLong("OwnerUserID"));
                     shop.setInvoiceEmail(rs.getString("InvoiceEmail"));
