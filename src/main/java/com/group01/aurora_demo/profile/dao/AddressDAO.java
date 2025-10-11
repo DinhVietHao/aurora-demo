@@ -10,6 +10,23 @@ import com.group01.aurora_demo.profile.model.UserAddress;
 
 public class AddressDAO {
 
+    public boolean hasAddress(long userId) {
+        String sql = "SELECT COUNT(*) AS addressCount FROM Users_Addresses WHERE UserID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("addressCount") > 0;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public List<Address> getAddressesByUserId(long userId) {
         List<Address> list = new ArrayList<>();
         String sql = """
@@ -48,6 +65,43 @@ public class AddressDAO {
             e.printStackTrace();
         }
         return list;
+    }
+
+    public Address getDefaultAddress(long userId) {
+        String sql = """
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.Ward, a.Description, ua.IsDefault
+                    FROM Addresses a
+                    JOIN Users_Addresses ua ON a.AddressID = ua.AddressID
+                    WHERE ua.UserID = ? AND ua.IsDefault = 1
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Address address = new Address();
+                address.setAddressId(rs.getLong("AddressID"));
+                address.setRecipientName(rs.getString("RecipientName"));
+                address.setPhone(rs.getString("Phone"));
+                address.setCity(rs.getString("City"));
+                address.setWard(rs.getString("Ward"));
+                address.setDescription(rs.getString("Description"));
+
+                UserAddress userAddress = new UserAddress();
+                userAddress.setUserId(userId);
+                userAddress.setAddressId(address.getAddressId());
+                userAddress.setDefaultAddress(rs.getBoolean("IsDefault"));
+                address.setUserAddress(userAddress);
+
+                return address;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public Address getAddressById(long userId, long addressId) {
@@ -212,5 +266,37 @@ public class AddressDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Address getAddressByShopId(long shopId) {
+        String sql = """
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.Ward, a.Description
+                    FROM Shops s
+                    JOIN Addresses a ON s.PickupAddressID = a.AddressID
+                    WHERE s.ShopID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Address address = new Address();
+                    address.setAddressId(rs.getLong("AddressID"));
+                    address.setRecipientName(rs.getString("RecipientName"));
+                    address.setPhone(rs.getString("Phone"));
+                    address.setCity(rs.getString("City"));
+                    address.setWard(rs.getString("Ward"));
+                    address.setDescription(rs.getString("Description"));
+                    return address;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

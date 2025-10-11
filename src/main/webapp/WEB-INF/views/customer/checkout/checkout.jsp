@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="./assets/css/common/globals.css?v=1.0.1'">
-                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css?v=1.0.1">
+                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css">
             </head>
 
             <body>
@@ -37,14 +37,10 @@
                                 <!-- LEFT: danh sách sản phẩm -->
                                 <div class="col-md-9 ">
                                     <div class="row cart-header">
-                                        <div class="col-6">
-                                            <input class="form-check-input me-2 cursor-pointer cart-checkboxAll"
-                                                type="checkbox"> Sản phẩm
-                                        </div>
-                                        <div class="col-1 text-center">Đơn giá</div>
+                                        <div class="col-6">Sản phẩm</div>
+                                        <div class="col-2 text-center">Đơn giá</div>
                                         <div class="col-2 text-center">Số lượng</div>
                                         <div class="col-2 text-center">Thành tiền</div>
-                                        <div class="col-1 text-center">Xóa</div>
                                     </div>
 
 
@@ -53,16 +49,17 @@
                                             <div class="col-12 cart-body__header">
                                                 <span><strong><i
                                                             class="bi bi-shop me-2"></i>${shopCart.shop.name}</strong>
-                                                    <a href="#" class="button-outline mx-2"> Xem shop</a>
                                                 </span>
                                             </div>
+
                                             <c:forEach var="cartItem" items="${shopCart.items}">
                                                 <div class="row cart-body__item" id="cartItemId${cartItem.cartItemId}"
                                                     data-cartitemid="${cartItem.cartItemId}"
                                                     data-userid="${cartItem.userId}">
                                                     <div class="col-2 d-flex align-items-center">
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
-                                                            type="checkbox" ${cartItem.isChecked ? "checked" : "" }>
+                                                            type="checkbox" ${cartItem.isChecked ? "checked" : "" }
+                                                            hidden>
                                                         <a href="${ctx}/book?id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].imageUrl}"
@@ -82,7 +79,7 @@
                                                         </p>
                                                     </div>
 
-                                                    <div class="col-1 text-center">
+                                                    <div class="col-2 text-center">
                                                         <span class="price unit-price">
                                                             <fmt:formatNumber value="${cartItem.unitPrice}"
                                                                 type="currency" />
@@ -99,15 +96,9 @@
 
                                                     <div class="col-2">
                                                         <div class="text-center">
-                                                            <button class="btn btn-outline-secondary btn-sm minus"
-                                                                data-cartitemid="${cartItem.cartItemId}">
-                                                                -
-                                                            </button>
                                                             <span class="mx-2 number">
                                                                 <c:out value="${cartItem.quantity}" />
                                                             </span>
-                                                            <button
-                                                                class="btn btn-outline-secondary btn-sm plus">+</button>
                                                         </div>
                                                     </div>
 
@@ -115,13 +106,8 @@
                                                         <fmt:formatNumber value="${cartItem.subtotal}"
                                                             type="currency" />
                                                     </div>
-
-                                                    <button type="button" class="col-1 button-delete text-center"
-                                                        data-bs-toggle="modal" data-bs-target="#deleteCartModal"
-                                                        data-cartitemid="${cartItem.cartItemId}">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
                                                 </div>
+
                                             </c:forEach>
 
                                             <div class="row cart-body__footer" data-shop-id="${shopCart.shop.shopId}">
@@ -140,10 +126,9 @@
                                                 </div>
                                             </div>
                                             <!-- Modal Voucher Shop -->
-
                                             <div class="modal fade cart-shop-voucher"
                                                 id="shopVoucherModal_${shopCart.shop.shopId}" tabindex="-1"
-                                                aria-hidden="true">
+                                                aria-hidden="true" data-shop-id="${shopCart.shop.shopId}">
                                                 <div class="modal-dialog modal-dialog-scrollable">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
@@ -154,13 +139,17 @@
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
                                                                 <div class="col-8">
-                                                                    <input type="text" class="form-control"
+                                                                    <input type="text"
+                                                                        class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
                                                                 <div class="col-4">
-                                                                    <button class="button-four w-100">Áp
+                                                                    <button
+                                                                        class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
                                                                 </div>
+                                                                <span class="text-danger small voucherShopMessage">
+                                                                </span>
                                                             </div>
                                                             <c:choose>
                                                                 <c:when test="${empty shopCart.vouchers}">
@@ -215,17 +204,20 @@
                                                                                         - HSD:
                                                                                         <fmt:formatDate
                                                                                             value="${voucher.endAt}"
-                                                                                            pattern="dd/MM/yyyyy" />
+                                                                                            pattern="dd/MM/yyyy" />
                                                                                     </small>
                                                                                 </div>
-                                                                                <input type="radio"
+                                                                                <input class="voucher-input-shop"
+                                                                                    type="radio"
                                                                                     name="voucherShopDiscount_${shopCart.shop.shopId}"
-                                                                                    value="discount1"
+                                                                                    value="${voucher.code}"
+                                                                                    data-value="${voucher.code}"
                                                                                     data-text="Giảm 8% tối đa 30K"
                                                                                     data-discount="${voucher.value}"
                                                                                     data-type="${voucher.discountType}"
                                                                                     data-max="${voucher.maxAmount}"
-                                                                                    data-min-order-amount="${voucher.minOrderAmount}">
+                                                                                    data-min-order-amount="${voucher.minOrderAmount}"
+                                                                                    data-shop-id="${shopCart.shop.shopId}">
                                                                             </label>
                                                                         </c:forEach>
                                                                     </div>
@@ -243,10 +235,66 @@
                                             </div>
                                         </div>
                                     </c:forEach>
+                                    <div class="row cart-footer">
+                                        <div class="col-12">
+                                            <h6 class="cart-footer-title">Chọn hình thức thanh toán</h6>
+                                        </div>
+
+                                        <div class="row align-items-center mb-3">
+                                            <div class="col-1">
+                                                <input type="radio" name="payment" id="cash">
+                                            </div>
+                                            <div class="col-1">
+                                                <img src="./assets/images/payment/cash.png" alt="Cash" width="32">
+                                            </div>
+                                            <div class="col">
+                                                <label for="cash" class="mb-0">Thanh toán tiền mặt</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="row align-items-center">
+                                            <div class="col-1">
+                                                <input type="radio" name="payment" id="vnpay">
+                                            </div>
+                                            <div class="col-1">
+                                                <img src="./assets/images/payment/vnpay.png" alt="VNPAY" width="32">
+                                            </div>
+                                            <div class="col">
+                                                <label for="vnpay" class="mb-0">
+                                                    VNPAY <br>
+                                                    <small class="text-muted">Quét Mã QR từ ứng dụng ngân hàng</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- RIGHT: địa chỉ + tổng tiền -->
                                 <div class="col-md-3 cart-right">
+                                    <div class="card-address">
+                                        <div class="row">
+                                            <div class="col">
+                                                <strong>Giao tới</strong>
+                                            </div>
+                                            <div class="col text-end">
+                                                <a data-bs-toggle="modal" data-bs-target="#addressModal"
+                                                    class="text-primary cursor-pointer ">Thay đổi</a>
+                                            </div>
+                                        </div>
+                                        <div class=" row mt-2">
+                                            <div class="col">
+                                                <span><strong>${address.recipientName}</strong></span> &nbsp;
+                                                <span>${address.phone}</span>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-2">
+                                            <div class="col">
+                                                <span class="badge bg-success">Nhà</span>
+                                                <span> ${address.description},
+                                                    ${address.ward}, ${address.city}</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="cart-promotion">
                                         <h6 class="cart-promotion-title">Aurora Khuyến Mãi</h6>
 
@@ -259,6 +307,7 @@
 
                                         <div id="appliedVoucherShip"
                                             class="d-flex justify-content-between align-items-center border p-2 rounded mb-2 d-none">
+                                            <span class="badge bg-primary">FREESHIP</span>
                                             <span id="voucherTextShip"></span>
                                             <button id="removeVoucherShip" class="btn btn-primary btn-sm">Bỏ
                                                 chọn</button>
@@ -276,22 +325,33 @@
                                             <span class="total-product-price">188.000đ</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
+                                            <span>Phí vận chuyển</span>
+                                            <span class="shipping-fee">
+                                                <fmt:formatNumber value="${shippingFee}" /> đ
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
                                             <span class="cart-pay-success">Tổng cộng Voucher giảm giá</span>
                                             <span class="cart-pay-success discount">0đ</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="cart-pay-success">Tổng tiền phí vận chuyển
+                                            </span>
+                                            <span class="cart-pay-success ship-discount">0đ</span>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between mb-2">
                                             <span class="cart-pay-danger">Tổng tiền thanh toán</span>
                                             <span class="cart-pay-danger total-payment">142.000đ</span>
                                         </div>
-                                        <button class="button-three" id="cart-pay-button">Mua Hàng (0)</button>
+                                        <button class="button-three" id="btnPay">Đặt hàng</button>
                                     </div>
                                 </div>
                             </div>
                             <!-- Modals tách riêng để có thể reuse -->
                             <jsp:include page="/WEB-INF/views/customer/cart/partials/_cart_delete_modal.jsp" />
                             <jsp:include page="/WEB-INF/views/customer/cart/partials/_cart_empty_selection_modal.jsp" />
-                            <!-- Modal Voucher Cart -->
+                            <!-- Modal Voucher System  -->
                             <div class="modal fade cart-system-voucher" id="voucherModal" tabindex="-1"
                                 aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-scrollable">
@@ -304,11 +364,14 @@
                                             <div class="row mb-3 align-items-center">
                                                 <div class="col-8">
                                                     <input type="text" class="form-control"
-                                                        placeholder="Nhập mã giảm giá">
+                                                        placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
                                                 <div class="col-4">
-                                                    <button class="button-four w-100">Áp dụng</button>
+                                                    <button class="button-four w-100" id="applySystemVoucher">Áp
+                                                        dụng</button>
                                                 </div>
+                                                <span class="text-danger small" id="voucherSystemMessage">
+                                                </span>
                                             </div>
                                             <c:choose>
                                                 <c:when test="${empty systemVouchers}">
@@ -362,7 +425,7 @@
                                                                             - HSD:
                                                                             <fmt:formatDate
                                                                                 value="${systemVoucher.endAt}"
-                                                                                pattern="dd/MM/yyyyy" />
+                                                                                pattern="dd/MM/yyyy" />
                                                                         </small>
                                                                     </div>
                                                                     <fmt:formatNumber
@@ -386,12 +449,13 @@
                                                                         </c:otherwise>
                                                                     </c:choose>
                                                                     <input type="radio" name="voucherDiscount"
-                                                                        value="discount1" data-text="${voucherText}"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
+                                                                        data-text="${voucherText}"
                                                                         data-discount="${systemVoucher.value}"
-                                                                        data-type="${voucher.discountType}"
-                                                                        data-max="${voucher.maxAmount}"
-                                                                        data-min-order-amount="${voucher.minOrderAmount}"
-                                                                        data-voucherid="${voucher.maxAmount}">
+                                                                        data-type="${systemVoucher.discountType}"
+                                                                        data-max="${systemVoucher.maxAmount}"
+                                                                        data-min-order-amount="${systemVoucher.minOrderAmount}">
                                                                 </label>
                                                             </c:if>
                                                         </c:forEach>
@@ -420,7 +484,9 @@
                                                                                 pattern="dd/MM/yyyyy" />
                                                                         </small>
                                                                     </div>
-                                                                    <input type="radio" name="voucherShip" value="ship1"
+                                                                    <input type="radio" name="voucherShip"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
                                                                         data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
                                                                         data-ship="${systemVoucher.value}"
                                                                         data-min-order-amount="${systemVoucher.minOrderAmount}">
@@ -441,19 +507,160 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!--End Modal Voucher Cart -->
+                            <!--End Modal Voucher System  -->
                         </c:otherwise>
                     </c:choose>
                 </div>
 
+                <!-- Modal Address -->
+                <form action="/checkout" method="GET">
+                    <div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Địa Chỉ Của Tôi</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="list-group">
+                                        <c:forEach var="address" items="${addresses}">
+                                            <label class="list-group-item d-flex justify-content-between">
+                                                <div class="address-card ">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <input type="radio" name="addressId"
+                                                            value="${address.addressId}" class="me-2"
+                                                            ${address.addressId==selectedAddressId ? 'checked' : '' } />
+                                                        <h6 class="card-name mb-0">${address.recipientName}</h6>
+                                                        <c:if test="${address.userAddress.defaultAddress}">
+                                                            <span
+                                                                class="card-default d-flex align-items-center mx-2">Mặc
+                                                                định</span>
+                                                        </c:if>
+                                                    </div>
+                                                    <p class="mb-1">Địa chỉ: ${address.description},
+                                                        ${address.ward}, ${address.city}
+                                                    </p>
+                                                    <p class="mb-1">Việt Nam</p>
+                                                    <p class="mb-3">Điện thoại: ${address.phone}</p>
+                                                    <button type="button" class="button-four mb-3"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#shippingAddressModal">Cập nhật</button>
+                                                </div>
+                                            </label>
+                                        </c:forEach>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Hủy</button>
+                                    <button type="submit" class="button-four" id="select-address-btn">Xác nhận</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+                <!--End Modal Address -->
+
+                <!--Modal Add Address -->
+                <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog ">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="addAddressModalLabel">Địa chỉ của tôi</h1>
+                                <a type="button" class="btn-close" href="/cart" aria-label="Close"></a>
+                            </div>
+                            <div class="modal-body">
+                                <form class="shipping-address" id="form-create-address" action="/address/add"
+                                    method="post">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 form-group">
+                                            <label for="fullName" class="form-label">Họ tên</label>
+                                            <input type="text" class="form-control" id="fullName"
+                                                placeholder="Nhập họ tên" name="fullName">
+                                            <span class="form-message"></span>
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="phone" class="form-label">Điện thoại di động</label>
+                                            <input type="text" class="form-control" id="phone"
+                                                placeholder="Nhập số điện thoại" name="phone">
+                                            <span class="form-message"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6 form-group">
+                                            <label for="province" class="form-label">Tỉnh/Thành phố</label>
+                                            <select class="form-select" id="addProvince" name="city">
+                                                <option value="">Chọn Tỉnh/Thành phố</option>
+                                            </select>
+                                            <span class="form-message"></span>
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label for="ward" class="form-label">Phường/Xã</label>
+                                            <select class="form-select" id="addWard" name="ward">
+                                                <option value="">Chọn Phường/Xã</option>
+                                            </select>
+                                            <span class="form-message"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3 form-group">
+                                        <label for="address" class="form-label">Địa chỉ</label>
+                                        <textarea class="form-control" id="address"
+                                            placeholder="Ví dụ: 52, đường Trần Hưng Đạo" name="description"></textarea>
+                                        <span class="form-message"></span>
+                                    </div>
+                                    <div class="form-check mb-3 <c:if test='${empty addresses}'>d-none</c:if>">
+                                        <input class="form-check-input" type="checkbox" value="true" id="checkChecked"
+                                            name="isDefault" <c:if test='${empty addresses}'>checked</c:if> />
+                                        <label class="form-check-label" for="checkChecked">
+                                            Đặt làm địa chỉ mặc định
+                                        </label>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <a type="reset" class="button-five" href="/cart">Trở
+                                            lại</a>
+                                        <button type="submit" class="button-four">Hoàn thành</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End Modal Add Address -->
+
+                <!-- Modal Error Payment -->
+                <div class="modal fade" id="paymentErrorModal" tabindex="-1" aria-labelledby="paymentErrorLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content text-center p-3">
+                            <div class="modal-body">
+                                <p class="mb-3">Vui lòng chọn hình thức thanh toán</p>
+                                <button type="button" class="button-four" data-bs-dismiss="modal">Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End Modal Error Payment -->
 
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
+                <script src="<c:url value='/assets/js/customer/checkout/checkout.js'/>"></script>
+
+                <c:if test="${!isAddress}">
+                    <script>
+                        const addAddressModalEl = document.getElementById("addAddressModal");
+                        if (addAddressModalEl) {
+                            const modal = new bootstrap.Modal(addAddressModalEl);
+                            modal.show();
+                        }
+                    </script>
+                </c:if>
             </body>
 
             </html>

@@ -26,6 +26,10 @@ function initProvinceWard(
 }
 
 function loadWards(provinceSelect, wardSelect, defaultWard = "") {
+  if (defaultWard) {
+    wardSelect.value = defaultWard;
+    return;
+  }
   wardSelect.innerHTML = "<option value=''>Chọn Phường/Xã</option>";
   const selectedOption = provinceSelect.selectedOptions[0];
   if (!selectedOption) return;
@@ -40,9 +44,6 @@ function loadWards(provinceSelect, wardSelect, defaultWard = "") {
         opt.textContent = w.name;
         wardSelect.appendChild(opt);
       });
-      if (defaultWard) {
-        wardSelect.value = defaultWard;
-      }
     });
 }
 
@@ -128,3 +129,26 @@ btnUpdateAddress.forEach((btn) => {
       });
   });
 });
+
+document
+  .getElementById("form-update-address")
+  .addEventListener("submit", function (e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    console.log(formData);
+    fetch(form.action, {
+      method: "POST",
+      body: formData,
+    })
+      .then((res) => res.text())
+      .then((data) => {
+        console.log(">>> Kết quả:", data);
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("updateAddressModal")
+        );
+        modal.hide();
+        location.reload();
+      })
+      .catch((err) => console.error(err));
+  });

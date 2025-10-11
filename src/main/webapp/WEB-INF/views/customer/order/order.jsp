@@ -19,7 +19,6 @@
             </head>
 
             <body>
-
                 <!-- Header + các modal auth dùng chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 

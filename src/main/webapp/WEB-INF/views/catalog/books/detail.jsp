@@ -195,9 +195,6 @@
             <%-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) --%>
               <div class="book-introduction container">
                 <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-                <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
-                  <jsp:param name="carouselId" value="bookIntroduction" />
-                </jsp:include>
               </div>
 
         </div>
@@ -216,10 +213,10 @@
 
               <%-- Send AJAX to controller --%>
                 <script>
-                  const addTocartBtn = document.getElementById("add-to-cart");
-                  addTocartBtn.addEventListener("click", () => {
-                    const productId = addTocartBtn.dataset.productId;
-                    fetch("add-to-cart", {
+                  const addToCartBtn = document.getElementById("add-to-cart");
+                  addToCartBtn.addEventListener("click", () => {
+                    const productId = addToCartBtn.dataset.productId;
+                    fetch("/cart/add", {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/x-www-form-urlencoded",

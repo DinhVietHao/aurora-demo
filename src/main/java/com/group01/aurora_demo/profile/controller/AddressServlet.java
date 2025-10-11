@@ -78,10 +78,13 @@ public class AddressServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
+        System.out.println("Check path " + path);
         switch (path) {
             case "/update":
+                System.out.println(">>>>>>>>>>>>>>>>>>>>>. Check update");
                 try {
                     long addressIdUpdate = Long.parseLong(req.getParameter("addressId"));
+
                     String recipientName = req.getParameter("fullName");
                     String phone = req.getParameter("phone");
                     String city = req.getParameter("city");
@@ -97,12 +100,13 @@ public class AddressServlet extends HttpServlet {
                     address.setWard(ward);
                     address.setDescription(description);
                     this.addressDAO.updateAddress(user.getId(), address, isDefault);
+
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.out.println(">>>>>>>>>>>>>>>>>>>>>>>Check lỗi");
+                    System.out.println(e.getMessage());
                 }
                 resp.sendRedirect(req.getContextPath() + "/address");
                 break;
-
             case "/add":
                 String recipientName = req.getParameter("fullName");
                 String phone = req.getParameter("phone");

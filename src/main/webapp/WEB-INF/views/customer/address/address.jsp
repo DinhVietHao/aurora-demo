@@ -162,8 +162,7 @@
                 <!--End Modal Delete Cart -->
 
                 <!-- Link javascript of Shipping Address -->
-                <script src="./assets/js/customer/address/address.js"></script>
-
+                <script src="./assets/js/customer/address/address.js?v=1.0.1"></script>
 
                 <!-- Link javascript of Validator -->
                 <script src="./assets/js/common/validator.js"></script>

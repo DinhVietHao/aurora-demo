@@ -24,11 +24,8 @@ public class ImageDAO {
         ProductImage img = null;
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
-
             ps.setInt(1, productID);
-
             ResultSet rs = ps.executeQuery();
-
             if (rs.next()) {
                 img = new ProductImage();
                 img.setImageId(rs.getLong("ImageID"));

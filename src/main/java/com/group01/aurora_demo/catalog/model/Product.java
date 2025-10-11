@@ -187,6 +187,7 @@ public class Product {
 
     public String getPrimaryImageUrl() {
         return primaryImageUrl;
+
     }
 
     public void setPrimaryImageUrl(String primaryImageUrl) {
