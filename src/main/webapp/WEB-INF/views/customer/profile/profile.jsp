@@ -12,7 +12,7 @@
                     <jsp:param name="title" value="Giỏ hàng - Aurora" />
                 </jsp:include>
 
-                <!-- CSS riêng trang Cart -->
+                <!-- CSS riêng trang Profile -->
                 <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
             </head>
 
@@ -27,7 +27,7 @@
                             <div class="text-center mb-4">
                                 <img src="./assets/images/common/avatar.png" alt="avatar"
                                     class="information-account__image">
-                                <p class="mt-2 fw-bold mb-0">Leminhkha220</p>
+                                <p class="mt-2 fw-bold mb-0">${user.fullName}</p>
                             </div>
 
                             <!-- sidebar profile -->
@@ -73,7 +73,7 @@
                                     <div class="profile">
                                         <div class="d-flex justify-content-between">
                                             <h5 class="mb-3 profile-title">Hồ Sơ Của Tôi</h5>
-                                            <button type="button" class="profile-remove">Xóa tài khoản</button>
+                                            <button type="button" class="profile-remove">Gửi yêu cầu xóa tài khoản</button>
                                         </div>
                                         <p class="profile-des">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
 
@@ -83,23 +83,24 @@
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Tên:</label>
                                                         <div class="col-sm-9">
-                                                            <input type="text" class="form-control" value="Minh Kha">
+                                                            <input type="text" class="form-control" value="${user.fullName}">
                                                         </div>
                                                     </div>
-
+                                                    
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Email:</label>
                                                         <div class="col-sm-9 d-flex align-items-center">
                                                             <span
-                                                                class="me-2 text-truncate">le*********@gmail.com</span>
+                                                                class="me-2 text-truncate">${user.email}</span>
                                                             <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
                                                         </div>
                                                     </div>
 
                                                     <div class="mb-3 row align-items-center">
-                                                        <label class="col-sm-3 col-form-label">Số điện thoại:</label>
+                                                        <label class="col-sm-3 col-form-label">Mật khẩu:</label>
                                                         <div class="col-sm-9 d-flex align-items-center">
-                                                            <span class="me-2 text-truncate">********05</span>
+                                                            <span
+                                                                class="me-2 text-truncate">**********</span>
                                                             <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
                                                         </div>
                                                     </div>

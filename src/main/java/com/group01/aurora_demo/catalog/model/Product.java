@@ -1,12 +1,12 @@
 package com.group01.aurora_demo.catalog.model;
 
+import com.group01.aurora_demo.shop.model.Shop;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.group01.aurora_demo.customer.model.Shop;
-
 public class Product {
-
+    // Basic fields
     private Long productId;
     private Long shopId;
     private String title;
@@ -14,18 +14,40 @@ public class Product {
     private Double originalPrice;
     private Double salePrice;
     private Long soldCount;
-    private Integer stock;
-    private Boolean isBundle;
-    private Long categoryId;
+    private Integer quantity;
+    private String status;
     private LocalDate publishedDate;
-    private double weight;
-    private String primaryImageUrl;
-    private List<ProductImages> images;
-    private List<Author> authors;
+    private Double weight;
+    private String rejectReason;
+    private String returnReason;
+    private LocalDateTime createdAt;
+
+    // Publisher relationship (N:1)
+    private Long publisherId;
     private Publisher publisher;
-    private String publisherString;
-    private BookDetail bookDetail;
+
+    // Shop relationship (N:1)
     private Shop shop;
+
+    // Images relationship (1:N)
+    private String primaryImageUrl;
+    private List<ProductImage> images;
+
+    // Categories relationship (N:N)
+    private List<Category> categories;
+
+    // Authors relationship (N:N)
+    private List<Author> authors;
+
+    // BookDetails relationship (1:1)
+    private BookDetail bookDetail;
+
+    // Computed fields (for display)
+    private Double avgRating;
+    private int discountPercent;
+
+    public Product() {
+    }
 
     public Long getProductId() {
         return productId;
@@ -83,36 +105,20 @@ public class Product {
         this.soldCount = soldCount;
     }
 
-    public Integer getStock() {
-        return stock;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
     }
 
-    public Boolean getIsBundle() {
-        return isBundle;
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsBundle(Boolean isBundle) {
-        this.isBundle = isBundle;
-    }
-
-    public Long getCategoryId() {
-        return categoryId;
-    }
-
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
-    }
-
-    public String getPublisherString() {
-        return publisherString;
-    }
-
-    public void setPublisherString(String publisherString) {
-        this.publisherString = publisherString;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public LocalDate getPublishedDate() {
@@ -123,28 +129,44 @@ public class Product {
         this.publishedDate = publishedDate;
     }
 
-    public String getPrimaryImageUrl() {
-        return primaryImageUrl;
+    public Double getWeight() {
+        return weight;
     }
 
-    public void setPrimaryImageUrl(String primaryImageUrl) {
-        this.primaryImageUrl = primaryImageUrl;
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 
-    public List<ProductImages> getImages() {
-        return images;
+    public String getRejectReason() {
+        return rejectReason;
     }
 
-    public void setImages(List<ProductImages> images) {
-        this.images = images;
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 
-    public List<Author> getAuthors() {
-        return authors;
+    public String getReturnReason() {
+        return returnReason;
     }
 
-    public void setAuthors(List<Author> authors) {
-        this.authors = authors;
+    public void setReturnReason(String returnReason) {
+        this.returnReason = returnReason;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Long getPublisherId() {
+        return publisherId;
+    }
+
+    public void setPublisherId(Long publisherId) {
+        this.publisherId = publisherId;
     }
 
     public Publisher getPublisher() {
@@ -155,14 +177,6 @@ public class Product {
         this.publisher = publisher;
     }
 
-    public BookDetail getBookDetail() {
-        return bookDetail;
-    }
-
-    public void setBookDetail(BookDetail bookDetail) {
-        this.bookDetail = bookDetail;
-    }
-
     public Shop getShop() {
         return shop;
     }
@@ -171,22 +185,60 @@ public class Product {
         this.shop = shop;
     }
 
-    public double getWeight() {
-        return weight;
+    public String getPrimaryImageUrl() {
+        return primaryImageUrl;
+
     }
 
-    public void setWeight(double weight) {
-        this.weight = weight;
+    public void setPrimaryImageUrl(String primaryImageUrl) {
+        this.primaryImageUrl = primaryImageUrl;
     }
 
-    @Override
-    public String toString() {
-        return "Product [productId=" + productId + ", shopId=" + shopId + ", title=" + title + ", description="
-                + description + ", originalPrice=" + originalPrice + ", salePrice=" + salePrice + ", soldCount="
-                + soldCount + ", stock=" + stock + ", isBundle=" + isBundle + ", categoryId=" + categoryId
-                + ", publishedDate=" + publishedDate + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
-                + ", authors=" + authors + ", publisher=" + publisher + ", publisherString=" + publisherString
-                + ", bookDetail=" + bookDetail + ", shop=" + shop + "]";
+    public List<ProductImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<ProductImage> images) {
+        this.images = images;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
+    }
+
+    public List<Author> getAuthors() {
+        return authors;
+    }
+
+    public void setAuthors(List<Author> authors) {
+        this.authors = authors;
+    }
+
+    public BookDetail getBookDetail() {
+        return bookDetail;
+    }
+
+    public void setBookDetail(BookDetail bookDetail) {
+        this.bookDetail = bookDetail;
+    }
+
+    public Double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(Double avgRating) {
+        this.avgRating = avgRating;
+    }
+
+    public Integer getDiscountPercent() {
+        if (originalPrice != null && salePrice != null && originalPrice > salePrice) {
+            this.discountPercent = (int) (((originalPrice - salePrice) / originalPrice) * 100);
+        }
+        return discountPercent;
     }
 
 }

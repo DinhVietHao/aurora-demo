@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.auth.controller;
 
-import com.group01.aurora_demo.auth.dao.RememberMeTokenDAO;
 import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.common.util.Json;
@@ -33,13 +32,11 @@ public class ForgotPassServlet extends HttpServlet {
 
     private EmailService emailService;
     private UserDAO userDAO;
-    private RememberMeTokenDAO rmDAO;
 
     @Override
     public void init() {
         this.emailService = new EmailService();
         this.userDAO = new UserDAO();
-        this.rmDAO = new RememberMeTokenDAO();
     }
 
     @Override
@@ -231,11 +228,6 @@ public class ForgotPassServlet extends HttpServlet {
         if (!ok) {
             Json.sendOk(resp, err("Không thể cập nhật mật khẩu. Vui lòng thử lại."));
             return;
-        }
-
-        try {
-            rmDAO.deleteAllForUser(userId);
-        } catch (Exception ignore) {
         }
 
         clearSession(s);

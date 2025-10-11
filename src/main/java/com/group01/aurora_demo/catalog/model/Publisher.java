@@ -2,8 +2,10 @@ package com.group01.aurora_demo.catalog.model;
 
 public class Publisher {
     private Long publisherId;
-    private String publisherName;
-    
+    private String name;
+
+    public Publisher() {
+    }
 
     public Long getPublisherId() {
         return publisherId;
@@ -13,11 +15,11 @@ public class Publisher {
         this.publisherId = publisherId;
     }
 
-    public String getPublisherName() {
-        return publisherName;
+    public String getName() {
+        return name;
     }
 
-    public void setPublisherName(String publisherName) {
-        this.publisherName = publisherName;
+    public void setName(String name) {
+        this.name = name;
     }
 }

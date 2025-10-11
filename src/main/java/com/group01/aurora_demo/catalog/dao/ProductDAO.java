@@ -1,299 +1,401 @@
 package com.group01.aurora_demo.catalog.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.catalog.model.ProductImages;
-import com.group01.aurora_demo.catalog.model.Author;
-import com.group01.aurora_demo.catalog.model.BookDetail;
-import com.group01.aurora_demo.catalog.model.Product;
+// import com.group01.aurora_demo.catalog.model.BookDetail;
+// import com.group01.aurora_demo.catalog.model.Category;
+// import com.group01.aurora_demo.catalog.model.Author;
 import com.group01.aurora_demo.catalog.model.Publisher;
-
+import com.group01.aurora_demo.catalog.model.Product;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.sql.*;
 
-/**
- * ProductDAO handles database operations related to products.
- * 
- * Author: Phạm Thanh Lượng
- */
 public class ProductDAO {
 
-    /**
-     * Retrieve all products (including primary image if available).
-     *
-     * @return list of products
-     */
-    public List<Product> getAllProducts() {
-        List<Product> products = new ArrayList<>();
-
-        // SQL: lấy sản phẩm, ảnh chính, nhà xuất bản, và tác giả
-        String sql = "SELECT p.ProductID, p.ShopID, p.Title, p.Description, "
-                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, "
-                + "p.CategoryID, p.PublishedDate, "
-                + "i.Url AS PrimaryImageUrl, "
-                + "pub.PublisherID, pub.Name AS PublisherName, "
-                + "a.AuthorID, a.AuthorName "
-                + "FROM Products p "
-                + "LEFT JOIN ProductImages i ON p.ProductID = i.ProductID AND i.IsPrimary = 1 "
-                + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
-                + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
-                + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
-                + "ORDER BY p.ProductID";
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-
-            Long lastProductId = null;
-            Product product = null;
-
-            while (rs.next()) {
-                Long currentProductId = rs.getLong("ProductID");
-
-                // Nếu sang sản phẩm mới thì tạo object mới
-                if (!currentProductId.equals(lastProductId)) {
-                    product = new Product();
-                    product.setProductId(currentProductId);
-                    product.setShopId(rs.getLong("ShopID"));
-                    product.setTitle(rs.getString("Title"));
-                    product.setDescription(rs.getString("Description"));
-                    product.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                    product.setSalePrice(rs.getDouble("SalePrice"));
-                    product.setSoldCount(rs.getLong("SoldCount"));
-                    product.setStock(rs.getInt("Stock"));
-                    product.setIsBundle(rs.getBoolean("IsBundle"));
-                    product.setCategoryId(rs.getLong("CategoryID"));
-
-                    Date publishedDate = rs.getDate("PublishedDate");
-                    if (publishedDate != null) {
-                        product.setPublishedDate(publishedDate.toLocalDate());
-                    }
-
-                    product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
-
-                    // Gán Publisher
-                    Long publisherId = (Long) rs.getObject("PublisherID");
-                    String publisherName = rs.getString("PublisherName");
-                    if (publisherId != null) {
-                        Publisher publisher = new Publisher();
-                        publisher.setPublisherId(publisherId);
-                        publisher.setPublisherName(publisherName);
-                        product.setPublisher(publisher);
-                    }
-
-                    // Init danh sách authors
-                    product.setAuthors(new ArrayList<>());
-
-                    products.add(product);
-                    lastProductId = currentProductId;
-                }
-
-                // Thêm author nếu có
-                Long authorId = (Long) rs.getObject("AuthorID");
-                String authorName = rs.getString("AuthorName");
-                if (authorId != null && product != null) {
-                    Author author = new Author(authorId, authorName);
-                    product.getAuthors().add(author);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    private Product mapToProduct(ResultSet rs) throws SQLException {
+        Product p = new Product();
+        p.setProductId(rs.getLong("ProductID"));
+        p.setTitle(rs.getString("Title"));
+        p.setSalePrice(rs.getDouble("SalePrice"));
+        p.setOriginalPrice(rs.getDouble("OriginalPrice"));
+        p.setSoldCount(rs.getLong("SoldCount"));
+        p.setAvgRating(rs.getObject("AvgRating", Double.class) != null ? rs.getDouble("AvgRating") : 0.0);
+        p.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+        String publisherName = rs.getString("PublisherName");
+        if (publisherName != null) {
+            Publisher pub = new Publisher();
+            pub.setName(publisherName);
+            p.setPublisher(pub);
         }
-        return products;
+        return p;
     }
 
-    public Product getProductById(long productId) {
-        Product product = null;
+    public List<Product> getSuggestedProductsForCustomer(Long userId) {
         String sql = """
-                SELECT p.ProductID, p.ShopID, p.Title, p.Description,
-                    p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.BundleID,
-                    pub.Name AS PublisherName, p.PublishedDate,
-                    b.Translator, b.Version, b.CoverType, b.Pages, l.LanguageName, b.[Size], b.ISBN,
-                    a.AuthorName AS Author
+                SELECT TOP 10
+                    p.ProductID,
+                    p.Title,
+                    p.SalePrice,
+                    p.OriginalPrice,
+                    p.SoldCount,
+                    ISNULL(AVG(r.Rating), 0) AS AvgRating,
+                    img.Url AS PrimaryImageUrl,
+                    pub.Name AS PublisherName
                 FROM Products p
+                JOIN ProductCategory pc ON p.ProductID = pc.ProductID
+                WHERE pc.CategoryID IN (
+                    -- Thể loại mà user đã mua
+                    SELECT DISTINCT pc2.CategoryID
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    JOIN ProductCategory pc2 ON oi.ProductID = pc2.ProductID
+                    WHERE o.UserID = ? AND o.OrderStatus IN (N'Hoàn thành')
+
+                    UNION
+
+                    -- Thể loại mà user đang có trong giỏ hàng
+                    SELECT DISTINCT pc3.CategoryID
+                    FROM CartItems ci
+                    JOIN ProductCategory pc3 ON ci.ProductID = pc3.ProductID
+                    WHERE ci.UserID = ?
+                )
+                AND p.Status = 'ACTIVE'
+                AND p.ProductID NOT IN (
+                    -- Loại bỏ những sản phẩm user đã mua hoặc có trong giỏ
+                    SELECT oi.ProductID
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    WHERE o.UserID = ?
+
+                    UNION
+
+                    SELECT ci.ProductID
+                    FROM CartItems ci
+                    WHERE ci.UserID = ?
+                )
+                LEFT JOIN OrderItems oi2 ON p.ProductID = oi2.ProductID
+                LEFT JOIN Reviews r ON oi2.OrderItemID = r.OrderItemID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
-                LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
-                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID
-                WHERE p.ProductID = ?
+                GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
+                         p.SoldCount, img.Url, pub.Name
+                ORDER BY p.SoldCount DESC, AvgRating DESC;
                 """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, productId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                product = new Product();
-                product.setProductId(rs.getLong("ProductID"));
-                product.setShopId(rs.getLong("ShopID"));
-                product.setTitle(rs.getString("Title"));
-                product.setDescription(rs.getString("Description"));
-                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                product.setSalePrice(rs.getDouble("SalePrice"));
-                product.setSoldCount(rs.getLong("SoldCount"));
-                product.setStock(rs.getInt("Stock"));
-                // product.setBundleId(productId);(rs.getBoolean("BundleID"));
-                product.setPublisherString(rs.getString("PublisherName"));
-
-                if (rs.getDate("PublishedDate") != null) {
-                    product.setPublishedDate(rs.getDate("PublishedDate").toLocalDate());
-                }
-                BookDetail bookDetail = new BookDetail();
-
-                bookDetail.setProductId(product.getProductId());
-                bookDetail.setAuthor(rs.getString("Author"));
-                bookDetail.setTranslator(rs.getString("Translator"));
-                bookDetail.setVersion(rs.getString("Version"));
-                bookDetail.setCoverType(rs.getString("CoverType"));
-                bookDetail.setPages(rs.getInt("Pages"));
-                bookDetail.setLanguage(rs.getString("LanguageName"));
-                bookDetail.setSize(rs.getString("Size"));
-                bookDetail.setISBN(rs.getString("ISBN"));
-
-                product.setBookDetail(bookDetail);
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            stmt.setLong(2, userId);
+            stmt.setLong(3, userId);
+            stmt.setLong(4, userId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-
-        if (product != null) {
-            List<ProductImages> images = new ArrayList<>();
-            String imgSql = "SELECT ImageID, Url FROM ProductImages WHERE ProductID = ? ORDER BY IsPrimary DESC";
-            try (Connection cn = DataSourceProvider.get().getConnection()) {
-                PreparedStatement ps = cn.prepareStatement(imgSql);
-                ps.setLong(1, productId);
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    ProductImages productImages = new ProductImages();
-                    productImages.setImageId(rs.getLong("ImageID"));
-                    productImages.setProductId(productId);
-                    productImages.setImageUrl(rs.getString("Url"));
-                    images.add(productImages);
-                }
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-            product.setImages(images);
-        }
-
-        return product;
-    }
-
-    /**
-     * Count total number of products in the database.
-     *
-     * @return number of products
-     */
-    public int countProducts() {
-        String sql = "SELECT COUNT(*) FROM Products";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getInt(1); // Return COUNT result
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        return 0;
-    }
-
-    /**
-     * Retrieve products with pagination.
-     *
-     * @param page     current page number (starting from 1)
-     * @param pageSize number of products per page
-     * @return list of products for the given page
-     */
-    public List<Product> getProductsByPage(int page, int pageSize) {
-        List<Product> products = new ArrayList<>();
-
-        String sql = "SELECT p.ProductID, p.ShopID, p.Title, p.Description, "
-                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, "
-                + "p.CategoryID, p.PublishedDate, "
-                + "i.Url AS PrimaryImageUrl, "
-                + "pub.PublisherID, pub.Name AS PublisherName, "
-                + "a.AuthorID, a.AuthorName "
-                + "FROM Products p "
-                + "LEFT JOIN ProductImages i ON p.ProductID = i.ProductID AND i.IsPrimary = 1 "
-                + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
-                + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
-                + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
-                + "ORDER BY p.ProductID "
-                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setInt(1, (page - 1) * pageSize);
-            ps.setInt(2, pageSize);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                Map<Long, Product> productMap = new LinkedHashMap<>();
-
-                while (rs.next()) {
-                    long productId = rs.getLong("ProductID");
-                    Product product = productMap.get(productId);
-
-                    if (product == null) {
-                        product = new Product();
-                        product.setProductId(productId);
-                        product.setShopId(rs.getLong("ShopID"));
-                        product.setTitle(rs.getString("Title"));
-                        product.setDescription(rs.getString("Description"));
-                        product.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                        product.setSalePrice(rs.getDouble("SalePrice"));
-                        product.setSoldCount(rs.getLong("SoldCount"));
-                        product.setStock(rs.getInt("Stock"));
-                        product.setIsBundle(rs.getBoolean("IsBundle"));
-                        product.setCategoryId(rs.getLong("CategoryID"));
-
-                        Date publishedDate = rs.getDate("PublishedDate");
-                        if (publishedDate != null) {
-                            product.setPublishedDate(publishedDate.toLocalDate());
-                        }
-
-                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
-
-                        // Gán Publisher
-                        Long publisherId = (Long) rs.getObject("PublisherID");
-                        String publisherName = rs.getString("PublisherName");
-                        if (publisherId != null) {
-                            Publisher publisher = new Publisher();
-                            publisher.setPublisherId(publisherId);
-                            publisher.setPublisherName(publisherName);
-                            product.setPublisher(publisher);
-                        }
-
-                        // Init authors list
-                        product.setAuthors(new ArrayList<>());
-
-                        productMap.put(productId, product);
-                    }
-
-                    // Thêm tác giả nếu có
-                    long authorId = rs.getLong("AuthorID");
-                    if (!rs.wasNull()) {
-                        Author author = new Author();
-                        author.setAuthorId(authorId);
-                        author.setAuthorName(rs.getString("AuthorName"));
-                        product.getAuthors().add(author);
-                    }
-                }
-
-                products.addAll(productMap.values());
-            }
-
-        } catch (SQLException e) {
-            System.out.println("Error in getProductsByPage: " + e.getMessage());
-        }
-
         return products;
     }
 
+    public List<Product> getSuggestedProductsForGuest() {
+        String sql = """
+                SELECT TOP 10
+                    p.ProductID,
+                    p.Title,
+                    p.SalePrice,
+                    p.OriginalPrice,
+                    p.SoldCount,
+                    ISNULL(AVG(r.Rating), 0) AS AvgRating,
+                    img.Url AS PrimaryImageUrl,
+                    pub.Name AS PublisherName
+                FROM Products p
+                LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
+                LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                WHERE p.Status = 'ACTIVE'
+                GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
+                         p.SoldCount, img.Url, pub.Name
+                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
+                """;
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return products;
+    }
+
+    // ----- Phạm Thanh Lượng -----
+    /*
+     * public List<Product> getProductsByShopId(long shopId, int offset, int limit)
+     * throws SQLException {
+     * List<Product> list = new ArrayList<>();
+     * 
+     * String sql = """
+     * SELECT p.ProductID, p.ShopID, p.Title, p.Description,
+     * p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
+     * p.PublisherID, p.PublishedDate, p.Weight, p.CreatedAt, p.status,
+     * b.Translator, b.[Version], b.CoverType, b.Pages,
+     * b.LanguageCode, b.[Size], b.ISBN,
+     * pi.Url AS PrimaryImageUrl
+     * FROM Products p
+     * LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
+     * LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+     * WHERE p.ShopID = ?
+     * ORDER BY p.CreatedAt DESC
+     * OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+     * """;
+     * 
+     * try (Connection cn = DataSourceProvider.get().getConnection();
+     * PreparedStatement ps = cn.prepareStatement(sql)) {
+     * 
+     * ps.setLong(1, shopId);
+     * ps.setInt(2, offset);
+     * ps.setInt(3, limit);
+     * CategoryDAO cateDAO = new CategoryDAO();
+     * AuthorDAO authorDAO = new AuthorDAO();
+     * // ImageDAO imageDAO = new ImageDAO();
+     * try (ResultSet rs = ps.executeQuery()) {
+     * while (rs.next()) {
+     * Product p = new Product();
+     * p.setProductId(rs.getLong("ProductID"));
+     * p.setShopId(rs.getLong("ShopID"));
+     * p.setTitle(rs.getString("Title"));
+     * p.setDescription(rs.getString("Description"));
+     * p.setOriginalPrice(rs.getDouble("OriginalPrice"));
+     * p.setSalePrice(rs.getDouble("SalePrice"));
+     * p.setSoldCount(rs.getLong("SoldCount"));
+     * p.setQuantity(rs.getInt("Quantity"));
+     * p.setAuthors(authorDAO.getAuthorsByProductId(p.getProductId()));
+     * p.setCategories(cateDAO.getCategoriesByProductId(p.getProductId()));
+     * p.setStatus(rs.getString("status"));
+     * 
+     * long publisherId = rs.getLong("PublisherID");
+     * if (!rs.wasNull()) {
+     * p.setPublisherId(publisherId);
+     * }
+     * 
+     * p.setPublishedDate(rs.getTimestamp("PublishedDate"));
+     * p.setWeight(rs.getDouble("Weight"));
+     * p.setCreatedAt(rs.getTimestamp("CreatedAt"));
+     * p.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+     * 
+     * // Gán BookDetail
+     * BookDetail b = new BookDetail();
+     * b.setProductId(rs.getLong("ProductID"));
+     * b.setTranslator(rs.getString("Translator"));
+     * b.setVersion(rs.getString("Version"));
+     * b.setCoverType(rs.getString("CoverType"));
+     * b.setPages(rs.getInt("Pages"));
+     * b.setLanguageCode(rs.getString("LanguageCode"));
+     * b.setSize(rs.getString("Size"));
+     * b.setISBN(rs.getString("ISBN"));
+     * p.setBookDetail(b);
+     * 
+     * // Danh sách ảnh (nếu bạn vẫn muốn lấy thêm ảnh phụ)
+     * // p.setImages(imageDAO.getProductImages(p.getProductId())); -- Error !!!
+     * 
+     * list.add(p);
+     * }
+     * }
+     * }
+     * return list;
+     * }
+     * 
+     * public int countProductsByShopId(long shopId) throws SQLException {
+     * String sql = "SELECT COUNT(*) FROM Products WHERE ShopID = ?";
+     * try (Connection cn = DataSourceProvider.get().getConnection();
+     * PreparedStatement ps = cn.prepareStatement(sql)) {
+     * ps.setLong(1, shopId);
+     * try (ResultSet rs = ps.executeQuery()) {
+     * if (rs.next())
+     * return rs.getInt(1);
+     * }
+     * }
+     * return 0;
+     * }
+     * 
+     * public long insertProduct(Product product) throws SQLException {
+     * String sqlInsertProduct = """
+     * INSERT INTO Products (ShopID, Title, Description, OriginalPrice, SalePrice,
+     * Quantity, PublisherID,
+     * Weight, PublishedDate, [Status])
+     * VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
+     * """;
+     * 
+     * String sqlInsertBookDetail = """
+     * INSERT INTO BookDetails (ProductID, Translator, [Version], CoverType, Pages,
+     * LanguageCode, [Size], ISBN)
+     * VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+     * """;
+     * 
+     * String sqlInsertProductImage = """
+     * INSERT INTO ProductImages (ProductID, Url, IsPrimary)
+     * VALUES (?, ?, ?)
+     * """;
+     * 
+     * String sqlInsertCategory = """
+     * INSERT INTO ProductCategory (ProductID, CategoryID)
+     * VALUES (?, ?)
+     * """;
+     * 
+     * String sqlInsertAuthor = """
+     * INSERT INTO BookAuthors (ProductID, AuthorID)
+     * VALUES (?, ?)
+     * """;
+     * 
+     * try (Connection cn = DataSourceProvider.get().getConnection()) {
+     * cn.setAutoCommit(false);
+     * long productId = 0;
+     * 
+     * // 1️⃣ Insert Products & lấy ProductID
+     * try (PreparedStatement ps = cn.prepareStatement(sqlInsertProduct,
+     * Statement.RETURN_GENERATED_KEYS)) {
+     * ps.setLong(1, product.getShopId());
+     * ps.setString(2, product.getTitle());
+     * ps.setString(3, product.getDescription());
+     * ps.setDouble(4, product.getOriginalPrice());
+     * ps.setDouble(5, product.getSalePrice());
+     * ps.setInt(6, product.getQuantity());
+     * if (product.getPublisherId() != null) {
+     * ps.setLong(7, product.getPublisherId());
+     * } else {
+     * ps.setNull(7, Types.BIGINT);
+     * }
+     * ps.setDouble(8, product.getWeight());
+     * ps.setDate(9, product.getPublishedDate() != null
+     * ? new java.sql.Date(product.getPublishedDate().getTime())
+     * : null);
+     * 
+     * int affected = ps.executeUpdate();
+     * if (affected == 0) {
+     * cn.rollback();
+     * throw new SQLException("Chèn product thất bại (0 rows).");
+     * }
+     * try (ResultSet rs = ps.getGeneratedKeys()) {
+     * if (rs.next())
+     * productId = rs.getLong(1);
+     * }
+     * }
+     * 
+     * if (productId == 0) {
+     * cn.rollback();
+     * throw new SQLException("Không lấy được ProductID.");
+     * }
+     * 
+     * // 2️⃣ Insert BookDetails (1 record)
+     * if (product.getBookDetail() != null) {
+     * BookDetail bd = product.getBookDetail();
+     * try (PreparedStatement ps = cn.prepareStatement(sqlInsertBookDetail)) {
+     * ps.setLong(1, productId);
+     * ps.setString(2, bd.getTranslator());
+     * ps.setString(3, bd.getVersion());
+     * ps.setString(4, bd.getCoverType());
+     * ps.setInt(5, bd.getPages());
+     * ps.setString(6, bd.getLanguageCode());
+     * ps.setString(7, bd.getSize());
+     * ps.setString(8, bd.getISBN());
+     * ps.executeUpdate();
+     * }
+     * }
+     * 
+     * // 3️⃣ Insert ProductImages (mỗi ảnh 1 executeUpdate) -- Error
+     * // if (product.getImageUrls() != null) {
+     * // try (PreparedStatement ps = cn.prepareStatement(sqlInsertProductImage)) {
+     * // for (int i = 0; i < product.getImageUrls().size(); i++) {
+     * // ps.setLong(1, productId);
+     * // ps.setString(2, product.getImageUrls().get(i));
+     * // ps.setBoolean(3, i == 0);
+     * // ps.executeUpdate();
+     * // }
+     * // }
+     * // }
+     * 
+     * // 4️⃣ Insert Categories
+     * if (product.getCategories() != null) {
+     * try (PreparedStatement ps = cn.prepareStatement(sqlInsertCategory)) {
+     * for (Category c : product.getCategories()) {
+     * ps.setLong(1, productId);
+     * ps.setLong(2, c.getCategoryId());
+     * ps.executeUpdate();
+     * }
+     * }
+     * }
+     * 
+     * // 5️⃣ Insert Authors
+     * if (product.getAuthors() != null) {
+     * try (PreparedStatement ps = cn.prepareStatement(sqlInsertAuthor)) {
+     * for (Author a : product.getAuthors()) {
+     * ps.setLong(1, productId);
+     * ps.setLong(2, a.getAuthorId());
+     * ps.executeUpdate();
+     * }
+     * }
+     * }
+     * 
+     * cn.commit();
+     * return productId;
+     * } catch (SQLException ex) {
+     * ex.printStackTrace();
+     * throw ex;
+     * }
+     * }
+     * 
+     * public Long findAuthorIdByName(String name) throws SQLException {
+     * String sql = "SELECT AuthorID FROM Authors WHERE AuthorName = ?";
+     * try (Connection c = DataSourceProvider.get().getConnection();
+     * PreparedStatement ps = c.prepareStatement(sql)) {
+     * ps.setString(1, name);
+     * try (ResultSet rs = ps.executeQuery()) {
+     * if (rs.next())
+     * return rs.getLong(1);
+     * }
+     * }
+     * return null;
+     * }
+     * 
+     * public Long insertAuthor(String name) throws SQLException {
+     * String sql =
+     * "INSERT INTO Authors (AuthorName) OUTPUT INSERTED.AuthorID VALUES (?)";
+     * try (Connection c = DataSourceProvider.get().getConnection();
+     * PreparedStatement ps = c.prepareStatement(sql)) {
+     * ps.setString(1, name);
+     * try (ResultSet rs = ps.executeQuery()) {
+     * if (rs.next())
+     * return rs.getLong(1);
+     * }
+     * }
+     * throw new SQLException("Không thể thêm tác giả: " + name);
+     * }
+     * 
+     * public boolean deleteProduct(long productId) {
+     * String sql = "DELETE FROM Products WHERE ProductID = ?";
+     * try (Connection cn = DataSourceProvider.get().getConnection();
+     * PreparedStatement stmt = cn.prepareStatement(sql)) {
+     * 
+     * stmt.setLong(1, productId);
+     * int affectedRows = stmt.executeUpdate();
+     * 
+     * // Nếu trigger chặn, SQL Server sẽ không xóa dòng nào → affectedRows = 0
+     * return affectedRows > 0;
+     * 
+     * } catch (SQLException e) {
+     * // Kiểm tra nếu lỗi do trigger RAISERROR gửi ra
+     * if (e.getMessage().contains("Không thể xóa sản phẩm")) {
+     * return false; // trigger gửi lỗi nghiệp vụ
+     * }
+     * e.printStackTrace();
+     * return false;
+     * }
+     * }
+     */
 }
