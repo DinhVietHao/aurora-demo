@@ -14,6 +14,7 @@ import java.sql.*;
 
 public class ProductDAO {
 
+    // ========== Home page =========
     private Product mapToProduct(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setProductId(rs.getLong("ProductID"));
@@ -128,6 +129,105 @@ public class ProductDAO {
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
+        }
+        return products;
+    }
+
+    // ============ Bookstore page ============
+
+    public int countAllProducts() {
+        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE'";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            System.out.println("Error in countAllProducts: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public int countProductsWithSold() {
+        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE' AND SoldCount > 0";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            System.out.println("Error (Bookstore page) in countProductsWithSold: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    public List<Product> getAllProducts(int offset, int limit, String sort) {
+        // whitelist / enum-like mapping cho sort -> ORDER BY
+        String orderBy;
+        switch (sort) {
+            case "pop":
+                orderBy = "ISNULL(r.AvgRating, 0) DESC, p.SoldCount DESC";
+                break;
+            case "best":
+                orderBy = "p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC";
+                break;
+            case "priceAsc":
+                orderBy = "p.SalePrice ASC";
+                break;
+            case "priceDesc":
+                orderBy = "p.SalePrice DESC";
+                break;
+            case "newest":
+                orderBy = "p.CreatedAt DESC";
+                break;
+            default:
+                orderBy = "p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC";
+                break;
+        }
+
+        String sql = """
+                SELECT
+                  p.ProductID,
+                  p.Title,
+                  p.SalePrice,
+                  p.OriginalPrice,
+                  p.SoldCount,
+                  ISNULL(r.AvgRating, 0) AS AvgRating,
+                  img.Url AS PrimaryImageUrl,
+                  pub.Name AS PublisherName,
+                  p.CreatedAt
+                FROM Products p
+                LEFT JOIN (
+                    SELECT oi.ProductID, AVG(CAST(r.Rating AS FLOAT)) AS AvgRating
+                    FROM OrderItems oi
+                    JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
+                    GROUP BY oi.ProductID
+                ) r ON r.ProductID = p.ProductID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                WHERE p.[Status] = 'ACTIVE'
+                """ // ← kết thúc ở đây
+                + " ORDER BY " + orderBy + " " // ← thêm dấu cách 2 bên
+                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;";
+
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, offset);
+            stmt.setInt(2, limit);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            // log chi tiết hơn
+            e.printStackTrace();
+            System.out.println("Error (Bookstore page) in getAllProducts: " + e.getMessage());
         }
         return products;
     }
