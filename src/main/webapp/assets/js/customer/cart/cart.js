@@ -480,7 +480,10 @@ buyButton.addEventListener("click", () => {
     const emptySelection = document.getElementById("emptySelectionModal");
     const emptySelectionModal = new bootstrap.Modal(emptySelection);
     emptySelectionModal.show();
+    return;
   }
+
+  window.location.href = "/checkout";
 });
 
 updateCartSummary();

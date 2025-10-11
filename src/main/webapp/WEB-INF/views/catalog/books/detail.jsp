@@ -26,7 +26,7 @@
               <div class="col-md-5">
                 <div class="book-detail-images">
                   <div class="product-image mb-3">
-                    <img id="mainImage" src="${ctx}/assets/images/catalog/thumbnails/${product.images[0].imageUrl}"
+                    <img id="mainImage" src="${ctx}/assets/images/catalog/thumbnails/${product.images[0].url}"
                       alt="Sách" class="img-fluid border" />
                   </div>
 
@@ -34,7 +34,7 @@
                     <c:forEach var="img" items="${product.images}" varStatus="s">
                       <c:if test="${!s.last}">
                         <div class="col-3">
-                          <img src="${ctx}/assets/images/catalog/thumbnails/${img.imageUrl}"
+                          <img src="${ctx}/assets/images/catalog/thumbnails/${img.url}"
                             class="img-fluid border thumbnail ${s.first ? 'active' : ''}" alt="" />
                         </div>
                       </c:if>
@@ -49,120 +49,6 @@
                   </div>
                 </div>
               </div>
-
-              <%-- THÔNG TIN CHÍNH --%>
-                <div class="col-md-7">
-                  <div class="book-detail-header">
-                    <h6 class="author">Tác giả:
-                      <c:out value="${product.bookDetail.author}" />
-                    </h6>
-                    <h4 class="title">
-                      <c:out value="${product.title}" />
-                    </h4>
-
-                    <div class="mb-2 rating">
-                      <i class="bi bi-star-fill text-warning small"></i>
-                      <i class="bi bi-star-fill text-warning small"></i>
-                      <i class="bi bi-star-fill text-warning small"></i>
-                      <i class="bi bi-star-fill text-warning small"></i>
-                      <i class="bi bi-star-half text-warning small"></i>
-                      <span>
-                        4.5 (124) |
-                        <c:out value="${product.soldCount}" />
-                      </span>
-                    </div>
-
-                    <div class="mb-3">
-                      <span class="price">
-                        <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
-                          groupingUsed="true" />
-                      </span>
-                      <c:if test="${percentDiscount != 0}">
-                        <span class="discount">-
-                          <c:out value="${percentDiscount}" />%
-                        </span>
-                        <span class="text-muted text-decoration-line-through">
-                          <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
-                            groupingUsed="true" />
-                        </span>
-                      </c:if>
-                    </div>
-                  </div>
-
-                  <%-- THÔNG TIN CHI TIẾT (BookDetails) --%>
-                    <div class="book-information my-3">
-                      <div class="book-information-header">Thông tin chi tiết</div>
-                      <div class="book-information-body">
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Phiên bản sách</div>
-                          <div class="col-7">
-                            <c:out value="${product.bookDetail.version}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Công ty phát hành</div>
-                          <div class="col-7">
-                            <c:out value="${product.publisherString}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Ngày xuất bản</div>
-                          <div class="col-7">
-                            <c:out value="${product.publishedDate}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Kích thước</div>
-                          <div class="col-7">
-                            <c:out value="${product.bookDetail.size}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Dịch giả</div>
-                          <div class="col-7">
-                            <c:out value="${product.bookDetail.translator}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Loại bìa</div>
-                          <div class="col-7">
-                            <c:out value="${product.bookDetail.coverType}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Số trang</div>
-                          <div class="col-7">
-                            <c:out value="${product.bookDetail.pages}" />
-                          </div>
-                        </div>
-                        <div class="row mb-1 book-information-box">
-                          <div class="col-5 text-muted">Nhà xuất bản</div>
-                          <div class="col-7">
-                            <c:out value="${product.publisherString}" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <%-- MÔ TẢ --%>
-                      <div class="mt-4">
-                        <div class="book-description">
-                          <div class="book-description-header">Mô tả sản phẩm</div>
-                          <div class="book-description-body">
-                            <p class="fw-medium">
-                              <c:out value="${product.title}" />
-                            </p>
-                            <p id="moreText">
-                              <c:out value="${product.description}" />
-                            </p>
-                            <div class="gradient"></div>
-                          </div>
-                          <a class="d-block mt-2 text-primary text-center cursor-pointer" id="more">
-                            Xem thêm
-                          </a>
-                        </div>
-                      </div>
-                </div>
           </div>
 
           <%-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) --%>
@@ -195,9 +81,6 @@
             <%-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) --%>
               <div class="book-introduction container">
                 <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-                <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
-                  <jsp:param name="carouselId" value="bookIntroduction" />
-                </jsp:include>
               </div>
 
         </div>
@@ -216,10 +99,10 @@
 
               <%-- Send AJAX to controller --%>
                 <script>
-                  const addTocartBtn = document.getElementById("add-to-cart");
-                  addTocartBtn.addEventListener("click", () => {
-                    const productId = addTocartBtn.dataset.productId;
-                    fetch("add-to-cart", {
+                  const addToCartBtn = document.getElementById("add-to-cart");
+                  addToCartBtn.addEventListener("click", () => {
+                    const productId = addToCartBtn.dataset.productId;
+                    fetch("/cart/add", {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/x-www-form-urlencoded",

@@ -3,28 +3,29 @@ package com.group01.aurora_demo.shop.model;
 import java.sql.Timestamp;
 
 public class Voucher {
-    private long voucherID;
-    private String code;
-    private String discountType;
-    private double value;
-    private Double maxAmount;
-    private Double minOrderAmount;
-    private Timestamp startAt;
-    private Timestamp endAt;
-    private String status;
-    private boolean isShopVoucher;
     private Long shopID;
-    private Integer usageLimit;
-    private Timestamp createdAt;
+    private String code;
+    private double value;
+    private String status;
     private int usageCount;
+    private long voucherID;
+    private Timestamp endAt;
+    private Double maxAmount;
+    private int perUserLimit;
+    private Timestamp startAt;
+    private Integer usageLimit;
     private String description;
+    private String discountType;
+    private Timestamp createdAt;
+    private Double minOrderAmount;
+    private boolean isShopVoucher;
 
-    public long getVoucherID() {
-        return voucherID;
+    public Long getShopID() {
+        return shopID;
     }
 
-    public void setVoucherID(long voucherID) {
-        this.voucherID = voucherID;
+    public void setShopID(Long shopID) {
+        this.shopID = shopID;
     }
 
     public String getCode() {
@@ -35,52 +36,12 @@ public class Voucher {
         this.code = code;
     }
 
-    public String getDiscountType() {
-        return discountType;
-    }
-
-    public void setDiscountType(String discountType) {
-        this.discountType = discountType;
-    }
-
     public double getValue() {
         return value;
     }
 
     public void setValue(double value) {
         this.value = value;
-    }
-
-    public Double getMaxAmount() {
-        return maxAmount;
-    }
-
-    public void setMaxAmount(Double maxAmount) {
-        this.maxAmount = maxAmount;
-    }
-
-    public Double getMinOrderAmount() {
-        return minOrderAmount;
-    }
-
-    public void setMinOrderAmount(Double minOrderAmount) {
-        this.minOrderAmount = minOrderAmount;
-    }
-
-    public Timestamp getStartAt() {
-        return startAt;
-    }
-
-    public void setStartAt(Timestamp startAt) {
-        this.startAt = startAt;
-    }
-
-    public Timestamp getEndAt() {
-        return endAt;
-    }
-
-    public void setEndAt(Timestamp endAt) {
-        this.endAt = endAt;
     }
 
     public String getStatus() {
@@ -91,20 +52,52 @@ public class Voucher {
         this.status = status;
     }
 
-    public boolean isShopVoucher() {
-        return isShopVoucher;
+    public int getUsageCount() {
+        return usageCount;
     }
 
-    public void setShopVoucher(boolean isShopVoucher) {
-        this.isShopVoucher = isShopVoucher;
+    public void setUsageCount(int usageCount) {
+        this.usageCount = usageCount;
     }
 
-    public Long getShopID() {
-        return shopID;
+    public long getVoucherID() {
+        return voucherID;
     }
 
-    public void setShopID(Long shopID) {
-        this.shopID = shopID;
+    public void setVoucherID(long voucherID) {
+        this.voucherID = voucherID;
+    }
+
+    public Timestamp getEndAt() {
+        return endAt;
+    }
+
+    public void setEndAt(Timestamp endAt) {
+        this.endAt = endAt;
+    }
+
+    public Double getMaxAmount() {
+        return maxAmount;
+    }
+
+    public void setMaxAmount(Double maxAmount) {
+        this.maxAmount = maxAmount;
+    }
+
+    public int getPerUserLimit() {
+        return perUserLimit;
+    }
+
+    public void setPerUserLimit(int perUserLimit) {
+        this.perUserLimit = perUserLimit;
+    }
+
+    public Timestamp getStartAt() {
+        return startAt;
+    }
+
+    public void setStartAt(Timestamp startAt) {
+        this.startAt = startAt;
     }
 
     public Integer getUsageLimit() {
@@ -115,6 +108,22 @@ public class Voucher {
         this.usageLimit = usageLimit;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDiscountType() {
+        return discountType;
+    }
+
+    public void setDiscountType(String discountType) {
+        this.discountType = discountType;
+    }
+
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -123,20 +132,20 @@ public class Voucher {
         this.createdAt = createdAt;
     }
 
-    public int getUsageCount() {
-        return usageCount;
+    public Double getMinOrderAmount() {
+        return minOrderAmount;
     }
 
-    public void setUsageCount(int usageCount) {
-        this.usageCount = usageCount;
+    public void setMinOrderAmount(Double minOrderAmount) {
+        this.minOrderAmount = minOrderAmount;
     }
 
-    public String getDescription() {
-        return description;
+    public boolean isShopVoucher() {
+        return isShopVoucher;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setShopVoucher(boolean isShopVoucher) {
+        this.isShopVoucher = isShopVoucher;
     }
 
 }

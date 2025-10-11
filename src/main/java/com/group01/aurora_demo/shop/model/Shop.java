@@ -1,20 +1,30 @@
 package com.group01.aurora_demo.shop.model;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.profile.model.Address;
 
 public class Shop {
     private Long shopId;
     private String name;
+    private String description;
+    private Double ratingAvg;
     private String status;
     private Long ownerUserId;
-    private String avatarUrl;
-    private String description;
-    private String invoiceEmail;
-    private String rejectReason;
-    private BigDecimal ratingAvg;
-    private Long pickupAddressId;
     private LocalDateTime createdAt;
+    private Long pickupAddressId;
+    private String invoiceEmail;
+    private String avatarUrl;
+    private String rejectReason;
+
+    // Relationship objects
+    private User owner;
+    private Address pickupAddress;
+
+    // Computed fields
+    private Long totalProducts;
+    private Long totalOrders;
 
     public Shop() {
     }
@@ -35,6 +45,22 @@ public class Shop {
         this.name = name;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Double getRatingAvg() {
+        return ratingAvg;
+    }
+
+    public void setRatingAvg(Double ratingAvg) {
+        this.ratingAvg = ratingAvg;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -51,44 +77,12 @@ public class Shop {
         this.ownerUserId = ownerUserId;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getInvoiceEmail() {
-        return invoiceEmail;
-    }
-
-    public void setInvoiceEmail(String invoiceEmail) {
-        this.invoiceEmail = invoiceEmail;
-    }
-
-    public String getRejectReason() {
-        return rejectReason;
-    }
-
-    public void setRejectReason(String rejectReason) {
-        this.rejectReason = rejectReason;
-    }
-
-    public BigDecimal getRatingAvg() {
-        return ratingAvg;
-    }
-
-    public void setRatingAvg(BigDecimal ratingAvg) {
-        this.ratingAvg = ratingAvg;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Long getPickupAddressId() {
@@ -99,12 +93,60 @@ public class Shop {
         this.pickupAddressId = pickupAddressId;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getInvoiceEmail() {
+        return invoiceEmail;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setInvoiceEmail(String invoiceEmail) {
+        this.invoiceEmail = invoiceEmail;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
+    }
+
+    public Address getPickupAddress() {
+        return pickupAddress;
+    }
+
+    public void setPickupAddress(Address pickupAddress) {
+        this.pickupAddress = pickupAddress;
+    }
+
+    public Long getTotalProducts() {
+        return totalProducts;
+    }
+
+    public void setTotalProducts(Long totalProducts) {
+        this.totalProducts = totalProducts;
+    }
+
+    public Long getTotalOrders() {
+        return totalOrders;
+    }
+
+    public void setTotalOrders(Long totalOrders) {
+        this.totalOrders = totalOrders;
     }
 
 }

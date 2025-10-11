@@ -65,7 +65,7 @@
                                                             type="checkbox" ${cartItem.isChecked ? "checked" : "" }>
                                                         <a href="${ctx}/book?id=${cartItem.product.productId}"
                                                             target="_blank">
-                                                            <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].imageUrl}"
+                                                            <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
                                                         </a>
                                                     </div>
@@ -140,6 +140,7 @@
                                                 </div>
                                             </div>
                                             <!-- Modal Voucher Shop -->
+
                                             <div class="modal fade cart-shop-voucher"
                                                 id="shopVoucherModal_${shopCart.shop.shopId}" tabindex="-1"
                                                 aria-hidden="true">
@@ -157,61 +158,79 @@
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
                                                                 <div class="col-4">
-                                                                    <button class="button-four w-100">Áp dụng</button>
+                                                                    <button class="button-four w-100">Áp
+                                                                        dụng</button>
                                                                 </div>
                                                             </div>
-                                                            <div class="list-group">
-                                                                <c:forEach var="voucher" items="${shopCart.vouchers}">
-                                                                    <label
-                                                                        class="list-group-item d-flex justify-content-between align-items-center">
-                                                                        <div>
-                                                                            <span class="badge bg-success">
-                                                                                ${shopCart.shop.name}</span>
-                                                                            <c:choose>
-                                                                                <c:when
-                                                                                    test="${voucher.discountType == 'PERCENT'}">
-                                                                                    <span class="ms-2">Giảm
+                                                            <c:choose>
+                                                                <c:when test="${empty shopCart.vouchers}">
+                                                                    <div class="text-center">
+                                                                        <img src="${ctx}/assets/images/common/voucherEmpty.png"
+                                                                            alt="Cart Empty">
+                                                                        <p class="text-muted">Chưa có mã giảm giá nào
+                                                                            của shop</p>
+                                                                        <p>Nhập mã giá có thể sử dụng vào thanh bên trên
+                                                                        </p>
+                                                                    </div>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <div class="list-group">
+                                                                        <c:forEach var="voucher"
+                                                                            items="${shopCart.vouchers}">
+                                                                            <label
+                                                                                class="list-group-item d-flex justify-content-between align-items-center">
+                                                                                <div>
+                                                                                    <span class="badge bg-success">
+                                                                                        ${shopCart.shop.name}</span>
+                                                                                    <c:choose>
+                                                                                        <c:when
+                                                                                            test="${voucher.discountType == 'PERCENT'}">
+                                                                                            <span class="ms-2">Giảm
+                                                                                                <fmt:formatNumber
+                                                                                                    value="${voucher.value}"
+                                                                                                    type="number"
+                                                                                                    maxFractionDigits="0" />
+                                                                                                %
+                                                                                                tối đa
+                                                                                                <fmt:formatNumber
+                                                                                                    value="${voucher.maxAmount / 1000}"
+                                                                                                    type="number" />K
+                                                                                            </span>
+                                                                                            <br />
+                                                                                        </c:when>
+                                                                                        <c:otherwise>
+                                                                                            <span class="ms-2">Giảm
+                                                                                                <fmt:formatNumber
+                                                                                                    value="${voucher.value / 1000}"
+                                                                                                    type="number" />K
+                                                                                            </span>
+                                                                                            <br />
+                                                                                        </c:otherwise>
+                                                                                    </c:choose>
+                                                                                    <small>
+                                                                                        Cho đơn từ
                                                                                         <fmt:formatNumber
-                                                                                            value="${voucher.value}"
-                                                                                            type="number"
-                                                                                            maxFractionDigits="0" />%
-                                                                                        tối đa
-                                                                                        <fmt:formatNumber
-                                                                                            value="${voucher.maxAmount / 1000}"
+                                                                                            value="${voucher.minOrderAmount / 1000}"
                                                                                             type="number" />K
-                                                                                    </span>
-                                                                                    <br />
-                                                                                </c:when>
-                                                                                <c:otherwise>
-                                                                                    <span class="ms-2">Giảm
-                                                                                        <fmt:formatNumber
-                                                                                            value="${voucher.value / 1000}"
-                                                                                            type="number" />K
-                                                                                    </span>
-                                                                                    <br />
-                                                                                </c:otherwise>
-                                                                            </c:choose>
-                                                                            <small>
-                                                                                Cho đơn từ
-                                                                                <fmt:formatNumber
-                                                                                    value="${voucher.minOrderAmount / 1000}"
-                                                                                    type="number" />K
-                                                                                - HSD:
-                                                                                <fmt:formatDate value="${voucher.endAt}"
-                                                                                    pattern="dd/MM/yyyyy" />
-                                                                            </small>
-                                                                        </div>
-                                                                        <input type="radio"
-                                                                            name="voucherShopDiscount_${shopCart.shop.shopId}"
-                                                                            value="discount1"
-                                                                            data-text="Giảm 8% tối đa 30K"
-                                                                            data-discount="${voucher.value}"
-                                                                            data-type="${voucher.discountType}"
-                                                                            data-max="${voucher.maxAmount}"
-                                                                            data-min-order-amount="${voucher.minOrderAmount}">
-                                                                    </label>
-                                                                </c:forEach>
-                                                            </div>
+                                                                                        - HSD:
+                                                                                        <fmt:formatDate
+                                                                                            value="${voucher.endAt}"
+                                                                                            pattern="dd/MM/yyyyy" />
+                                                                                    </small>
+                                                                                </div>
+                                                                                <input type="radio"
+                                                                                    name="voucherShopDiscount_${shopCart.shop.shopId}"
+                                                                                    value="discount1"
+                                                                                    data-text="Giảm 8% tối đa 30K"
+                                                                                    data-discount="${voucher.value}"
+                                                                                    data-type="${voucher.discountType}"
+                                                                                    data-max="${voucher.maxAmount}"
+                                                                                    data-min-order-amount="${voucher.minOrderAmount}">
+                                                                            </label>
+                                                                        </c:forEach>
+                                                                    </div>
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </div>
                                                         <div class="modal-footer">
                                                             <button type="button" class="button-five"
@@ -291,108 +310,126 @@
                                                     <button class="button-four w-100">Áp dụng</button>
                                                 </div>
                                             </div>
-
-
-                                            <h6 class="fw-bold mb-2">Mã Giảm Giá</h6>
-                                            <div class="list-group">
-                                                <c:forEach var="systemVoucher" items="${systemVouchers}">
-                                                    <c:if test="${systemVoucher.discountType != 'SHIPPING'}">
-                                                        <label
-                                                            class="list-group-item d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <span class="badge bg-success">Aurora</span>
-                                                                <c:choose>
-                                                                    <c:when
-                                                                        test="${systemVoucher.discountType == 'PERCENT'}">
-                                                                        <span class="ms-2">Giảm
+                                            <c:choose>
+                                                <c:when test="${empty systemVouchers}">
+                                                    <div class="text-center">
+                                                        <img src="${ctx}/assets/images/common/voucherEmpty.png"
+                                                            alt="Cart Empty">
+                                                        <p class="text-muted">Chưa có mã giảm giá nào
+                                                            của Aurora</p>
+                                                        <p>Nhập mã giá có thể sử dụng vào thanh bên trên
+                                                        </p>
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <h6 class="fw-bold mb-2">Mã Giảm Giá</h6>
+                                                    <div class="list-group">
+                                                        <c:forEach var="systemVoucher" items="${systemVouchers}">
+                                                            <c:if test="${systemVoucher.discountType != 'SHIPPING'}">
+                                                                <label
+                                                                    class="list-group-item d-flex justify-content-between align-items-center">
+                                                                    <div>
+                                                                        <span class="badge bg-success">Aurora</span>
+                                                                        <c:choose>
+                                                                            <c:when
+                                                                                test="${systemVoucher.discountType == 'PERCENT'}">
+                                                                                <span class="ms-2">Giảm
+                                                                                    <fmt:formatNumber
+                                                                                        value="${systemVoucher.value}"
+                                                                                        type="number"
+                                                                                        maxFractionDigits="0" />%
+                                                                                    tối đa
+                                                                                    <fmt:formatNumber
+                                                                                        value="${systemVoucher.maxAmount / 1000}"
+                                                                                        type="number" />K
+                                                                                </span>
+                                                                                <br />
+                                                                            </c:when>
+                                                                            <c:otherwise>
+                                                                                <span class="ms-2">Giảm
+                                                                                    <fmt:formatNumber
+                                                                                        value="${systemVoucher.value / 1000}"
+                                                                                        type="number" />K
+                                                                                </span>
+                                                                                <br />
+                                                                            </c:otherwise>
+                                                                        </c:choose>
+                                                                        <small>
+                                                                            Cho đơn từ
                                                                             <fmt:formatNumber
-                                                                                value="${systemVoucher.value}"
-                                                                                type="number" maxFractionDigits="0" />%
-                                                                            tối đa
-                                                                            <fmt:formatNumber
-                                                                                value="${systemVoucher.maxAmount / 1000}"
+                                                                                value="${systemVoucher.minOrderAmount / 1000}"
                                                                                 type="number" />K
-                                                                        </span>
-                                                                        <br />
-                                                                    </c:when>
-                                                                    <c:otherwise>
+                                                                            - HSD:
+                                                                            <fmt:formatDate
+                                                                                value="${systemVoucher.endAt}"
+                                                                                pattern="dd/MM/yyyyy" />
+                                                                        </small>
+                                                                    </div>
+                                                                    <fmt:formatNumber
+                                                                        value="${systemVoucher.maxAmount/1000}"
+                                                                        type="number" var="maxAmount" />
+                                                                    <fmt:formatNumber
+                                                                        value="${systemVoucher.value/1000}"
+                                                                        type="number" var="valueAmount" />
+                                                                    <fmt:formatNumber value="${systemVoucher.value}"
+                                                                        type="number" maxFractionDigits="0"
+                                                                        var="valuePercent" />
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${systemVoucher.discountType == 'PERCENT'}">
+                                                                            <c:set var="voucherText"
+                                                                                value="Giảm ${valuePercent}% tối đa ${maxAmount}K" />
+                                                                        </c:when>
+                                                                        <c:otherwise>
+                                                                            <c:set var="voucherText"
+                                                                                value="Giảm ${valueAmount}K" />
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                    <input type="radio" name="voucherDiscount"
+                                                                        value="discount1" data-text="${voucherText}"
+                                                                        data-discount="${systemVoucher.value}"
+                                                                        data-type="${voucher.discountType}"
+                                                                        data-max="${voucher.maxAmount}"
+                                                                        data-min-order-amount="${voucher.minOrderAmount}"
+                                                                        data-voucherid="${voucher.maxAmount}">
+                                                                </label>
+                                                            </c:if>
+                                                        </c:forEach>
+                                                    </div>
+
+                                                    <h6 class="fw-bold mt-4 mb-2">Mã Vận Chuyển</h6>
+                                                    <div class="list-group">
+                                                        <c:forEach var="systemVoucher" items="${systemVouchers}">
+                                                            <c:if test="${systemVoucher.discountType == 'SHIPPING'}">
+                                                                <label
+                                                                    class="list-group-item d-flex justify-content-between align-items-center">
+                                                                    <div>
+                                                                        <span class="badge bg-primary">FREESHIP</span>
                                                                         <span class="ms-2">Giảm
                                                                             <fmt:formatNumber
                                                                                 value="${systemVoucher.value / 1000}"
                                                                                 type="number" />K
-                                                                        </span>
-                                                                        <br />
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                                <small>
-                                                                    Cho đơn từ
-                                                                    <fmt:formatNumber
-                                                                        value="${systemVoucher.minOrderAmount / 1000}"
-                                                                        type="number" />K
-                                                                    - HSD:
-                                                                    <fmt:formatDate value="${systemVoucher.endAt}"
-                                                                        pattern="dd/MM/yyyyy" />
-                                                                </small>
-                                                            </div>
-                                                            <fmt:formatNumber value="${systemVoucher.maxAmount/1000}"
-                                                                type="number" var="maxAmount" />
-                                                            <fmt:formatNumber value="${systemVoucher.value/1000}"
-                                                                type="number" var="valueAmount" />
-                                                            <fmt:formatNumber value="${systemVoucher.value}"
-                                                                type="number" maxFractionDigits="0"
-                                                                var="valuePercent" />
-                                                            <c:choose>
-                                                                <c:when
-                                                                    test="${systemVoucher.discountType == 'PERCENT'}">
-                                                                    <c:set var="voucherText"
-                                                                        value="Giảm ${valuePercent}% tối đa ${maxAmount}K" />
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <c:set var="voucherText"
-                                                                        value="Giảm ${valueAmount}K" />
-                                                                </c:otherwise>
-                                                            </c:choose>
-                                                            <input type="radio" name="voucherDiscount" value="discount1"
-                                                                data-text="${voucherText}"
-                                                                data-discount="${systemVoucher.value}"
-                                                                data-type="${voucher.discountType}"
-                                                                data-max="${voucher.maxAmount}"
-                                                                data-min-order-amount="${voucher.minOrderAmount}">
-                                                        </label>
-                                                    </c:if>
-                                                </c:forEach>
-                                            </div>
-
-                                            <h6 class="fw-bold mt-4 mb-2">Mã Vận Chuyển</h6>
-                                            <div class="list-group">
-                                                <c:forEach var="systemVoucher" items="${systemVouchers}">
-                                                    <c:if test="${systemVoucher.discountType == 'SHIPPING'}">
-                                                        <label
-                                                            class="list-group-item d-flex justify-content-between align-items-center">
-                                                            <div>
-                                                                <span class="badge bg-primary">FREESHIP</span>
-                                                                <span class="ms-2">Giảm
-                                                                    <fmt:formatNumber
-                                                                        value="${systemVoucher.value / 1000}"
-                                                                        type="number" />K
-                                                                </span><br>
-                                                                <small> Cho đơn từ
-                                                                    <fmt:formatNumber
-                                                                        value="${systemVoucher.minOrderAmount / 1000}"
-                                                                        type="number" />K
-                                                                    - HSD:
-                                                                    <fmt:formatDate value="${systemVoucher.endAt}"
-                                                                        pattern="dd/MM/yyyyy" />
-                                                                </small>
-                                                            </div>
-                                                            <input type="radio" name="voucherShip" value="ship1"
-                                                                data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
-                                                                data-ship="${systemVoucher.value}"
-                                                                data-min-order-amount="${systemVoucher.minOrderAmount}">
-                                                        </label>
-                                                    </c:if>
-                                                </c:forEach>
-                                            </div>
+                                                                        </span><br>
+                                                                        <small> Cho đơn từ
+                                                                            <fmt:formatNumber
+                                                                                value="${systemVoucher.minOrderAmount / 1000}"
+                                                                                type="number" />K
+                                                                            - HSD:
+                                                                            <fmt:formatDate
+                                                                                value="${systemVoucher.endAt}"
+                                                                                pattern="dd/MM/yyyyy" />
+                                                                        </small>
+                                                                    </div>
+                                                                    <input type="radio" name="voucherShip" value="ship1"
+                                                                        data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
+                                                                        data-ship="${systemVoucher.value}"
+                                                                        data-min-order-amount="${systemVoucher.minOrderAmount}">
+                                                                </label>
+                                                            </c:if>
+                                                        </c:forEach>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
 
                                         <!-- Footer -->
@@ -416,7 +453,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
             </body>
 
             </html>

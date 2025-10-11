@@ -161,11 +161,11 @@
                                                                             <c:choose>
                                                                                 <c:when
                                                                                     test="${fn:length(p.authors) == 1}">
-                                                                                    ${p.authors[0].name}
+                                                                                    ${p.authors[0].authorName}
                                                                                 </c:when>
                                                                                 <c:when
                                                                                     test="${fn:length(p.authors) > 1}">
-                                                                                    ${p.authors[0].name},...
+                                                                                    ${p.authors[0].authorName},...
                                                                                 </c:when>
                                                                                 <c:otherwise>
                                                                                     Không có tác giả
@@ -257,7 +257,7 @@
                                                                     data-product-languagecode="${p.bookDetail.languageCode}"
                                                                     data-product-isbn="${p.bookDetail.isbn}"
                                                                     data-product-authors="<c:forEach var='a'
-                                                                        items='${p.authors}' varStatus='st'>${a.name}
+                                                                        items='${p.authors}' varStatus='st'>${a.authorName}
                                                                         <c:if test='${!st.last}'>|</c:if>
                                                                     </c:forEach>" data-product-categories="<c:forEach var='c'
                                                                         items='${p.categories}' varStatus='st'>
@@ -555,160 +555,154 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="1" id="cat1">
-                                                                <label class="form-check-label" for="cat1">Sách Văn
-                                                                    học</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="2" id="cat2">
-                                                                <label class="form-check-label" for="cat2">Tiểu
+                                                                <label class="form-check-label" for="cat1">Tiểu
                                                                     thuyết</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="3" id="cat3">
-                                                                <label class="form-check-label" for="cat3">Truyện
+                                                                    name="CategoryIDs" value="2" id="cat2">
+                                                                <label class="form-check-label" for="cat2">Truyện
                                                                     ngắn</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="4" id="cat4">
-                                                                <label class="form-check-label" for="cat4">Thơ
+                                                                    name="CategoryIDs" value="3" id="cat3">
+                                                                <label class="form-check-label" for="cat3">Thơ
                                                                     ca</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="5" id="cat5">
-                                                                <label class="form-check-label" for="cat5">Văn
+                                                                    name="CategoryIDs" value="4" id="cat4">
+                                                                <label class="form-check-label" for="cat4">Văn
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="6" id="cat6">
-                                                                <label class="form-check-label" for="cat6">Truyện
+                                                                    name="CategoryIDs" value="5" id="cat5">
+                                                                <label class="form-check-label" for="cat5">Truyện
                                                                     tranh</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="7" id="cat7">
-                                                                <label class="form-check-label" for="cat7">Light
+                                                                    name="CategoryIDs" value="6" id="cat6">
+                                                                <label class="form-check-label" for="cat6">Light
                                                                     Novel</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="8" id="cat8">
-                                                                <label class="form-check-label" for="cat8">Sách giáo
+                                                                    name="CategoryIDs" value="7" id="cat7">
+                                                                <label class="form-check-label" for="cat7">Sách giáo
                                                                     khoa</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="9" id="cat9">
-                                                                <label class="form-check-label" for="cat9">Sách tham
+                                                                    name="CategoryIDs" value="8" id="cat8">
+                                                                <label class="form-check-label" for="cat8">Sách tham
                                                                     khảo</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="10" id="cat10">
-                                                                <label class="form-check-label" for="cat10">Kinh
+                                                                    name="CategoryIDs" value="9" id="cat9">
+                                                                <label class="form-check-label" for="cat9">Kinh
                                                                     tế</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="10" id="cat10">
+                                                                <label class="form-check-label" for="cat10">Tài
+                                                                    chính</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="11" id="cat11">
+                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                    bản thân</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="12" id="cat12">
+                                                                <label class="form-check-label" for="cat12">Lịch
+                                                                    sử</label>
                                                             </div>
                                                         </div>
 
                                                         <div class="col-md-6">
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Tài
-                                                                    chính</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="12" id="cat12">
-                                                                <label class="form-check-label" for="cat12">Phát triển
-                                                                    bản thân</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="13" id="cat13">
-                                                                <label class="form-check-label" for="cat13">Lịch
-                                                                    sử</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="14" id="cat14">
-                                                                <label class="form-check-label" for="cat14">Chính
+                                                                <label class="form-check-label" for="cat13">Chính
                                                                     trị</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="15" id="cat15">
-                                                                <label class="form-check-label" for="cat15">Pháp
+                                                                    name="CategoryIDs" value="14" id="cat14">
+                                                                <label class="form-check-label" for="cat14">Pháp
                                                                     luật</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="16" id="cat16">
-                                                                <label class="form-check-label" for="cat16">Khoa
+                                                                    name="CategoryIDs" value="15" id="cat15">
+                                                                <label class="form-check-label" for="cat15">Khoa
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="17" id="cat17">
-                                                                <label class="form-check-label" for="cat17">Tâm
+                                                                    name="CategoryIDs" value="16" id="cat16">
+                                                                <label class="form-check-label" for="cat16">Tâm
                                                                     lý</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="18" id="cat18">
-                                                                <label class="form-check-label" for="cat18">Y
+                                                                    name="CategoryIDs" value="17" id="cat17">
+                                                                <label class="form-check-label" for="cat17">Y
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="19" id="cat19">
-                                                                <label class="form-check-label" for="cat19">Ẩm
+                                                                    name="CategoryIDs" value="18" id="cat18">
+                                                                <label class="form-check-label" for="cat18">Ẩm
                                                                     thực</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="20" id="cat20">
-                                                                <label class="form-check-label" for="cat20">Nuôi dạy
+                                                                    name="CategoryIDs" value="19" id="cat19">
+                                                                <label class="form-check-label" for="cat19">Nuôi dạy
                                                                     con</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="21" id="cat21">
-                                                                <label class="form-check-label" for="cat21">Du
+                                                                    name="CategoryIDs" value="20" id="cat20">
+                                                                <label class="form-check-label" for="cat20">Du
                                                                     lịch</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="22" id="cat22">
-                                                                <label class="form-check-label" for="cat22">Thời
+                                                                    name="CategoryIDs" value="21" id="cat21">
+                                                                <label class="form-check-label" for="cat21">Thời
                                                                     trang</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="23" id="cat23">
-                                                                <label class="form-check-label" for="cat23">Nhà
+                                                                    name="CategoryIDs" value="22" id="cat22">
+                                                                <label class="form-check-label" for="cat22">Nhà
                                                                     cửa</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="24" id="cat24">
-                                                                <label class="form-check-label" for="cat24">Nghệ
+                                                                    name="CategoryIDs" value="23" id="cat23">
+                                                                <label class="form-check-label" for="cat23">Nghệ
                                                                     thuật</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="25" id="cat25">
-                                                                <label class="form-check-label" for="cat25">Tôn
+                                                                    name="CategoryIDs" value="24" id="cat24">
+                                                                <label class="form-check-label" for="cat24">Tôn
                                                                     giáo</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="26" id="cat26">
-                                                                <label class="form-check-label" for="cat26">Trinh
+                                                                    name="CategoryIDs" value="25" id="cat25">
+                                                                <label class="form-check-label" for="cat25">Trinh
                                                                     Thám</label>
                                                             </div>
                                                         </div>
@@ -964,160 +958,154 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="1" id="cat1">
-                                                                <label class="form-check-label" for="cat1">Sách Văn
-                                                                    học</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="2" id="cat2">
-                                                                <label class="form-check-label" for="cat2">Tiểu
+                                                                <label class="form-check-label" for="cat1">Tiểu
                                                                     thuyết</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="3" id="cat3">
-                                                                <label class="form-check-label" for="cat3">Truyện
+                                                                    name="CategoryIDs" value="2" id="cat2">
+                                                                <label class="form-check-label" for="cat2">Truyện
                                                                     ngắn</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="4" id="cat4">
-                                                                <label class="form-check-label" for="cat4">Thơ
+                                                                    name="CategoryIDs" value="3" id="cat3">
+                                                                <label class="form-check-label" for="cat3">Thơ
                                                                     ca</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="5" id="cat5">
-                                                                <label class="form-check-label" for="cat5">Văn
+                                                                    name="CategoryIDs" value="4" id="cat4">
+                                                                <label class="form-check-label" for="cat4">Văn
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="6" id="cat6">
-                                                                <label class="form-check-label" for="cat6">Truyện
+                                                                    name="CategoryIDs" value="5" id="cat5">
+                                                                <label class="form-check-label" for="cat5">Truyện
                                                                     tranh</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="7" id="cat7">
-                                                                <label class="form-check-label" for="cat7">Light
+                                                                    name="CategoryIDs" value="6" id="cat6">
+                                                                <label class="form-check-label" for="cat6">Light
                                                                     Novel</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="8" id="cat8">
-                                                                <label class="form-check-label" for="cat8">Sách giáo
+                                                                    name="CategoryIDs" value="7" id="cat7">
+                                                                <label class="form-check-label" for="cat7">Sách giáo
                                                                     khoa</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="9" id="cat9">
-                                                                <label class="form-check-label" for="cat9">Sách tham
+                                                                    name="CategoryIDs" value="8" id="cat8">
+                                                                <label class="form-check-label" for="cat8">Sách tham
                                                                     khảo</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="10" id="cat10">
-                                                                <label class="form-check-label" for="cat10">Kinh
+                                                                    name="CategoryIDs" value="9" id="cat9">
+                                                                <label class="form-check-label" for="cat9">Kinh
                                                                     tế</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="10" id="cat10">
+                                                                <label class="form-check-label" for="cat10">Tài
+                                                                    chính</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="11" id="cat11">
+                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                    bản thân</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    name="CategoryIDs" value="12" id="cat12">
+                                                                <label class="form-check-label" for="cat12">Lịch
+                                                                    sử</label>
                                                             </div>
                                                         </div>
 
                                                         <div class="col-md-6">
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Tài
-                                                                    chính</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="12" id="cat12">
-                                                                <label class="form-check-label" for="cat12">Phát triển
-                                                                    bản thân</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="13" id="cat13">
-                                                                <label class="form-check-label" for="cat13">Lịch
-                                                                    sử</label>
-                                                            </div>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="14" id="cat14">
-                                                                <label class="form-check-label" for="cat14">Chính
+                                                                <label class="form-check-label" for="cat13">Chính
                                                                     trị</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="15" id="cat15">
-                                                                <label class="form-check-label" for="cat15">Pháp
+                                                                    name="CategoryIDs" value="14" id="cat14">
+                                                                <label class="form-check-label" for="cat14">Pháp
                                                                     luật</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="16" id="cat16">
-                                                                <label class="form-check-label" for="cat16">Khoa
+                                                                    name="CategoryIDs" value="15" id="cat15">
+                                                                <label class="form-check-label" for="cat15">Khoa
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="17" id="cat17">
-                                                                <label class="form-check-label" for="cat17">Tâm
+                                                                    name="CategoryIDs" value="16" id="cat16">
+                                                                <label class="form-check-label" for="cat16">Tâm
                                                                     lý</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="18" id="cat18">
-                                                                <label class="form-check-label" for="cat18">Y
+                                                                    name="CategoryIDs" value="17" id="cat17">
+                                                                <label class="form-check-label" for="cat17">Y
                                                                     học</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="19" id="cat19">
-                                                                <label class="form-check-label" for="cat19">Ẩm
+                                                                    name="CategoryIDs" value="18" id="cat18">
+                                                                <label class="form-check-label" for="cat18">Ẩm
                                                                     thực</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="20" id="cat20">
-                                                                <label class="form-check-label" for="cat20">Nuôi dạy
+                                                                    name="CategoryIDs" value="19" id="cat19">
+                                                                <label class="form-check-label" for="cat19">Nuôi dạy
                                                                     con</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="21" id="cat21">
-                                                                <label class="form-check-label" for="cat21">Du
+                                                                    name="CategoryIDs" value="20" id="cat20">
+                                                                <label class="form-check-label" for="cat20">Du
                                                                     lịch</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="22" id="cat22">
-                                                                <label class="form-check-label" for="cat22">Thời
+                                                                    name="CategoryIDs" value="21" id="cat21">
+                                                                <label class="form-check-label" for="cat21">Thời
                                                                     trang</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="23" id="cat23">
-                                                                <label class="form-check-label" for="cat23">Nhà
+                                                                    name="CategoryIDs" value="22" id="cat22">
+                                                                <label class="form-check-label" for="cat22">Nhà
                                                                     cửa</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="24" id="cat24">
-                                                                <label class="form-check-label" for="cat24">Nghệ
+                                                                    name="CategoryIDs" value="23" id="cat23">
+                                                                <label class="form-check-label" for="cat23">Nghệ
                                                                     thuật</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="25" id="cat25">
-                                                                <label class="form-check-label" for="cat25">Tôn
+                                                                    name="CategoryIDs" value="24" id="cat24">
+                                                                <label class="form-check-label" for="cat24">Tôn
                                                                     giáo</label>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
-                                                                    name="CategoryIDs" value="26" id="cat26">
-                                                                <label class="form-check-label" for="cat26">Trinh
+                                                                    name="CategoryIDs" value="25" id="cat25">
+                                                                <label class="form-check-label" for="cat25">Trinh
                                                                     Thám</label>
                                                             </div>
                                                         </div>
@@ -1168,7 +1156,7 @@
                         src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
                     <script src="${ctx}/assets/js/shop/scripts.js"></script>
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
                 </body>
 
                 </html>

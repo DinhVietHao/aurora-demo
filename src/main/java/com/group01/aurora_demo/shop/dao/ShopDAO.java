@@ -1,7 +1,7 @@
 package com.group01.aurora_demo.shop.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.shop.model.Address;
+import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.model.Shop;
 import java.sql.*;
 
@@ -101,7 +101,7 @@ public class ShopDAO {
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setName(rs.getString("Name"));
                     shop.setDescription(rs.getString("Description"));
-                    shop.setRatingAvg(rs.getBigDecimal("RatingAvg"));
+                    shop.setRatingAvg(rs.getDouble("RatingAvg"));
                     shop.setStatus(rs.getString("Status"));
                     shop.setOwnerUserId(rs.getLong("OwnerUserID"));
                     shop.setInvoiceEmail(rs.getString("InvoiceEmail"));

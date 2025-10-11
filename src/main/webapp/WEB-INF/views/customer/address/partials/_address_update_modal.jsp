@@ -1,5 +1,5 @@
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
-    <div class="modal fade" id="updateAddressModal" tabindex="-1" aria-labelledby="updateAddressModalLabel"
+    <div class="modal fade  " id="updateAddressModal" tabindex="-1" aria-labelledby="updateAddressModalLabel"
         aria-hidden="true">
         <div class="modal-dialog ">
             <div class="modal-content">
@@ -8,19 +8,19 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form class="shipping-address" id="form-create-address" method="post" action="/address/update">
+                    <form class="shipping-address" id="form-update-address" method="POST" action="/address/update">
                         <input type="hidden" name="addressId" value="" />
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
                                 <label for="fullName" class="form-label">Họ tên</label>
                                 <input type="text" class="form-control update-fullname" id="fullName"
-                                    placeholder="Nhập họ tên" value="" name="fullName">
+                                    placeholder="Nhập họ tên" name="fullName" value="">
                                 <span class="form-message"></span>
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="phone" class="form-label">Điện thoại di động</label>
                                 <input type="text" class="form-control update-phone" id="phone"
-                                    placeholder="Nhập số điện thoại" value="" name="phone">
+                                    placeholder="Nhập số điện thoại" name="phone" value="">
                                 <span class="form-message"></span>
                             </div>
                         </div>

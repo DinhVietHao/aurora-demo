@@ -1,6 +1,6 @@
 package com.group01.aurora_demo.shop.controller;
 
-import com.group01.aurora_demo.shop.model.Address;
+import com.group01.aurora_demo.profile.model.Address;
 import jakarta.servlet.annotation.MultipartConfig;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;

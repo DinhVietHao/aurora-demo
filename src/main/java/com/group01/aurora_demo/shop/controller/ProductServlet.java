@@ -1,26 +1,26 @@
 package com.group01.aurora_demo.shop.controller;
 
-import java.io.IOException;
 import java.sql.Date;
-import java.util.ArrayList;
 import java.util.List;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.shop.dao.ImageDAO;
-import com.group01.aurora_demo.shop.dao.ProductDAO;
-import com.group01.aurora_demo.shop.dao.PublisherDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
-import com.group01.aurora_demo.shop.model.Author;
-import com.group01.aurora_demo.shop.model.BookDetail;
-import com.group01.aurora_demo.shop.model.Category;
-import com.group01.aurora_demo.shop.model.Product;
+import com.group01.aurora_demo.catalog.dao.ImageDAO;
+import com.group01.aurora_demo.catalog.model.Author;
+import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.catalog.model.Category;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.BookDetail;
+import com.group01.aurora_demo.catalog.dao.PublisherDAO;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/shop/product")
@@ -52,6 +52,10 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("errorMessage",
                     "Không thể xóa sản phẩm vì đang trong Flash Sale hoặc đang được giao hàng.");
         }
+        if ("create_success".equals(message)) {
+            request.setAttribute("successMessage",
+                    "Đã thêm sản phẩm thành công.");
+        }
 
         try {
             switch (action) {
@@ -61,7 +65,7 @@ public class ProductServlet extends HttpServlet {
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
 
                     int page = 1;
-                    int limit = 15; // Mỗi trang 15 sản phẩm
+                    int limit = 15;
                     String pageParam = request.getParameter("page");
 
                     if (pageParam != null) {
@@ -197,7 +201,7 @@ public class ProductServlet extends HttpServlet {
                             }
                             Author a = new Author();
                             a.setAuthorId(id);
-                            a.setName(name);
+                            a.setAuthorName(name);
                             authors.add(a);
                         }
                     }
@@ -216,7 +220,8 @@ public class ProductServlet extends HttpServlet {
                     }
                     product.setCategories(categoryList);
                     if (productDAO.insertProduct(product) != 0) {
-                        response.sendRedirect(request.getContextPath() + "/shop/product?action=view");
+                        response.sendRedirect(
+                                request.getContextPath() + "/shop/product?action=view&message=create_success");
                     } else {
                         request.setAttribute("errorMessage", "Không thể thêm sản phẩm?");
                         request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,

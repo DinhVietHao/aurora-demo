@@ -6,6 +6,7 @@
 /build/
 /out/
 /jsp/
+/.history/
 # Jetty/Tomcat work dirs (dự phòng)
 work/
 temp/
