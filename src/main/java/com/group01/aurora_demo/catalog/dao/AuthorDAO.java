@@ -27,7 +27,7 @@ public class AuthorDAO {
                 while (rs.next()) {
                     Author author = new Author();
                     author.setAuthorId(rs.getLong("AuthorID"));
-                    author.setName(rs.getString("AuthorName"));
+                    author.setAuthorName(rs.getString("AuthorName"));
                     authors.add(author);
                 }
             }

@@ -1,15 +1,18 @@
 package com.group01.aurora_demo.catalog.model;
 
 public class Category {
-
-    private long categoryId;
+    private Long categoryId;
     private String name;
+    private String vatCode;
 
-    public long getCategoryId() {
+    public Category() {
+    }
+
+    public Long getCategoryId() {
         return categoryId;
     }
 
-    public void setCategoryId(long categoryId) {
+    public void setCategoryId(Long categoryId) {
         this.categoryId = categoryId;
     }
 
@@ -21,4 +24,11 @@ public class Category {
         this.name = name;
     }
 
+    public String getVatCode() {
+        return vatCode;
+    }
+
+    public void setVatCode(String vatCode) {
+        this.vatCode = vatCode;
+    }
 }
