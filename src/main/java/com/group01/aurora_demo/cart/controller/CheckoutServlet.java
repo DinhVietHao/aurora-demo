@@ -100,7 +100,6 @@ public class CheckoutServlet extends HttpServlet {
                     double shopWeight = items.stream()
                             .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
                             .sum();
-                    System.out.println("Check  shop.getAddress().getCity()" + shop.getPickupAddress().getCity());
                     double fee = shippingCalculator.calculateShippingFee(
                             shop.getPickupAddress().getCity(),
                             selectedAddress.getCity(),
@@ -114,7 +113,7 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("addresses", addressList);
             req.setAttribute("isAddress", isAddress);
             req.setAttribute("address", selectedAddress);
-            req.setAttribute("selectedAddressId", selectedAddress.getAddressId());
+            req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
             req.setAttribute("shippingFee", totalShippingFee);
 
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout/checkout.jsp").forward(req, resp);

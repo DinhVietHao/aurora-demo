@@ -62,7 +62,7 @@
                                                             hidden>
                                                         <a href="${ctx}/book?id=${cartItem.product.productId}"
                                                             target="_blank">
-                                                            <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].imageUrl}"
+                                                            <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
                                                         </a>
                                                     </div>
@@ -271,30 +271,32 @@
 
                                 <!-- RIGHT: địa chỉ + tổng tiền -->
                                 <div class="col-md-3 cart-right">
-                                    <div class="card-address">
-                                        <div class="row">
-                                            <div class="col">
-                                                <strong>Giao tới</strong>
+                                    <c:if test="${not empty addresses}">
+                                        <div class="card-address">
+                                            <div class="row">
+                                                <div class="col">
+                                                    <strong>Giao tới</strong>
+                                                </div>
+                                                <div class="col text-end">
+                                                    <a data-bs-toggle="modal" data-bs-target="#addressModal"
+                                                        class="text-primary cursor-pointer ">Thay đổi</a>
+                                                </div>
                                             </div>
-                                            <div class="col text-end">
-                                                <a data-bs-toggle="modal" data-bs-target="#addressModal"
-                                                    class="text-primary cursor-pointer ">Thay đổi</a>
+                                            <div class=" row mt-2">
+                                                <div class="col">
+                                                    <span><strong>${address.recipientName}</strong></span> &nbsp;
+                                                    <span>${address.phone}</span>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-2">
+                                                <div class="col">
+                                                    <span class="badge bg-success">Nhà</span>
+                                                    <span> ${address.description},
+                                                        ${address.ward}, ${address.city}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class=" row mt-2">
-                                            <div class="col">
-                                                <span><strong>${address.recipientName}</strong></span> &nbsp;
-                                                <span>${address.phone}</span>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-2">
-                                            <div class="col">
-                                                <span class="badge bg-success">Nhà</span>
-                                                <span> ${address.description},
-                                                    ${address.ward}, ${address.city}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </c:if>
                                     <div class="cart-promotion">
                                         <h6 class="cart-promotion-title">Aurora Khuyến Mãi</h6>
 
@@ -522,33 +524,44 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="list-group">
-                                        <c:forEach var="address" items="${addresses}">
-                                            <label class="list-group-item d-flex justify-content-between">
-                                                <div class="address-card ">
-                                                    <div class="d-flex align-items-center mb-1">
-                                                        <input type="radio" name="addressId"
-                                                            value="${address.addressId}" class="me-2"
-                                                            ${address.addressId==selectedAddressId ? 'checked' : '' } />
-                                                        <h6 class="card-name mb-0">${address.recipientName}</h6>
-                                                        <c:if test="${address.userAddress.defaultAddress}">
-                                                            <span
-                                                                class="card-default d-flex align-items-center mx-2">Mặc
-                                                                định</span>
-                                                        </c:if>
-                                                    </div>
-                                                    <p class="mb-1">Địa chỉ: ${address.description},
-                                                        ${address.ward}, ${address.city}
-                                                    </p>
-                                                    <p class="mb-1">Việt Nam</p>
-                                                    <p class="mb-3">Điện thoại: ${address.phone}</p>
-                                                    <button type="button" class="button-four mb-3"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#shippingAddressModal">Cập nhật</button>
-                                                </div>
-                                            </label>
-                                        </c:forEach>
-                                    </div>
+                                    <c:choose>
+                                        <c:when test="${empty addresses}">
+                                            <div class="text-center mt-5">
+                                                <img src="./assets/images/common/addressEmpty.png" alt="">
+                                                <p class="text-muted mt-3">Bạn chưa có địa chỉ nào.</p>
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="list-group">
+                                                <c:forEach var="address" items="${addresses}">
+                                                    <label class="list-group-item d-flex justify-content-between">
+                                                        <div class="address-card ">
+                                                            <div class="d-flex align-items-center mb-1">
+                                                                <input type="radio" name="addressId"
+                                                                    value="${address.addressId}" class="me-2"
+                                                                    ${address.addressId==selectedAddressId ? 'checked'
+                                                                    : '' } />
+                                                                <h6 class="card-name mb-0">${address.recipientName}</h6>
+                                                                <c:if test="${address.userAddress.defaultAddress}">
+                                                                    <span
+                                                                        class="card-default d-flex align-items-center mx-2">Mặc
+                                                                        định</span>
+                                                                </c:if>
+                                                            </div>
+                                                            <p class="mb-1">Địa chỉ: ${address.description},
+                                                                ${address.ward}, ${address.city}
+                                                            </p>
+                                                            <p class="mb-1">Việt Nam</p>
+                                                            <p class="mb-3">Điện thoại: ${address.phone}</p>
+                                                            <button type="button" class="button-four mb-3"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#shippingAddressModal">Cập nhật</button>
+                                                        </div>
+                                                    </label>
+                                                </c:forEach>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="button-five" data-bs-dismiss="modal">Hủy</button>
