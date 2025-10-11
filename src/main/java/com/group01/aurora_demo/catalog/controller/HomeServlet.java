@@ -23,6 +23,8 @@ public class HomeServlet extends HttpServlet {
         List<Product> suggestedProducts;
         if (user != null) {
             suggestedProducts = productDAO.getSuggestedProductsForCustomer(user.getId());
+            if (suggestedProducts.isEmpty())
+                suggestedProducts = productDAO.getSuggestedProductsForGuest();
         } else {
             suggestedProducts = productDAO.getSuggestedProductsForGuest();
         }

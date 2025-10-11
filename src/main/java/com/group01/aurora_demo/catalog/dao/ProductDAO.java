@@ -45,18 +45,20 @@ public class ProductDAO {
                     pub.Name AS PublisherName
                 FROM Products p
                 JOIN ProductCategory pc ON p.ProductID = pc.ProductID
+                LEFT JOIN OrderItems oi2 ON p.ProductID = oi2.ProductID
+                LEFT JOIN Reviews r ON oi2.OrderItemID = r.OrderItemID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
                 WHERE pc.CategoryID IN (
-                    -- Thể loại mà user đã mua
+                    -- Thể loại từ lịch sử mua (hoàn thành)
                     SELECT DISTINCT pc2.CategoryID
                     FROM Orders o
                     JOIN OrderShops os ON o.OrderID = os.OrderID
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                     JOIN ProductCategory pc2 ON oi.ProductID = pc2.ProductID
-                    WHERE o.UserID = ? AND o.OrderStatus IN (N'Hoàn thành')
-
+                    WHERE o.UserID = ? AND o.OrderStatus IN (N'SUCCESS')
                     UNION
-
-                    -- Thể loại mà user đang có trong giỏ hàng
+                    -- Thể loại từ giỏ hàng
                     SELECT DISTINCT pc3.CategoryID
                     FROM CartItems ci
                     JOIN ProductCategory pc3 ON ci.ProductID = pc3.ProductID
@@ -64,27 +66,21 @@ public class ProductDAO {
                 )
                 AND p.Status = 'ACTIVE'
                 AND p.ProductID NOT IN (
-                    -- Loại bỏ những sản phẩm user đã mua hoặc có trong giỏ
+                    -- Loại trừ sản phẩm đã mua
                     SELECT oi.ProductID
                     FROM Orders o
                     JOIN OrderShops os ON o.OrderID = os.OrderID
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                     WHERE o.UserID = ?
-
                     UNION
-
+                    -- Loại trừ sản phẩm trong giỏ
                     SELECT ci.ProductID
                     FROM CartItems ci
                     WHERE ci.UserID = ?
                 )
-                LEFT JOIN OrderItems oi2 ON p.ProductID = oi2.ProductID
-                LEFT JOIN Reviews r ON oi2.OrderItemID = r.OrderItemID
-                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
-                         p.SoldCount, img.Url, pub.Name
-                ORDER BY p.SoldCount DESC, AvgRating DESC;
-                """;
+                GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
+                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
+                    """;
         List<Product> products = new ArrayList<>();
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
