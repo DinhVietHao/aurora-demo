@@ -65,7 +65,7 @@
                                                             type="checkbox" ${cartItem.isChecked ? "checked" : "" }>
                                                         <a href="${ctx}/book?id=${cartItem.product.productId}"
                                                             target="_blank">
-                                                            <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].imageUrl}"
+                                                            <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
                                                         </a>
                                                     </div>
