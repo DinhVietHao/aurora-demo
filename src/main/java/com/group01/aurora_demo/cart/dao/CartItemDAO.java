@@ -6,7 +6,6 @@ import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.ProductImage;
 import com.group01.aurora_demo.catalog.dao.AuthorDAO;
 import com.group01.aurora_demo.catalog.model.Author;
-import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;

@@ -44,13 +44,15 @@ public class CartServlet extends HttpServlet {
         String path = req.getPathInfo();
 
         if (path == null || path.equals("/") || path.equals("/view")) {
-            List<CartItem> cartItems = cartItemDAO
+            List<com.group01.aurora_demo.cart.model.CartItem> cartItems = cartItemDAO
                     .getCartItemsByUserId(user.getId());
             if (cartItems.isEmpty()) {
                 req.setAttribute("shopCarts", null);
             } else {
                 Map<Long, List<CartItem>> grouped = cartItems.stream()
-                        .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId(), LinkedHashMap::new,
+                        .collect(Collectors.groupingBy(
+                                ci -> ci.getProduct().getShop().getShopId(),
+                                LinkedHashMap::new,
                                 Collectors.toList()));
 
                 List<ShopCartDTO> shopCarts = grouped.entrySet().stream().map(entry -> {

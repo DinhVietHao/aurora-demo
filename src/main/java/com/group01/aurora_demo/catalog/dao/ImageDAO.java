@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.catalog.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.catalog.model.ProductImage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.ServletException;
 import java.sql.PreparedStatement;
@@ -15,33 +16,30 @@ import java.io.File;
 
 public class ImageDAO {
 
-    // public ProductImages getImagesByProductId(int productID) {
-    // String sql = "SELECT ImageID, ProductID, Url, IsPrimary "
-    // + "FROM ProductImages "
-    // + "WHERE ProductID = ? AND IsPrimary = 1";
+    public ProductImage getImagesByProductId(int productID) {
+        String sql = "SELECT ImageID, ProductID, Url, IsPrimary "
+                + "FROM ProductImages "
+                + "WHERE ProductID = ? AND IsPrimary = 1";
 
-    // ProductImages img = null;
-    // try (Connection cn = DataSourceProvider.get().getConnection();
-    // PreparedStatement ps = cn.prepareStatement(sql)) {
+        ProductImage img = null;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, productID);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                img = new ProductImage();
+                img.setImageId(rs.getLong("ImageID"));
+                img.setProductId(rs.getLong("ProductID"));
+                img.setUrl(rs.getString("Url"));
+                img.setIsPrimary(rs.getBoolean("IsPrimary"));
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return img;
+    }
 
-    // ps.setInt(1, productID);
-
-    // ResultSet rs = ps.executeQuery();
-
-    // if (rs.next()) {
-    // img = new ProductImages();
-    // img.setImageId(rs.getLong("ImageID"));
-    // img.setProductId(rs.getLong("ProductID"));
-    // img.setImageUrl(rs.getString("Url"));
-    // img.setPrimary(rs.getBoolean("IsPrimary"));
-    // }
-    // } catch (Exception e) {
-    // System.out.println(e.getMessage());
-    // }
-    // return img;
-    // }
-
-    public List<String> getProductImages(long productId) throws SQLException {
+    public List<String> getListImageUrlsByProductId(long productId) throws SQLException {
         List<String> urls = new ArrayList<>();
         String sql = "SELECT Url FROM ProductImages WHERE ProductID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection()) {

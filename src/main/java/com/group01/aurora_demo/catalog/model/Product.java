@@ -1,8 +1,7 @@
 package com.group01.aurora_demo.catalog.model;
 
 import com.group01.aurora_demo.shop.model.Shop;
-import java.time.LocalDateTime;
-import java.time.LocalDate;
+import java.sql.Date;
 import java.util.List;
 
 public class Product {
@@ -16,11 +15,11 @@ public class Product {
     private Long soldCount;
     private Integer quantity;
     private String status;
-    private LocalDate publishedDate;
+    private Date publishedDate;
     private Double weight;
     private String rejectReason;
     private String returnReason;
-    private LocalDateTime createdAt;
+    private Date createdAt;
 
     // Publisher relationship (N:1)
     private Long publisherId;
@@ -32,6 +31,7 @@ public class Product {
     // Images relationship (1:N)
     private String primaryImageUrl;
     private List<ProductImage> images;
+    private List<String> imageUrls;
 
     // Categories relationship (N:N)
     private List<Category> categories;
@@ -121,12 +121,16 @@ public class Product {
         this.status = status;
     }
 
-    public LocalDate getPublishedDate() {
+    public Date getPublishedDate() {
         return publishedDate;
     }
 
-    public void setPublishedDate(LocalDate publishedDate) {
+    public void setPublishedDate(Date publishedDate) {
         this.publishedDate = publishedDate;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Double getWeight() {
@@ -153,12 +157,8 @@ public class Product {
         this.returnReason = returnReason;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Date getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
     }
 
     public Long getPublisherId() {
@@ -232,6 +232,14 @@ public class Product {
 
     public void setAvgRating(Double avgRating) {
         this.avgRating = avgRating;
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 
     public Integer getDiscountPercent() {
