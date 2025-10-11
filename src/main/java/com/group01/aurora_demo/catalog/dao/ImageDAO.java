@@ -65,10 +65,15 @@ public class ImageDAO {
 
         for (Part part : parts) {
             if (part.getName().equals("ProductImages") && part.getSize() > 0) {
+
                 if (part.getSize() > 5 * 1024 * 1024) {
                     throw new ServletException("Ảnh '" + part.getSubmittedFileName() + "' vượt 5MB.");
                 }
-                String fileName = System.currentTimeMillis() + "_" + part.getSubmittedFileName();
+
+                String originalFileName = part.getSubmittedFileName();
+                String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
+                String fileName = System.currentTimeMillis() + "_" + sanitizedFileName;
+
                 String fullPath = uploadDir + File.separator + fileName;
                 part.write(fullPath);
                 imageNames.add(fileName);
