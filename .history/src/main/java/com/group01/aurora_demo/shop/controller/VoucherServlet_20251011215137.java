@@ -97,9 +97,7 @@ public class VoucherServlet extends HttpServlet {
                     json.put("success", !isDuplicate);
                     out.print(json.toString());
                     break;
-                case "create":
-                
-                break;
+                case "c":
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;

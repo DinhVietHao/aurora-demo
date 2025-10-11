@@ -98,8 +98,6 @@ public class VoucherServlet extends HttpServlet {
                     out.print(json.toString());
                     break;
                 case "create":
-                
-                break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;
