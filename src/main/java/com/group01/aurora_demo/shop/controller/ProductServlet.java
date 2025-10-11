@@ -52,6 +52,10 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("errorMessage",
                     "Không thể xóa sản phẩm vì đang trong Flash Sale hoặc đang được giao hàng.");
         }
+        if ("create_success".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Đã thêm sản phẩm thành công.");
+        }
 
         try {
             switch (action) {
@@ -216,7 +220,8 @@ public class ProductServlet extends HttpServlet {
                     }
                     product.setCategories(categoryList);
                     if (productDAO.insertProduct(product) != 0) {
-                        response.sendRedirect(request.getContextPath() + "/shop/product?action=view");
+                        response.sendRedirect(
+                                request.getContextPath() + "/shop/product?action=view&message=create_success");
                     } else {
                         request.setAttribute("errorMessage", "Không thể thêm sản phẩm?");
                         request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
