@@ -73,15 +73,14 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("productImages");
   const previewContainer = document.getElementById("imagePreview");
   const errorDiv = document.getElementById("imageError");
-  const form = document.getElementById("addProductForm");
   let selectedFiles = [];
 
   fileInput.addEventListener("change", function (event) {
-    const files = Array.from(event.target.files);
+    const newFiles = Array.from(event.target.files);
     errorDiv.style.display = "none";
     errorDiv.innerText = "";
 
-    for (const file of files) {
+    for (const file of newFiles) {
       if (file.size > 5 * 1024 * 1024) {
         errorDiv.style.display = "block";
         errorDiv.innerText = `Ảnh "${file.name}" vượt quá dung lượng 5MB.`;
@@ -89,7 +88,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
 
-    selectedFiles = [...selectedFiles, ...files];
+    // ✅ Thêm ảnh mới vào cuối danh sách (giữ thứ tự upload)
+    selectedFiles = [...selectedFiles, ...newFiles];
 
     if (selectedFiles.length > 20) {
       errorDiv.style.display = "block";
@@ -97,15 +97,22 @@ document.addEventListener("DOMContentLoaded", function () {
       selectedFiles = selectedFiles.slice(0, 20);
     }
 
+    updateFileInput();
+    renderPreview();
+    // Reset input để lần sau chọn lại cùng ảnh cũng được tính là change
+    fileInput.value = "";
+  });
+
+  function updateFileInput() {
     const dataTransfer = new DataTransfer();
+    // ✅ Thêm file theo đúng thứ tự trong selectedFiles
     selectedFiles.forEach((f) => dataTransfer.items.add(f));
     fileInput.files = dataTransfer.files;
-
-    renderPreview();
-  });
+  }
 
   async function renderPreview() {
     previewContainer.innerHTML = "";
+
     if (selectedFiles.length < 2) {
       errorDiv.style.display = "block";
       errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
@@ -113,13 +120,7 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.style.display = "none";
     }
 
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
-    }
-
-    // Sử dụng Promise để đảm bảo render theo thứ tự đúng
+    // ✅ Sử dụng Promise để đảm bảo render theo thứ tự đúng
     const promises = selectedFiles.map((file, index) => {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -132,20 +133,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const results = await Promise.all(promises);
 
-    // Render tuần tự theo thứ tự index
+    // ✅ Render tuần tự theo thứ tự index (tức là thứ tự trong selectedFiles)
     results.forEach(({ index, src }) => {
       const col = document.createElement("div");
       col.classList.add("col-3", "position-relative");
 
-      // Nếu là ảnh đầu tiên => hiển thị nhãn "Ảnh đại diện"
+      // ✅ Nếu là ảnh đầu tiên (index 0) => hiển thị nhãn “Ảnh đại diện” dưới dạng ô vuông
       const isMain = index === 0;
       const mainBadge = isMain
         ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1"
-                  style="z-index: 2; font-size: 0.75rem; border-radius: 0.25rem;">Ảnh đại diện</span>`
+                  style="z-index: 2; font-size: 0.75rem; border-radius: 0.25rem; width: auto; height: auto; display: inline-block;">Ảnh đại diện</span>`
         : "";
 
       col.innerHTML = `
-        <div class="border rounded position-relative overflow-hidden">
+        <div class="border rounded position-relative overflow-hidden shadow-sm">
           ${mainBadge}
           <img src="${src}" class="img-fluid rounded"
             style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
@@ -159,40 +160,36 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // ✅ Sự kiện xóa ảnh
   previewContainer.addEventListener("click", function (e) {
     if (e.target.tagName === "BUTTON") {
       const index = parseInt(e.target.getAttribute("data-index"));
       selectedFiles.splice(index, 1);
-      const dataTransfer = new DataTransfer();
-      selectedFiles.forEach((f) => dataTransfer.items.add(f));
-      fileInput.files = dataTransfer.files;
-      console.log("Check  fileInput.files ", fileInput.files);
-
+      updateFileInput();
       renderPreview();
     }
   });
+});
+
+// Thêm vào cuối file JS (ngoài DOMContentLoaded)
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("addProductForm");
   if (form) {
     form.addEventListener("submit", function (e) {
+      // Kiểm tra số lượng ảnh trước khi submit
       if (selectedFiles.length < 2 || selectedFiles.length > 20) {
-        e.preventDefault();
+        e.preventDefault();  // Ngăn submit
+        const errorDiv = document.getElementById("imageError");
         errorDiv.style.display = "block";
         errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
-        fileInput.classList.add("is-invalid");
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
         return;
       }
 
-      // Nếu hợp lệ
-      fileInput.classList.remove("is-invalid");
-      errorDiv.style.display = "none";
-
+      // Disable button và hiển thị loading
       const submitBtn = form.querySelector('button[type="submit"]');
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML =
-          '<i class="bi bi-hourglass-split me-1"></i> Đang lưu...';
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Đang lưu...';
       }
     });
   }
@@ -359,56 +356,36 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("addProductForm");
   const publishedDateInput = document.getElementById("publishedDate");
 
-  // Tạo phần hiển thị lỗi dưới ô input (nếu chưa có)
+  // ✅ Tạo phần hiển thị lỗi dưới ô input (nếu chưa có)
   let errorMsg = document.createElement("div");
   errorMsg.classList.add("invalid-feedback");
-  errorMsg.style.display = "none"; // Ẩn ban đầu
   publishedDateInput.parentNode.appendChild(errorMsg);
 
-  // Hàm kiểm tra ngày
-  function validatePublishedDate() {
+  // ✅ Lắng nghe sự kiện blur (rời khỏi ô input)
+  publishedDateInput.addEventListener("blur", function () {
     const dateValue = publishedDateInput.value;
     errorMsg.textContent = ""; // Xóa thông báo cũ
-    errorMsg.style.display = "none";
 
     if (dateValue) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Đặt về đầu ngày để so sánh chính xác
-
+      today.setHours(0, 0, 0, 0);
       const publishedDate = new Date(dateValue);
 
       if (publishedDate > today) {
-        // Báo lỗi: làm input đỏ và hiển thị thông báo
         publishedDateInput.classList.add("is-invalid");
         errorMsg.textContent =
-          "⚠️ Ngày xuất bản không được lớn hơn ngày hiện tại!";
-        errorMsg.style.display = "block";
+          "⚠️ Ngày phát hành không được lớn hơn ngày hiện tại!";
       } else {
-        // Hợp lệ: xóa lỗi
         publishedDateInput.classList.remove("is-invalid");
-        errorMsg.style.display = "none";
+        errorMsg.textContent = "";
       }
     } else {
-      // Nếu bỏ trống: xóa lỗi
+      // Nếu bỏ trống thì xóa thông báo lỗi
       publishedDateInput.classList.remove("is-invalid");
-      errorMsg.style.display = "none";
+      errorMsg.textContent = "";
     }
-  }
-
-  // Gọi hàm kiểm tra khi người dùng chọn ngày (event blur hoặc change)
-  publishedDateInput.addEventListener("blur", validatePublishedDate);
-  publishedDateInput.addEventListener("change", validatePublishedDate);
-
-  // Tùy chọn: Kiểm tra khi submit form (để chặn submit nếu sai)
-  const form = document.getElementById("addProductForm");
-  if (form) {
-    form.addEventListener("submit", function (event) {
-      validatePublishedDate(); // Kiểm tra lại
-      if (publishedDateInput.classList.contains("is-invalid")) {
-        event.preventDefault(); // Ngăn submit nếu có lỗi
-      }
-    });
-  }
+  });
 });

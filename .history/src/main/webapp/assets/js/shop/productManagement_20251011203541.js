@@ -112,7 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       errorDiv.style.display = "none";
     }
-
     const submitBtn = form?.querySelector('button[type="submit"]');
     if (submitBtn) {
       submitBtn.disabled =

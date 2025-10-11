@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("productImages");
   const previewContainer = document.getElementById("imagePreview");
   const errorDiv = document.getElementById("imageError");
-  const form = document.getElementById("addProductForm");
   let selectedFiles = [];
 
   fileInput.addEventListener("change", function (event) {
@@ -104,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () {
     renderPreview();
   });
 
-  async function renderPreview() {
+  function renderPreview() {
     previewContainer.innerHTML = "";
     if (selectedFiles.length < 2) {
       errorDiv.style.display = "block";
@@ -113,89 +112,37 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.style.display = "none";
     }
 
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
-    }
-
-    // Sử dụng Promise để đảm bảo render theo thứ tự đúng
-    const promises = selectedFiles.map((file, index) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          resolve({ index, src: e.target.result });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    const results = await Promise.all(promises);
-
-    // Render tuần tự theo thứ tự index
-    results.forEach(({ index, src }) => {
-      const col = document.createElement("div");
-      col.classList.add("col-3", "position-relative");
-
-      // Nếu là ảnh đầu tiên => hiển thị nhãn "Ảnh đại diện"
-      const isMain = index === 0;
-      const mainBadge = isMain
-        ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1"
-                  style="z-index: 2; font-size: 0.75rem; border-radius: 0.25rem;">Ảnh đại diện</span>`
-        : "";
-
-      col.innerHTML = `
-        <div class="border rounded position-relative overflow-hidden">
-          ${mainBadge}
-          <img src="${src}" class="img-fluid rounded"
-            style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
-          <button type="button"
-            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-            style="width: 25px; height: 25px; line-height: 0;"
-            data-index="${index}">×</button>
-        </div>
-      `;
-      previewContainer.appendChild(col);
+    selectedFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const col = document.createElement("div");
+        col.classList.add("col-3", "position-relative");
+        col.innerHTML = `
+          <div class="border rounded position-relative overflow-hidden">
+            <img src="${e.target.result}" class="img-fluid rounded"
+              style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
+            <button type="button"
+              class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
+              style="width: 25px; height: 25px; line-height: 0;"
+              data-index="${index}">×</button>
+          </div>
+        `;
+        previewContainer.appendChild(col);
+      };
+      reader.readAsDataURL(file);
     });
   }
 
   previewContainer.addEventListener("click", function (e) {
     if (e.target.tagName === "BUTTON") {
-      const index = parseInt(e.target.getAttribute("data-index"));
+      const index = e.target.getAttribute("data-index");
       selectedFiles.splice(index, 1);
+      renderPreview();
       const dataTransfer = new DataTransfer();
       selectedFiles.forEach((f) => dataTransfer.items.add(f));
       fileInput.files = dataTransfer.files;
-      console.log("Check  fileInput.files ", fileInput.files);
-
-      renderPreview();
     }
   });
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      if (selectedFiles.length < 2 || selectedFiles.length > 20) {
-        e.preventDefault();
-        errorDiv.style.display = "block";
-        errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
-        fileInput.classList.add("is-invalid");
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
-        return;
-      }
-
-      // Nếu hợp lệ
-      fileInput.classList.remove("is-invalid");
-      errorDiv.style.display = "none";
-
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML =
-          '<i class="bi bi-hourglass-split me-1"></i> Đang lưu...';
-      }
-    });
-  }
 });
 
 // =============================

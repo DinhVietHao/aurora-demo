@@ -73,7 +73,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("productImages");
   const previewContainer = document.getElementById("imagePreview");
   const errorDiv = document.getElementById("imageError");
-  const form = document.getElementById("addProductForm");
+   const form = document.getElementById("addProductForm");
+  let selectedFiles = [];
   let selectedFiles = [];
 
   fileInput.addEventListener("change", function (event) {
@@ -111,12 +112,6 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
     } else {
       errorDiv.style.display = "none";
-    }
-
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
     }
 
     // Sử dụng Promise để đảm bảo render theo thứ tự đúng

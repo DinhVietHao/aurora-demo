@@ -113,12 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.style.display = "none";
     }
 
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
-    }
-
     // Sử dụng Promise để đảm bảo render theo thứ tự đúng
     const promises = selectedFiles.map((file, index) => {
       return new Promise((resolve) => {
