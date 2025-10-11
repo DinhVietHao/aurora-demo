@@ -113,12 +113,6 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.style.display = "none";
     }
 
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
-    }
-
     // Sử dụng Promise để đảm bảo render theo thứ tự đúng
     const promises = selectedFiles.map((file, index) => {
       return new Promise((resolve) => {
@@ -171,31 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
       renderPreview();
     }
   });
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      if (selectedFiles.length < 2 || selectedFiles.length > 20) {
-        e.preventDefault();
-        errorDiv.style.display = "block";
-        errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
-        fileInput.classList.add("is-invalid");
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
-        return;
-      }
-
-      // Nếu hợp lệ
-      fileInput.classList.remove("is-invalid");
-      errorDiv.style.display = "none";
-
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML =
-          '<i class="bi bi-hourglass-split me-1"></i> Đang lưu...';
-      }
-    });
-  }
+  
 });
 
 // =============================

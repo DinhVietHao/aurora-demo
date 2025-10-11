@@ -223,7 +223,6 @@ public class ProductServlet extends HttpServlet {
                         response.sendRedirect(
                                 request.getContextPath() + "/shop/product?action=view&message=create_success");
                     } else {
-                        request.setAttribute("errorMessage", "Không thể thêm sản phẩm?");
                         request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
                                 response);
                     }

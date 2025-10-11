@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const fileInput = document.getElementById("productImages");
   const previewContainer = document.getElementById("imagePreview");
   const errorDiv = document.getElementById("imageError");
-  const form = document.getElementById("addProductForm");
   let selectedFiles = [];
 
   fileInput.addEventListener("change", function (event) {
@@ -111,12 +110,6 @@ document.addEventListener("DOMContentLoaded", function () {
       errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
     } else {
       errorDiv.style.display = "none";
-    }
-
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
     }
 
     // Sử dụng Promise để đảm bảo render theo thứ tự đúng
@@ -171,23 +164,40 @@ document.addEventListener("DOMContentLoaded", function () {
       renderPreview();
     }
   });
+});
+
+// Thêm vào cuối file JS để debug số lượng ảnh gửi
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("addProductForm");
+  const fileInput = document.getElementById("productImages");
+  const errorDiv = document.getElementById("imageError");
   if (form) {
     form.addEventListener("submit", function (e) {
-      if (selectedFiles.length < 2 || selectedFiles.length > 20) {
-        e.preventDefault();
+      // Kiểm tra số lượng ảnh
+
+      if (selectedFilesCreate.length < 2 || selectedFilesCreate.length > 20) {
+        e.preventDefault(); // Ngăn submit
+        console.log(">>>>>>>>>>>>>>>>>>> Check submit");
+
         errorDiv.style.display = "block";
         errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
+        // Làm đỏ input
         fileInput.classList.add("is-invalid");
-
+        // Disable button
         const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
+        if (submitBtn) {
+          submitBtn.disabled = true;
+        }
         return;
+      } else {
+        // Nếu đủ ảnh, xóa lỗi
+        fileInput.classList.remove("is-invalid");
+        errorDiv.style.display = "none";
       }
 
-      // Nếu hợp lệ
-      fileInput.classList.remove("is-invalid");
-      errorDiv.style.display = "none";
-
+      // Disable button và hiển thị loading nếu submit thành công
       const submitBtn = form.querySelector('button[type="submit"]');
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -197,7 +207,21 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
-
+document.addEventListener("DOMContentLoaded", function () {
+  const form = document.getElementById("addProductForm");
+  if (form) {
+    form.addEventListener("submit", function (e) {
+      const fileInput = document.getElementById("productImages");
+      console.log(
+        "selectedFilesCreate.length:",
+        selectedFilesCreate ? selectedFilesCreate.length : "undefined"
+      );
+      console.log("fileInput.files.length:", fileInput.files.length);
+      // Nếu cần, uncomment để ngăn submit tạm thời
+      e.preventDefault();
+    });
+  }
+});
 // =============================
 // Modal Update
 // =============================
@@ -412,3 +436,4 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
