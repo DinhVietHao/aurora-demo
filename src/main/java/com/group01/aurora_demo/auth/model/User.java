@@ -4,19 +4,34 @@ import java.time.LocalDateTime;
 
 public class User {
 
-    private long id;
+    private long userID;
     private String email;
     private String fullName;
     private String authProvider;
-    private String passwordHash;
+    private String password;
     private LocalDateTime createdAt;
+    private String status = "active"; // Default value
+    private String phone;
+    private int points;
+    private String nationalID;
+    private String avatarUrl;
+    private String roles;
 
+    public long getUserID() {
+        return userID;
+    }
+
+    public void setUserID(long userID) {
+        this.userID = userID;
+    }
+    
+    // For backward compatibility
     public long getId() {
-        return id;
+        return userID;
     }
 
     public void setId(long id) {
-        this.id = id;
+        this.userID = id;
     }
 
     public String getEmail() {
@@ -35,12 +50,21 @@ public class User {
         this.fullName = fullName;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+    
+    // For backward compatibility
     public String getPasswordHash() {
-        return passwordHash;
+        return password;
     }
 
     public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
+        this.password = passwordHash;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -58,5 +82,62 @@ public class User {
     public void setAuthProvider(String authProvider) {
         this.authProvider = authProvider;
     }
+    
+    public String getStatus() {
+        if (status == null) return "active";
+        return status;
+    }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public int getPoints() {
+        return points;
+    }
+
+    public void setPoints(int points) {
+        this.points = points;
+    }
+    
+    public String getNationalID() {
+        return nationalID;
+    }
+
+    public void setNationalID(String nationalID) {
+        this.nationalID = nationalID;
+    }
+    
+    // For backward compatibility
+    public String getNationalId() {
+        return nationalID;
+    }
+
+    public void setNationalId(String nationalId) {
+        this.nationalID = nationalId;
+    }
+    
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+    
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
 }
