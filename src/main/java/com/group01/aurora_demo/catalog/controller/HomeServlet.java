@@ -87,4 +87,47 @@ public class HomeServlet extends HttpServlet {
         }
     }
 
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            String action = request.getParameter("action");
+            switch (action) {
+                case "search":
+                    request.setCharacterEncoding("UTF-8");
+                    String keyword = request.getParameter("keyword");
+                    if (keyword == null)
+                        keyword = "";
+
+                    int limit = 12;
+                    int page = 1;
+                    String pageParam = request.getParameter("page");
+                    if (pageParam != null) {
+                        try {
+                            page = Integer.parseInt(pageParam);
+                        } catch (Exception e) {
+                            page = 1;
+                        }
+                    }
+                    int offset = (page - 1) * limit;
+
+                    List<Product> products = productDAO.getAllProductsByKeyword(keyword, offset, limit);
+                    int totalProducts = productDAO.countSearchResultsByKeyword(keyword);
+                    int totalPages = (int) Math.ceil((double) totalProducts / limit);
+
+                    request.setAttribute("products", products);
+                    request.setAttribute("page", page);
+                    request.setAttribute("totalPages", totalPages);
+                    request.setAttribute("title", "Kết quả tìm kiếm cho: \"" + keyword + "\"");
+                    request.setAttribute("keyword", keyword);
+                    request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request,
+                            response);
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
 }

@@ -441,3 +441,6 @@ VALUES
     (N'Nghệ thuật', N'VAT10'),
     (N'Tôn giáo', N'VAT5'),
     (N'Trinh Thám', N'VAT5');
+
+SELECT *
+FROM Reviews
