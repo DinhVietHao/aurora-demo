@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.auth.controller;
 
-import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -11,7 +10,6 @@ public class LogoutServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            User u = (User) req.getSession().getAttribute("AUTH_USER");
             req.getSession().invalidate();
             resp.sendRedirect(req.getContextPath() + "/home");
         } catch (IOException ex) {
