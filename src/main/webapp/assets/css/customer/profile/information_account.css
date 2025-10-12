@@ -51,7 +51,7 @@
 }
 
 /* Active TAB */
-.information-account .active {
+.information-account #profileTabs .active {
     border-color: transparent;
     color: var(--color-one);
     font-weight: 500;
