@@ -57,7 +57,8 @@
                                                     </h5>
                                                 </div>
                                                 <div class="card-body">
-                                                    <form id="createVoucherForm">
+                                                    <form id="createVoucherForm" action="/shop/voucher?action=create"
+                                                        method="POST">
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="mb-3">
@@ -66,7 +67,7 @@
                                                                             class="text-danger">*</span></label>
                                                                     <input type="text" class="form-control"
                                                                         id="voucherCode" placeholder="VD: NEWUSER50"
-                                                                        required>
+                                                                        required name="voucherCode">
                                                                     <div class="form-text">Mã voucher phải là duy nhất
                                                                         và không chứa khoảng trắng</div>
                                                                 </div>
@@ -77,8 +78,9 @@
                                                             <label for="voucherDescription" class="form-label">Mô
                                                                 tả</label>
                                                             <textarea class="form-control" id="voucherDescription"
-                                                                rows="2"
-                                                                placeholder="Mô tả chi tiết về voucher..."></textarea>
+                                                                rows="2" name="voucherDescription"
+                                                                placeholder="Mô tả chi tiết về voucher..."
+                                                                required></textarea>
                                                         </div>
 
                                                         <div class="row">
@@ -87,12 +89,12 @@
                                                                     <label for="discountType" class="form-label">Loại
                                                                         giảm giá <span
                                                                             class="text-danger">*</span></label>
-                                                                    <select class="form-select" id="discountType"
-                                                                        required>
+                                                                    <select class="form-select" name="discountType"
+                                                                        id="discountType" required>
                                                                         <option value="">Chọn loại giảm giá</option>
-                                                                        <option value="percentage">Phần trăm (%)
+                                                                        <option value="PERCENT">Phần trăm (%)
                                                                         </option>
-                                                                        <option value="fixed">Số tiền cố định (VNĐ)
+                                                                        <option value="AMOUNT">Số tiền cố định (VNĐ)
                                                                         </option>
                                                                     </select>
                                                                 </div>
@@ -103,8 +105,8 @@
                                                                         trị giảm <span
                                                                             class="text-danger">*</span></label>
                                                                     <input type="number" class="form-control"
-                                                                        id="discountValue" placeholder="0" min="0"
-                                                                        required>
+                                                                        id="discountValue" name="discountValue"
+                                                                        placeholder="0" min="0" required>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-4">
@@ -112,7 +114,8 @@
                                                                     <label for="maxDiscount" class="form-label">Giảm tối
                                                                         đa (VNĐ)</label>
                                                                     <input type="number" class="form-control"
-                                                                        id="maxDiscount" placeholder="0" min="0">
+                                                                        id="maxDiscount" name="maxDiscount"
+                                                                        placeholder="0" min="0">
                                                                     <div class="form-text">Chỉ áp dụng cho giảm theo %
                                                                     </div>
                                                                 </div>
@@ -124,8 +127,9 @@
                                                                 <div class="mb-3">
                                                                     <label for="minOrderValue" class="form-label">Đơn
                                                                         hàng tối thiểu (VNĐ)</label>
-                                                                    <input type="number" class="form-control"
-                                                                        id="minOrderValue" placeholder="0" min="0">
+                                                                    <input type="number" min="0" name="minOrderValue"
+                                                                        class="form-control" id="minOrderValue"
+                                                                        placeholder="0" min="0" required>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
@@ -133,8 +137,8 @@
                                                                     <label for="usageLimit" class="form-label">Giới hạn
                                                                         sử dụng</label>
                                                                     <input type="number" class="form-control"
-                                                                        id="usageLimit" placeholder="Không giới hạn"
-                                                                        min="1">
+                                                                        id="usageLimit" name="usageLimit"
+                                                                        placeholder="Không giới hạn" min="1" required>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -145,7 +149,7 @@
                                                                     <label for="startDate" class="form-label">Ngày bắt
                                                                         đầu <span class="text-danger">*</span></label>
                                                                     <input type="datetime-local" class="form-control"
-                                                                        id="startDate" required>
+                                                                        id="startDate" name="startDate" required>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
@@ -153,7 +157,7 @@
                                                                     <label for="endDate" class="form-label">Ngày kết
                                                                         thúc <span class="text-danger">*</span></label>
                                                                     <input type="datetime-local" class="form-control"
-                                                                        id="endDate" required>
+                                                                        id="endDate" name="endDate" required>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -190,7 +194,8 @@
                                                                 </div>
                                                             </div>
                                                             <div class="voucher-body">
-                                                                <div class="voucher-name-preview" id="previewName">Tên voucher</div>
+                                                                <div class="voucher-name-preview" id="previewName">Tên
+                                                                    voucher</div>
                                                                 <div class="voucher-discount-preview"
                                                                     id="previewDiscount">0%</div>
                                                                 <div class="voucher-condition-preview"
@@ -245,7 +250,7 @@
                     </div>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/createVoucher.js?v=1.0.3"></script>
+                    <script src="${ctx}/assets/js/shop/createVoucher.js"></script>
                 </body>
 
                 </html>

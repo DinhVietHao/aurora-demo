@@ -147,5 +147,4 @@ public class Voucher {
     public void setShopVoucher(boolean isShopVoucher) {
         this.isShopVoucher = isShopVoucher;
     }
-
 }
