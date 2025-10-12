@@ -20,7 +20,7 @@ import com.group01.aurora_demo.cart.utils.ShippingCalculator;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
-import com.group01.aurora_demo.shop.model.Shop;
+// import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.shop.model.Voucher;
 
 import jakarta.servlet.ServletException;
@@ -277,7 +277,7 @@ public class CheckoutServlet extends HttpServlet {
                     if (selectedAddress != null) {
                         for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
                             List<CartItem> items = entry.getValue();
-                            Shop shop = items.get(0).getProduct().getShop();
+                            // Shop shop = items.get(0).getProduct().getShop();
                             double shopWeight = items.stream()
                                     .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
                                     .sum();

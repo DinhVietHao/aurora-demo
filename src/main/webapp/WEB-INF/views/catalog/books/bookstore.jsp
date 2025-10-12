@@ -54,7 +54,7 @@
                                         <c:otherwise>
                                             <c:forEach var="p" items="${products}">
                                                 <div class="col-6 col-md-4 col-lg-3">
-                                                    <a href="${pageContext.request.contextPath}/book/${p.productId}">
+                                                    <a href="${ctx}/home?action=detail&id=${p.productId}">
                                                         <div class="product-card">
                                                             <div class="product-img">
                                                                 <!-- Tính % giảm giá từ originalPrice và salePrice -->

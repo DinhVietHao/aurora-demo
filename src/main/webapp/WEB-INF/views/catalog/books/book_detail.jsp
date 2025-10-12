@@ -13,8 +13,8 @@
 
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
 
-        <%-- CSS của thông báo Toast --%>
-          <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css" />
+        <!-- CSS của thông báo Toast -->
+        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css" />
       </head>
 
       <body>
@@ -22,33 +22,33 @@
 
         <div class="container book-detail mt-3">
           <div class="row justify-content-evenly">
-            <%-- HÌNH ẢNH & NÚT MUA --%>
-              <div class="col-md-5">
-                <div class="book-detail-images">
-                  <div class="product-image mb-3">
-                    <img id="mainImage" src="${ctx}/assets/images/catalog/thumbnails/${product.images[0].url}"
-                      alt="Sách" class="img-fluid border" />
-                  </div>
+            <!-- HÌNH ẢNH & NÚT MUA -->
+            <div class="col-md-5">
+              <div class="book-detail-images">
+                <div class="product-image mb-3">
+                  <img id="mainImage" src="${ctx}/assets/images/catalog/thumbnails/${product.images[0].url}" alt="Sách"
+                    class="img-fluid border" />
+                </div>
 
-                  <div class="row g-2 mb-3">
-                    <c:forEach var="img" items="${product.images}" varStatus="s">
-                      <c:if test="${!s.last}">
-                        <div class="col-3">
-                          <img src="${ctx}/assets/images/catalog/thumbnails/${img.url}"
-                            class="img-fluid border thumbnail ${s.first ? 'active' : ''}" alt="" />
-                        </div>
-                      </c:if>
-                    </c:forEach>
-                  </div>
+                <div class="row g-2 mb-3">
+                  <c:forEach var="img" items="${product.images}" varStatus="s">
+                    <c:if test="${!s.last}">
+                      <div class="col-3">
+                        <img src="${ctx}/assets/images/catalog/thumbnails/${img.url}"
+                          class="img-fluid border thumbnail ${s.first ? 'active' : ''}" alt="" />
+                      </div>
+                    </c:if>
+                  </c:forEach>
+                </div>
 
-                  <div class="row gap-2 justify-content-evenly">
-                    <button class="button-two col-lg-5" id="add-to-cart" data-product-id="${product.productId}">
-                      <i class="bi bi-cart3"></i> Thêm vào giỏ hàng
-                    </button>
-                    <button class="button-three col-lg-5">Mua Ngay</button>
-                  </div>
+                <div class="row gap-2 justify-content-evenly">
+                  <button class="button-two col-lg-5" id="add-to-cart" data-product-id="${product.productId}">
+                    <i class="bi bi-cart3"></i> Thêm vào giỏ hàng
+                  </button>
+                  <button class="button-three col-lg-5">Mua Ngay</button>
                 </div>
               </div>
+            </div>
           </div>
 
           <%-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) --%>

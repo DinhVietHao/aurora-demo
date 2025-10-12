@@ -41,9 +41,7 @@ public class HomeServlet extends HttpServlet {
                 // Detect nếu có sản phẩm bán được
                 int soldProducts = productDAO.countProductsWithSold();
                 String defaultSort = soldProducts > 0 ? "best" : "newest";
-
                 String sort = request.getParameter("sort");
-                System.out.println(sort);
                 if (sort == null || sort.isEmpty())
                     sort = defaultSort;
 
@@ -70,10 +68,23 @@ public class HomeServlet extends HttpServlet {
 
                 request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
                 break;
+            case "detail":
+                String idRaw = request.getParameter("id");
+                ProductDAO productDAO = new ProductDAO();
+                try {
+                    long id = Long.parseLong(idRaw);
+                    Product product = productDAO.getProductById(id);
+                    request.setAttribute("title", product.getTitle());
+                    request.setAttribute("product", product);
+                    request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request,
+                            response);
+                } catch (NumberFormatException e) {
+                    System.out.println(e.getMessage());
+                }
+                break;
             default:
                 break;
         }
-
     }
 
 }
