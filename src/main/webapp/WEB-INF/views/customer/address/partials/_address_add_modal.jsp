@@ -10,6 +10,7 @@
                     </div>
                     <div class="modal-body">
                         <form class="shipping-address" id="form-create-address" action="/address/add" method="post">
+                            <input type="hidden" name="from" value="address">
                             <div class="row mb-3">
                                 <div class="col-md-6 form-group">
                                     <label for="fullName" class="form-label">Họ tên</label>

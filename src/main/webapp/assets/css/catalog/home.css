@@ -1,7 +1,11 @@
+.modal-backdrop {
+  z-index: 9 !important; 
+}
 /* Header*/
 .modal-backdrop {
   z-index: 9 !important;
 }
+
 .header {
   position: sticky;
   top: 0;

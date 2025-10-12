@@ -9,7 +9,9 @@ import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.ProductImage;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.sql.*;
 
 public class ProductDAO {
@@ -491,8 +493,7 @@ public class ProductDAO {
                         product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                         product.setSalePrice(rs.getDouble("SalePrice"));
                         product.setSoldCount(rs.getLong("SoldCount"));
-                        product.setQuantity(rs.getInt("Stock"));
-                        // ! Error
+                        product.setQuantity(rs.getInt("Quantity"));
                         // product.setCategoryId(rs.getLong("CategoryID"));
 
                         Date publishedDate = rs.getDate("PublishedDate");
@@ -551,14 +552,9 @@ public class ProductDAO {
 
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT COUNT(DISTINCT p.ProductID) FROM Products p "
-                + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
                 + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
                 + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
-                + "LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID "
-                + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
-                + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
-                + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
-                + "AND p.Status = 'ACTIVE'";
+                + "WHERE p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ?";
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -566,8 +562,6 @@ public class ProductDAO {
             ps.setString(1, searchPattern);
             ps.setString(2, searchPattern);
             ps.setString(3, searchPattern);
-            ps.setString(4, searchPattern);
-            ps.setString(5, searchPattern);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
