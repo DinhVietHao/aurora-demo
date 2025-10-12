@@ -136,13 +136,14 @@
                                                 <div class="card-body text-center">
                                                     <div class="shop-logo-container mb-3">
                                                         <img src="${ctx}/assets/images/catalog/products/product-1.png"
-                                                            alt="Shop Logo" class="shop-logo" id="shopLogoPreview" />
+                                                            alt="Shop Logo" name="shopLogo" class="shop-logo"
+                                                            id="shopLogoPreview" />
                                                     </div>
                                                     <div class="mb-3">
                                                         <input type="file" class="form-control" id="shopLogoInput"
                                                             accept="image/*" />
                                                         <div class="form-text">
-                                                            Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF
+                                                            Kích thước tối đa: 2MB. Định dạng: JPG, PNG. WEBP
                                                         </div>
                                                     </div>
                                                     <button type="button" class="btn btn-outline-primary btn-sm"

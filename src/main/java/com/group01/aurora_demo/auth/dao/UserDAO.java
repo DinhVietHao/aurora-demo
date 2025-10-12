@@ -85,4 +85,22 @@ public class UserDAO {
         }
     }
 
+    public boolean updateAvatarCustomer(long userID, String avatarUrl) {
+        String sql = "UPDATE Users SET AvatarUrl = ? WHERE UserID = ?";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, avatarUrl);
+            ps.setLong(2, userID);
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }
