@@ -25,7 +25,7 @@
                             <a href="${ctx}/" class="header-nav-item header-mobile-disable">
                                 <i class="bi bi-house"></i> <span>Trang chủ</span>
                             </a>
-                            <a href="${ctx}/books" class="header-nav-item header-mobile-disable">
+                            <a href="${ctx}/home?action=bookstore" class="header-nav-item header-mobile-disable">
                                 <i class="bi bi-journal-bookmark"></i> <span>Nhà sách</span>
                             </a>
 

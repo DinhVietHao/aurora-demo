@@ -9,6 +9,9 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +39,24 @@ public class VoucherServlet extends HttpServlet {
         if (action == null)
             action = "view";
 
+        String message = request.getParameter("message");
+        String error = request.getParameter("error");
+
+        if ("delete_success".equals(message)) {
+            request.setAttribute("successMessage", "Đã xóa sản phẩm thành công!");
+        }
+        if ("delete_failed".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Không thể xóa sản phẩm vì đang trong Flash Sale hoặc đang được giao hàng.");
+        }
+        if ("create_success".equals(message)) {
+            request.setAttribute("successMessage",
+                    "Đã thêm voucher thành công.");
+        }
+        if ("create_failed".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Thêm voucher thất bại");
+        }
         try {
             VoucherDAO voucherDAO = new VoucherDAO();
             ShopDAO shopDAO = new ShopDAO();
@@ -88,14 +109,54 @@ public class VoucherServlet extends HttpServlet {
             action = "view";
         ShopDAO shopDAO = new ShopDAO();
         VoucherDAO voucherDAO = new VoucherDAO();
+        Long shopId = (long) 0;
         try {
             switch (action) {
                 case "checkVoucherCode":
-                    Long shopId = shopDAO.getShopIdByUserId(user.getId());
+                    shopId = shopDAO.getShopIdByUserId(user.getId());
                     String voucherCode = request.getParameter("voucherCode");
                     boolean isDuplicate = voucherDAO.checkVoucherCode(voucherCode, shopId);
                     json.put("success", !isDuplicate);
                     out.print(json.toString());
+                    break;
+                case "create":
+                    try {
+                        shopId = shopDAO.getShopIdByUserId(user.getId());
+
+                        Voucher voucher = new Voucher();
+                        voucher.setCode(request.getParameter("voucherCode"));
+                        voucher.setDescription(request.getParameter("voucherDescription"));
+                        voucher.setDiscountType(request.getParameter("discountType"));
+                        voucher.setValue(Double.parseDouble(request.getParameter("discountValue")));
+                        String maxDiscountStr = request.getParameter("maxDiscount");
+                        if (maxDiscountStr != null && !maxDiscountStr.isEmpty()) {
+                            voucher.setMaxAmount(Double.parseDouble(maxDiscountStr));
+                        }
+                        voucher.setMinOrderAmount(Double.parseDouble(request.getParameter("minOrderValue")));
+                        voucher.setUsageLimit(Integer.parseInt(request.getParameter("usageLimit")));
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+                        LocalDateTime startAt = LocalDateTime.parse(request.getParameter("startDate"), formatter);
+                        LocalDateTime endAt = LocalDateTime.parse(request.getParameter("endDate"), formatter);
+                        voucher.setStartAt(Timestamp.valueOf(startAt));
+                        voucher.setEndAt(Timestamp.valueOf(endAt));
+                        voucher.setStatus("UPCOMING");
+                        voucher.setShopVoucher(true);
+                        voucher.setShopID(shopId);
+                        if (voucherDAO.insertVoucher(voucher)) {
+
+                            response.sendRedirect(
+                                    request.getContextPath() + "/shop/voucher?action=view&message=create_success");
+                        } else {
+                            response.sendRedirect(
+                                    request.getContextPath() + "/shop/voucher?action=view&message=create_failed");
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        request.setAttribute("errorMessage", "Đã xảy ra lỗi: " + e.getMessage());
+                        request.getRequestDispatcher("/WEB-INF/views/shop/createVoucher.jsp").forward(request,
+                                response);
+                    }
+
                     break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);

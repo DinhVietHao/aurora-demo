@@ -309,4 +309,34 @@ public class VoucherDAO {
         return false;
     }
 
+    public boolean insertVoucher(Voucher voucher) throws SQLException {
+        String sql = "INSERT INTO Vouchers (Code, DiscountType, Value, MaxAmount, MinOrderAmount, StartAt, EndAt, " +
+                "UsageLimit, UsageCount, Status, IsShopVoucher, ShopID, Description) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement stmt = cn.prepareStatement(sql)) {
+            stmt.setString(1, voucher.getCode());
+            stmt.setString(2, voucher.getDiscountType());
+            stmt.setDouble(3, voucher.getValue());
+            if (voucher.getMaxAmount() != null) {
+                stmt.setDouble(4, voucher.getMaxAmount());
+            } else {
+                stmt.setNull(4, java.sql.Types.DECIMAL);
+            }
+            stmt.setDouble(5, voucher.getMinOrderAmount());
+            stmt.setTimestamp(6, voucher.getStartAt());
+            stmt.setTimestamp(7, voucher.getEndAt());
+            stmt.setInt(8, voucher.getUsageLimit());
+            stmt.setInt(9, 0);
+            stmt.setString(10, voucher.getStatus());
+            stmt.setBoolean(11, voucher.isShopVoucher());
+            stmt.setLong(12, voucher.getShopID());
+            stmt.setString(13, voucher.getDescription());
+
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+
 }

@@ -6,10 +6,14 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.catalog.dao.ImageDAO;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
+
+import java.io.File;
 import java.io.PrintWriter;
 import org.json.JSONObject;
 
@@ -90,8 +94,9 @@ public class ShopServlet extends HttpServlet {
                 out.print(json.toString());
                 return;
             }
-
+            
             String action = request.getParameter("action");
+            ShopDAO shopDAO = new ShopDAO();
             if (action.equalsIgnoreCase("register")) {
                 String avatarUrl = null; // Need additional
                 String city = request.getParameter("city");
@@ -133,6 +138,46 @@ public class ShopServlet extends HttpServlet {
                     json.put("message", "Đăng ký thất bại.");
                 }
 
+                out.print(json.toString());
+            } else if (action.equalsIgnoreCase("uploadAvatar")) {
+                Long shopID = shopDAO.getShopIdByUserId(user.getId());
+                Part filePart = request.getPart("shopLogo");
+                if (filePart == null || filePart.getSize() == 0) {
+                    json.put("success", false);
+                    json.put("message", "Ảnh không tồn tại hoặc chưa chọn ảnh.");
+                    out.print(json.toString());
+                    return;
+                }
+                if (filePart.getSize() > 5 * 1024 * 1024) {
+                    json.put("success", false);
+                    json.put("message", "Ảnh vượt quá dung lượng cho phép (5MB).");
+                    out.print(json.toString());
+                    return;
+                }
+
+                String contentType = filePart.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    json.put("success", false);
+                    json.put("message", "Tệp tải lên không phải hình ảnh hợp lệ.");
+                    out.print(json.toString());
+                    return;
+                }
+                String uploadDir = request.getServletContext().getRealPath("/assets/images/catalog/avatars");
+                File uploadDirFile = new File(uploadDir);
+                if (!uploadDirFile.exists()) {
+                    uploadDirFile.mkdirs();
+
+                }
+                ImageDAO imageDAO = new ImageDAO();
+                String fileName = imageDAO.uploadAvatar(filePart, uploadDir);
+
+                if(shopDAO.updateAvatarShop(shopID, fileName)){
+                    json.put("success", true);
+                    json.put("message", "Upload avatar thành công.");
+                }else{
+                    json.put("success", false);
+                    json.put("message", "Upload avatar thất bại.");
+                }
                 out.print(json.toString());
             }
         } catch (Exception e) {

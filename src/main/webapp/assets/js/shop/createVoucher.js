@@ -1,5 +1,4 @@
 // Promotion Create JavaScript
-
 document.addEventListener("DOMContentLoaded", function () {
   // Initialize create voucher functionality
   initializeCreateVoucher();
@@ -14,12 +13,6 @@ function initializeCreateVoucher() {
 
   // Set default dates
   setDefaultDates();
-
-  // Initialize form submission
-  const form = document.getElementById("createVoucherForm");
-  if (form) {
-    form.addEventListener("submit", handleFormSubmit);
-  }
 
   // Initialize discount type change
   const discountType = document.getElementById("discountType");
@@ -124,15 +117,6 @@ function formatDateTimeLocal(date) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-// Handle form submission
-function handleFormSubmit(event) {
-  event.preventDefault();
-
-  if (validateForm()) {
-    submitVoucher();
-  }
-}
-
 // Handle discount type change
 function handleDiscountTypeChange() {
   const discountType = document.getElementById("discountType").value;
@@ -206,7 +190,7 @@ function clearValidation(event) {
   }
 }
 
-// Validate voucher code
+// ✅ Validate voucher code (giữ lại phần gọi backend check trùng)
 const validateVoucherCode = async () => {
   const field = document.getElementById("voucherCode");
   const value = field.value.trim();
@@ -232,8 +216,6 @@ const validateVoucherCode = async () => {
   }
 
   try {
-    clearFieldMessage(field);
-
     const res = await fetch("/shop/voucher?action=checkVoucherCode", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -288,7 +270,6 @@ function validateDates() {
 
   let isValid = true;
 
-  // Clear previous validations
   startDate.classList.remove("is-invalid", "is-valid");
   endDate.classList.remove("is-invalid", "is-valid");
 
@@ -345,7 +326,7 @@ function showFieldSuccess(field, message) {
   feedback.textContent = message;
 }
 
-// Validate entire form
+// Validate entire form (client-side only)
 function validateForm() {
   const requiredFields = [
     "voucherCode",
@@ -365,15 +346,13 @@ function validateForm() {
     }
   });
 
-  // Validate specific fields
-  if (!validateVoucherCode()) isValid = false;
   if (!validateDiscountValue()) isValid = false;
   if (!validateDates()) isValid = false;
 
   return isValid;
 }
 
-// Update preview
+// Update preview (animation)
 function updatePreview() {
   const voucherCode =
     document.getElementById("voucherCode").value || "VOUCHER_CODE";
@@ -386,11 +365,9 @@ function updatePreview() {
   const description =
     document.getElementById("voucherDescription").value || "Mô tả voucher";
 
-  // Update preview elements
   document.getElementById("previewCode").textContent = voucherCode;
   document.getElementById("previewName").textContent = description;
 
-  // Update discount type badge
   const typeElement = document.getElementById("previewType");
   if (discountType === "percentage") {
     typeElement.textContent = "%";
@@ -403,7 +380,6 @@ function updatePreview() {
     typeElement.className = "voucher-type-preview bg-secondary";
   }
 
-  // Update discount value
   const discountElement = document.getElementById("previewDiscount");
   if (discountType === "percentage") {
     discountElement.textContent = `${discountValue}%`;
@@ -415,13 +391,11 @@ function updatePreview() {
     discountElement.textContent = "0%";
   }
 
-  // Update condition
   const conditionElement = document.getElementById("previewCondition");
   conditionElement.textContent = `Đơn tối thiểu: ${parseInt(
     minOrderValue
   ).toLocaleString()} VNĐ`;
 
-  // Update date range
   const dateElement = document.getElementById("previewDate");
   if (startDate && endDate) {
     const start = new Date(startDate).toLocaleDateString("vi-VN");
@@ -431,7 +405,6 @@ function updatePreview() {
     dateElement.textContent = "Chưa có thời hạn";
   }
 
-  // Update usage limit
   const usageElement = document.getElementById("previewUsage");
   if (usageLimit) {
     usageElement.textContent = `Giới hạn: ${usageLimit} lượt`;
@@ -439,99 +412,83 @@ function updatePreview() {
     usageElement.textContent = "Không giới hạn";
   }
 
-  // Add update animation
   const previewCard = document.querySelector(".voucher-preview-card");
-  previewCard.classList.add("updating");
-  setTimeout(() => {
-    previewCard.classList.remove("updating");
-  }, 300);
-}
-
-// Submit voucher
-function submitVoucher() {
-  const submitButton = document.querySelector('button[type="submit"]');
-
-  // Show loading state
-  submitButton.disabled = true;
-  submitButton.classList.add("loading");
-  submitButton.innerHTML =
-    '<i class="bi bi-hourglass-split me-2"></i>Đang tạo voucher...';
-
-  // Collect form data
-  const formData = {
-    code: document.getElementById("voucherCode").value,
-    description: document.getElementById("voucherDescription").value,
-    discountType: document.getElementById("discountType").value,
-    discountValue: parseFloat(document.getElementById("discountValue").value),
-    maxDiscount:
-      parseFloat(document.getElementById("maxDiscount").value) || null,
-    minOrderValue:
-      parseFloat(document.getElementById("minOrderValue").value) || 0,
-    usageLimit: parseInt(document.getElementById("usageLimit").value) || null,
-    startDate: document.getElementById("startDate").value,
-    endDate: document.getElementById("endDate").value,
-    isActive: document.getElementById("isActive").checked,
-  };
-
-  console.log("Creating voucher with data:", formData);
-
-  // Simulate API call
-  setTimeout(() => {
-    // Reset button state
-    submitButton.disabled = false;
-    submitButton.classList.remove("loading");
-    submitButton.innerHTML =
-      '<i class="bi bi-check-circle me-2"></i>Tạo voucher';
-
-    // Show success message
-    showSuccessMessage("Tạo voucher thành công!");
-
-    // Redirect to promotion management
+  if (previewCard) {
+    previewCard.classList.add("updating");
     setTimeout(() => {
-      window.location.href = "promotionManagement.html";
-    }, 2000);
-  }, 2000);
-}
-
-// Show success message
-function showSuccessMessage(message) {
-  // Create toast notification
-  const toastHTML = `
-        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi bi-check-circle me-2"></i>${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-        </div>
-    `;
-
-  // Add toast container if it doesn't exist
-  let toastContainer = document.querySelector(".toast-container");
-  if (!toastContainer) {
-    toastContainer = document.createElement("div");
-    toastContainer.className = "toast-container position-fixed top-0 end-0 p-3";
-    document.body.appendChild(toastContainer);
+      previewCard.classList.remove("updating");
+    }, 300);
   }
-
-  // Add toast to container
-  toastContainer.insertAdjacentHTML("beforeend", toastHTML);
-
-  // Show toast
-  const toastElement = toastContainer.lastElementChild;
-  const toast = new bootstrap.Toast(toastElement);
-  toast.show();
-
-  // Remove toast from DOM after it's hidden
-  toastElement.addEventListener("hidden.bs.toast", function () {
-    this.remove();
-  });
 }
 
-// Export functions for external use
+// Export functions
 window.PromotionCreate = {
   validateForm,
-  submitVoucher,
   updatePreview,
 };
+
+document.addEventListener("DOMContentLoaded", function () {
+  const discountTypeSelect = document.getElementById("discountType");
+  const discountValueInput = document.getElementById("discountValue");
+  const maxDiscountContainer = document
+    .getElementById("maxDiscount")
+    .closest(".mb-3");
+  const form = document.getElementById("createVoucherForm");
+
+  function toggleDiscountFields() {
+    const selectedType = discountTypeSelect.value;
+
+    if (selectedType === "PERCENT") {
+      maxDiscountContainer.style.display = "block";
+      discountValueInput.placeholder = "Nhập phần trăm giảm (1–100)";
+      discountValueInput.removeAttribute("min");
+      discountValueInput.removeAttribute("max");
+      discountValueInput.setAttribute("min", "1");
+      discountValueInput.setAttribute("max", "100");
+    } else if (selectedType === "AMOUNT") {
+      maxDiscountContainer.style.display = "none";
+      discountValueInput.placeholder = "Nhập số tiền giảm (VNĐ)";
+      discountValueInput.removeAttribute("max");
+      discountValueInput.removeAttribute("min");
+    } else {
+      maxDiscountContainer.style.display = "none";
+      discountValueInput.placeholder = "0";
+      discountValueInput.removeAttribute("max");
+      discountValueInput.removeAttribute("min");
+    }
+  }
+
+  // Validate khi người dùng nhập giá trị giảm
+  discountValueInput.addEventListener("input", function () {
+    const selectedType = discountTypeSelect.value;
+    const value = parseFloat(discountValueInput.value);
+
+    if (selectedType === "PERCENT") {
+      if (value > 100) {
+        discountValueInput.value = 100;
+      } else if (value < 1 && value !== 0) {
+        discountValueInput.value = 1;
+      }
+    } else if (selectedType === "AMOUNT") {
+      if (value < 0) {
+        discountValueInput.value = 0;
+      }
+    }
+  });
+
+  // Validate khi submit form
+  form.addEventListener("submit", function (e) {
+    const selectedType = discountTypeSelect.value;
+    const value = parseFloat(discountValueInput.value);
+
+    if (selectedType === "PERCENT" && (value < 1 || value > 100)) {
+      e.preventDefault();
+      alert("Giá trị giảm theo phần trăm phải nằm trong khoảng 1% - 100%");
+      discountValueInput.focus();
+    }
+  });
+
+  // Gọi khi load trang và khi thay đổi loại giảm giá
+  toggleDiscountFields();
+  discountTypeSelect.addEventListener("change", toggleDiscountFields);
+});

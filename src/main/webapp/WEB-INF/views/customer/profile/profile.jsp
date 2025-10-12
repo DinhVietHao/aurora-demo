@@ -116,7 +116,7 @@
 
                                             <div class="col-md-4 text-center profile-update__img">
                                                 <div class="mb-3">
-                                                    <img src="./assets/images/common/avatar.png" class="profile-img"
+                                                    <img src="./assets/images/common/avatar.png" name="avatarCustomer" class="profile-img"
                                                         alt="Avatar">
                                                     <div class="mt-3">
                                                         <input type="file" class="d-none" id="avatarInput">
