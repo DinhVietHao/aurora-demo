@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.sql.ResultSet;
 import java.util.List;
 import java.io.File;
+import java.io.IOException;
 
 public class ImageDAO {
 
@@ -86,5 +87,17 @@ public class ImageDAO {
 
         return imageNames;
     }
+    
+    public String uploadAvatar(Part filePart, String uploadDir) throws IOException, ServletException {
+        
+        String originalFileName = filePart.getSubmittedFileName();
+        String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
+        String fileName = System.currentTimeMillis() + "_" + sanitizedFileName;
 
+        String fullPath = uploadDir + File.separator + fileName;
+        filePart.write(fullPath);
+
+        
+        return fileName;
+    }
 }
