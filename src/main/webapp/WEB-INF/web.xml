@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+  <!-- Session configuration -->
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+
+  <!-- BẬT welcomeServlets để welcome-file trỏ tới servlet -->
+  <servlet>
+    <servlet-name>default</servlet-name>
+    <servlet-class>org.eclipse.jetty.ee10.servlet.DefaultServlet</servlet-class>
+    <init-param>
+      <param-name>welcomeServlets</param-name>
+      <param-value>true</param-value>
+    </init-param>
+  </servlet>
+
+  <!-- Default welcome (HomeServlet mapped to /home) -->
+  <welcome-file-list>
+    <welcome-file>home</welcome-file>
+  </welcome-file-list>
+
+  <!-- ================== FILTERS ================== -->
+
+  <!-- 1) Auto login from remember-me cookie (run BEFORE auth-required filter) -->
+  <filter>
+    <filter-name>RememberMeFilter</filter-name>
+    <filter-class>com.group01.aurora_demo.common.filter.RememberMeFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>RememberMeFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <!-- 2) URLs requiring authentication -->
+  <filter>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <filter-class>com.group01.aurora_demo.common.filter.AuthRequiredFilter</filter-class>
+  </filter>
+
+  <filter-mapping>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <url-pattern>/book/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <url-pattern>/cart/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <url-pattern>/checkout/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <url-pattern>/orders/*</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>AuthRequiredFilter</filter-name>
+    <url-pattern>/profile/*</url-pattern>
+  </filter-mapping>
+
+</web-app>

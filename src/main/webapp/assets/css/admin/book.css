@@ -1,0 +1,81 @@
+/* FILTER */
+.filter {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.filter label {
+    color: var(--color-one);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* END FILTER */
+
+/* BOOK CONTENT HEADER*/
+.book-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-one);
+    border-radius: 10px;
+    padding: 5px 15px;
+    margin-bottom: 10px;
+}
+
+.book-content-title {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.book-content-arrange {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.book-content-arrange label {
+    color: #EAEAEA;
+    font-size: 14px;
+}
+
+.book-content-arrange select {
+    border-radius: 30px;
+    padding: 4px 10px;
+    margin-left: 10px;
+}
+
+/* END BOOK CONTENT HEADER */
+
+/* PAGINATION */
+.pagination .page-item {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.pagination .page-link {
+    width: 40px;
+    height: 40px;
+    border-radius: 50% !important;
+    color: #888888;
+    border: 1px solid var(--color-one);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination .active .page-link {
+    color: #fff;
+    background-color: var(--color-one);
+
+}
+
+.pagination .page-link:hover {
+    background-color: var(--color-one);
+    color: #fff;
+
+}
+
+/*END PAGINATION */

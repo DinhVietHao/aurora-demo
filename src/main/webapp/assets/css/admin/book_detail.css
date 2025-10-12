@@ -1,0 +1,140 @@
+/* book-detail-images */
+.book-detail-images {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.book-detail-images .button-two {
+    padding: 0;
+}
+
+.book-detail-images .button-three {
+    width: 50%;
+}
+
+.book-detail-images .active {
+    border: 2px solid var(--color-one) !important;
+}
+
+/* end book-detail-images */
+
+/* book-detail-header */
+.book-detail-header {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.book-detail-header .author {
+    color: var(--color-one);
+    font-size: 16px;
+}
+
+.book-detail-header .title {
+    color: #000;
+    font-weight: 650;
+    font-size: 27px;
+}
+
+.book-detail-header .price {
+    color: var(--color-three);
+    font-size: 24px;
+    font-weight: 650;
+}
+
+.book-detail-header .discount {
+    color: var(--color-font);
+    margin: 0px 10px;
+    background-color: #E5E7EB;
+    border-radius: 10px;
+}
+
+/*end book-detail-header */
+
+/* book-information */
+.book-information {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.book-information-header {
+    color: var(--color-one);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.book-information-body .book-information-box {
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/*end book-information */
+
+/* book-description */
+.book-description {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.book-description-header {
+    color: var(--color-one);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.book-description-body {
+    position: relative;
+}
+
+.gradient {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    height: 150px;
+    background-image: linear-gradient(rgba(255, 255, 255, 0), rgb(255, 255, 255));
+}
+
+/* end book-description */
+
+/* book-review */
+.book-review {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.book-review-header {
+    color: var(--color-one);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.book-review-body .progress {
+    --bs-progress-height: 10px;
+}
+
+/* end book-review */
+
+/* book-introduction */
+.book-introduction {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.book-introduction-title {
+    color: var(--color-one);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+
+/* end .book-introduction */

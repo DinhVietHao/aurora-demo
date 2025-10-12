@@ -1,0 +1,160 @@
+/* Auth Form - LOGIN AND REGISTER */
+.authFormModal .modal-header {
+    padding: 0px;
+    border-bottom: none;
+}
+
+.authFormModal .modal-body {
+    padding: 0px;
+}
+
+.authFormModal .modal-content {
+    position: relative;
+    border-radius: 10px;
+}
+
+.authFormModal .modal-content .btn-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 10;
+}
+
+.auth-form .form-group .button-two {
+    border: 1px solid var(--bs-border-color);
+}
+
+.auth-form .form-group .button-two:hover {
+    background-color: #6c757d;
+}
+
+.auth-form #register-otp {
+    border-color: var(--bs-border-color);
+    box-shadow: none;
+}
+
+.auth-form-logo {
+    width: 280px;
+    height: 100px;
+}
+
+.auth-form-title {
+    color: var(--color-one);
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.auth-form-desc {
+    text-align: center;
+    font-size: 14px;
+}
+
+.auth-form-left {
+    background-color: #f0ffff;
+    padding: 30px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-form-right {
+    background-color: #fff;
+    padding: 30px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.auth-form-form label {
+    font-size: 14px;
+    color: var(--color-one);
+    font-weight: 550;
+}
+
+.auth-form-form .form-control {
+    background: var(--color-background);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #6c757d;
+    font-size: 14px;
+    margin-top: 16px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.auth-form-have-account span {
+    color: #4a5565;
+    font-size: 14px;
+}
+
+.auth-form-have-account a {
+    color: var(--color-one);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.auth-form .forget-password {
+    border-radius: 10px;
+}
+
+.auth-form .forget-password .auth-form-title {
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Send Verification OTP */
+#otp-timer {
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#otp-timer.red {
+    color: red;
+}
+
+#send-otp:disabled {
+    cursor: not-allowed;
+}
+
+/* Message */
+.auth-form .form-group.invalid .form-control {
+    border-color: #f33a58;
+}
+
+.auth-form .form-group.invalid .form-message {
+    color: #f33a58;
+}
+
+.auth-form .form-message {
+    font-size: 14px;
+}
+
+/*End Message */
+
+/* Show or hide password */
+.auth-form .password {
+    position: relative;
+}
+
+.auth-form .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+}
+/*End Show or hide password */
+
+/*End Auth Form - LOGIN AND REGISTER */

@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Jetty & open Chrome",
+            "type": "shell",
+            "command": "mvn clean package exec:exec@open-browser jetty:run",
+            "problemMatcher": []
+        }
+    ]
+}

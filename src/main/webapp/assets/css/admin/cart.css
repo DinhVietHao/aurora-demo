@@ -1,0 +1,103 @@
+.cart .cart-title {
+    color: var(--color-one);
+    font-size: 24px;
+    font-weight: 600;
+    margin: 15px 0;
+}
+
+.cart .cart-header {
+    background-color: var(--color-one);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 450;
+    padding: 7px 10px;
+    border-radius: 5px;
+}
+
+.cart .cart-body {
+    align-items: center;
+    background-color: #fff;
+    margin-top: 20px;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.cart .cart-body img {
+    width: 100px;
+    height: 140px;
+    object-fit: cover;
+}
+
+.cart .cart-body .cart-checkbox {
+    margin-right: 30px;
+}
+
+.cart .cart-body .cart-book-title {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.cart .cart-body .price {
+    color: 16px;
+    font-weight: 600;
+    color: var(--color-three);
+}
+
+.cart .cart-body .author {
+    font-size: 14px;
+    color: var(--color-font);
+}
+
+.cart .cart-body .number {
+    color: 16px;
+    font-weight: 550;
+    color: #000;
+}
+
+.cart .cart-body .button-delete {
+    border: none;
+    background-color: transparent;
+}
+
+.cart .cart-footer {
+    background-color: #fff;
+    margin-top: 20px;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.cart .cart-footer .cart-footer-title {
+    color: var(--color-one);
+    font-size: 16px;
+    font-weight: 550;
+}
+
+.cart .cart-right .card-address {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.cart .cart-right .cart-promotion {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.cart .cart-pay {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.cart .cart-pay .cart-pay-success {
+    color: var(--color-one);
+}
+
+.cart .cart-pay .cart-pay-danger {
+    color: var(--color-three);
+    font-size: 16px;
+    font-weight: 650;
+}
