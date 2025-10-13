@@ -128,7 +128,8 @@
                                 <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
                                     <jsp:param name="page" value="${page}" />
                                     <jsp:param name="totalPages" value="${totalPages}" />
-                                    <jsp:param name="baseUrl" value="${ctx}/books" />
+                                    <jsp:param name="baseUrl"
+                                        value="${ctx}/home?action=${param.action}&keyword=${param.keyword}" />
                                 </jsp:include>
                             </div>
                         </div>

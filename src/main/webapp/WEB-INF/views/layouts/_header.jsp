@@ -14,9 +14,12 @@
 
                     <div class="col-6 col-md-5">
                         <div class="header-search">
-                            <span class="icon"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control rounded-pill" placeholder="Hôm nay bạn mua gì ...">
-                            <button class="btn btn-light btn-sm rounded-pill">Tìm kiếm</button>
+                            <form method="POST" action="${ctx}/home">
+                                <input type="hidden" name="action" value="search" />
+                                <input type="text" class="form-control rounded-pill" name="keyword"
+                                    placeholder="Hôm nay bạn mua gì ..." value="${param.keyword}" />
+                                <button type="submit" class="btn btn-light btn-sm rounded-pill">Tìm kiếm</button>
+                            </form>
                         </div>
                     </div>
 

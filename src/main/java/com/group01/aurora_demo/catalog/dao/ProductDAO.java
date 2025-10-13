@@ -210,8 +210,8 @@ public class ProductDAO {
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
                 WHERE p.[Status] = 'ACTIVE'
-                """ // ← kết thúc ở đây
-                + " ORDER BY " + orderBy + " " // ← thêm dấu cách 2 bên
+                """
+                + " ORDER BY " + orderBy + " "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;";
 
         List<Product> products = new ArrayList<>();
@@ -227,11 +227,98 @@ public class ProductDAO {
                 }
             }
         } catch (SQLException e) {
-            // log chi tiết hơn
-            e.printStackTrace();
             System.out.println("Error (Bookstore page) in getAllProducts: " + e.getMessage());
         }
         return products;
+    }
+
+    // ========== Search books by keyword =========== //
+
+    public List<Product> getAllProductsByKeyword(String keyword, int offset, int limit) {
+        List<Product> products = new ArrayList<>();
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllProducts(0, Integer.MAX_VALUE, "best");
+        }
+
+        String searchPattern = "%" + keyword.trim() + "%";
+        String sql = "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
+                + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
+                + "FROM Products p "
+                + "LEFT JOIN ("
+                + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
+                + "    FROM OrderItems oi "
+                + "    JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID "
+                + "    GROUP BY oi.ProductID"
+                + ") r ON r.ProductID = p.ProductID "
+                + "LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1 "
+                + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
+                + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
+                + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
+                + "LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID "
+                + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
+                + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
+                + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
+                + "AND p.Status = 'ACTIVE' "
+                + "ORDER BY p.ProductID "
+                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, searchPattern); // Title
+            ps.setString(2, searchPattern); // Description
+            ps.setString(3, searchPattern); // AuthorName
+            ps.setString(4, searchPattern); // PublisherName
+            ps.setString(5, searchPattern); // CategoryName
+            ps.setInt(6, offset);
+            ps.setInt(7, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in getAllProductsByKeyword: " + e.getMessage());
+        }
+        return products;
+    }
+
+    public int countSearchResultsByKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return countAllProducts();
+        }
+
+        String searchPattern = "%" + keyword.trim() + "%";
+        String sql = "SELECT COUNT(DISTINCT p.ProductID) FROM Products p "
+                + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
+                + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
+                + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
+                + "LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID "
+                + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
+                + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
+                + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
+                + "AND p.Status = 'ACTIVE'";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, searchPattern);
+            ps.setString(2, searchPattern);
+            ps.setString(3, searchPattern);
+            ps.setString(4, searchPattern);
+            ps.setString(5, searchPattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in countSearchResultsByKeyword: " + e.getMessage());
+        }
+        return 0;
     }
 
     // ----- DuyHT -----
@@ -406,8 +493,7 @@ public class ProductDAO {
                         product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                         product.setSalePrice(rs.getDouble("SalePrice"));
                         product.setSoldCount(rs.getLong("SoldCount"));
-                        product.setQuantity(rs.getInt("Stock"));
-                        // ! Error
+                        product.setQuantity(rs.getInt("Quantity"));
                         // product.setCategoryId(rs.getLong("CategoryID"));
 
                         Date publishedDate = rs.getDate("PublishedDate");
