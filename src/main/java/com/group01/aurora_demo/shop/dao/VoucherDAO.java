@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.sql.SQLException;
@@ -212,20 +213,19 @@ public class VoucherDAO {
         String sql = """
                     SELECT
                         COUNT(*) AS totalVouchers,
-                        SUM(CASE
-                                WHEN GETDATE() < StartAt THEN 0
-                                WHEN GETDATE() > EndAt OR (ISNULL(UsageLimit, 0) <= 0) THEN 0
-                                ELSE 1
-                            END) AS activeCount,
-                        SUM(CASE WHEN GETDATE() < StartAt THEN 1 ELSE 0 END) AS upcomingCount,
-                        SUM(CASE WHEN GETDATE() > EndAt OR (ISNULL(UsageLimit, 0) <= 0) THEN 1 ELSE 0 END) AS expiredCount,
+                        SUM(CASE WHEN Status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeCount,
+                        SUM(CASE WHEN Status = 'UPCOMING' THEN 1 ELSE 0 END) AS upcomingCount,
+                        SUM(CASE WHEN Status = 'EXPIRED' THEN 1 ELSE 0 END) AS expiredCount,
                         SUM(ISNULL(UsageCount, 0)) AS totalUsage
                     FROM Vouchers
                     WHERE ShopID = ?
                 """;
+
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, shopId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     stats.put("totalVouchers", rs.getInt("totalVouchers"));
@@ -235,23 +235,24 @@ public class VoucherDAO {
                     stats.put("totalUsage", rs.getInt("totalUsage"));
                 }
             }
+
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace(); // tốt hơn System.out.println
         }
+
         return stats;
     }
 
-    public Voucher getVoucherByVoucherCode(String voucherCode) {
-        String sql = "SELECT * FROM Vouchers WHERE Code = ?";
+    public Voucher getVoucherByVoucherID(long voucherID) {
+        String sql = "SELECT * FROM Vouchers WHERE VoucherID = ?";
         Voucher v = null;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, voucherCode);
-            ResultSet rs = ps.executeQuery();
+            ps.setLong(1, voucherID);
 
-            Timestamp now = new Timestamp(System.currentTimeMillis());
+            ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 v = new Voucher();
@@ -270,20 +271,9 @@ public class VoucherDAO {
                 v.setCreatedAt(rs.getTimestamp("CreatedAt"));
                 v.setDescription(rs.getString("Description"));
 
-                Timestamp start = v.getStartAt();
-                Timestamp end = v.getEndAt();
-                Integer usageLimit = v.getUsageLimit();
-                Integer usageCount = v.getUsageCount();
+                v.setStatus(rs.getString("Status"));
 
-                String status;
-                if (now.before(start)) {
-                    status = "UPCOMING";
-                } else if (now.after(end) || (usageLimit != null && usageCount != null && usageCount >= usageLimit)) {
-                    status = "EXPIRED";
-                } else {
-                    status = "ACTIVE";
-                }
-                v.setStatus(status);
+                System.out.println(v.getCode());
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -336,6 +326,165 @@ public class VoucherDAO {
 
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
+        }
+    }
+
+    public boolean deleteVoucherByBusinessRule(long voucherID) throws SQLException {
+        String sql = """
+                    SELECT v.VoucherID, v.Status, v.UsageCount,
+                           CASE
+                               WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID) THEN 1
+                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID) THEN 1
+                               ELSE 0
+                           END AS UsedInOrders
+                    FROM Vouchers v
+                    WHERE v.VoucherID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, voucherID);
+            ResultSet rs = ps.executeQuery();
+
+            if (!rs.next()) {
+                return false;
+            }
+
+            String status = rs.getString("Status");
+            int usageCount = rs.getInt("UsageCount");
+            boolean usedInOrders = rs.getInt("UsedInOrders") > 0;
+
+            if (usedInOrders) {
+                return false;
+            }
+
+            boolean canDelete = "UPCOMING".equalsIgnoreCase(status) ||
+                    ("ACTIVE".equalsIgnoreCase(status) && usageCount == 0);
+
+            if (!canDelete) {
+                return false;
+            }
+
+            String deleteSql = "DELETE FROM Vouchers WHERE VoucherID = ?";
+            try (PreparedStatement deletePs = cn.prepareStatement(deleteSql)) {
+                deletePs.setLong(1, voucherID);
+                int rows = deletePs.executeUpdate();
+                return rows > 0;
+            }
+        }
+    }
+
+    public Long getVoucherIDByVoucherCodeAndShopID(String voucherCode, Long shopID) {
+        String sql = "SELECT VoucherID FROM Vouchers WHERE Code = ? AND ShopID = ?";
+        Long voucherID = null;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, voucherCode);
+            ps.setLong(2, shopID);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    voucherID = rs.getLong("VoucherID");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return voucherID;
+    }
+
+    public boolean updateVoucher(Voucher voucher) {
+        String sql = """
+                    UPDATE Vouchers
+                    SET
+                        Code = ?,
+                        Description = ?,
+                        DiscountType = ?,
+                        Value = ?,
+                        MaxAmount = ?,
+                        MinOrderAmount = ?,
+                        UsageLimit = ?,
+                        StartAt = ?,
+                        EndAt = ?,
+                        Status = ?
+                    WHERE VoucherID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, voucher.getCode());
+            ps.setString(2, voucher.getDescription());
+            ps.setString(3, voucher.getDiscountType());
+            ps.setDouble(4, voucher.getValue());
+            if (voucher.getMaxAmount() != null) {
+                ps.setDouble(5, voucher.getMaxAmount());
+            } else {
+                ps.setNull(5, Types.DOUBLE);
+            }
+            ps.setDouble(6, voucher.getMinOrderAmount());
+            ps.setInt(7, voucher.getUsageLimit());
+            ps.setTimestamp(8, voucher.getStartAt());
+            ps.setTimestamp(9, voucher.getEndAt());
+            ps.setString(10, voucher.getStatus());
+
+            ps.setLong(11, voucher.getVoucherID());
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int getUsageCount(Long voucherId) {
+        String sql = "SELECT SUM(UsageCount) AS totalUsage FROM Vouchers WHERE VoucherID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, voucherId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("totalUsage");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean updateVoucherExpired(Voucher voucher) {
+        String sql = """
+                    UPDATE Vouchers
+                    SET
+                        Description = ?,
+                        StartAt = ?, 
+                        EndAt = ?,
+                        Status = ?
+                    WHERE VoucherID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, voucher.getDescription());
+            ps.setTimestamp(2, voucher.getStartAt());
+            ps.setTimestamp(3, voucher.getEndAt());
+            ps.setString(4, voucher.getStatus());
+            ps.setLong(5, voucher.getVoucherID());
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

@@ -94,7 +94,7 @@ public class ShopServlet extends HttpServlet {
                 out.print(json.toString());
                 return;
             }
-            
+
             String action = request.getParameter("action");
             ShopDAO shopDAO = new ShopDAO();
             if (action.equalsIgnoreCase("register")) {
@@ -171,10 +171,10 @@ public class ShopServlet extends HttpServlet {
                 ImageDAO imageDAO = new ImageDAO();
                 String fileName = imageDAO.uploadAvatar(filePart, uploadDir);
 
-                if(shopDAO.updateAvatarShop(shopID, fileName)){
+                if (shopDAO.updateAvatarShop(shopID, fileName)) {
                     json.put("success", true);
                     json.put("message", "Upload avatar thành công.");
-                }else{
+                } else {
                     json.put("success", false);
                     json.put("message", "Upload avatar thất bại.");
                 }
