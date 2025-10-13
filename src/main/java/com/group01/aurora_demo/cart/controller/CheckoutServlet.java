@@ -181,7 +181,7 @@ public class CheckoutServlet extends HttpServlet {
                 try {
                     String code = req.getParameter("code");
                     long shopId = Long.parseLong(req.getParameter("shopId"));
-                    Voucher voucher = this.voucherDAO.getVoucherByCode(code, true);
+                    Voucher voucher = this.voucherDAO.getVoucherByCode(shopId, code, true);
                     if (voucher == null) {
                         json.put("success", false);
                         json.put("message", "Mã giảm giá không tồn tại.");
@@ -214,7 +214,7 @@ public class CheckoutServlet extends HttpServlet {
             case "/voucher/system": {
                 try {
                     String code = req.getParameter("code");
-                    Voucher voucher = this.voucherDAO.getVoucherByCode(code, false);
+                    Voucher voucher = this.voucherDAO.getVoucherByCode(null, code, false);
                     if (voucher == null) {
                         json.put("success", false);
                         json.put("message", "Mã giảm giá không tồn tại.");

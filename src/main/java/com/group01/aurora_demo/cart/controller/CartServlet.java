@@ -37,7 +37,7 @@ public class CartServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
 
@@ -81,7 +81,7 @@ public class CartServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
 
