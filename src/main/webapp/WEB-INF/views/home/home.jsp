@@ -236,39 +236,138 @@
                 </div>
               </div>
 
-              <%-- Tủ sách nổi bật (giữ nguyên bố cục, sửa đường dẫn ảnh) --%>
+              <c:if test="${not empty latestProducts}">
+                <!-- Tủ sách mới (expandable) -->
                 <div class="featured-bookcase container">
-                  <h5 class="featured-bookcase-title"><i class="bi bi-book"></i> Tủ sách nổi bật</h5>
-                  <div class="row g-3 product">
-                    <div class="col-6 col-md-4 col-lg-2">
-                      <div class="product-card">
-                        <div class="product-img">
-                          <span class="discount">-16%</span>
-                          <img src="${ctx}/assets/images/catalog/products/product-1.png" alt="Sách" />
-                        </div>
-                        <div class="product-body">
-                          <h6 class="price">128.300 ₫</h6>
-                          <small class="author">GLENDY VANDERAH</small>
-                          <p class="title">Nơi Khu Rừng Chạm Tới Những Vì Sao</p>
-                          <div class="rating">
-                            <i class="bi bi-star-fill text-warning small"></i><i
-                              class="bi bi-star-fill text-warning small"></i><i
-                              class="bi bi-star-fill text-warning small"></i><i
-                              class="bi bi-star-fill text-warning small"></i><i
-                              class="bi bi-star-half text-warning small"></i>
-                            <span>Đã bán 99</span>
-                          </div>
+                  <h5 class="featured-bookcase-title"><i class="bi bi-clock"></i> Tủ sách mới</h5>
+                  <div class="row g-3 product" id="latestProductsContainer">
+                    <c:set var="productsPerRow" value="6" />
+                    <c:set var="maxRows" value="6" />
+                    <c:set var="totalProducts" value="${fn:length(latestProducts)}" />
+                    <c:set var="currentRow" value="0" />
+
+                    <c:forEach var="i" begin="0" end="${totalProducts - 1}" step="${productsPerRow}">
+                      <c:set var="currentRow" value="${currentRow + 1}" />
+                      <div class="row-item" data-row="${currentRow}" style="${currentRow > 1 ? 'display: none;' : ''}">
+                        <div class="row g-3">
+                          <c:forEach var="j" begin="${i}" end="${i + productsPerRow - 1}">
+                            <c:if test="${j < totalProducts}">
+                              <c:set var="p" value="${latestProducts[j]}" />
+                              <div class="col-6 col-md-4 col-lg-2">
+                                <a href="${ctx}/home?action=detail&id=${p.productId}">
+                                  <div class="product-card">
+                                    <div class="product-img">
+                                      <c:if
+                                        test="${p.salePrice != null && p.originalPrice != null && p.salePrice < p.originalPrice}">
+                                        <span class="discount">
+                                          -
+                                          <fmt:formatNumber value="${p.discountPercent}" maxFractionDigits="0" />%
+                                        </span>
+                                      </c:if>
+                                      <img
+                                        src="http://localhost:8080/assets/images/catalog/products/${p.primaryImageUrl}"
+                                        alt="${p.title}">
+                                    </div>
+                                    <div class="product-body">
+                                      <h6 class="price">
+                                        <c:choose>
+                                          <c:when
+                                            test="${p.salePrice != null && p.originalPrice != null && p.salePrice < p.originalPrice}">
+                                            <fmt:formatNumber value="${p.salePrice}" type="currency" currencySymbol="đ"
+                                              maxFractionDigits="0" />
+                                            <span class="text-muted text-decoration-line-through ms-2">
+                                              <fmt:formatNumber value="${p.originalPrice}" type="currency"
+                                                currencySymbol="đ" maxFractionDigits="0" />
+                                            </span>
+                                          </c:when>
+                                          <c:otherwise>
+                                            <fmt:formatNumber value="${p.originalPrice}" type="currency"
+                                              currencySymbol="đ" maxFractionDigits="0" />
+                                          </c:otherwise>
+                                        </c:choose>
+                                      </h6>
+                                      <small class="author">${p.publisher.name}</small>
+                                      <p class="title">${p.title}</p>
+                                      <div class="rating">
+                                        <c:forEach begin="1" end="5" var="k">
+                                          <c:choose>
+                                            <c:when test="${k <= p.avgRating}">
+                                              <i class="bi bi-star-fill text-warning small"></i>
+                                            </c:when>
+                                            <c:when test="${k - p.avgRating <= 0.5}">
+                                              <i class="bi bi-star-half text-warning small"></i>
+                                            </c:when>
+                                            <c:otherwise>
+                                              <i class="bi bi-star text-warning small"></i>
+                                            </c:otherwise>
+                                          </c:choose>
+                                        </c:forEach>
+                                        <span>Đã bán ${p.soldCount}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </a>
+                              </div>
+                            </c:if>
+                          </c:forEach>
                         </div>
                       </div>
-                    </div>
-                    <%-- … các card còn lại --%>
+                    </c:forEach>
                   </div>
 
                   <div class="text-center mt-4">
-                    <a href="${ctx}/book" class="button-two">Xem thêm</a>
+                    <button id="loadMoreBtn" class="button-two"
+                      style="${totalProducts <= productsPerRow ? 'display: none;' : ''}">
+                      Xem thêm
+                    </button>
+                    <button id="collapseBtn" class="button-two" style="display: none;">
+                      Thu gọn
+                    </button>
                   </div>
+
                 </div>
+              </c:if>
           </main>
+
+          <script>
+            document.addEventListener("DOMContentLoaded", function () {
+              const rows = document.querySelectorAll(".row-item");
+              const loadMoreBtn = document.getElementById("loadMoreBtn");
+              const collapseBtn = document.getElementById("collapseBtn");
+
+              const maxRows = 6;
+              let visibleRows = 1;
+
+              loadMoreBtn.addEventListener("click", function () {
+                visibleRows++;
+
+                rows.forEach((row, index) => {
+                  if (index < visibleRows) row.style.display = "block";
+                });
+
+                if (visibleRows >= maxRows || visibleRows >= rows.length) {
+                  loadMoreBtn.style.display = "none";
+                  collapseBtn.style.display = "inline-block";
+                }
+              });
+
+              collapseBtn.addEventListener("click", function () {
+                visibleRows = 1;
+
+                rows.forEach((row, index) => {
+                  row.style.display = index === 0 ? "block" : "none";
+                });
+
+                loadMoreBtn.style.display = "inline-block";
+                collapseBtn.style.display = "none";
+              });
+
+              if (rows.length <= 1) {
+                loadMoreBtn.style.display = "none";
+                collapseBtn.style.display = "none";
+              }
+            });
+          </script>
 
           <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
 
