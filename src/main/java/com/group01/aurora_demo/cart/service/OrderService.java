@@ -48,7 +48,9 @@ public class OrderService {
 
     public boolean createOrder(User user, Address address, Voucher voucherDiscount,
             Voucher voucherShip, Map<Long, String> shopVouchers) {
-        try (Connection conn = DataSourceProvider.get().getConnection()) {
+        Connection conn = null;
+        try {
+            conn = DataSourceProvider.get().getConnection();
             conn.setAutoCommit(false);
             Order order = new Order();
             CheckoutSummaryDTO summary = this.checkoutService.calculateCheckoutSummary(
@@ -67,16 +69,18 @@ public class OrderService {
             order.setFinalAmount(summary.getFinalAmount());
             order.setOrderStatus("PENDING");
 
-            if (!orderDAO.createOrder(conn, order)) {
+            long orderId = orderDAO.createOrder(conn, order);
+            if (orderId == -1) {
                 conn.rollback();
                 return false;
             }
-
-            long orderId = order.getOrderId();
             List<CartItem> cartItems = this.cartItemDAO.getCheckedCartItems(user.getId());
             Map<Long, List<CartItem>> groupByShop = cartItems.stream()
                     .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
+            Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
+
+            Map<Long, Voucher> shopVoucherCache = new HashMap<>();
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();
                 List<CartItem> items = entry.getValue();
@@ -84,45 +88,54 @@ public class OrderService {
                         .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity()).sum();
 
                 double shopDiscount = 0;
-                Long voucherId = null;
+                Long shopVoucherId = null;
                 if (shopVouchers != null && shopVouchers.containsKey(shopId)) {
                     String shopVoucherCode = shopVouchers.get(shopId);
                     if (shopVoucherCode != null && !shopVoucherCode.isEmpty()) {
-                        Voucher shopVoucher = this.voucherDAO.getVoucherByCode(shopVoucherCode, true);
-                        if (shopVoucher != null) {
-                            shopDiscount = this.voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
-                            voucherId = shopVoucher.getVoucherID();
+                        Voucher shopVoucher = this.voucherDAO.getVoucherByCode(shopId, shopVoucherCode, true);
+                        if (shopVoucher == null) {
+                            conn.rollback();
+                            return false;
                         }
+                        shopVoucherCache.put(shopId, shopVoucher);
+
+                        String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId);
+                        if (validation != null) {
+                            conn.rollback();
+                            return false;
+                        }
+                        shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
+                        shopVoucherId = shopVoucher.getVoucherID();
                     }
                 }
-                Double shopShippingFees = this.checkoutService.calculateShippingFee(cartItems, address);
+
+                double shopShippingFee = shopShippingFees.getOrDefault(shopId, 0.0);
                 OrderShop orderShop = new OrderShop();
                 orderShop.setOrderId(orderId);
                 orderShop.setShopId(shopId);
-                orderShop.setVoucherId(voucherId);
+                orderShop.setVoucherId(shopVoucherId);
                 orderShop.setSubtotal(shopSubtotal);
                 orderShop.setDiscount(shopDiscount);
-                orderShop.setShippingFee(shopShippingFees);
-                orderShop.setFinalAmount(shopSubtotal - shopDiscount);
+                orderShop.setShippingFee(shopShippingFee);
+                orderShop.setFinalAmount(shopSubtotal - shopDiscount + shopShippingFee);
                 orderShop.setStatus("PENDING");
-
-                if (!orderShopDAO.createOrderShop(conn, orderShop)) {
+                long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
+                if (orderShopId == -1) {
                     conn.rollback();
                     return false;
                 }
-
-                long orderShopId = orderShop.getOrderShopId();
 
                 for (CartItem item : items) {
                     OrderItem orderItem = new OrderItem();
                     orderItem.setOrderShopId(orderShopId);
                     orderItem.setProductId(item.getProduct().getProductId());
                     orderItem.setQuantity(item.getQuantity());
-                    orderItem.setUnitPrice(item.getProduct().getSalePrice());
+                    orderItem.setOriginalPrice(item.getProduct().getOriginalPrice());
+                    orderItem.setSalePrice(item.getProduct().getSalePrice());
                     orderItem.setSubtotal(item.getQuantity() * item.getProduct().getSalePrice());
                     orderItem.setVatRate(0);
 
-                    if (!orderItemDAO.createOrderItem(conn, orderItem)) {
+                    if (orderItemDAO.createOrderItem(conn, orderItem) == -1) {
                         conn.rollback();
                         return false;
                     }
@@ -134,16 +147,33 @@ public class OrderService {
             payment.setAmount(summary.getFinalAmount());
             payment.setTransactionRef("SYS-" + System.currentTimeMillis());
 
-            if (!paymentDAO.createPayment(conn, payment)) {
+            if (paymentDAO.createPayment(conn, payment) == -1) {
+                conn.rollback();
+                return false;
+            }
+            if (!cartItemDAO.deleteCheckout(conn, user.getId())) {
                 conn.rollback();
                 return false;
             }
 
+            if (voucherDiscount != null) {
+                this.voucherDAO.incrementUsage(conn, voucherDiscount.getVoucherID());
+            }
+            if (voucherShip != null) {
+                this.voucherDAO.incrementUsage(conn, voucherShip.getVoucherID());
+            }
+            if (shopVouchers != null) {
+                for (Voucher shopVoucher : shopVoucherCache.values()) {
+                    voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID());
+                }
+            }
             conn.commit();
             return true;
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
+            System.err.println("Error cause: " + e.getCause());
+            System.err.println("Error message: " + e.getMessage());
             return false;
         }
     }

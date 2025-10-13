@@ -6,7 +6,8 @@ public class OrderItem {
     private long productId;
     private Long flashSaleItemId;
     private int quantity;
-    private double unitPrice;
+    private Double originalPrice;
+    private Double salePrice;
     private double subtotal;
     private double vatRate;
 
@@ -50,14 +51,6 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public double getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
     public double getVatRate() {
         return vatRate;
     }
@@ -72,6 +65,22 @@ public class OrderItem {
 
     public void setSubtotal(double subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public Double getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Double originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public Double getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(Double salePrice) {
+        this.salePrice = salePrice;
     }
 
 }

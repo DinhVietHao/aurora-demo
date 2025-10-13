@@ -442,6 +442,17 @@ public class CartItemDAO {
         return 0;
     }
 
+    public boolean deleteCheckout(Connection conn, long userId) {
+        String sql = "DELETE FROM CartItems WHERE UserID = ? AND isChecked = 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public static void main(String[] args) {
         CartItemDAO cartItemDAO = new CartItemDAO();
 

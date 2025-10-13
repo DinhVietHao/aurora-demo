@@ -346,7 +346,7 @@
                                             <span class="cart-pay-danger">Tổng tiền thanh toán</span>
                                             <span class="cart-pay-danger total-payment">142.000đ</span>
                                         </div>
-                                        <button class="button-three" id="btnPay">Đặt hàng</button>
+                                        <button class="button-three" id="btnPlaceOrder">Đặt hàng</button>
                                     </div>
                                 </div>
                             </div>
