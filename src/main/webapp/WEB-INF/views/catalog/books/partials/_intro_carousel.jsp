@@ -2,6 +2,7 @@
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <c:set var="ctx" value="${pageContext.request.contextPath}" />
         <c:set var="id" value="${empty param.carouselId ? 'bookIntroduction' : param.carouselId}" />
+        <c:set var="totalSlides" value="${not empty suggestions ? (suggestions.size() + 5) / 6 : 2}" />
 
         <div id="${id}" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
@@ -34,7 +35,7 @@
             <div class="carousel-item active">
                 <div class="row g-3 product">
                     <c:forEach begin="1" end="6">
-                        <jsp:include page="/WEB-INF/views/cart/partials/_card.jsp">
+                        <jsp:include page="/WEB-INF/views/customer/cart/partials/_card.jsp">
                             <jsp:param name="id" value="1" />
                             <jsp:param name="title" value="Nơi Khu Rừng Chạm Tới Những Vì Sao" />
                             <jsp:param name="author" value="GLENDY VANDERAH" />
@@ -49,7 +50,7 @@
             <div class="carousel-item">
                 <div class="row g-3 product">
                     <c:forEach begin="1" end="6">
-                        <jsp:include page="/WEB-INF/views/cart/partials/_card.jsp">
+                        <jsp:include page="/WEB-INF/views/customer/cart/partials/_card.jsp">
                             <jsp:param name="id" value="2" />
                             <jsp:param name="title" value="Tựa sách khác (demo)" />
                             <jsp:param name="author" value="Tác giả" />
@@ -66,10 +67,11 @@
         </div>
 
         <!-- Nút điều hướng -->
-        <button class="carousel-control-prev" type="button" data-bs-target="#${id}" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#${id}" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-        </button>
-        </div>
+        <c:if test="${totalSlides > 1}">
+            <button class="carousel-control-prev" type="button" data-bs-target="#${id}" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#${id}" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </c:if>
