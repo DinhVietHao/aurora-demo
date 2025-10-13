@@ -128,13 +128,16 @@
                                     </c:choose>
                                 </div>
 
-                                <!-- PHÂN TRANG DÙNG CHUNG -->
-                                <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
-                                    <jsp:param name="page" value="${page}" />
-                                    <jsp:param name="totalPages" value="${totalPages}" />
-                                    <jsp:param name="baseUrl"
-                                        value="${ctx}/home?action=${param.action}&keyword=${param.keyword}" />
-                                </jsp:include>
+                                <!-- PHÂN TRANG -->
+                                <c:if test="${totalPages > 1}">
+                                    <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
+                                        <jsp:param name="page" value="${page}" />
+                                        <jsp:param name="totalPages" value="${totalPages}" />
+                                        <jsp:param name="baseUrl"
+                                            value="${ctx}/home?action=${param.action}&keyword=${param.keyword}&category=${param.category}&author=${param.author}&publisher=${param.publisher}&language=${param.language}&minPrice=${param.minPrice}&maxPrice=${param.maxPrice}" />
+                                    </jsp:include>
+                                </c:if>
+
                             </div>
                         </div>
                     </div>

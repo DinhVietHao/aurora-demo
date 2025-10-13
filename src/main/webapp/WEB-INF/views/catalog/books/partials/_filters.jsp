@@ -2,7 +2,7 @@
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
-        <form action="${ctx}/home" method="POST" class="filter">
+        <form action="${ctx}/home" method="GET" class="filter">
             <input type="hidden" name="action" value="filter" />
 
             <div class="mb-3">
