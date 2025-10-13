@@ -34,7 +34,10 @@ public class HomeServlet extends HttpServlet {
                 if (suggestedProducts.isEmpty())
                     suggestedProducts = productDAO.getSuggestedProductsForGuest();
 
+                List<Product> latestProducts = productDAO.getLatestProducts(36);
+
                 request.setAttribute("suggestedProducts", suggestedProducts);
+                request.setAttribute("latestProducts", latestProducts);
                 request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
                 break;
 
