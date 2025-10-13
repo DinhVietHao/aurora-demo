@@ -19,6 +19,7 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         setFilterAttributes(request);
+        request.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
@@ -81,35 +82,20 @@ public class HomeServlet extends HttpServlet {
                 }
                 break;
 
+            case "search":
+                handleSearch(request, response);
+                break;
+
+            case "filter":
+                handleFilter(request, response);
+                break;
+
             default:
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 break;
         }
     }
 
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        setFilterAttributes(request);
-        request.setCharacterEncoding("UTF-8");
-
-        String action = request.getParameter("action");
-        if (action == null)
-            return;
-
-        switch (action) {
-            case "search":
-                handleSearch(request, response);
-                break;
-            case "filter":
-                handleFilter(request, response);
-                break;
-            default:
-                break;
-        }
-    }
-
-    // -------------------- Helper Methods --------------------
     private void setFilterAttributes(HttpServletRequest request) {
         request.setAttribute("categories", productDAO.getCategories());
         request.setAttribute("authors", productDAO.getAuthors());

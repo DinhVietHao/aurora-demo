@@ -14,7 +14,7 @@
 
                     <div class="col-6 col-md-5">
                         <div class="header-search">
-                            <form method="POST" action="${ctx}/home">
+                            <form method="GET" action="${ctx}/home">
                                 <input type="hidden" name="action" value="search" />
                                 <input type="text" class="form-control rounded-pill" name="keyword"
                                     placeholder="Hôm nay bạn mua gì ..." value="${param.keyword}" />
