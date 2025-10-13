@@ -297,17 +297,16 @@
                                                                         <!-- Thao tác -->
                                                                         <td>
                                                                             <div class="action-buttons">
-                                                                                <a href="/shop/voucher?action=detail&voucherCode=${v.code}"
+                                                                                <a href="/shop/voucher?action=detail&voucherID=${v.voucherID}"
                                                                                     class="btn btn-sm btn-outline-primary"
                                                                                     title="Xem chi tiết">
                                                                                     <i class="bi bi-eye"></i>
                                                                                 </a>
-                                                                                <button
+                                                                                <a href="/shop/voucher?action=update&voucherID=${v.voucherID}"
                                                                                     class="btn btn-sm btn-outline-warning"
-                                                                                    onclick="editVoucher('${v.code}')"
                                                                                     title="Chỉnh sửa">
                                                                                     <i class="bi bi-pencil"></i>
-                                                                                </button>
+                                                                                </a>
                                                                                 <button
                                                                                     class="btn btn-sm btn-outline-danger"
                                                                                     onclick="deleteVoucher('${v.code}')"
