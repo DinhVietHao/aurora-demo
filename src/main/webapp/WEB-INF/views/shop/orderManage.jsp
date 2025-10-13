@@ -68,28 +68,28 @@
                                                             <button class="nav-link" id="confirmed-tab"
                                                                 data-bs-toggle="tab" data-bs-target="#confirmed"
                                                                 type="button" role="tab">
-                                                                Chờ lấy hàng
+                                                                Vận chuyển
                                                             </button>
                                                         </li>
                                                         <li class="nav-item" role="presentation">
                                                             <button class="nav-link" id="shipping-tab"
                                                                 data-bs-toggle="tab" data-bs-target="#shipping"
                                                                 type="button" role="tab">
-                                                                Đang giao (18)
+                                                                Chờ giao hàng
                                                             </button>
                                                         </li>
                                                         <li class="nav-item" role="presentation">
                                                             <button class="nav-link" id="delivered-tab"
                                                                 data-bs-toggle="tab" data-bs-target="#delivered"
                                                                 type="button" role="tab">
-                                                                Đã giao
+                                                                Hoàn thành
                                                             </button>
                                                         </li>
                                                         <li class="nav-item" role="presentation">
                                                             <button class="nav-link" id="cancelled-tab"
                                                                 data-bs-toggle="tab" data-bs-target="#cancelled"
                                                                 type="button" role="tab">
-                                                                Trả hàng/Hoàn tiền/Hủy (4)
+                                                                Trả hàng/Hoàn tiền/Hủy
                                                             </button>
                                                         </li>
                                                     </ul>
@@ -103,10 +103,8 @@
                                         <div class="col-12">
                                             <div class="alert alert-warning alert-dismissible fade show" role="alert">
                                                 <i class="bi bi-exclamation-triangle me-2"></i>
-                                                <strong>Lưu ý:</strong> Tỷ lệ đơn hàng không thành công của Shop trong
-                                                tuần trước là 10%. Nếu tỷ lệ này vượt quá 10% vào tuần này, bạn có thể
-                                                bị phạt tối đa 2 điểm tín. Vui lòng cập nhật giao hàng đúng hạn để tránh
-                                                bị phạt.
+                                                <strong>Admin:</strong> Cùng nhau phấn đấu, mỗi một đơn hàng là 1 cơ hội
+                                                để chúng tha thể hiển trách nhiệm của bản thân
                                                 <button type="button" class="btn-close" data-bs-dismiss="alert"
                                                     aria-label="Close"></button>
                                             </div>
@@ -132,16 +130,6 @@
                                                                 placeholder="Nhập tên khách hàng">
                                                         </div>
                                                         <div class="col-md-2">
-                                                            <label for="orderStatus" class="form-label">Đơn vị vận
-                                                                chuyển</label>
-                                                            <select class="form-select" id="orderStatus">
-                                                                <option value="">Tất cả ĐVVC</option>
-                                                                <option value="ghn">Giao hàng nhanh</option>
-                                                                <option value="ghtk">Giao hàng tiết kiệm</option>
-                                                                <option value="viettel">Viettel Post</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-2">
                                                             <label class="form-label">&nbsp;</label>
                                                             <div class="d-flex gap-2">
                                                                 <button type="button" class="btn btn-primary">Áp
@@ -157,242 +145,116 @@
                                     </div>
 
                                     <!-- Orders Summary -->
-                                    <div class="row mt-3">
-                                        <div class="col-12">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <h5 class="mb-0">2373 Đơn hàng</h5>
-                                                <div class="d-flex align-items-center gap-3">
-                                                    <span class="text-muted">Sản phẩm</span>
-                                                    <span class="text-muted">Tổng Đơn hàng</span>
-                                                    <span class="text-muted">Trạng thái</span>
-                                                    <span class="text-muted">Đơn vị vận chuyển</span>
-                                                    <span class="text-muted">Đơn vị vận chuyển</span>
-                                                    <span class="text-muted">Thao tác</span>
+                                    <div class="order-summary mt-3">
+
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="mb-0">2373 Đơn hàng</h5>
+                                        </div>
+
+                                        <div class="row fw-bold border-bottom pb-2">
+                                            <div class="col-md-5">Sản phẩm</div>
+                                            <div class="col-md-2">Tổng Đơn hàng</div>
+                                            <div class="col-md-3">Trạng thái</div>
+                                            <div class="col-md-2">Thao tác</div>
+                                        </div>
+
+                                        <!-- Tab Content -->
+                                        <div class="tab-content mt-3" id="orderTabContent">
+                                            <div class="tab-pane fade show active" id="all" role="tabpanel">
+                                                <!-- Order Items -->
+                                                <div class="order-list">
+                                                    <!-- Order 1 -->
+                                                    <div class="order-item">
+                                                        <div class="order-header">
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="order-id">Gemini2019</span>
+                                                                <span class="badge bg-danger ms-2">
+                                                                    <i class="bi bi-flag"></i>
+                                                                </span>
+                                                            </div>
+                                                            <div class="order-code">Mã đơn hàng: 250912440CPRXU</div>
+                                                        </div>
+                                                        <div class="order-content">
+                                                            <div class="row align-items-center">
+                                                                <div class="col-md-5">
+                                                                    <div class="d-flex">
+                                                                        <img src="./assets/images/book-placeholder.jpg"
+                                                                            alt="Book" class="order-product-image">
+                                                                        <div class="ms-3">
+                                                                            <h6 class="product-name">Cây Thúc Thần Kỳ,
+                                                                                Cây
+                                                                                Cầm Đồng Trong Tín Điều, và Thú
+                                                                                Handmade:
+                                                                                Nghệ Thuật Thủ Công Việt Tân Hành</h6>
+                                                                            <p class="text-muted mb-0">x1</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <div class="order-total">
+                                                                        <div class="fw-bold">643.400</div>
+                                                                        <div class="text-muted small">Tổng tiền khi chưa
+                                                                            khấu trừ</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <div class="order-status">
+                                                                        <span class="badge bg-warning">Đã giao cho
+                                                                            ĐVVC</span>
+                                                                        <div class="text-muted small">Giao hàng đang
+                                                                            giao
+                                                                            cho Người mua</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <div class="order-actions" data-productid="1">
+                                                                        <a href=""
+                                                                            class="btn btn-outline-primary btn-sm">
+                                                                            Xem chi tiết
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Pagination -->
+                                            <div class="row mt-4">
+                                                <div class="col-12">
+                                                    <div class="pagination-container">
+                                                        <nav aria-label="Order pagination">
+                                                            <ul class="pagination">
+                                                                <li class="page-item disabled">
+                                                                    <a class="page-link" href="#" tabindex="-1"
+                                                                        aria-disabled="true">Trước</a>
+                                                                </li>
+                                                                <li class="page-item active" aria-current="page">
+                                                                    <a class="page-link" href="#">1</a>
+                                                                </li>
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="#">2</a>
+                                                                </li>
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="#">3</a>
+                                                                </li>
+                                                                <li class="page-item">
+                                                                    <span class="page-link">...</span>
+                                                                </li>
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="#">95</a>
+                                                                </li>
+                                                                <li class="page-item">
+                                                                    <a class="page-link" href="#">Sau</a>
+                                                                </li>
+                                                            </ul>
+                                                        </nav>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <!-- Tab Content -->
-                                    <div class="tab-content mt-3" id="orderTabContent">
-                                        <div class="tab-pane fade show active" id="all" role="tabpanel">
-                                            <!-- Order Items -->
-                                            <div class="order-list">
-                                                <!-- Order 1 -->
-                                                <div class="order-item">
-                                                    <div class="order-header">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="order-id">Gemini2019</span>
-                                                            <span class="badge bg-danger ms-2">
-                                                                <i class="bi bi-flag"></i>
-                                                            </span>
-                                                        </div>
-                                                        <div class="order-code">Mã đơn hàng: 250912440CPRXU</div>
-                                                    </div>
-                                                    <div class="order-content">
-                                                        <div class="row align-items-center">
-                                                            <div class="col-md-4">
-                                                                <div class="d-flex">
-                                                                    <img src="./assets/images/book-placeholder.jpg"
-                                                                        alt="Book" class="order-product-image">
-                                                                    <div class="ms-3">
-                                                                        <h6 class="product-name">Cây Thúc Thần Kỳ, Cây
-                                                                            Cầm Đồng Trong Tín Điều, và Thú Handmade:
-                                                                            Nghệ Thuật Thủ Công Việt Tân Hành</h6>
-                                                                        <p class="text-muted mb-0">x1</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-total">
-                                                                    <div class="fw-bold">643.400</div>
-                                                                    <div class="text-muted small">Tổng tiền khi chưa
-                                                                        khấu trừ</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-status">
-                                                                    <span class="badge bg-warning">Đã giao cho
-                                                                        ĐVVC</span>
-                                                                    <div class="text-muted small">Giao hàng đang giao
-                                                                        cho Người mua</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="shipping-info">
-                                                                    <div class="fw-bold">Nhanh</div>
-                                                                    <div class="text-muted small">SPX Express</div>
-                                                                    <div class="text-muted small">SP1A3B2C3D4E5F6</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-actions" data-productid="1">
-                                                                    <a href="" class="btn btn-outline-primary btn-sm">
-                                                                        Xem chi tiết
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Order 2 -->
-                                                <div class="order-item">
-                                                    <div class="order-header">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="order-id">anhhieuvan6453</span>
-                                                            <span class="badge bg-danger ms-2">
-                                                                <i class="bi bi-flag"></i>
-                                                            </span>
-                                                        </div>
-                                                        <div class="order-code">Mã đơn hàng: 250918C3F8P6</div>
-                                                    </div>
-                                                    <div class="order-content">
-                                                        <div class="row align-items-center">
-                                                            <div class="col-md-4">
-                                                                <div class="d-flex">
-                                                                    <img src="./assets/images/book-placeholder.jpg"
-                                                                        alt="Book" class="order-product-image">
-                                                                    <div class="ms-3">
-                                                                        <h6 class="product-name">PHÁP HOA TÔN GIÁO Những
-                                                                            Lưu Ý Lớp Mẫn Sáu Hạt và Bài Tập Handmade,
-                                                                            Tr</h6>
-                                                                        <p class="text-muted mb-0">x1</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-total">
-                                                                    <div class="fw-bold">412.100</div>
-                                                                    <div class="text-muted small">Thành tiền khi chưa
-                                                                        khấu trừ</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-status">
-                                                                    <span class="badge bg-warning">Đã giao cho
-                                                                        ĐVVC</span>
-                                                                    <div class="text-muted small">Giao hàng đang giao
-                                                                        cho Người mua</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="shipping-info">
-                                                                    <div class="fw-bold">Nhanh</div>
-                                                                    <div class="text-muted small">SPX Express</div>
-                                                                    <div class="text-muted small">SP1A3B2C3D4E5F6</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-actions">
-                                                                    <a href="/order?productId=1"
-                                                                        class="btn btn-outline-primary btn-sm">
-                                                                        Xem chi tiết
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Order 3 -->
-                                                <div class="order-item">
-                                                    <div class="order-header">
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="order-id">lonha1417</span>
-                                                            <span class="badge bg-danger ms-2">
-                                                                <i class="bi bi-flag"></i>
-                                                            </span>
-                                                        </div>
-                                                        <div class="order-code">Mã đơn hàng: 250914GF1H4G03</div>
-                                                    </div>
-                                                    <div class="order-content">
-                                                        <div class="row align-items-center">
-                                                            <div class="col-md-4">
-                                                                <div class="d-flex">
-                                                                    <img src="./assets/images/book-placeholder.jpg"
-                                                                        alt="Book" class="order-product-image">
-                                                                    <div class="ms-3">
-                                                                        <h6 class="product-name">1 Lúp Đào Kiểm Những
-                                                                            Suy Nghĩ Để Thương - Lúp Ở Át Tương Tự -
-                                                                            Dành - Tương Tự Những Suy Nghĩ Để Thương
-                                                                        </h6>
-                                                                        <p class="text-muted mb-0">x1</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-total">
-                                                                    <div class="fw-bold">1166.625</div>
-                                                                    <div class="text-muted small">Thành tiền khi chưa
-                                                                        khấu trừ</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-status">
-                                                                    <span class="badge bg-warning">Đã giao cho
-                                                                        ĐVVC</span>
-                                                                    <div class="text-muted small">Giao hàng đang giao
-                                                                        cho Người mua</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="shipping-info">
-                                                                    <div class="fw-bold">Nhanh</div>
-                                                                    <div class="text-muted small">SPX Express</div>
-                                                                    <div class="text-muted small">SP1A3B2C3D4E5F6</div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-md-2">
-                                                                <div class="order-actions" data-productid="1">
-                                                                    <a href="/order?productId=1"
-                                                                        class="btn btn-outline-primary btn-sm">
-                                                                        Xem chi tiết
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                        </div>
-
-                                        <!-- Pagination -->
-                                        <div class="row mt-4">
-                                            <div class="col-12">
-                                                <div class="pagination-container">
-                                                    <nav aria-label="Order pagination">
-                                                        <ul class="pagination">
-                                                            <li class="page-item disabled">
-                                                                <a class="page-link" href="#" tabindex="-1"
-                                                                    aria-disabled="true">Trước</a>
-                                                            </li>
-                                                            <li class="page-item active" aria-current="page">
-                                                                <a class="page-link" href="#">1</a>
-                                                            </li>
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">2</a>
-                                                            </li>
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">3</a>
-                                                            </li>
-                                                            <li class="page-item">
-                                                                <span class="page-link">...</span>
-                                                            </li>
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">95</a>
-                                                            </li>
-                                                            <li class="page-item">
-                                                                <a class="page-link" href="#">Sau</a>
-                                                            </li>
-                                                        </ul>
-                                                    </nav>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </main>
                         </div>
                     </div>

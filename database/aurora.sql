@@ -231,7 +231,7 @@ CREATE TABLE Orders
     FinalAmount DECIMAL(12,2) NOT NULL,
     -- tổng tiền cuối cùng, backend tự tính
     OrderStatus NVARCHAR(20) NOT NULL,
-    -- NEW, SHIPPING, DELIVERED, CANCELLED, RETURNED
+    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED,    CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     DeliveredAt DATETIME2(6) NULL,
     CancelReason NVARCHAR(255) NULL,
@@ -299,7 +299,8 @@ CREATE TABLE OrderItems
     ProductID BIGINT NOT NULL,
     FlashSaleItemID BIGINT NULL,
     Quantity INT NOT NULL,
-    UnitPrice DECIMAL(12,2) NOT NULL,
+    OriginalPrice DECIMAL(12,2) NOT NULL,
+    SalePrice DECIMAL(12,2) NOT NULL,
     Subtotal DECIMAL(12,2),
     VATRate DECIMAL(5,2) NOT NULL DEFAULT 0,
     CONSTRAINT FK_OrderItems_OrderShop FOREIGN KEY (OrderShopID) REFERENCES OrderShops(OrderShopID),
