@@ -73,7 +73,8 @@
                                     <div class="profile">
                                         <div class="d-flex justify-content-between">
                                             <h5 class="mb-3 profile-title">Hồ Sơ Của Tôi</h5>
-                                            <button type="button" class="profile-remove">Gửi yêu cầu xóa tài khoản</button>
+                                            <button type="button" class="profile-remove">Gửi yêu cầu xóa tài
+                                                khoản</button>
                                         </div>
                                         <p class="profile-des">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
 
@@ -83,15 +84,15 @@
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Tên:</label>
                                                         <div class="col-sm-9">
-                                                            <input type="text" class="form-control" value="${user.fullName}">
+                                                            <input type="text" class="form-control"
+                                                                value="${user.fullName}">
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Email:</label>
                                                         <div class="col-sm-9 d-flex align-items-center">
-                                                            <span
-                                                                class="me-2 text-truncate">${user.email}</span>
+                                                            <span class="me-2 text-truncate">${user.email}</span>
                                                             <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
                                                         </div>
                                                     </div>
@@ -99,8 +100,7 @@
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Mật khẩu:</label>
                                                         <div class="col-sm-9 d-flex align-items-center">
-                                                            <span
-                                                                class="me-2 text-truncate">**********</span>
+                                                            <span class="me-2 text-truncate">**********</span>
                                                             <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
                                                         </div>
                                                     </div>
@@ -116,8 +116,8 @@
 
                                             <div class="col-md-4 text-center profile-update__img">
                                                 <div class="mb-3">
-                                                    <img src="./assets/images/common/avatar.png" name="avatarCustomer" class="profile-img"
-                                                        alt="Avatar">
+                                                    <img src="./assets/images/common/avatar.png" name="avatarCustomer"
+                                                        class="profile-img" alt="Avatar">
                                                     <div class="mt-3">
                                                         <input type="file" class="d-none" id="avatarInput">
                                                         <label for="avatarInput" class="button-five">Chọn

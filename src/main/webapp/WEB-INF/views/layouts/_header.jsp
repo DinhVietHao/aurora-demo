@@ -46,7 +46,7 @@
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông tin tài
                                                     khoản</a></li>
-                                            <li><a class="dropdown-item" href="<c:url value='/orders'/>">Đơn hàng của
+                                            <li><a class="dropdown-item" href="<c:url value='/order'/>">Đơn hàng của
                                                     tôi</a></li>
                                             <li>
                                                 <a class="dropdown-item" id="shopStatusBtn" style="cursor: pointer;">

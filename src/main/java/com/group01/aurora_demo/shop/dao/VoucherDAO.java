@@ -34,8 +34,6 @@ public class VoucherDAO {
                           FROM Vouchers
                           WHERE IsShopVoucher = 1
                             AND ShopID = ?
-                            AND StartAt <= SYSUTCDATETIME()
-                            AND EndAt   >= SYSUTCDATETIME()
                             AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
                             AND Status = 'ACTIVE'
                 """;
@@ -113,21 +111,60 @@ public class VoucherDAO {
         return listVouchersSystem;
     }
 
-    public Voucher getVoucherByCode(String code, boolean isShopVoucher) {
-        String sql = """
-                    SELECT
-                        VoucherID, Code, DiscountType, Value, MaxAmount,
-                        MinOrderAmount, StartAt, EndAt, UsageLimit,
-                        PerUserLimit, Status, UsageCount, IsShopVoucher, ShopID
-                    FROM Vouchers
-                    WHERE Code = ?
-                    AND IsShopVoucher = ?
-                """;
+    public Voucher getVoucherByCode(Long shopId, String code, boolean isShopVoucher) {
+        String sql;
+        if (isShopVoucher) {
+            sql = """
+                        SELECT
+                            VoucherID,
+                            Code,
+                            DiscountType,
+                            Value,
+                            MaxAmount,
+                            MinOrderAmount,
+                            StartAt,
+                            EndAt,
+                            UsageLimit,
+                            PerUserLimit,
+                            Status,
+                            UsageCount,
+                            IsShopVoucher,
+                            ShopID
+                        FROM Vouchers
+                        WHERE ShopID = ? AND Code = ? AND IsShopVoucher = ?
+                    """;
+        } else {
+            sql = """
+                        SELECT
+                            VoucherID,
+                            Code,
+                            DiscountType,
+                            Value,
+                            MaxAmount,
+                            MinOrderAmount,
+                            StartAt,
+                            EndAt,
+                            UsageLimit,
+                            PerUserLimit,
+                            Status,
+                            UsageCount,
+                            IsShopVoucher,
+                            ShopID
+                        FROM Vouchers
+                        WHERE Code = ? AND IsShopVoucher = ?
+                    """;
+        }
 
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setString(1, code);
-            ps.setBoolean(2, isShopVoucher);
+            if (isShopVoucher) {
+                ps.setLong(1, shopId);
+                ps.setString(2, code);
+                ps.setBoolean(3, true);
+            } else {
+                ps.setString(1, code);
+                ps.setBoolean(2, false);
+            }
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Voucher voucher = new Voucher();
@@ -151,6 +188,17 @@ public class VoucherDAO {
             System.out.println(e.getMessage());
         }
         return null;
+    }
+
+    public boolean incrementUsage(Connection conn, long voucherId) {
+        String sql = "UPDATE Voucher SET UsageCount = UsageCount + 1 WHERE VoucherID = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, voucherId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<Voucher> getAllVouchersByShopId(long shopId) {

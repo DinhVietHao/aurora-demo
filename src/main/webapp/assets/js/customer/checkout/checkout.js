@@ -303,6 +303,7 @@ confirmShopVoucher.forEach((btn) => {
     );
     const shopVoucherModal = bootstrap.Modal.getInstance(shopVoucherModalEl);
     shopVoucherModal.hide();
+    syncWithServer();
   });
 });
 // ====================== Check if user is condition to apply Voucher ======================
@@ -384,21 +385,21 @@ function refreshShopVoucher() {
 }
 
 // Check payment method selection when clicking "Pay" button, if not selected then report error, if VNPAY is selected then open VNPAY modal.
-const PayBtn = document.getElementById("btnPay");
-PayBtn.addEventListener("click", () => {
-  const selected = document.querySelector('input[name="payment"]:checked');
-  const errorPayment = document.getElementById("paymentErrorModal");
-  const vnPayModalElement = document.getElementById("vnpayModal");
-  if (!selected) {
-    const errorPaymentModal = new bootstrap.Modal(errorPayment);
-    errorPaymentModal.show();
-  } else {
-    if (selected.id === "vnpay") {
-      const vnPayModalModal = new bootstrap.Modal(vnPayModalElement);
-      vnPayModalModal.show();
-    }
-  }
-});
+// const PayBtn = document.getElementById("btnPay");
+// PayBtn.addEventListener("click", () => {
+//   const selected = document.querySelector('input[name="payment"]:checked');
+//   const errorPayment = document.getElementById("paymentErrorModal");
+//   const vnPayModalElement = document.getElementById("vnpayModal");
+//   if (!selected) {
+//     const errorPaymentModal = new bootstrap.Modal(errorPayment);
+//     errorPaymentModal.show();
+//   } else {
+//     if (selected.id === "vnpay") {
+//       const vnPayModalModal = new bootstrap.Modal(vnPayModalElement);
+//       vnPayModalModal.show();
+//     }
+//   }
+// });
 // ====================== SYNC SERVER ======================
 
 function syncWithServer() {
@@ -636,4 +637,54 @@ window.addEventListener("DOMContentLoaded", () => {
   loadSavedVouchers();
   loadSystemVouchers();
   refreshShopVoucher();
+});
+
+const btnPlaceOrder = document.getElementById("btnPlaceOrder");
+btnPlaceOrder.addEventListener("click", () => {
+  const params = new URLSearchParams();
+  const addressId =
+    document.querySelector(`[name='addressId']:checked`)?.value || "";
+  params.append("addressId", addressId);
+
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  if (selectedDiscount) {
+    params.append("systemVoucherDiscount", selectedDiscount.value);
+  }
+
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+  if (selectedShip) {
+    params.append("systemVoucherShip", selectedShip.value);
+  }
+
+  document.querySelectorAll(".cart-body[data-shop-id]").forEach((shop) => {
+    const shopId = shop.dataset.shopId;
+    const selectedShopDiscount = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+    if (selectedShopDiscount) {
+      params.append(`shopVoucher_${shopId}`, selectedShopDiscount.value);
+    }
+  });
+  console.log(params.toString());
+  fetch("/order/create", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        alert(data.message);
+        window.location.href = "/home";
+      } else {
+        alert(data.message);
+      }
+    })
+    .catch(() => {
+      console.log("Lỗi Khi đặt hàng");
+    });
 });
