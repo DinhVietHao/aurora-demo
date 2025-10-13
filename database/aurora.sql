@@ -290,7 +290,6 @@ CREATE TABLE FlashSales
     EndAt DATETIME2(6) NOT NULL,
     [Status] NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_FlashSales_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID)
 );
 
 CREATE TABLE FlashSaleItems
@@ -307,8 +306,6 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_FlashSale FOREIGN KEY (FlashSaleID) REFERENCES FlashSales(FlashSaleID),
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
-
-
 
 CREATE TABLE Payments
 (
