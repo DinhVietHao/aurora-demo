@@ -135,6 +135,42 @@ public class ProductDAO {
         return products;
     }
 
+    public List<Product> getLatestProducts(int limit) {
+        List<Product> products = new ArrayList<>();
+        String sql = """
+                SELECT TOP (?)
+                    p.ProductID,
+                    p.Title,
+                    p.SalePrice,
+                    p.OriginalPrice,
+                    p.SoldCount,
+                    ISNULL(AVG(r.Rating), 0) AS AvgRating,
+                    img.Url AS PrimaryImageUrl,
+                    pub.Name AS PublisherName
+                FROM Products p
+                LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
+                LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                WHERE p.Status = 'ACTIVE'
+                GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
+                ORDER BY MAX(p.CreatedAt) DESC
+                    """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getLatestProducts: " + e.getMessage());
+        }
+        return products;
+    }
+
     // ============ Bookstore page ============ //
 
     public int countAllProducts() {
