@@ -135,7 +135,7 @@ public class ProductDAO {
         return products;
     }
 
-    // ============ Bookstore page ============
+    // ============ Bookstore page ============ //
 
     public int countAllProducts() {
         String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE'";
@@ -319,6 +319,235 @@ public class ProductDAO {
             System.out.println("Error in countSearchResultsByKeyword: " + e.getMessage());
         }
         return 0;
+    }
+
+    // ================ Filter ================= //
+
+    public List<String> getCategories() {
+        List<String> categories = new ArrayList<>();
+        String sql = "SELECT DISTINCT c.Name FROM Category c "
+                + "JOIN ProductCategory pc ON c.CategoryID = pc.CategoryID "
+                + "JOIN Products p ON pc.ProductID = p.ProductID "
+                + "WHERE p.Status = 'ACTIVE' ORDER BY c.Name";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                categories.add(rs.getString("Name"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getCategories: " + e.getMessage());
+        }
+        return categories;
+    }
+
+    public List<String> getAuthors() {
+        List<String> authors = new ArrayList<>();
+        String sql = "SELECT DISTINCT a.AuthorName FROM Authors a "
+                + "JOIN BookAuthors ba ON a.AuthorID = ba.AuthorID "
+                + "JOIN Products p ON ba.ProductID = p.ProductID "
+                + "WHERE p.Status = 'ACTIVE' ORDER BY a.AuthorName";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                authors.add(rs.getString("AuthorName"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getAuthors: " + e.getMessage());
+        }
+        return authors;
+    }
+
+    public List<String> getPublishers() {
+        List<String> publishers = new ArrayList<>();
+        String sql = "SELECT DISTINCT pub.Name FROM Publishers pub "
+                + "JOIN Products p ON pub.PublisherID = p.PublisherID "
+                + "WHERE p.Status = 'ACTIVE' ORDER BY pub.Name";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                publishers.add(rs.getString("Name"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getPublishers: " + e.getMessage());
+        }
+        return publishers;
+    }
+
+    public List<String> getLanguages() {
+        List<String> languages = new ArrayList<>();
+        String sql = "SELECT DISTINCT l.LanguageName FROM BookDetails bd "
+                + "JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
+                + "JOIN Products p ON bd.ProductID = p.ProductID "
+                + "WHERE p.Status = 'ACTIVE' ORDER BY l.LanguageName";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                languages.add(rs.getString("LanguageName"));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getLanguages: " + e.getMessage());
+        }
+        return languages;
+    }
+
+    public List<Product> getAllProductsByFilter(int offset, int limit, String category, String author,
+            String publisher, String language, Double minPrice, Double maxPrice) {
+
+        List<Product> products = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
+                        + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
+                        + "FROM Products p "
+                        + "LEFT JOIN ("
+                        + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
+                        + "    FROM OrderItems oi "
+                        + "    JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID "
+                        + "    GROUP BY oi.ProductID"
+                        + ") r ON r.ProductID = p.ProductID "
+                        + "LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1 "
+                        + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
+                        + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
+                        + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
+                        + "LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID "
+                        + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
+                        + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
+                        + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
+                        + "WHERE p.Status = 'ACTIVE' ");
+
+        // Add filter conditions dynamically
+        if (category != null && !category.isEmpty()) {
+            sql.append("AND c.Name = ? ");
+        }
+        if (author != null && !author.isEmpty()) {
+            sql.append("AND a.AuthorName = ? ");
+        }
+        if (publisher != null && !publisher.isEmpty()) {
+            sql.append("AND pub.Name = ? ");
+        }
+        if (language != null && !language.isEmpty()) {
+            sql.append("AND l.LanguageName = ? ");
+        }
+        if (minPrice != null) {
+            sql.append("AND p.SalePrice >= ? ");
+        }
+        if (maxPrice != null) {
+            sql.append("AND p.SalePrice <= ? ");
+        }
+
+        sql.append("ORDER BY p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC ")
+                .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+
+            // Bind parameters dynamically
+            int index = 1;
+            if (category != null && !category.isEmpty()) {
+                ps.setString(index++, category);
+            }
+            if (author != null && !author.isEmpty()) {
+                ps.setString(index++, author);
+            }
+            if (publisher != null && !publisher.isEmpty()) {
+                ps.setString(index++, publisher);
+            }
+            if (language != null && !language.isEmpty()) {
+                ps.setString(index++, language);
+            }
+            if (minPrice != null) {
+                ps.setDouble(index++, minPrice);
+            }
+            if (maxPrice != null) {
+                ps.setDouble(index++, maxPrice);
+            }
+            ps.setInt(index++, offset);
+            ps.setInt(index++, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapToProduct(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error (ProductDAO) in getAllProductsByFilter: " + e.getMessage());
+        }
+        return products;
+    }
+
+    public int countProductsByFilter(String category, String author, String publisher, String language, Double minPrice,
+            Double maxPrice) {
+        int count = 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(DISTINCT p.ProductID) "
+                        + "FROM Products p "
+                        + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
+                        + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
+                        + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
+                        + "LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID "
+                        + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
+                        + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
+                        + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
+                        + "WHERE p.Status = 'ACTIVE' ");
+
+        // Add filter conditions dynamically (same as getAllProductsByFilter)
+        if (category != null && !category.isEmpty()) {
+            sql.append("AND c.Name = ? ");
+        }
+        if (author != null && !author.isEmpty()) {
+            sql.append("AND a.AuthorName = ? ");
+        }
+        if (publisher != null && !publisher.isEmpty()) {
+            sql.append("AND pub.Name = ? ");
+        }
+        if (language != null && !language.isEmpty()) {
+            sql.append("AND l.LanguageName = ? ");
+        }
+        if (minPrice != null) {
+            sql.append("AND p.SalePrice >= ? ");
+        }
+        if (maxPrice != null) {
+            sql.append("AND p.SalePrice <= ? ");
+        }
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+
+            // Bind parameters dynamically
+            int index = 1;
+            if (category != null && !category.isEmpty()) {
+                ps.setString(index++, category);
+            }
+            if (author != null && !author.isEmpty()) {
+                ps.setString(index++, author);
+            }
+            if (publisher != null && !publisher.isEmpty()) {
+                ps.setString(index++, publisher);
+            }
+            if (language != null && !language.isEmpty()) {
+                ps.setString(index++, language);
+            }
+            if (minPrice != null) {
+                ps.setDouble(index++, minPrice);
+            }
+            if (maxPrice != null) {
+                ps.setDouble(index++, maxPrice);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in countProductsByFilter: " + e.getMessage());
+        }
+        return count;
     }
 
     // ----- DuyHT -----

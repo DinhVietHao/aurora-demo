@@ -30,26 +30,30 @@
                                     <h4 class="book-content-title">
                                         <c:out value="${empty title ? 'Tất cả sản phẩm' : title}" />
                                     </h4>
-                                    <div class="book-content-arrange">
-                                        <label class="form-label m-0">Sắp xếp</label>
-                                        <select class="form-select" id="sortSelect">
-                                            <option value="pop" ${param.sort=='pop' ? 'selected' : '' }>Phổ biến
-                                            </option>
-                                            <option value="best" ${param.sort=='best' ? 'selected' : '' }>Bán chạy
-                                            </option>
-                                            <option value="priceAsc" ${param.sort=='priceAsc' ? 'selected' : '' }>Giá
-                                                thấp đến cao</option>
-                                            <option value="priceDesc" ${param.sort=='priceDesc' ? 'selected' : '' }>Giá
-                                                cao đến thấp</option>
-                                        </select>
-                                    </div>
+                                    <c:if test="${showSort}">
+                                        <div class="book-content-arrange">
+                                            <label class="form-label m-0">Sắp xếp</label>
+                                            <select class="form-select" id="sortSelect">
+                                                <option value="pop" ${param.sort=='pop' ? 'selected' : '' }>Phổ biến
+                                                </option>
+                                                <option value="best" ${param.sort=='best' ? 'selected' : '' }>Bán chạy
+                                                </option>
+                                                <option value="priceAsc" ${param.sort=='priceAsc' ? 'selected' : '' }>
+                                                    Giá
+                                                    thấp đến cao</option>
+                                                <option value="priceDesc" ${param.sort=='priceDesc' ? 'selected' : '' }>
+                                                    Giá
+                                                    cao đến thấp</option>
+                                            </select>
+                                        </div>
+                                    </c:if>
                                 </div>
 
                                 <!-- GRID SẢN PHẨM -->
                                 <div class="row g-3 product">
                                     <c:choose>
                                         <c:when test="${empty products}">
-                                            <p>Chưa có bài đăng nào!</p>
+                                            <p>${noProductsMessage}</p>
                                         </c:when>
                                         <c:otherwise>
                                             <c:forEach var="p" items="${products}">
