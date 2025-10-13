@@ -231,7 +231,7 @@ CREATE TABLE Orders
     FinalAmount DECIMAL(12,2) NOT NULL,
     -- tổng tiền cuối cùng, backend tự tính
     OrderStatus NVARCHAR(20) NOT NULL,
-    -- NEW, SHIPPING, DELIVERED, CANCELLED, RETURNED
+    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED,    CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     DeliveredAt DATETIME2(6) NULL,
     CancelReason NVARCHAR(255) NULL,
@@ -258,13 +258,27 @@ CREATE TABLE OrderShops
     FinalAmount DECIMAL(12,2) NOT NULL,
     -- backend tự tính
     [Status] NVARCHAR(20) NOT NULL,
-    -- NEW, SHIPPING, DELIVERED, CANCELLED, RETURNED
+    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_OrderShops_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
     CONSTRAINT FK_OrderShops_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
     CONSTRAINT FK_OrderShops_Voucher FOREIGN KEY (VoucherID) REFERENCES Vouchers(VoucherID)
 );
-
+CREATE TABLE OrderItems
+(
+    OrderItemID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    OrderShopID BIGINT NOT NULL,
+    ProductID BIGINT NOT NULL,
+    FlashSaleItemID BIGINT NULL,
+    Quantity INT NOT NULL,
+    OriginalPrice DECIMAL(12,2) NOT NULL,
+    SalePrice DECIMAL(12,2) NOT NULL,
+    Subtotal DECIMAL(12,2),
+    VATRate DECIMAL(5,2) NOT NULL DEFAULT 0,
+    CONSTRAINT FK_OrderItems_OrderShop FOREIGN KEY (OrderShopID) REFERENCES OrderShops(OrderShopID),
+    CONSTRAINT FK_OrderItems_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID),
+    CONSTRAINT FK_OrderItems_Flash     FOREIGN KEY (FlashSaleItemID) REFERENCES FlashSaleItems(FlashSaleItemID)
+);
 CREATE TABLE FlashSales
 (
     FlashSaleID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -292,20 +306,7 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
 
-CREATE TABLE OrderItems
-(
-    OrderItemID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    OrderShopID BIGINT NOT NULL,
-    ProductID BIGINT NOT NULL,
-    FlashSaleItemID BIGINT NULL,
-    Quantity INT NOT NULL,
-    UnitPrice DECIMAL(12,2) NOT NULL,
-    Subtotal DECIMAL(12,2),
-    VATRate DECIMAL(5,2) NOT NULL DEFAULT 0,
-    CONSTRAINT FK_OrderItems_OrderShop FOREIGN KEY (OrderShopID) REFERENCES OrderShops(OrderShopID),
-    CONSTRAINT FK_OrderItems_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID),
-    CONSTRAINT FK_OrderItems_Flash     FOREIGN KEY (FlashSaleItemID) REFERENCES FlashSaleItems(FlashSaleItemID)
-);
+
 
 CREATE TABLE Payments
 (

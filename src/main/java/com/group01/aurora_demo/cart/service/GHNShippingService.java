@@ -50,8 +50,6 @@ public class GHNShippingService {
             while ((line = br.readLine()) != null)
                 response.append(line);
 
-            System.out.println("GHN Response: " + response);
-
             JSONObject json = new JSONObject(response.toString());
             JSONObject data = json.optJSONObject("data");
 
