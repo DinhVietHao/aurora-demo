@@ -1,0 +1,38 @@
+.shipping-address {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    min-width: 600px;
+    width: 800px;
+    margin: auto;
+}
+
+.shipping-address .btn-primary {
+    background-color: var(--color-one);
+    color: #fff;
+    font-size: 16px;
+    border: 1px solid transparent;
+}
+
+.shipping-address .btn-primary:hover {
+    background-color: #fff;
+    color: var(--color-one);
+    font-size: 16px;
+    border: 1px solid var(--color-one);
+}
+
+/* Message */
+.shipping-address .form-group.invalid .form-control {
+    border-color: #f33a58;
+}
+
+.shipping-address .form-group.invalid .form-message {
+    color: #f33a58;
+}
+
+.shipping-address .form-message {
+    font-size: 14px;
+
+}
+
+/*End Message */

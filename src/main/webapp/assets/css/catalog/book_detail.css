@@ -88,6 +88,9 @@
 
 .book-description-body {
     position: relative;
+    max-height: 250px; 
+    overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 
 .gradient {
@@ -101,6 +104,8 @@
         rgb(255, 255, 255)
     );
 }
+
+
 
 /* end book-description */
 

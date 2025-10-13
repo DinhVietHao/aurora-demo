@@ -1,0 +1,68 @@
+.information-account .information-account__sidebar {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 10px 6px;
+}
+
+.information-account .information-account__sidebar .accordion-button {
+    background-color: #fff;
+    box-shadow: none;
+}
+
+.information-account .information-account__sidebar::after {
+    margin-left: 10px;
+}
+
+.information-account__image {
+    width: 60px;
+    height: 60px;
+}
+
+.information-account .profile {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px 20px 50px 20px;
+}
+
+.profile .profile-remove {
+    font-size: 12px;
+    font-weight: 400;
+    border: none;
+    background-color: transparent;
+    color: var(--color-three);
+}
+
+.profile .profile-remove:hover {
+    font-weight: 500;
+}
+
+.profile-des {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #efefef;
+}
+
+.profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+}
+
+/* Active TAB */
+.information-account #profileTabs .active {
+    border-color: transparent;
+    color: var(--color-one);
+    font-weight: 500;
+}
+
+.information-account .nav-link:hover {
+    border-color: transparent;
+    color: var(--color-one);
+}
+
+.information-account .nav-tabs .nav-item.show .nav-link,
+.nav-tabs .nav-link.active {
+    border-color: transparent;
+}

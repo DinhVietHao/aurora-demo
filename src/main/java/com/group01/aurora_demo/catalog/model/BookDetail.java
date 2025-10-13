@@ -1,34 +1,27 @@
 package com.group01.aurora_demo.catalog.model;
 
 public class BookDetail {
-
-    private long productId;
-    private String author;
+    private Long productId;
     private String translator;
     private String version;
     private String coverType;
-    private int pages;
-    private String language;
+    private Integer pages;
+    private String languageCode;
     private String size;
-    private String ISBN;
+    private String isbn;
+
+    // Language relationship (optional)
+    private Language language;
 
     public BookDetail() {
     }
 
-    public long getProductId() {
+    public Long getProductId() {
         return productId;
     }
 
-    public void setProductId(long productId) {
+    public void setProductId(Long productId) {
         this.productId = productId;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     public String getTranslator() {
@@ -55,20 +48,20 @@ public class BookDetail {
         this.coverType = coverType;
     }
 
-    public int getPages() {
+    public Integer getPages() {
         return pages;
     }
 
-    public void setPages(int pages) {
+    public void setPages(Integer pages) {
         this.pages = pages;
     }
 
-    public String getLanguage() {
-        return language;
+    public String getLanguageCode() {
+        return languageCode;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
     }
 
     public String getSize() {
@@ -79,19 +72,19 @@ public class BookDetail {
         this.size = size;
     }
 
-    public String getISBN() {
-        return ISBN;
+    public String getIsbn() {
+        return isbn;
     }
 
-    public void setISBN(String ISBN) {
-        this.ISBN = ISBN;
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
     }
 
-    @Override
-    public String toString() {
-        return "BookDetail{" + "productId=" + productId + ", author=" + author + ", translator=" + translator
-                + ", version=" + version + ", coverType=" + coverType + ", pages=" + pages + ", language=" + language
-                + ", size=" + size + ", ISBN=" + ISBN + '}';
+    public Language getLanguage() {
+        return language;
     }
 
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
 }
