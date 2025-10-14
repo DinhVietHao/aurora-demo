@@ -14,6 +14,7 @@ import java.util.Map;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
+import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
@@ -243,6 +244,82 @@ public class OrderDAO {
         }
 
         return new ArrayList<>(orderMap.values());
+    }
+
+    public List<OrderShop> getOrdersByShopIdAndStatus(long shopId, String status) throws SQLException {
+        String sql = """
+                SELECT
+                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
+                    p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                JOIN Users u ON o.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.ShopID = ? AND os.Status = ?
+                ORDER BY os.CreatedAt DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                Map<Long, OrderShop> orderShopMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    long orderShopId = rs.getLong("OrderShopID");
+
+                    OrderShop os = orderShopMap.get(orderShopId);
+                    if (os == null) {
+                        os = new OrderShop();
+                        os.setOrderShopId(orderShopId);
+                        os.setOrderId(rs.getLong("OrderID"));
+                        os.setShopId(rs.getLong("ShopID"));
+                        os.setStatus(rs.getString("ShopStatus"));
+                        os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
+                        os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+
+                        // Gán thông tin Order trực tiếp
+                        os.setCustomerName(rs.getString("CustomerName"));
+                        os.setOrderStatus(rs.getString("OrderStatus"));
+                        os.setOrderTotal(rs.getDouble("OrderTotal"));
+
+                        os.setItems(new ArrayList<>());
+                        orderShopMap.put(orderShopId, os);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(rs.getLong("ProductID"));
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+                        item.setProduct(product);
+
+                        os.getItems().add(item);
+                    }
+                }
+                return new ArrayList<>(orderShopMap.values());
+            }
+        }
     }
 
 }

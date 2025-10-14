@@ -68,10 +68,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.card-body {
-  padding: 1.5rem;
-}
-
 /* Order List */
 .order-list {
   margin-top: 1rem;

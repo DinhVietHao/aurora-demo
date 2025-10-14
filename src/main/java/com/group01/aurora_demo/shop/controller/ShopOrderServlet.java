@@ -6,6 +6,7 @@ import java.util.*;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.model.Order;
+import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 
 import jakarta.servlet.ServletException;
@@ -38,6 +39,7 @@ public class ShopOrderServlet extends HttpServlet {
         try {
             Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
             List<Order> orders = new ArrayList<>();
+            List<OrderShop> orderShops = new ArrayList<>();
 
             // ✅ Xử lý theo trạng thái đơn hàng
             switch (status.toUpperCase()) {
@@ -46,37 +48,30 @@ public class ShopOrderServlet extends HttpServlet {
                     request.setAttribute("pageTitle", "Tất cả đơn hàng");
                     break;
                 case "PENDING":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "PENDING");
+                    orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "PENDING");
                     request.setAttribute("pageTitle", "Đơn hàng chờ xác nhận");
                     break;
                 case "SHIPPING":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "CONFIRMED");
-                    request.setAttribute("pageTitle", "Đơn hàng đang vận chuyển");
+
                     break;
                 case "WAITING_SHIP":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "SHIPPING");
-                    request.setAttribute("pageTitle", "Đơn hàng chờ giao hàng");
+
                     break;
                 case "COMPLETED":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "DELIVERED");
-                    request.setAttribute("pageTitle", "Đơn hàng hoàn thành");
+
                     break;
                 case "CANCELLED":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "CANCELLED");
-                    request.setAttribute("pageTitle", "Đơn hàng bị hủy / hoàn tiền");
+
                     break;
                 case "RETURNED":
-                    orders = orderDAO.getOrdersWithItemsByShopAndStatus(shopId, "CANCELLED");
-                    request.setAttribute("pageTitle", "Đơn hàng bị hủy / hoàn tiền");
+
                     break;
                 default:
-                    // orders = orderDAO.getOrdersByShop(shopId);
                     request.setAttribute("pageTitle", "Tất cả đơn hàng");
                     break;
             }
 
-            // ✅ Gửi dữ liệu sang JSP
-            request.setAttribute("orders", orders);
+            request.setAttribute("orderShops", orderShops);
             request.setAttribute("status", status);
             request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
 

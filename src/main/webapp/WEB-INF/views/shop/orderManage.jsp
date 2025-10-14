@@ -133,8 +133,8 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             <h5 class="mb-0">
                                                 <c:choose>
-                                                    <c:when test="${not empty orders}">
-                                                        ${fn:length(orders)} đơn hàng
+                                                    <c:when test="${not empty orderShops}">
+                                                        ${fn:length(orderShops)} đơn hàng
                                                     </c:when>
                                                     <c:otherwise>Không có đơn hàng nào</c:otherwise>
                                                 </c:choose>
@@ -148,86 +148,107 @@
                                             <div class="col-md-2">Thao tác</div>
                                         </div>
 
-                                        <div class="card-body py-4 px-4">
-                                            <c:forEach var="order" items="${orders}">
+                                        <div class="card-body py-4">
+                                            <c:forEach var="orderShop" items="${orderShops}">
                                                 <div class="card mb-4 border-0 shadow-sm order-card-hover">
                                                     <div
                                                         class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top">
                                                         <div>
                                                             <strong class="text-primary">Mã đơn hàng:
-                                                                #${order.orderId}</strong>
-                                                            <span class="text-muted ms-2">(${order.customerName})</span>
+                                                                #${orderShop.orderShopId}</strong>
+                                                            <span
+                                                                class="text-muted ms-2">(${orderShop.customerName})</span>
                                                         </div>
                                                         <small class="text-muted">
-                                                            <fmt:formatDate value="${order.createdAt}"
+                                                            <fmt:formatDate value="${orderShop.createdAt}"
                                                                 pattern="dd/MM/yyyy HH:mm" />
                                                         </small>
                                                     </div>
 
                                                     <div class="card-body py-4 px-4">
-                                                        <c:forEach var="item" items="${order.items}">
-                                                            <div class="row align-items-center py-3 border-bottom gx-0">
-                                                                <div class="col-md-5 d-flex align-items-center">
-                                                                    <img src="${ctx}/assets/images/catalog/products/${item.product.primaryImageUrl}"
-                                                                        alt="${item.product.title}"
-                                                                        class="rounded border me-3 shadow-sm"
-                                                                        style="width: 95px; height: 95px; object-fit: cover;">
-                                                                    <div>
-                                                                        <h6 class="fw-semibold mb-1 text-dark">
-                                                                            ${item.product.title}</h6>
-                                                                        <small
-                                                                            class="text-muted">x${item.quantity}</small>
+                                                        <div class="row align-items-center gx-0">
+                                                            <!-- Cột sản phẩm -->
+                                                            <div class="col-md-5">
+                                                                <c:forEach var="item" items="${orderShop.items}">
+                                                                    <div class="d-flex align-items-center mb-3">
+                                                                        <img src="${ctx}/assets/images/catalog/products/${item.product.primaryImageUrl}"
+                                                                            alt="${item.product.title}"
+                                                                            class="rounded border me-3 shadow-sm"
+                                                                            style="width: 100px; height: 100px; object-fit: cover;">
+                                                                        <div>
+                                                                            <h6 class="fw-semibold mb-1">
+                                                                                ${item.product.title}</h6>
+                                                                            <small
+                                                                                class="text-muted">x${item.quantity}</small>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                        </c:forEach>
+                                                                </c:forEach>
+                                                            </div>
 
-                                                        <!-- Tổng tiền -->
-                                                        <div class="col-md-2 text-start">
-                                                            <span class="fw-semibold text-dark">
-                                                                <fmt:formatNumber value="${order.totalAmount}"
-                                                                    type="number" />₫
-                                                            </span>
-                                                        </div>
+                                                            <!-- Cột tổng tiền -->
+                                                            <div class="col-md-2 text-start">
+                                                                <span class="fw-semibold text-dark">
+                                                                    <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                                        type="number" />₫
+                                                                </span>
+                                                            </div>
 
-                                                        <!-- Trạng thái -->
-                                                        <div class="col-md-3 text-start">
-                                                            <c:choose>
-                                                                <c:when test="${order.orderStatus == 'PENDING'}">
-                                                                    <span
-                                                                        class="badge bg-warning text-dark px-3 py-2 fs-6">Chờ
-                                                                        xác nhận</span>
-                                                                </c:when>
-                                                                <c:when test="${order.orderStatus == 'COMPLETED'}">
-                                                                    <span class="badge bg-success px-3 py-2 fs-6">Hoàn
-                                                                        thành</span>
-                                                                </c:when>
-                                                                <c:when test="${order.orderStatus == 'CANCELLED'}">
-                                                                    <span class="badge bg-danger px-3 py-2 fs-6">Đã
-                                                                        hủy</span>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <span
-                                                                        class="badge bg-secondary px-3 py-2 fs-6">${order.orderStatus}</span>
-                                                                </c:otherwise>
-                                                            </c:choose>
-                                                        </div>
+                                                            <!-- Cột trạng thái -->
+                                                            <div class="col-md-3 text-start">
+                                                                <c:choose>
+                                                                    <c:when test="${orderShop.status == 'PENDING'}">
+                                                                        <span
+                                                                            class="badge bg-warning text-dark px-3 py-2 fs-6">Chờ
+                                                                            xác nhận</span>
+                                                                    </c:when>
+                                                                    <c:when test="${orderShop.status == 'SHIPPING'}">
+                                                                        <span
+                                                                            class="badge bg-primary px-3 py-2 fs-6">Đang
+                                                                            vận chuyển</span>
+                                                                    </c:when>
+                                                                    <c:when
+                                                                        test="${orderShop.status == 'WAITING_SHIP'}">
+                                                                        <span
+                                                                            class="badge bg-info text-dark px-3 py-2 fs-6">Chờ
+                                                                            giao hàng</span>
+                                                                    </c:when>
+                                                                    <c:when test="${orderShop.status == 'COMPLETED'}">
+                                                                        <span
+                                                                            class="badge bg-success px-3 py-2 fs-6">Hoàn
+                                                                            thành</span>
+                                                                    </c:when>
+                                                                    <c:when test="${orderShop.status == 'CANCELLED'}">
+                                                                        <span class="badge bg-danger px-3 py-2 fs-6">Đã
+                                                                            hủy</span>
+                                                                    </c:when>
+                                                                    <c:when test="${orderShop.status == 'RETURNED'}">
+                                                                        <span
+                                                                            class="badge bg-secondary px-3 py-2 fs-6">Hoàn
+                                                                            tiền</span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span
+                                                                            class="badge bg-secondary px-3 py-2 fs-6">${orderShop.status}</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </div>
 
-                                                        <!-- Xem chi tiết -->
-                                                        <div class="col-md-2 text-start">
-                                                            <a href="${ctx}/shop/order-detail?id=${order.orderId}"
-                                                                class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                                                Xem chi tiết
-                                                            </a>
+                                                            <!-- Cột thao tác -->
+                                                            <div class="col-md-2 text-start">
+                                                                <a href="${ctx}/shop/order-detail?id=${orderShop.orderShopId}"
+                                                                    class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                                                    Xem chi tiết
+                                                                </a>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </c:forEach>
                                         </div>
-                                        </c:forEach>
                                     </div>
-
                                 </div>
+                            </main>
                         </div>
-                        </main>
                     </div>
                     </div>
 
