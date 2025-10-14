@@ -14,7 +14,7 @@
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
 
         <!-- CSS của thông báo Toast -->
-        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css" />
+        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1" />
       </head>
 
       <body>
@@ -26,16 +26,19 @@
             <div class="col-md-5">
               <div class="book-detail-images">
                 <div class="product-image mb-3">
-                  <img id="mainImage" src="${ctx}/assets/images/catalog/thumbnails/${product.images[0].url}" alt="Sách"
-                    class="img-fluid border" />
+                  <c:if test="${not empty product.images}">
+                    <img id="mainImage" src="${ctx}/assets/images/catalog/products/${product.images[0].url}" alt="Sách"
+                      class="img-fluid border"
+                      style="width: 100%; height: 500px; object-fit: contain; background-color: #f8f9fa;" />
+                  </c:if>
                 </div>
 
                 <div class="row g-2 mb-3">
                   <c:forEach var="img" items="${product.images}" varStatus="s">
-                    <c:if test="${!s.last}">
+                    <c:if test="${!s.first}">
                       <div class="col-3">
-                        <img src="${ctx}/assets/images/catalog/thumbnails/${img.url}"
-                          class="img-fluid border thumbnail ${s.first ? 'active' : ''}" alt="" />
+                        <img src="${ctx}/assets/images/catalog/products/${img.url}" class="img-fluid border thumbnail"
+                          alt="" style="width: 100%; height: 150px; object-fit: contain; background-color: #f8f9fa;" />
                       </div>
                     </c:if>
                   </c:forEach>
@@ -46,6 +49,156 @@
                     <i class="bi bi-cart3"></i> Thêm vào giỏ hàng
                   </button>
                   <button class="button-three col-lg-5">Mua Ngay</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- THÔNG TIN CHÍNH -->
+            <div class="col-md-7">
+              <div class="book-detail-header">
+                <h6 class="author">Tác giả:
+                  <c:forEach var="author" items="${product.authors}" varStatus="status">
+                    <c:out value="${author.authorName}" />
+                    <c:if test="${!status.last}">, </c:if>
+                  </c:forEach>
+                </h6>
+                <h4 class="title">
+                  <c:out value="${product.title}" />
+                </h4>
+
+                <div class="mb-2 rating">
+                  <c:forEach begin="1" end="5" var="k">
+                    <c:choose>
+                      <c:when test="${k <= product.avgRating}">
+                        <i class="bi bi-star-fill text-warning small"></i>
+                      </c:when>
+                      <c:when test="${k - product.avgRating <= 0.5}">
+                        <i class="bi bi-star-half text-warning small"></i>
+                      </c:when>
+                      <c:otherwise>
+                        <i class="bi bi-star text-warning small"></i>
+                      </c:otherwise>
+                    </c:choose>
+                  </c:forEach>
+                  <span>
+                    <fmt:formatNumber value="${product.avgRating}" maxFractionDigits="1" /> (${reviewCount}) |
+                    <c:out value="${product.soldCount}" />
+                  </span>
+                </div>
+
+                <div class="mb-3">
+                  <span class="price">
+                    <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
+                      groupingUsed="true" />
+                  </span>
+                  <c:if test="${product.discountPercent != 0}">
+                    <span class="discount">-
+                      <c:out value="${product.discountPercent}" />%
+                    </span>
+                    <span class="text-muted text-decoration-line-through">
+                      <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
+                        groupingUsed="true" />
+                    </span>
+                  </c:if>
+                </div>
+              </div>
+
+              <!-- THÔNG TIN CHI TIẾT (BookDetails) -->
+              <div class="book-information my-3">
+                <div class="book-information-header">Thông tin chi tiết</div>
+
+                <div class="book-information-body">
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Thể loại</div>
+                    <div class="col-7">
+                      <c:forEach var="cat" items="${product.categories}" varStatus="status">
+                        <c:out value="${cat.name}" />
+                        <c:if test="${!status.last}">, </c:if>
+                      </c:forEach>
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Ngôn ngữ</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.language.languageName}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Số trang</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.pages}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Kích thước</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.size}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Loại bìa</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.coverType}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Nhà xuất bản</div>
+                    <div class="col-7">
+                      <c:out value="${product.publisher.name}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Ngày xuất bản</div>
+                    <div class="col-7">
+                      <c:out value="${product.publishedDate}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Phiên bản sách</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.version}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">Dịch giả</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.translator}" />
+                    </div>
+                  </div>
+
+                  <div class="row mb-1 book-information-box">
+                    <div class="col-5 text-muted">ISBN</div>
+                    <div class="col-7">
+                      <c:out value="${product.bookDetail.isbn}" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- MÔ TẢ -->
+              <div class="mt-4">
+                <div class="book-description">
+                  <div class="book-description-header">Mô tả sản phẩm</div>
+                  <div class="book-description-body">
+                    <p class="fw-medium">
+                      <c:out value="${product.title}" />
+                    </p>
+                    <p id="moreText">
+                      <c:out value="${product.description}" />
+                    </p>
+                    <div class="gradient"></div>
+                  </div>
+                  <a class="d-block mt-2 text-primary text-center cursor-pointer" id="more">
+                    Xem thêm
+                  </a>
                 </div>
               </div>
             </div>
@@ -78,10 +231,13 @@
               </div>
             </div>
 
-            <%-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) --%>
-              <div class="book-introduction container">
-                <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-              </div>
+            <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
+            <div class="book-introduction container">
+              <h5 class="book-introduction-title">Aurora giới thiệu</h5>
+              <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
+                <jsp:param name="carouselId" value="bookIntroduction" />
+              </jsp:include>
+            </div>
 
         </div>
 
@@ -99,10 +255,10 @@
 
               <%-- Send AJAX to controller --%>
                 <script>
-                  const addToCartBtn = document.getElementById("add-to-cart");
-                  addToCartBtn.addEventListener("click", () => {
-                    const productId = addToCartBtn.dataset.productId;
-                    fetch("/cart/add", {
+                  const addTocartBtn = document.getElementById("add-to-cart");
+                  addTocartBtn.addEventListener("click", () => {
+                    const productId = addTocartBtn.dataset.productId;
+                    fetch("add-to-cart", {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
