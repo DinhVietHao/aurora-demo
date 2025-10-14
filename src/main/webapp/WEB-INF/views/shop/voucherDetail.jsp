@@ -103,12 +103,12 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                                 <div class="action-buttons">
-                                                                    <button class="btn btn-warning"
-                                                                        onclick="editVoucher()">
+                                                                    <a href="/shop/voucher?action=update&voucherID=${voucher.voucherID}"
+                                                                        class="btn btn-warning">
                                                                         <i class="bi bi-pencil me-2"></i>Chỉnh sửa
-                                                                    </button>
+                                                                    </a>
                                                                     <button class="btn btn-danger"
-                                                                        onclick="deleteVoucher()">
+                                                                        onclick="deleteVoucher('${voucher.code}')">
                                                                         <i class="bi bi-trash me-2"></i>Xóa
                                                                     </button>
                                                                 </div>
@@ -393,7 +393,7 @@
                     </div>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/voucherDetail.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/voucherDetail.js"></script>
                 </body>
 
                 </html>

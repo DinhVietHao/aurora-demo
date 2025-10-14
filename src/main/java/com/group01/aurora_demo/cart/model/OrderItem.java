@@ -1,5 +1,7 @@
 package com.group01.aurora_demo.cart.model;
 
+import com.group01.aurora_demo.catalog.model.Product;
+
 public class OrderItem {
     private long orderItemId;
     private long orderShopId;
@@ -10,6 +12,8 @@ public class OrderItem {
     private Double salePrice;
     private double subtotal;
     private double vatRate;
+
+    private Product product;
 
     public long getOrderItemId() {
         return orderItemId;
@@ -81,6 +85,14 @@ public class OrderItem {
 
     public void setSalePrice(Double salePrice) {
         this.salePrice = salePrice;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
 }

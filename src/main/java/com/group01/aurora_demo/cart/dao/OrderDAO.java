@@ -3,13 +3,18 @@ package com.group01.aurora_demo.cart.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
+import com.group01.aurora_demo.cart.model.OrderItem;
+import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderDAO {
@@ -115,4 +120,129 @@ public class OrderDAO {
         }
         return orders;
     }
+
+    public List<Order> getOrdersByShopAndStatus(Long shopId, String status) throws SQLException {
+        String sql = """
+                    SELECT
+                        o.OrderID,
+                        o.OrderStatus,
+                        o.TotalAmount,
+                        o.CreatedAt,
+                        u.FullName AS CustomerName
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN Users u ON o.UserID = u.UserID
+                    WHERE os.ShopID = ? AND o.OrderStatus = ?
+                    ORDER BY o.CreatedAt DESC
+                """;
+
+        List<Order> orders = new ArrayList<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order();
+                    order.setOrderId(rs.getLong("OrderID"));
+                    order.setOrderStatus(rs.getString("OrderStatus"));
+                    order.setTotalAmount(rs.getDouble("TotalAmount"));
+                    order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    order.setCustomerName(rs.getString("CustomerName"));
+                    orders.add(order);
+                }
+            }
+        }
+
+        return orders;
+    }
+
+    public List<Order> getOrdersWithItemsByShopAndStatus(Long shopId, String status) throws SQLException {
+        String sql = """
+                    SELECT
+                        o.OrderID,
+                        o.OrderStatus,
+                        o.TotalAmount,
+                        o.CreatedAt,
+                        u.FullName AS CustomerName,
+                        oi.OrderItemID,
+                        oi.OrderShopID,
+                        oi.ProductID,
+                        oi.FlashSaleItemID,
+                        oi.Quantity,
+                        oi.OriginalPrice,
+                        oi.SalePrice,
+                        oi.Subtotal,
+                        oi.VatRate,
+                        p.Title,
+                        p.OriginalPrice AS ProductOriginalPrice,
+                        p.SalePrice AS ProductSalePrice,
+                        pi.Url AS PrimaryImageUrl
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN Users u ON o.UserID = u.UserID
+                    LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                    LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                    WHERE os.ShopID = ? AND o.OrderStatus = ?
+                    ORDER BY o.CreatedAt DESC, o.OrderID, oi.OrderItemID
+                """;
+
+        Map<Long, Order> orderMap = new LinkedHashMap<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long orderId = rs.getLong("OrderID");
+                    Order order = orderMap.get(orderId);
+
+                    if (order == null) {
+                        order = new Order();
+                        order.setOrderId(orderId);
+                        order.setOrderStatus(rs.getString("OrderStatus"));
+                        order.setTotalAmount(rs.getDouble("TotalAmount"));
+                        order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                        order.setCustomerName(rs.getString("CustomerName"));
+                        order.setItems(new ArrayList<>());
+                        orderMap.put(orderId, order);
+                    }
+
+                    long productId = rs.getLong("ProductID");
+                    if (productId > 0) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(rs.getLong("OrderItemID"));
+                        item.setOrderShopId(rs.getLong("OrderShopID"));
+                        item.setProductId(productId);
+                        item.setFlashSaleItemId(rs.getLong("FlashSaleItemID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(productId);
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+
+                        item.setProduct(product);
+                        order.getItems().add(item);
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(orderMap.values());
+    }
+
 }

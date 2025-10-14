@@ -1,6 +1,25 @@
 /* Order Management Styles */
 
 /* Page Title */
+.order-card-hover {
+  transition: all 0.25s ease;
+  border-left: 4px solid transparent;
+}
+
+.order-card-hover:hover {
+  transform: translateY(-3px);
+  border-left-color: #0d6efd; /* xanh dương nhạt */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.order-summary h4 {
+  font-weight: 600;
+}
+
+.order-list img {
+  border-radius: 8px;
+}
+
 .order-management-title {
   color: var(--primary-color);
   font-weight: 600;
