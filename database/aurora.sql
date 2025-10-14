@@ -307,6 +307,7 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
 
+
 CREATE TABLE Payments
 (
     PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,

@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.cart.model;
 
 import java.util.Date;
+import java.util.List;
 
 public class Order {
     private long orderId;
@@ -18,6 +19,9 @@ public class Order {
     private Date deliveredAt;
     private String cancelReason;
     private Date cancelledAt;
+    private String customerName;
+
+    private List<OrderItem> items;
 
     public long getOrderId() {
         return orderId;
@@ -147,6 +151,22 @@ public class Order {
                 + ", shippingDiscount=" + shippingDiscount + ", finalAmount=" + finalAmount + ", orderStatus="
                 + orderStatus + ", createdAt=" + createdAt + ", deliveredAt=" + deliveredAt + ", cancelReason="
                 + cancelReason + ", cancelledAt=" + cancelledAt + "]";
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
     }
 
 }

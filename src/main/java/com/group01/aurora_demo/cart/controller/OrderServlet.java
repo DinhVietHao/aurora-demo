@@ -14,7 +14,6 @@ import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
-import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
