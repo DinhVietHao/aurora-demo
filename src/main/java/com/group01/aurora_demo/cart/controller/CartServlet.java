@@ -72,16 +72,19 @@ public class CartServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-            throws IOException {
+            throws IOException, ServletException {
         resp.setContentType("application/json;charset=UTF-8");
         PrintWriter out = resp.getWriter();
         JSONObject json = new JSONObject();
 
         HttpSession session = req.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
-
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/home");
+            json.put("success", false);
+            json.put("title", "Cảnh báo!");
+            json.put("type", "warning");
+            json.put("message", "Vui lòng đăng nhập trước khi mua hàng.");
+            out.print(json.toString());
             return;
         }
 
@@ -118,6 +121,8 @@ public class CartServlet extends HttpServlet {
 
                 } catch (Exception e) {
                     json.put("success", false);
+                    json.put("title", "Lỗi!");
+                    json.put("type", "error");
                     json.put("message", "Có lỗi xảy ra, vui lòng thử lại.");
                 }
                 out.print(json.toString());
@@ -140,6 +145,8 @@ public class CartServlet extends HttpServlet {
                     }
                 } catch (Exception e) {
                     json.put("success", false);
+                    json.put("title", "Lỗi!");
+                    json.put("type", "error");
                     json.put("message", "Có lỗi xảy ra.");
                 }
                 out.print(json.toString());
@@ -166,6 +173,8 @@ public class CartServlet extends HttpServlet {
                     }
                 } catch (Exception e) {
                     json.put("success", false);
+                    json.put("title", "Lỗi!");
+                    json.put("type", "error");
                     json.put("message", "Có lỗi xảy ra");
                 }
                 out.print(json.toString());
@@ -187,6 +196,8 @@ public class CartServlet extends HttpServlet {
                     }
                 } catch (Exception e) {
                     json.put("success", false);
+                    json.put("title", "Lỗi!");
+                    json.put("type", "error");
                     json.put("message", "Có lỗi xảy ra");
                 }
                 out.print(json.toString());
@@ -208,6 +219,8 @@ public class CartServlet extends HttpServlet {
                     }
                 } catch (Exception e) {
                     json.put("success", false);
+                    json.put("title", "Lỗi!");
+                    json.put("type", "error");
                     json.put("message", "Có lỗi xảy ra");
                 }
                 out.print(json.toString());
@@ -216,6 +229,8 @@ public class CartServlet extends HttpServlet {
 
             default:
                 json.put("success", false);
+                json.put("title", "Lỗi!");
+                json.put("type", "error");
                 json.put("message", "API không hợp lệ.");
                 out.print(json.toString());
                 break;
