@@ -3,13 +3,19 @@ package com.group01.aurora_demo.cart.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
+import com.group01.aurora_demo.cart.model.OrderItem;
+import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderDAO {
@@ -114,6 +120,206 @@ public class OrderDAO {
             System.out.println(e.getMessage());
         }
         return orders;
+    }
+
+    public List<Order> getOrdersByShopAndStatus(Long shopId, String status) throws SQLException {
+        String sql = """
+                    SELECT
+                        o.OrderID,
+                        o.OrderStatus,
+                        o.TotalAmount,
+                        o.CreatedAt,
+                        u.FullName AS CustomerName
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN Users u ON o.UserID = u.UserID
+                    WHERE os.ShopID = ? AND o.OrderStatus = ?
+                    ORDER BY o.CreatedAt DESC
+                """;
+
+        List<Order> orders = new ArrayList<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order();
+                    order.setOrderId(rs.getLong("OrderID"));
+                    order.setOrderStatus(rs.getString("OrderStatus"));
+                    order.setTotalAmount(rs.getDouble("TotalAmount"));
+                    order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    order.setCustomerName(rs.getString("CustomerName"));
+                    orders.add(order);
+                }
+            }
+        }
+
+        return orders;
+    }
+
+    public List<Order> getOrdersWithItemsByShopAndStatus(Long shopId, String status) throws SQLException {
+        String sql = """
+                    SELECT
+                        o.OrderID,
+                        o.OrderStatus,
+                        o.TotalAmount,
+                        o.CreatedAt,
+                        u.FullName AS CustomerName,
+                        oi.OrderItemID,
+                        oi.OrderShopID,
+                        oi.ProductID,
+                        oi.FlashSaleItemID,
+                        oi.Quantity,
+                        oi.OriginalPrice,
+                        oi.SalePrice,
+                        oi.Subtotal,
+                        oi.VatRate,
+                        p.Title,
+                        p.OriginalPrice AS ProductOriginalPrice,
+                        p.SalePrice AS ProductSalePrice,
+                        pi.Url AS PrimaryImageUrl
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    JOIN Users u ON o.UserID = u.UserID
+                    LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                    LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                    WHERE os.ShopID = ? AND o.OrderStatus = ?
+                    ORDER BY o.CreatedAt DESC, o.OrderID, oi.OrderItemID
+                """;
+
+        Map<Long, Order> orderMap = new LinkedHashMap<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long orderId = rs.getLong("OrderID");
+                    Order order = orderMap.get(orderId);
+
+                    if (order == null) {
+                        order = new Order();
+                        order.setOrderId(orderId);
+                        order.setOrderStatus(rs.getString("OrderStatus"));
+                        order.setTotalAmount(rs.getDouble("TotalAmount"));
+                        order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                        order.setCustomerName(rs.getString("CustomerName"));
+                        order.setItems(new ArrayList<>());
+                        orderMap.put(orderId, order);
+                    }
+
+                    long productId = rs.getLong("ProductID");
+                    if (productId > 0) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(rs.getLong("OrderItemID"));
+                        item.setOrderShopId(rs.getLong("OrderShopID"));
+                        item.setProductId(productId);
+                        item.setFlashSaleItemId(rs.getLong("FlashSaleItemID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(productId);
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+
+                        item.setProduct(product);
+                        order.getItems().add(item);
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(orderMap.values());
+    }
+
+    public List<OrderShop> getOrdersByShopIdAndStatus(long shopId, String status) throws SQLException {
+        String sql = """
+                SELECT
+                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
+                    p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                JOIN Users u ON o.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.ShopID = ? AND os.Status = ?
+                ORDER BY os.CreatedAt DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                Map<Long, OrderShop> orderShopMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    long orderShopId = rs.getLong("OrderShopID");
+
+                    OrderShop os = orderShopMap.get(orderShopId);
+                    if (os == null) {
+                        os = new OrderShop();
+                        os.setOrderShopId(orderShopId);
+                        os.setOrderId(rs.getLong("OrderID"));
+                        os.setShopId(rs.getLong("ShopID"));
+                        os.setStatus(rs.getString("ShopStatus"));
+                        os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
+                        os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+
+                        // Gán thông tin Order trực tiếp
+                        os.setCustomerName(rs.getString("CustomerName"));
+                        os.setOrderStatus(rs.getString("OrderStatus"));
+                        os.setOrderTotal(rs.getDouble("OrderTotal"));
+
+                        os.setItems(new ArrayList<>());
+                        orderShopMap.put(orderShopId, os);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(rs.getLong("ProductID"));
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+                        item.setProduct(product);
+
+                        os.getItems().add(item);
+                    }
+                }
+                return new ArrayList<>(orderShopMap.values());
+            }
+        }
     }
 
 }
