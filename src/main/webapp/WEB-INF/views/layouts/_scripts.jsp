@@ -10,6 +10,9 @@
         <!-- Check Input Register  -->
         <script src="<c:url value='/assets/js/common/validator.js'/>?v=1.0.1"></script>
 
+        <!-- JS của thông báo Toast -->
+        <script src="${ctx}/assets/js/common/toast.js?v=1.0.1"></script>
+
         <!-- Tạo redirect_uri động, đúng host/port/context hiện tại -->
         <c:set var="redirectUri"
             value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth/login" />
