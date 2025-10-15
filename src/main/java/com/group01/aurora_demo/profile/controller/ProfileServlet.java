@@ -11,6 +11,7 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.catalog.dao.ImageDAO;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 
 @WebServlet("/profile")
+@MultipartConfig
 public class ProfileServlet extends HttpServlet {
 
     private UserDAO userDAO = new UserDAO();
@@ -28,6 +30,10 @@ public class ProfileServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         User user = (User) (session != null ? session.getAttribute("AUTH_USER") : null);
+        if (user == null) {
+            request.getRequestDispatcher(request.getContextPath() + "/home").forward(request, response);
+            return;
+        }
         request.setAttribute("user", user);
         request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
     }
@@ -42,10 +48,7 @@ public class ProfileServlet extends HttpServlet {
             HttpSession session = request.getSession(false);
             User user = (session != null) ? (User) session.getAttribute("AUTH_USER") : null;
             if (user == null) {
-                json.put("success", false);
-                json.put("message", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-                out.print(json.toString());
-                out.flush();
+                request.getRequestDispatcher(request.getContextPath() + "/home").forward(request, response);
                 return;
             }
 
@@ -67,10 +70,6 @@ public class ProfileServlet extends HttpServlet {
             }
         } catch (Exception e) {
             System.out.println("[ERROR] ProfileServlet#doPost: " + e.getMessage());
-            JSONObject err = new JSONObject();
-            err.put("success", false);
-            err.put("message", "Lỗi hệ thống tại ProfileServlet#doPost: " + e.getMessage());
-            out.print(err.toString());
         } finally {
             out.flush();
         }
@@ -101,7 +100,7 @@ public class ProfileServlet extends HttpServlet {
                 out.print(json.toString());
                 return;
             }
-            String uploadDir = request.getServletContext().getRealPath("/assets/images/catalog/avatars");
+            String uploadDir = request.getServletContext().getRealPath("/assets/images/avatars");
             File uploadDirFile = new File(uploadDir);
             if (!uploadDirFile.exists()) {
                 uploadDirFile.mkdirs();
@@ -119,10 +118,6 @@ public class ProfileServlet extends HttpServlet {
             out.print(json.toString());
         } catch (Exception e) {
             System.out.println("[ERROR] ProfileServlet#handleUploadAvatar: " + e.getMessage());
-            JSONObject err = new JSONObject();
-            err.put("success", false);
-            err.put("message", "Lỗi khi upload avatar: " + e.getMessage());
-            out.print(err.toString());
         }
     }
 
@@ -202,10 +197,6 @@ public class ProfileServlet extends HttpServlet {
             out.print(json.toString());
         } catch (Exception e) {
             System.out.println("[ERROR] ProfileServlet#handleChangePassword: " + e.getMessage());
-            JSONObject err = new JSONObject();
-            err.put("success", false);
-            err.put("message", "Lỗi khi đổi mật khẩu: " + e.getMessage());
-            out.print(err.toString());
         }
     }
 }

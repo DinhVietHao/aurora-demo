@@ -50,6 +50,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
 
         if (path == null || path.equals("/")) {
@@ -88,6 +89,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
         if (path == null) {
             resp.sendRedirect(req.getContextPath() + "/checkout");

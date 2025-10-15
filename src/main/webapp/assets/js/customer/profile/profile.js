@@ -101,3 +101,74 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+  const avatarInput = document.getElementById("avatarInput");
+  const avatarPreview = document.getElementById("avatarPreview");
+  const avatarSidebar = document.getElementById("avatarSidebar");
+
+  if (avatarInput && avatarPreview) {
+    avatarInput.addEventListener("change", function () {
+      const file = avatarInput.files[0];
+      if (!file) return;
+
+      // Kiểm tra file là ảnh và không quá dung lượng (ví dụ 5MB)
+      if (!file.type.startsWith("image/")) {
+        alert("Vui lòng chọn file ảnh hợp lệ.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Ảnh vượt quá dung lượng cho phép (5MB).");
+        return;
+      }
+
+      // Hiển thị preview ngay trên UI trước khi upload
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        avatarPreview.src = e.target.result;
+        if (avatarSidebar) avatarSidebar.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+
+      // Tạo form data để gửi file lên server
+      const formData = new FormData();
+      formData.append("action", "uploadAvatar");
+      formData.append("avatarCustomer", file);
+
+      fetch("/profile", {
+        method: "POST",
+        body: formData,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            if (data.avatarUrl) {
+              avatarPreview.src = data.avatarUrl;
+              if (avatarSidebar) avatarSidebar.src = data.avatarUrl;
+            }
+            toast({
+              title: "Thành công!",
+              message: data.message,
+              type: "success",
+              duration: 3000,
+            });
+          } else {
+            toast({
+              title: "Thất bại!",
+              message: data.message,
+              type: "error",
+              duration: 3000,
+            });
+          }
+        })
+        .catch(() => {
+          toast({
+            title: "Thất bại!",
+            message: "Đã xảy ra lỗi khi tải ảnh đại diện.",
+            type: "error",
+            duration: 3000,
+          });
+        });
+    });
+  }
+});
