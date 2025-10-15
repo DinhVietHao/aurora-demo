@@ -10,7 +10,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
@@ -246,6 +250,80 @@ public class OrderDAO {
         return new ArrayList<>(orderMap.values());
     }
 
+    public List<OrderShop> getOrdersByShopId(long shopId) throws SQLException {
+        String sql = """
+                SELECT
+                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
+                    p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                JOIN Users u ON o.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.ShopID = ?
+                ORDER BY os.CreatedAt DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+
+                Map<Long, OrderShop> orderShopMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    long orderShopId = rs.getLong("OrderShopID");
+
+                    OrderShop os = orderShopMap.get(orderShopId);
+                    if (os == null) {
+                        os = new OrderShop();
+                        os.setOrderShopId(orderShopId);
+                        os.setOrderId(rs.getLong("OrderID"));
+                        os.setShopId(rs.getLong("ShopID"));
+                        os.setStatus(rs.getString("ShopStatus"));
+                        os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
+                        os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+
+                        // Gán thông tin Order trực tiếp
+                        os.setCustomerName(rs.getString("CustomerName"));
+                        os.setOrderStatus(rs.getString("OrderStatus"));
+                        os.setOrderTotal(rs.getDouble("OrderTotal"));
+
+                        os.setItems(new ArrayList<>());
+                        orderShopMap.put(orderShopId, os);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(rs.getLong("ProductID"));
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+                        item.setProduct(product);
+
+                        os.getItems().add(item);
+                    }
+                }
+                return new ArrayList<>(orderShopMap.values());
+            }
+        }
+
+    }
+
     public List<OrderShop> getOrdersByShopIdAndStatus(long shopId, String status) throws SQLException {
         String sql = """
                 SELECT
@@ -319,6 +397,121 @@ public class OrderDAO {
                 }
                 return new ArrayList<>(orderShopMap.values());
             }
+        }
+    }
+
+    public OrderShop getOrderShopDetail(Long orderShopId) throws Exception {
+        String sql = """
+                SELECT
+                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus,
+                    os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    os.ShippingFee,
+                    o.TotalAmount AS OrderTotal, o.CreatedAt AS OrderCreatedAt,
+                    o.OrderStatus AS OrderStatus, o.UserID,
+
+                    u.FullName AS CustomerName, u.Email AS CustomerEmail, a.Phone AS CustomerPhone,
+
+                    a.[Description], a.Ward, a.District, a.City,
+
+                    oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal,
+                    p.Title AS ProductTitle, p.SalePrice AS ProductSalePrice, pi.Url AS ProductImage
+
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                JOIN Users u ON o.UserID = u.UserID
+                LEFT JOIN Addresses a ON o.AddressID = a.AddressID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.OrderShopID = ?
+                ORDER BY oi.OrderItemID
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery()) {
+
+                OrderShop orderShop = null;
+                List<OrderItem> items = new ArrayList<>();
+                boolean found = false;
+                while (rs.next()) {
+                    found = true;
+                    if (orderShop == null) {
+                        orderShop = new OrderShop();
+                        orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                        orderShop.setOrderId(rs.getLong("OrderID"));
+                        orderShop.setShopId(rs.getLong("ShopID"));
+                        orderShop.setStatus(rs.getString("ShopStatus"));
+                        orderShop.setFinalAmount(rs.getDouble("ShopFinalAmount"));
+                        orderShop.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+                        orderShop.setShippingFee(rs.getDouble("ShippingFee"));
+
+                        orderShop.setCustomerName(rs.getString("CustomerName"));
+                        orderShop.setOrderTotal(rs.getDouble("OrderTotal"));
+                        orderShop.setOrderStatus(rs.getString("OrderStatus"));
+
+                        // Thông tin khách hàng (User)
+                        User customer = new User();
+                        customer.setFullName(rs.getString("CustomerName"));
+                        customer.setEmail(rs.getString("CustomerEmail"));
+                        customer.setPhone(rs.getString("CustomerPhone"));
+                        orderShop.setUser(customer);
+
+                        // Địa chỉ giao hàng (lọc null/blank trước khi join)
+                        String address = Stream.of(
+                                rs.getString("Description"),
+                                rs.getString("Ward"),
+                                rs.getString("District"),
+                                rs.getString("City"))
+                                .filter(Objects::nonNull)
+                                .filter(s -> !s.isBlank())
+                                .collect(Collectors.joining(", "));
+                        orderShop.setShippingAddress(address);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("Subtotal"));
+
+                        Product p = new Product();
+                        p.setTitle(rs.getString("ProductTitle"));
+                        p.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        p.setPrimaryImageUrl(rs.getString("ProductImage"));
+                        item.setProduct(p);
+
+                        items.add(item);
+                    }
+                }
+                if (!found) {
+                    System.out.println("⚠️ Không có dữ liệu trả về cho OrderShop ID = " + orderShopId);
+                }
+                if (orderShop != null) {
+                    orderShop.setItems(items);
+                }
+
+                return orderShop;
+            }
+        }
+    }
+
+    public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
+        String sql = "UPDATE OrderShops SET Status = ? WHERE OrderShopId = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, orderShopId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

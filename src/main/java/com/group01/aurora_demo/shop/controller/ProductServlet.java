@@ -1,10 +1,17 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.catalog.dao.ImageDAO;
@@ -56,14 +63,12 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("successMessage",
                     "Đã thêm sản phẩm thành công.");
         }
-
+        ShopDAO shopDAO = new ShopDAO();
+        ProductDAO productDAO = new ProductDAO();
         try {
             switch (action) {
                 case "view":
-                    ShopDAO shopDAO = new ShopDAO();
-                    ProductDAO productDAO = new ProductDAO();
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
-
                     int page = 1;
                     int limit = 15;
                     String pageParam = request.getParameter("page");
@@ -87,8 +92,42 @@ public class ProductServlet extends HttpServlet {
                     request.setAttribute("totalPages", totalPages);
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                     break;
-                case "create":
+                case "getProduct":
+                    try {
+                        long productId = Long.parseLong(request.getParameter("id"));
+                        Product product = productDAO.getProductById(productId);
 
+                        if (product == null) {
+                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                            response.getWriter().write("{\"error\": \"Sản phẩm không tồn tại\"}");
+                            return;
+                        }
+
+                        // Chuyển đổi thành JSON
+                        Gson gson = new GsonBuilder()
+                                .registerTypeAdapter(LocalDateTime.class, new TypeAdapter<LocalDateTime>() {
+                                    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+                                    @Override
+                                    public void write(JsonWriter out, LocalDateTime value) throws IOException {
+                                        out.value(value != null ? value.format(formatter) : null);
+                                    }
+
+                                    @Override
+                                    public LocalDateTime read(JsonReader in) throws IOException {
+                                        return LocalDateTime.parse(in.nextString(), formatter);
+                                    }
+                                })
+                                .create();
+                        String json = gson.toJson(product);
+
+                        response.setContentType("application/json");
+                        response.setCharacterEncoding("UTF-8");
+                        response.getWriter().write(json);
+                    } catch (Exception e) {
+                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                        response.getWriter().write("{\"error\": \"Lỗi server\"}");
+                    }
                     break;
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
@@ -115,12 +154,11 @@ public class ProductServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-
+        ShopDAO shopDAO = new ShopDAO();
+        ProductDAO productDAO = new ProductDAO();
+        ImageDAO imageDAO = new ImageDAO();
         switch (action) {
             case "create":
-                ShopDAO shopDAO = new ShopDAO();
-                ProductDAO productDAO = new ProductDAO();
-                ImageDAO imageDAO = new ImageDAO();
 
                 try {
 
@@ -238,9 +276,8 @@ public class ProductServlet extends HttpServlet {
             case "delete":
                 try {
                     long productId = Long.parseLong(request.getParameter("productId"));
-                    ProductDAO productDAODelete = new ProductDAO();
 
-                    boolean success = productDAODelete.deleteProduct(productId);
+                    boolean success = productDAO.deleteProduct(productId);
 
                     if (success) {
                         response.sendRedirect(
@@ -253,6 +290,16 @@ public class ProductServlet extends HttpServlet {
                     e.printStackTrace();
                     request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình xóa sản phẩm.");
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                }
+                break;
+            case "update":
+                try {
+
+                    long productId = Long.parseLong(request.getParameter("productId"));
+                    Product existingProduct = productDAO.getProductById(productId);
+
+                } catch (Exception e) {
+                    // Handle error
                 }
                 break;
             default:

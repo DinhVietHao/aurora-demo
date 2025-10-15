@@ -3,6 +3,8 @@ package com.group01.aurora_demo.cart.model;
 import java.util.Date;
 import java.util.List;
 
+import com.group01.aurora_demo.auth.model.User;
+
 public class OrderShop {
     private long orderShopId;
     private long orderId;
@@ -14,12 +16,30 @@ public class OrderShop {
     private double finalAmount;
     private String status;
     private Date createdAt;
+    private String shippingAddress;
+
+    public String getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
 
     private String customerName;
     private String orderStatus;
     private double orderTotal;
 
     private List<OrderItem> items;
+    private User user;
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     public String getCustomerName() {
         return customerName;
