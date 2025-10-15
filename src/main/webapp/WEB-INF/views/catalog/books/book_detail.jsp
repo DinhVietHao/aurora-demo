@@ -13,8 +13,6 @@
 
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
 
-        <!-- CSS của thông báo Toast -->
-        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1" />
       </head>
 
       <body>
@@ -246,9 +244,6 @@
 
         <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
-
-        <!-- JS của thông báo Toast -->
-        <script src="${ctx}/assets/js/common/toast.js?v=1.0.1"></script>
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.1"></script>

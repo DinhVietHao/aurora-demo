@@ -66,15 +66,12 @@
                                     </div>
                                 </div>
 
-
                                 <!-- Hồ sơ -->
                                 <div class="tab-pane fade show active" id="profile" role="tabpanel"
                                     aria-labelledby="profile-tab">
                                     <div class="profile">
                                         <div class="d-flex justify-content-between">
                                             <h5 class="mb-3 profile-title">Hồ Sơ Của Tôi</h5>
-                                            <button type="button" class="profile-remove">Gửi yêu cầu xóa tài
-                                                khoản</button>
                                         </div>
                                         <p class="profile-des">Quản lý thông tin hồ sơ để bảo mật tài khoản</p>
 
@@ -89,21 +86,25 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="mb-3 row align-items-center">
-                                                        <label class="col-sm-3 col-form-label">Email:</label>
-                                                        <div class="col-sm-9 d-flex align-items-center">
-                                                            <span class="me-2 text-truncate">${user.email}</span>
-                                                            <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
+                                                    <c:if test="${user.authProvider != 'GOOGLE'}">
+                                                        <div class="mb-3 row align-items-center">
+                                                            <label class="col-sm-3 col-form-label">Email:</label>
+                                                            <div class="col-sm-9 d-flex align-items-center">
+                                                                <span class="me-2 text-truncate">${user.email}</span>
+                                                                <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
+                                                            </div>
                                                         </div>
-                                                    </div>
 
-                                                    <div class="mb-3 row align-items-center">
-                                                        <label class="col-sm-3 col-form-label">Mật khẩu:</label>
-                                                        <div class="col-sm-9 d-flex align-items-center">
-                                                            <span class="me-2 text-truncate">**********</span>
-                                                            <a href="#" class="btn btn-link btn-sm p-0">Thay Đổi</a>
+                                                        <div class="mb-3 row align-items-center">
+                                                            <label class="col-sm-3 col-form-label">Mật khẩu:</label>
+                                                            <div class="col-sm-9 d-flex align-items-center">
+                                                                <span class="me-2 text-truncate">**********</span>
+                                                                <a href="#" class="text-primary change-password-link"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#changePasswordModal">Thay Đổi</a>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    </c:if>
 
                                                     <div class="row">
                                                         <div class="col-sm-9">
@@ -112,7 +113,6 @@
                                                     </div>
                                                 </form>
                                             </div>
-
 
                                             <div class="col-md-4 text-center profile-update__img">
                                                 <div class="mb-3">
@@ -125,9 +125,7 @@
                                                     </div>
                                                 </div>
 
-
                                             </div>
-
                                         </div>
                                     </div>
                                 </div>
@@ -135,9 +133,63 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Modal Đổi mật khẩu -->
+                <div class="modal fade" id="changePasswordModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form id="formChangePassword">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Đổi mật khẩu</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="changePasswordError" class="alert alert-danger d-none"></div>
+                                    <div class="form-group mb-2">
+                                        <label>Mật khẩu hiện tại</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="currentPassword" required>
+                                            <span class="input-group-text" style="cursor:pointer;">
+                                                <i class="bi bi-eye-slash toggle-password"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label>Mật khẩu mới</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="newPassword" required>
+                                            <span class="input-group-text" style="cursor:pointer;">
+                                                <i class="bi bi-eye-slash toggle-password"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group mb-2">
+                                        <label>Xác nhận mật khẩu mới</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="confirmNewPassword"
+                                                required>
+                                            <span class="input-group-text" style="cursor:pointer;">
+                                                <i class="bi bi-eye-slash toggle-password"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Toast notification Profile -->
+                <div id="notify-toast"></div>
+
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+
+                <script src="<c:url value='/assets/js/customer/profile/profile.js'/>?v=1.0.1"></script>
             </body>
 
             </html>
