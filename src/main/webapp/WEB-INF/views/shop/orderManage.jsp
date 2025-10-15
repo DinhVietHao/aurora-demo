@@ -34,7 +34,6 @@
 
                         <div id="layoutSidenav_content">
                             <main>
-                                <!-- ✅ Thông báo -->
                                 <c:if test="${not empty successMessage}">
                                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                                         ${fn:escapeXml(successMessage)}
@@ -76,13 +75,14 @@
                                                         href="${ctx}/shop/orders?status=PENDING">Chờ xác nhận</a></li>
                                                 <li class="nav-item"><a
                                                         class="nav-link ${status == 'SHIPPING' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=CONFIRMED">Vận chuyển</a></li>
+                                                        href="${ctx}/shop/orders?status=SHIPPING">Vận chuyển</a></li>
                                                 <li class="nav-item"><a
                                                         class="nav-link ${status == 'WAITING_SHIP' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=SHIPPING">Chờ giao hàng</a></li>
+                                                        href="${ctx}/shop/orders?status=WAITING_SHIP">Chờ giao hàng</a>
+                                                </li>
                                                 <li class="nav-item"><a
                                                         class="nav-link ${status == 'COMPLETED' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=DELIVERED">Hoàn thành</a></li>
+                                                        href="${ctx}/shop/orders?status=COMPLETED">Hoàn thành</a></li>
                                                 <li class="nav-item"><a
                                                         class="nav-link ${status == 'CANCELLED' ? 'active' : ''}"
                                                         href="${ctx}/shop/orders?status=CANCELLED">Hủy</a>
@@ -119,11 +119,6 @@
                                                     <input type="text" class="form-control" id="customerSearch"
                                                         placeholder="Nhập tên khách hàng">
                                                 </div>
-                                                <div class="col-md-2 d-flex align-items-end gap-2">
-                                                    <button type="button" class="btn btn-primary">Áp dụng</button>
-                                                    <button type="button" class="btn btn-outline-secondary">Đặt
-                                                        lại</button>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -136,7 +131,6 @@
                                                     <c:when test="${not empty orderShops}">
                                                         ${fn:length(orderShops)} đơn hàng
                                                     </c:when>
-                                                    <c:otherwise>Không có đơn hàng nào</c:otherwise>
                                                 </c:choose>
                                             </h5>
                                         </div>
@@ -149,6 +143,15 @@
                                         </div>
 
                                         <div class="card-body py-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h5 class="mb-0">
+                                                    <c:choose>
+                                                        <c:when test="${empty orderShops}">
+                                                            Không có đơn hàng nào!
+                                                        </c:when>
+                                                    </c:choose>
+                                                </h5>
+                                            </div>
                                             <c:forEach var="orderShop" items="${orderShops}">
                                                 <div class="card mb-4 border-0 shadow-sm order-card-hover">
                                                     <div
@@ -159,10 +162,6 @@
                                                             <span
                                                                 class="text-muted ms-2">(${orderShop.customerName})</span>
                                                         </div>
-                                                        <small class="text-muted">
-                                                            <fmt:formatDate value="${orderShop.createdAt}"
-                                                                pattern="dd/MM/yyyy HH:mm" />
-                                                        </small>
                                                     </div>
 
                                                     <div class="card-body py-4 px-4">
@@ -235,7 +234,7 @@
 
                                                             <!-- Cột thao tác -->
                                                             <div class="col-md-2 text-start">
-                                                                <a href="${ctx}/shop/order-detail?id=${orderShop.orderShopId}"
+                                                                <a href="/shop/orders?action=detail&orderShopId=${orderShop.orderShopId}"
                                                                     class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                                                     Xem chi tiết
                                                                 </a>

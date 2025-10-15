@@ -83,6 +83,7 @@ function initializePreview() {
   inputs.forEach((input) => {
     input.addEventListener("input", updatePreview);
     input.addEventListener("change", updatePreview);
+    input.addEventListener("keyup", updatePreview);
   });
 
   // Initial preview update
@@ -127,12 +128,12 @@ function handleDiscountTypeChange() {
     'label[for="discountValue"]'
   );
 
-  if (discountType === "percentage") {
+  if (discountType === "PERSENT") {
     maxDiscountField.style.display = "block";
     discountValueLabel.textContent = "Giá trị giảm (%) ";
     document.getElementById("discountValue").placeholder = "0-100";
     document.getElementById("discountValue").max = "100";
-  } else if (discountType === "fixed") {
+  } else if (discountType === "AMOUNT") {
     maxDiscountField.style.display = "none";
     discountValueLabel.textContent = "Giá trị giảm (VNĐ) ";
     document.getElementById("discountValue").placeholder = "0";
@@ -251,7 +252,7 @@ function validateDiscountValue() {
     return false;
   }
 
-  if (discountType === "percentage" && value > 100) {
+  if (discountType === "PERSENT" && value > 100) {
     showFieldError(field, "Giá trị giảm theo % không được vượt quá 100%");
     return false;
   }
@@ -369,10 +370,10 @@ function updatePreview() {
   document.getElementById("previewName").textContent = description;
 
   const typeElement = document.getElementById("previewType");
-  if (discountType === "percentage") {
+  if (discountType === "PERSENT") {
     typeElement.textContent = "%";
     typeElement.className = "voucher-type-preview bg-info";
-  } else if (discountType === "fixed") {
+  } else if (discountType === "AMOUNT") {
     typeElement.textContent = "VNĐ";
     typeElement.className = "voucher-type-preview bg-warning";
   } else {
@@ -381,9 +382,9 @@ function updatePreview() {
   }
 
   const discountElement = document.getElementById("previewDiscount");
-  if (discountType === "percentage") {
+  if (discountType === "PERSENT") {
     discountElement.textContent = `${discountValue}%`;
-  } else if (discountType === "fixed") {
+  } else if (discountType === "AMOUNT") {
     discountElement.textContent = `${parseInt(
       discountValue
     ).toLocaleString()} VNĐ`;

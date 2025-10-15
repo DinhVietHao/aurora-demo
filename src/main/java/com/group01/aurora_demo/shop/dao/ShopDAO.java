@@ -84,13 +84,15 @@ public class ShopDAO {
     }
 
     public Shop getShopByOwnerUserId(Long ownerUserId) throws SQLException {
-        String sql = "SELECT " +
-                " s.ShopID, s.Name, s.Description, s.RatingAvg, s.Status, " +
-                " s.OwnerUserID, s.InvoiceEmail, s.AvatarUrl, s.PickupAddressID, " +
-                " a.AddressID, a.RecipientName, a.Phone, a.Line, a.City, a.District, a.Ward, a.PostalCode " +
-                "FROM Shops s " +
-                "JOIN Addresses a ON s.PickupAddressID = a.AddressID " +
-                "WHERE s.OwnerUserID = ?";
+        String sql = """
+                SELECT
+                s.ShopID, s.Name, s.Description, s.RatingAvg, s.Status,
+                s.OwnerUserID, s.InvoiceEmail, s.AvatarUrl, s.PickupAddressID,
+                a.AddressID, a.RecipientName, a.Phone, a.City, a.District, a.Ward
+                FROM Shops s
+                JOIN Addresses a ON s.PickupAddressID = a.AddressID
+                WHERE s.OwnerUserID = ?
+                """;
 
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -140,7 +142,7 @@ public class ShopDAO {
         String sql = "UPDATE Shops SET AvatarUrl = ? WHERE ShopID = ?";
 
         try (Connection cn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
+                PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setString(1, avatarUrl);
             ps.setLong(2, shopId);

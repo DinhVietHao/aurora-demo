@@ -5,7 +5,7 @@
         <div class="sb-sidenav-menu">
           <div class="nav">
             <div class="sb-sidenav-menu-heading">Tổng quan</div>
-            <a class="nav-link" href="/dashboard">
+            <a class="nav-link" href="/shop/dashboard">
               <div class="sb-nav-link-icon"><i class="bi bi-speedometer2"></i></div>
               Dashboard
             </a>
