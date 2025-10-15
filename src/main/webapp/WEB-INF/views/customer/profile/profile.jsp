@@ -136,7 +136,7 @@
 
                 <!-- Modal Đổi mật khẩu -->
                 <div class="modal fade" id="changePasswordModal" tabindex="-1">
-                    <div class="modal-dialog">
+                    <div class="modal-dialog custom-modal-top">
                         <form id="formChangePassword">
                             <div class="modal-content">
                                 <div class="modal-header">
