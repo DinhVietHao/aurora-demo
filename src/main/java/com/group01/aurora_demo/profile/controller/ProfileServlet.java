@@ -55,7 +55,7 @@ public class ProfileServlet extends HttpServlet {
             String action = request.getParameter("action");
             switch (action) {
                 case "uploadAvatar":
-                    handleUploadAvatar(request, response, out, json, user);
+                    handleUploadAvatar(request, response, session, out, json, user);
                     break;
 
                 case "changePassword":
@@ -75,9 +75,8 @@ public class ProfileServlet extends HttpServlet {
         }
     }
 
-    private void handleUploadAvatar(HttpServletRequest request, HttpServletResponse response, PrintWriter out,
-            JSONObject json, User user)
-            throws IOException, ServletException {
+    private void handleUploadAvatar(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+            PrintWriter out, JSONObject json, User user) throws IOException, ServletException {
         try {
             Part filePart = request.getPart("avatarCustomer");
             if (filePart == null || filePart.getSize() == 0) {
@@ -109,6 +108,10 @@ public class ProfileServlet extends HttpServlet {
             String fileName = imageDAO.uploadAvatar(filePart, uploadDir);
 
             if (userDAO.updateAvatarCustomer(user.getId(), fileName)) {
+                user.setAvatarUrl(fileName);
+                session.setAttribute("AUTH_USER", user);
+                session.setMaxInactiveInterval(60 * 60 * 2);
+
                 json.put("success", true);
                 json.put("message", "Upload avatar thành công.");
             } else {
