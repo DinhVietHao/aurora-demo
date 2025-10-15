@@ -19,7 +19,7 @@
               <div class="sb-nav-link-icon"><i class="bi bi-box-seam"></i></div>
               Sản phẩm
             </a>
-            <a class="nav-link" href="/shop/order">
+            <a class="nav-link" href="/shop/orders">
               <div class="sb-nav-link-icon"><i class="bi bi-cart3"></i></div>
               Đơn hàng
             </a>
