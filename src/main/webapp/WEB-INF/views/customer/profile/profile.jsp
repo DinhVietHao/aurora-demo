@@ -25,7 +25,17 @@
                         <div class="col-3 col-md-2 information-account__sidebar">
 
                             <div class="text-center mb-4">
-                                <img src="./assets/images/common/avatar.png" alt="avatar"
+                                <c:choose>
+                                    <c:when test="${user.avatarUrl != null && !user.avatarUrl.isEmpty()}">
+                                        <c:set var="avatarPath"
+                                            value="http://localhost:8080/assets/images/avatars/${user.avatarUrl}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="avatarPath"
+                                            value="http://localhost:8080/assets/images/common/avatar.png" />
+                                    </c:otherwise>
+                                </c:choose>
+                                <img id="avatarSidebar" src="${avatarPath}" alt="avatar"
                                     class="information-account__image">
                                 <p class="mt-2 fw-bold mb-0">${user.fullName}</p>
                             </div>
@@ -116,15 +126,26 @@
 
                                             <div class="col-md-4 text-center profile-update__img">
                                                 <div class="mb-3">
-                                                    <img src="./assets/images/common/avatar.png" name="avatarCustomer"
+                                                    <c:choose>
+                                                        <c:when
+                                                            test="${user.avatarUrl != null && !user.avatarUrl.isEmpty()}">
+                                                            <c:set var="avatarPreviewPath"
+                                                                value="http://localhost:8080/assets/images/avatars/${user.avatarUrl}" />
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <c:set var="avatarPreviewPath"
+                                                                value="http://localhost:8080/assets/images/common/avatar.png" />
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                    <img id="avatarPreview" src="${avatarPreviewPath}"
                                                         class="profile-img" alt="Avatar">
                                                     <div class="mt-3">
-                                                        <input type="file" class="d-none" id="avatarInput">
-                                                        <label for="avatarInput" class="button-five">Chọn
-                                                            Ảnh</label>
+                                                        <input type="file" class="d-none" id="avatarInput"
+                                                            accept="image/*">
+                                                        <label for="avatarInput" class="button-five"
+                                                            style="cursor:pointer;">Chọn Ảnh</label>
                                                     </div>
                                                 </div>
-
                                             </div>
                                         </div>
                                     </div>

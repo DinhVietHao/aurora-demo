@@ -62,7 +62,7 @@ public class UserDAO {
     }
 
     public User findByEmailAndProvider(String email, String provider) {
-        String sql = "SELECT UserID, Email, FullName, Password, CreatedAt, AuthProvider FROM dbo.Users WHERE Email = ? AND AuthProvider = ?";
+        String sql = "SELECT UserID, Email, FullName, Password, CreatedAt, AuthProvider, AvatarUrl FROM dbo.Users WHERE Email = ? AND AuthProvider = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -79,6 +79,7 @@ public class UserDAO {
                 Timestamp ts = rs.getTimestamp("CreatedAt");
                 u.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
                 u.setAuthProvider(rs.getString("AuthProvider"));
+                u.setAvatarUrl(rs.getString("AvatarUrl"));
 
                 try {
                     u.setStatus(rs.getString("Status"));
