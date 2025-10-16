@@ -4,14 +4,9 @@ public class Author {
     private Long authorId;
     private String authorName;
 
-    // Constructors
-    public Author() {}
-    public Author(Long authorId, String authorName) {
-        this.authorId = authorId;
-        this.authorName = authorName;
+    public Author() {
     }
 
-    // Getters & Setters
     public Long getAuthorId() {
         return authorId;
     }
@@ -27,10 +22,4 @@ public class Author {
     public void setAuthorName(String authorName) {
         this.authorName = authorName;
     }
-
-    @Override
-    public String toString() {
-        return "Author{id=" + authorId + ", name='" + authorName + "'}";
-    }
 }
-

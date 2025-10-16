@@ -1,51 +1,103 @@
 package com.group01.aurora_demo.catalog.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
-import com.group01.aurora_demo.catalog.model.ProductImages;
+import com.group01.aurora_demo.catalog.model.ProductImage;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
 import java.sql.PreparedStatement;
+import jakarta.servlet.http.Part;
+import java.sql.SQLException;
+import java.util.Collection;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.sql.ResultSet;
+import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
-/**
- * Data Access Object (DAO) for the ProductImages table. Provides methods to
- * work with product image data.
- *
- * Author: Phạm Thanh Lượng
- */
 public class ImageDAO {
 
-    /**
-     * Retrieve the primary image (IsPrimary = 1) for a given product.
-     *
-     * @param productID ID of the product
-     * @return ProductImages object containing the primary image info, or null
-     *         if not found
-     */
-    public ProductImages getImagesByProductId(int productID) {
-        // SQL: select primary image by ProductID
+    public ProductImage getImagesByProductId(int productID) {
         String sql = "SELECT ImageID, ProductID, Url, IsPrimary "
                 + "FROM ProductImages "
                 + "WHERE ProductID = ? AND IsPrimary = 1";
 
-        ProductImages img = null;
-        try (Connection cn = DataSourceProvider.get().getConnection(); // Get DB connection
-                PreparedStatement ps = cn.prepareStatement(sql)) { // Prepare statement
-
-            ps.setInt(1, productID); // Bind productID parameter
-
-            ResultSet rs = ps.executeQuery(); // Execute query
-
+        ProductImage img = null;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, productID);
+            ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                img = new ProductImages();
-                // Map ResultSet data into ProductImages object
+                img = new ProductImage();
                 img.setImageId(rs.getLong("ImageID"));
                 img.setProductId(rs.getLong("ProductID"));
-                img.setImageUrl(rs.getString("Url")); // Image URL
-                img.setPrimary(rs.getBoolean("IsPrimary")); // true if primary image
+                img.setUrl(rs.getString("Url"));
+                img.setIsPrimary(rs.getBoolean("IsPrimary"));
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
         return img;
+    }
+
+    public List<String> getListImageUrlsByProductId(long productId) throws SQLException {
+        List<String> urls = new ArrayList<>();
+        String sql = "SELECT Url FROM ProductImages WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    urls.add(rs.getString("Url"));
+                }
+            }
+        }
+        return urls;
+    }
+
+    public List<String> handleImageUpload(HttpServletRequest request) throws Exception {
+        Collection<Part> parts = request.getParts();
+        List<String> imageNames = new ArrayList<>();
+
+        String uploadDir = request.getServletContext().getRealPath("/assets/images/catalog/products");
+        File uploadDirFile = new File(uploadDir);
+        if (!uploadDirFile.exists())
+            uploadDirFile.mkdirs();
+
+        for (Part part : parts) {
+            if (part.getName().equals("ProductImages") && part.getSize() > 0) {
+
+                if (part.getSize() > 5 * 1024 * 1024) {
+                    throw new ServletException("Ảnh '" + part.getSubmittedFileName() + "' vượt 5MB.");
+                }
+
+                String originalFileName = part.getSubmittedFileName();
+                String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
+                String fileName = System.currentTimeMillis() + "_" + sanitizedFileName;
+
+                String fullPath = uploadDir + File.separator + fileName;
+                part.write(fullPath);
+                imageNames.add(fileName);
+            }
+        }
+
+        if (imageNames.size() < 2 || imageNames.size() > 20) {
+            throw new ServletException("Cần tải lên từ 2 đến 20 ảnh sản phẩm.");
+        }
+
+        return imageNames;
+    }
+    
+    public String uploadAvatar(Part filePart, String uploadDir) throws IOException, ServletException {
+        
+        String originalFileName = filePart.getSubmittedFileName();
+        String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
+        String fileName = System.currentTimeMillis() + "_" + sanitizedFileName;
+
+        String fullPath = uploadDir + File.separator + fileName;
+        filePart.write(fullPath);
+
+        
+        return fileName;
     }
 }

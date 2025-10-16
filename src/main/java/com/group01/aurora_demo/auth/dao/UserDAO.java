@@ -9,7 +9,7 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 public class UserDAO {
 
     public User findById(long userId) {
-        String sql = "SELECT UserID, Email, FullName, PasswordHash, AuthProvider, CreatedAt, Status "
+        String sql = "SELECT UserID, Email, FullName, Password, AuthProvider, CreatedAt, Status, AvatarUrl "
                 + "FROM dbo.Users WHERE UserID = ?";
         try (Connection con = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = con.prepareStatement(sql)) {
@@ -27,28 +27,11 @@ public class UserDAO {
                     u.setStatus(rs.getString("Status"));
                     
                     try {
-                        u.setPhone(rs.getString("Phone"));
-                    } catch (SQLException e) {
-                        // Phone might be null
-                    }
-                    
-                    try {
-                        u.setPoints(rs.getInt("Points"));
-                    } catch (SQLException e) {
-                        // Points might be null
-                    }
-                    
-                    try {
-                        u.setNationalID(rs.getString("NationalID"));
-                    } catch (SQLException e) {
-                        // NationalID might be null
-                    }
-                    
-                    try {
                         u.setAvatarUrl(rs.getString("AvatarUrl"));
                     } catch (SQLException e) {
                         // AvatarUrl might be null
                     }
+                    
                     return u;
                 }
             }
@@ -59,7 +42,7 @@ public class UserDAO {
     }
 
     public User findByEmailAndProvider(String email, String provider) {
-        String sql = "SELECT UserID, Email, FullName, Password, CreatedAt, AuthProvider FROM dbo.Users WHERE Email = ? AND AuthProvider = ?";
+        String sql = "SELECT UserID, Email, FullName, Password, CreatedAt, AuthProvider, Status, AvatarUrl FROM dbo.Users WHERE Email = ? AND AuthProvider = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -82,24 +65,6 @@ public class UserDAO {
                 } catch (SQLException e) {
                     // Status might be null
                     u.setStatus("active");
-                }
-                
-                try {
-                    u.setPhone(rs.getString("Phone"));
-                } catch (SQLException e) {
-                    // Phone might be null
-                }
-                
-                try {
-                    u.setPoints(rs.getInt("Points"));
-                } catch (SQLException e) {
-                    // Points might be null
-                }
-                
-                try {
-                    u.setNationalID(rs.getString("NationalID"));
-                } catch (SQLException e) {
-                    // NationalID might be null
                 }
                 
                 try {
@@ -137,8 +102,8 @@ public class UserDAO {
         List<User> users = new ArrayList<>();
         int offset = (page - 1) * pageSize;
         
-        String sql = "SELECT u.UserID, u.Email, u.FullName, u.Phone, u.Points, u.NationalID, "
-                + "u.AuthProvider, u.CreatedAt, ISNULL(u.Status, 'active') as Status, u.AvatarUrl, "
+        String sql = "SELECT u.UserID, u.Email, u.FullName, "
+                + "u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, "
                 + "STUFF((SELECT ', ' + r.RoleName "
                 + "FROM dbo.UserRoles ur "
                 + "JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode "
@@ -155,27 +120,7 @@ public class UserDAO {
             
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    User user = new User();
-                    user.setUserID(rs.getLong("UserID"));
-                    user.setEmail(rs.getString("Email"));
-                    user.setFullName(rs.getString("FullName"));
-                    user.setPhone(rs.getString("Phone"));
-                    user.setPoints(rs.getInt("Points"));
-                    user.setNationalID(rs.getString("NationalID"));
-                    user.setAuthProvider(rs.getString("AuthProvider"));
-                    user.setStatus(rs.getString("Status"));
-                    user.setRoles(rs.getString("Roles"));
-                    
-                    try {
-                        user.setAvatarUrl(rs.getString("AvatarUrl"));
-                    } catch (SQLException e) {
-                        // AvatarUrl might be null
-                    }
-                    
-                    Timestamp ts = rs.getTimestamp("CreatedAt");
-                    user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
-                    
-                    users.add(user);
+                    users.add(extractUserFromResultSet(rs));
                 }
             }
         } catch (SQLException e) {
@@ -210,8 +155,8 @@ public class UserDAO {
         int offset = (page - 1) * pageSize;
         
         StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("SELECT u.UserID, u.Email, u.FullName, u.Phone, u.Points, u.NationalID, ")
-                .append("u.AuthProvider, u.CreatedAt, ISNULL(u.Status, 'active') as Status, u.AvatarUrl, ")
+        sqlBuilder.append("SELECT u.UserID, u.Email, u.FullName, ")
+                .append("u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, ")
                 .append("STUFF((SELECT ', ' + r.RoleName ")
                 .append("FROM dbo.UserRoles ur ")
                 .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ")
@@ -237,7 +182,7 @@ public class UserDAO {
         // Status filter
         if (!status.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
-            sqlBuilder.append("ISNULL(u.Status, 'active') = ? ");
+            sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) = LOWER(?) ");
             hasWhere = true;
         }
         
@@ -264,6 +209,7 @@ public class UserDAO {
             
             // Set status parameter
             if (!status.isEmpty()) {
+                System.out.println("Filtering by status: '" + status + "'");
                 ps.setString(paramIndex++, status);
             }
             
@@ -278,26 +224,8 @@ public class UserDAO {
             
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    User user = new User();
-                    user.setUserID(rs.getLong("UserID"));
-                    user.setEmail(rs.getString("Email"));
-                    user.setFullName(rs.getString("FullName"));
-                    user.setPhone(rs.getString("Phone"));
-                    user.setPoints(rs.getInt("Points"));
-                    user.setNationalID(rs.getString("NationalID"));
-                    user.setAuthProvider(rs.getString("AuthProvider"));
-                    user.setStatus(rs.getString("Status"));
-                    user.setRoles(rs.getString("Roles"));
-                    
-                    try {
-                        user.setAvatarUrl(rs.getString("AvatarUrl"));
-                    } catch (SQLException e) {
-                        // AvatarUrl might be null
-                    }
-                    
-                    Timestamp ts = rs.getTimestamp("CreatedAt");
-                    user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
-                    
+                    User user = extractUserFromResultSet(rs);
+                    System.out.println("User ID: " + user.getUserID() + " - Status: '" + user.getStatus() + "'");
                     users.add(user);
                 }
             }
@@ -333,7 +261,7 @@ public class UserDAO {
         // Status filter
         if (!status.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
-            sqlBuilder.append("ISNULL(u.Status, 'active') = ? ");
+            sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) = LOWER(?) ");
             hasWhere = true;
         }
         
@@ -380,34 +308,45 @@ public class UserDAO {
      * Toggle user account status between active and locked
      */
     public boolean toggleUserStatus(long userId) {
-        String checkSql = "SELECT ISNULL(Status, 'active') AS Status FROM dbo.Users WHERE UserID = ?";
-        String updateSql = "UPDATE dbo.Users SET Status = ? WHERE UserID = ?";
+        // First check current status
+        String checkSql = "SELECT LOWER(LTRIM(RTRIM(COALESCE(Status, 'active')))) AS Status FROM dbo.Users WHERE UserID = ?";
         
-        try (Connection conn = DataSourceProvider.get().getConnection()) {
-            // First check current status
+        try (Connection conn = DataSourceProvider.get().getConnection();
+             PreparedStatement ps = conn.prepareStatement(checkSql)) {
+            ps.setLong(1, userId);
             String currentStatus;
-            try (PreparedStatement ps = conn.prepareStatement(checkSql)) {
-                ps.setLong(1, userId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        return false; // User not found
-                    }
-                    currentStatus = rs.getString("Status").trim();
-                    System.out.println("Current status: '" + currentStatus + "'");
+            
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    System.err.println("User not found with ID: " + userId);
+                    return false; // User not found
                 }
+                currentStatus = rs.getString("Status");
+                System.out.println("Current status before toggle: '" + currentStatus + "'");
             }
             
-            // Toggle status
-            String newStatus = "active".equals(currentStatus.trim()) ? "locked" : "active";
+            // Toggle status - ensure we're using the exact string values
+            String newStatus;
+            if ("active".equals(currentStatus)) {
+                newStatus = "locked";
+            } else {
+                newStatus = "active";
+            }
+            
+            System.out.println("Setting new status to: '" + newStatus + "'");
             
             // Update status
-            try (PreparedStatement ps = conn.prepareStatement(updateSql)) {
-                ps.setString(1, newStatus);
-                ps.setLong(2, userId);
-                return ps.executeUpdate() > 0;
+            String updateSql = "UPDATE dbo.Users SET Status = ? WHERE UserID = ?";
+            try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                updatePs.setString(1, newStatus);
+                updatePs.setLong(2, userId);
+                int rows = updatePs.executeUpdate();
+                System.out.println("Rows updated: " + rows);
+                return rows > 0;
             }
         } catch (SQLException e) {
             System.err.println("Error toggling user status: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -425,4 +364,51 @@ public class UserDAO {
         }
     }
 
+    public boolean updateAvatarCustomer(long userID, String avatarUrl) {
+        String sql = "UPDATE Users SET AvatarUrl = ? WHERE UserID = ?";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, avatarUrl);
+            ps.setLong(2, userID);
+
+            int rows = ps.executeUpdate();
+            return rows > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Helper method to extract User data from ResultSet without accessing non-existent columns
+     */
+    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
+        User user = new User();
+        user.setUserID(rs.getLong("UserID"));
+        user.setEmail(rs.getString("Email"));
+        user.setFullName(rs.getString("FullName"));
+        user.setAuthProvider(rs.getString("AuthProvider"));
+        user.setStatus(rs.getString("Status"));
+        
+        // Roles may be null for some queries
+        try {
+            user.setRoles(rs.getString("Roles"));
+        } catch (SQLException e) {
+            // Roles might not be in the result set
+        }
+        
+        try {
+            user.setAvatarUrl(rs.getString("AvatarUrl"));
+        } catch (SQLException e) {
+            // AvatarUrl might be null
+        }
+        
+        Timestamp ts = rs.getTimestamp("CreatedAt");
+        user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
+        
+        return user;
+    }
 }

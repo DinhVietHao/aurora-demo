@@ -11,9 +11,10 @@ public class User {
     private String password;
     private LocalDateTime createdAt;
     private String status = "active"; // Default value
-    private String phone;
-    private int points;
-    private String nationalID;
+    // These fields don't exist in the database schema
+    // Removed: private String phone;
+    // Removed: private int points;
+    // Removed: private String nationalID;
     private String avatarUrl;
     private String roles;
 
@@ -92,6 +93,8 @@ public class User {
         this.status = status;
     }
     
+    // Removed methods for fields that don't exist in the database
+    /*
     public String getPhone() {
         return phone;
     }
@@ -124,6 +127,7 @@ public class User {
     public void setNationalId(String nationalId) {
         this.nationalID = nationalId;
     }
+    */
     
     public String getAvatarUrl() {
         return avatarUrl;
