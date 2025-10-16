@@ -12,8 +12,8 @@ public class OrderShopDAO {
     public long createOrderShop(Connection conn, OrderShop orderShop) {
         String sql = """
                     INSERT INTO OrderShops(OrderID, ShopID, VoucherID, Subtotal,
-                                           Discount, ShippingFee, FinalAmount, [Status])
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                           Discount, ShippingFee, FinalAmount, [Status], CreatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {

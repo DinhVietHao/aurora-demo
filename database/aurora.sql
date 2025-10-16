@@ -31,6 +31,7 @@ CREATE TABLE Addresses
     RecipientName NVARCHAR(150) NOT NULL,
     Phone NVARCHAR(20) NOT NULL,
     City NVARCHAR(100) NOT NULL,
+    ProvinceID INT NULL,
     District NVARCHAR(100) NOT NULL,
     DistrictID INT NULL,
     Ward NVARCHAR(100) NOT NULL,
