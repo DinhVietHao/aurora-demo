@@ -1,4 +1,4 @@
-package com.group01.aurora_demo.profile.service;
+package com.group01.aurora_demo.profile.controller;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,27 +9,32 @@ import java.net.URL;
 
 import com.group01.aurora_demo.profile.config.GHNConfig;
 
-@WebServlet("/ghn")
-public class GHNLocationServlet extends HttpServlet {
+@WebServlet("/api/address")
+public class AddressAPIServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("application/json;charset=UTF-8");
 
-        String type = request.getParameter("type"); // province | district | ward
+        String type = request.getParameter("type");
         String provinceId = request.getParameter("province_id");
         String districtId = request.getParameter("district_id");
 
-        String apiUrl;
+        String apiUrl = null;
         switch (type) {
-            case "province" -> apiUrl = GHNConfig.BASE_URL + "/province";
-            case "district" -> apiUrl = GHNConfig.BASE_URL + "/district?province_id=" + provinceId;
-            case "ward" -> apiUrl = GHNConfig.BASE_URL + "/ward?district_id=" + districtId;
-            default -> {
+            case "province":
+                apiUrl = GHNConfig.BASE_URL + "/province";
+                break;
+            case "district":
+                apiUrl = GHNConfig.BASE_URL + "/district?province_id=" + provinceId;
+                break;
+            case "ward":
+                apiUrl = GHNConfig.BASE_URL + "/ward?district_id=" + districtId;
+                break;
+            default:
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 response.getWriter().write("{\"error\":\"Invalid type\"}");
                 return;
-            }
         }
 
         try {

@@ -17,12 +17,20 @@ import java.util.stream.Stream;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
+import com.group01.aurora_demo.catalog.dao.CategoryDAO;
+import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderDAO {
+    private CategoryDAO categoryDAO;
+
+    public OrderDAO() {
+        this.categoryDAO = new CategoryDAO();
+    }
+
     public long createOrder(Connection conn, Order order) {
         String sql = """
                     INSERT INTO Orders(UserID, AddressID, VoucherDiscountID, VoucherShipID,
@@ -118,6 +126,8 @@ public class OrderDAO {
                 order.setShopStatus(rs.getString("ShopStatus"));
                 order.setOrderStatus(rs.getString("OrderStatus"));
                 order.setOrderDate(rs.getDate("OrderDate"));
+                List<Category> categories = this.categoryDAO.getCategoriesByProductId(rs.getLong("ProductID"));
+                order.setCategories(categories);
                 orders.add(order);
             }
         } catch (Exception e) {

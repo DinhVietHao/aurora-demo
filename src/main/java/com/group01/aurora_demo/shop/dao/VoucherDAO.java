@@ -192,7 +192,7 @@ public class VoucherDAO {
     }
 
     public boolean incrementUsage(Connection conn, long voucherId) {
-        String sql = "UPDATE Voucher SET UsageCount = UsageCount + 1 WHERE VoucherID = ?";
+        String sql = "UPDATE Vouchers SET UsageCount = UsageCount + 1 WHERE VoucherID = ?  AND (UsageLimit IS NULL OR UsageCount < UsageLimit)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, voucherId);
             return ps.executeUpdate() > 0;
@@ -512,7 +512,7 @@ public class VoucherDAO {
                     UPDATE Vouchers
                     SET
                         Description = ?,
-                        StartAt = ?, 
+                        StartAt = ?,
                         EndAt = ?,
                         Status = ?
                     WHERE VoucherID = ?

@@ -735,12 +735,13 @@
                 </div>
                 <!--End Modal Error Payment -->
 
+
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/checkout/checkout.js'/>"></script>
+                <script src="<c:url value='/assets/js/customer/checkout/checkout.js?v=1.0.1'/>"></script>
 
                 <!-- Link javascript of Shipping Address -->
                 <script src="./assets/js/customer/address/address.js?v=1.0.1"></script>

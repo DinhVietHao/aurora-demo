@@ -30,7 +30,7 @@ public class AddressDAO {
     public List<Address> getAddressesByUserId(long userId) {
         List<Address> list = new ArrayList<>();
         String sql = """
-                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City,
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.District,
                            a.Description, a.Ward, ua.IsDefault
                     FROM Addresses a
                     JOIN Users_Addresses ua ON a.AddressID = ua.AddressID
@@ -50,6 +50,7 @@ public class AddressDAO {
                 address.setRecipientName(rs.getString("RecipientName"));
                 address.setPhone(rs.getString("Phone"));
                 address.setCity(rs.getString("City"));
+                address.setDistrict(rs.getString("District"));
                 address.setDescription(rs.getString("Description"));
                 address.setWard(rs.getString("Ward"));
 
@@ -106,8 +107,8 @@ public class AddressDAO {
 
     public Address getAddressById(long userId, long addressId) {
         String sql = """
-                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City,
-                           a.Description, a.Ward, ua.IsDefault
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.ProvinceID, a.District, a.DistrictID,
+                           a.Description, a.Ward, a.WardCode, ua.IsDefault
                     FROM Addresses a
                     JOIN Users_Addresses ua ON a.AddressID = ua.AddressID
                     WHERE ua.UserID = ? AND a.AddressID = ?
@@ -126,7 +127,11 @@ public class AddressDAO {
                 address.setRecipientName(rs.getString("RecipientName"));
                 address.setPhone(rs.getString("Phone"));
                 address.setCity(rs.getString("City"));
+                address.setProvinceId(rs.getInt("ProvinceID"));
+                address.setDistrict(rs.getString("District"));
+                address.setDistrictId(rs.getInt("DistrictID"));
                 address.setWard(rs.getString("Ward"));
+                address.setWardCode(rs.getString("WardCode"));
                 address.setDescription(rs.getString("Description"));
 
                 UserAddress userAddress = new UserAddress();
@@ -146,8 +151,8 @@ public class AddressDAO {
 
     public void addAddress(long userId, Address address, boolean isDefault) {
         String insertAddress = """
-                    INSERT INTO Addresses (RecipientName, Phone, City, Ward, Description)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO Addresses (RecipientName, Phone, City, ProvinceID, District, DistrictID, Ward, WardCode, Description)
+                    VALUES (?, ?, ?, ?, ?, ?, ? , ?< ?)
                 """;
         String insertUserAddress = """
                     INSERT INTO Users_Addresses (UserID, AddressID, IsDefault)
@@ -161,8 +166,12 @@ public class AddressDAO {
             ps1.setString(1, address.getRecipientName());
             ps1.setString(2, address.getPhone());
             ps1.setString(3, address.getCity());
-            ps1.setString(4, address.getWard());
-            ps1.setString(5, address.getDescription());
+            ps1.setInt(4, address.getProvinceId());
+            ps1.setString(5, address.getDistrict());
+            ps1.setInt(6, address.getDistrictId());
+            ps1.setString(7, address.getWard());
+            ps1.setString(8, address.getWardCode());
+            ps1.setString(9, address.getDescription());
             ps1.executeUpdate();
 
             ResultSet rs = ps1.getGeneratedKeys();
@@ -192,7 +201,7 @@ public class AddressDAO {
     public void updateAddress(long userId, Address address, boolean setAsDefault) {
         String updateAddress = """
                     UPDATE Addresses
-                    SET RecipientName=?, Phone=?, City=?, Ward=?, Description=?, createdAt = SYSUTCDATETIME()
+                    SET RecipientName=?, Phone=?, City=?, ProvinceID=?, District = ?, DistrictID=?, Ward=?, WardCode=?, Description=?, createdAt = SYSUTCDATETIME()
                     WHERE AddressID=?
                 """;
         String updateDefault = "UPDATE Users_Addresses SET IsDefault = 0 WHERE UserID = ?";
@@ -204,9 +213,12 @@ public class AddressDAO {
             ps1.setString(1, address.getRecipientName());
             ps1.setString(2, address.getPhone());
             ps1.setString(3, address.getCity());
-            ps1.setString(4, address.getWard());
-            ps1.setString(5, address.getDescription());
-            ps1.setLong(6, address.getAddressId());
+            ps1.setInt(4, address.getProvinceId());
+            ps1.setString(5, address.getDistrict());
+            ps1.setInt(6, address.getDistrictId());
+            ps1.setString(7, address.getWard());
+            ps1.setString(8, address.getWardCode());
+            ps1.setString(9, address.getDescription());
             ps1.executeUpdate();
 
             if (setAsDefault) {

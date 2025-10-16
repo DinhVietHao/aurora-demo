@@ -89,7 +89,6 @@ public class CheckoutService {
         }
 
         double finalAmount = totalProduct + totalShippingFee - totalDiscount - shipDiscount;
-
         return new CheckoutSummaryDTO(totalProduct, totalDiscount, totalShippingFee, shipDiscount, finalAmount);
     }
 
