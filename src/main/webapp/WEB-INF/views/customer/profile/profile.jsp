@@ -13,7 +13,7 @@
                 </jsp:include>
 
                 <!-- CSS riêng trang Profile -->
-                <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
+                <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css">
             </head>
 
             <body>

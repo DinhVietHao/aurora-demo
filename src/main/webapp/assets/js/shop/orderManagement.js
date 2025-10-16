@@ -61,3 +61,35 @@ function initializeSidebar() {
     }
   }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  const countdowns = document.querySelectorAll(".countdown");
+
+  countdowns.forEach((el) => {
+    const createdAtMillis = parseInt(el.dataset.createdAt);
+    const expireTime = createdAtMillis + 3 * 24 * 60 * 60 * 1000;
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = expireTime - now;
+
+      if (distance <= 0) {
+        el.textContent = "Đơn hàng đã hết hạn ⏰";
+        el.classList.add("text-danger", "fw-bold");
+        return;
+      }
+
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      el.textContent = `${days} ngày ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  });
+});
