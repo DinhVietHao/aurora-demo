@@ -129,7 +129,7 @@
                                             <table id="datatablesSimple" class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>Sách/th>
+                                                        <th>Sách </th>
                                                         <th>Thể loại</th>
                                                         <th>Giá bán</th>
                                                         <th>Số lượng</th>

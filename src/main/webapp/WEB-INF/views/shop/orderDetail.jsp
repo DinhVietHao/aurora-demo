@@ -2,6 +2,7 @@
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
             <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+                <fmt:setLocale value="vi_VN" />
                 <c:set var="pageTitle" value="Aurora" />
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
                 <!DOCTYPE html>
@@ -60,6 +61,10 @@
                                                     <c:when test="${orderShop.status == 'WAITING_SHIP'}">
                                                         <span class="badge bg-info text-dark">Chờ giao hàng</span>
                                                     </c:when>
+                                                    <c:when test="${orderShop.status == 'CONFIRM'}">
+                                                        <span class="badge bg-secondary">Chờ xác nhận của khách
+                                                            hàng</span>
+                                                    </c:when>
                                                     <c:when test="${orderShop.status == 'COMPLETED'}">
                                                         <span class="badge bg-success">Hoàn thành</span>
                                                     </c:when>
@@ -75,6 +80,21 @@
                                                     <fmt:formatDate value="${orderShop.createdAt}"
                                                         pattern="dd/MM/yyyy HH:mm" />
                                                 </span>
+
+                                                <c:if
+                                                    test="${orderShop.status == 'CANCELLED' && not empty orderShop.cancelReason}">
+                                                    <div class="mt-2 text-danger fw-semibold">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        Lý do hủy: ${orderShop.cancelReason}
+                                                    </div>
+                                                </c:if>
+                                                <c:if
+                                                    test="${orderShop.status == 'RETURNED' && not empty orderShop.returnReason}">
+                                                    <div class="mt-2 text-danger fw-semibold">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                        Lý do hoàn tiền: ${orderShop.returnReason}
+                                                    </div>
+                                                </c:if>
                                             </div>
                                             <div>
 
@@ -121,21 +141,32 @@
                                                             method="post" class="d-inline status-form">
                                                             <input type="hidden" name="orderShopId"
                                                                 value="${orderShop.orderShopId}" />
-                                                            <input type="hidden" name="newStatus" value="COMPLETED" />
+                                                            <input type="hidden" name="newStatus" value="CONFIRM" />
                                                             <button type="button"
                                                                 class="btn btn-success btn-sm btn-show-modal"
                                                                 data-bs-toggle="modal" data-bs-target="#confirmModal"
-                                                                data-message="Bạn có chắc muốn xác nhận hoàn tất đơn hàng này?"
+                                                                data-message="Đơn hàng đã đến tay người nhận chuyển sang xác nhận của khách hàng?"
                                                                 data-form="status-form">
-                                                                <i class="bi bi-check2-circle"></i> Hoàn tất
-                                                                đơn hàng
+                                                                <i class="bi bi-check2-circle"></i> Đơn hàng đã đến tay
+                                                                người nhận
                                                             </button>
                                                         </form>
                                                     </c:when>
 
+                                                    <c:when test="${orderShop.status == 'CONFIRM'}">
+                                                        <button class="btn btn-warning btn-sm" disabled>
+                                                            <i class="bi bi-lock"></i> Đang đợi khách hàng xác nhận
+                                                        </button>
+                                                    </c:when>
+
+                                                    <c:when test="${orderShop.status == 'CANCELLED'}">
+                                                        <button class="btn btn-secondary btn-sm" disabled>
+                                                            <i class="bi bi-lock"></i> Đơn hàng đã hủy
+                                                        </button>
+                                                    </c:when>
 
                                                     <c:otherwise>
-                                                        <button class="btn btn-secondary btn-sm" disabled>
+                                                        <button class="btn btn-success btn-sm" disabled>
                                                             <i class="bi bi-lock"></i> Đơn hàng đã hoàn
                                                             tất
                                                         </button>
@@ -170,24 +201,56 @@
                                                     <h5><i class="bi bi-receipt me-2"></i>Tóm tắt thanh toán</h5>
                                                 </div>
                                                 <div class="card-body">
-                                                    <p><strong>Tạm tính:</strong>
-                                                        <fmt:formatNumber value="${orderShop.orderTotal}"
-                                                            type="currency" currencySymbol="₫" />
-                                                    </p>
-                                                    <p><strong>Phí vận chuyển:</strong>
-                                                        <fmt:formatNumber value="${orderShop.shippingFee}"
-                                                            type="currency" currencySymbol="₫" />
-                                                    </p>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Tạm tính:</strong>
+                                                        <span>
+                                                            <fmt:formatNumber value="${orderShop.orderTotal}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Phí vận chuyển:</strong>
+                                                        <span>
+                                                            <fmt:formatNumber value="${orderShop.shippingFee}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Phí voucher:</strong>
+                                                        <span>
+                                                            -
+                                                            <fmt:formatNumber value="${orderShop.discount}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
                                                     <hr>
-                                                    <p><strong>Tổng cộng:</strong>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Tổng cộng:</strong>
                                                         <span class="text-primary fw-bold">
                                                             <fmt:formatNumber value="${orderShop.finalAmount}"
-                                                                type="currency" currencySymbol="₫" />
+                                                                pattern="#,##0" /> VND
                                                         </span>
-                                                    </p>
+                                                    </div>
+                                                    <hr>
+
+                                                    <div class="payment-method">
+                                                        <strong>Phương thức thanh toán:</strong>
+                                                        <div class="mt-2">
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-credit-card me-1"></i>Thanh toán online
+                                                            </span>
+                                                        </div>
+                                                        <small class="text-muted">Đã thanh toán</small>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+
                                     </div>
 
                                     <!-- Danh sách sản phẩm -->
