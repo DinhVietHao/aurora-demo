@@ -1,47 +1,86 @@
-function initProvinceWard(
-    provinceSelect,
-    wardSelect,
-    defaultProvince = "",
-    defaultWard = ""
+function initAddressSelects(
+  provinceSelect,
+  districtSelect,
+  wardSelect,
+  provinceNameInput,
+  districtNameInput,
+  wardNameInput,
+  provinceIdInput,
+  districtIdInput,
+  wardCodeInput
 ) {
-    fetch("https://provinces.open-api.vn/api/v2/p/")
-        .then((res) => res.json())
-        .then((provinces) => {
-            provinces.forEach((p) => {
-                const opt = document.createElement("option");
-                opt.value = p.name;
-                opt.textContent = p.name;
-                opt.dataset.code = p.code;
-                provinceSelect.appendChild(opt);
-            });
-
-            if (defaultProvince) {
-                provinceSelect.value = defaultProvince;
-                loadWards(provinceSelect, wardSelect, defaultWard);
-            }
-            provinceSelect.addEventListener("change", () =>
-                loadWards(provinceSelect, wardSelect)
-            );
+  fetch("/api/address?type=province")
+    .then((res) => res.json())
+    .then((provinceData) => {
+      if (provinceData.data && Array.isArray(provinceData.data)) {
+        provinceData.data.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p.ProvinceID;
+          opt.textContent = p.ProvinceName;
+          provinceSelect.appendChild(opt);
         });
-}
+      }
+    });
 
-function loadWards(provinceSelect, wardSelect, defaultWard = "") {
-    wardSelect.innerHTML = "<option value=''>Chọn Phường/Xã</option>";
-    const selectedOption = provinceSelect.selectedOptions[0];
-    if (!selectedOption) return;
-    fetch(
-        `https://provinces.open-api.vn/api/v2/p/${selectedOption.dataset.code}?depth=2`
-    )
-        .then((res) => res.json())
-        .then((data) => {
-            data.wards.forEach((w) => {
-                const opt = document.createElement("option");
-                opt.value = w.name;
-                opt.textContent = w.name;
-                wardSelect.appendChild(opt);
-            });
-            if (defaultWard) {
-                wardSelect.value = defaultWard;
-            }
-        });
+  provinceSelect.addEventListener("change", function () {
+    const id = provinceSelect.value;
+    const name =
+      provinceSelect.options[provinceSelect.selectedIndex]?.text || "";
+    provinceNameInput.value = name;
+    provinceIdInput.value = id;
+
+    districtSelect.innerHTML =
+      '<option value="">-- Chọn Quận/Huyện --</option>';
+    wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+    districtSelect.disabled = !id;
+    wardSelect.disabled = true;
+
+    if (!id) return;
+
+    fetch("/api/address?type=district&province_id=" + id)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.data && Array.isArray(data.data)) {
+          data.data.forEach((d) => {
+            const opt = document.createElement("option");
+            opt.value = d.DistrictID;
+            opt.textContent = d.DistrictName;
+            districtSelect.appendChild(opt);
+          });
+        }
+      });
+  });
+
+  districtSelect.addEventListener("change", function () {
+    const id = districtSelect.value;
+    const name =
+      districtSelect.options[districtSelect.selectedIndex]?.text || "";
+    districtNameInput.value = name;
+    districtIdInput.value = id;
+
+    wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
+    wardSelect.disabled = !id;
+
+    if (!id) return;
+
+    fetch("/api/address?type=ward&district_id=" + id)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.data && Array.isArray(data.data)) {
+          data.data.forEach((w) => {
+            const opt = document.createElement("option");
+            opt.value = w.WardCode;
+            opt.textContent = w.WardName;
+            wardSelect.appendChild(opt);
+          });
+        }
+      });
+  });
+
+  wardSelect.addEventListener("change", function () {
+    const code = wardSelect.value;
+    const name = wardSelect.options[wardSelect.selectedIndex]?.text || "";
+    wardNameInput.value = name;
+    wardCodeInput.value = code;
+  });
 }

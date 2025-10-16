@@ -2,6 +2,7 @@ package com.group01.aurora_demo.cart.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,16 +61,11 @@ public class OrderServlet extends HttpServlet {
 
                 Map<Long, List<OrderDTO>> grouped = orders.stream()
                         .collect(Collectors.groupingBy(order -> order.getShopId()));
-
-                // List<Category> categories =
-                // this.categoryDAO.getCategoriesByProductId(orders.get(0).getProductId());
                 req.setAttribute("orders", grouped);
-                // req.setAttribute("categories", categories);
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 

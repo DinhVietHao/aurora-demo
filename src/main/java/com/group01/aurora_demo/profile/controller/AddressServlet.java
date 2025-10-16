@@ -36,7 +36,7 @@ public class AddressServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
         String path = req.getPathInfo();
@@ -51,8 +51,12 @@ public class AddressServlet extends HttpServlet {
                 json.put("addressId", address.getAddressId());
                 json.put("recipientName", address.getRecipientName());
                 json.put("phone", address.getPhone());
-                json.put("city", address.getCity());
+                json.put("province", address.getCity());
+                json.put("provinceId", address.getProvinceId());
+                json.put("district", address.getDistrict());
+                json.put("districtId", address.getDistrictId());
                 json.put("ward", address.getWard());
+                json.put("wardCode", address.getWardCode());
                 json.put("description", address.getDescription());
                 json.put("defaultAddress", address.getUserAddress().isDefaultAddress());
                 out.print(json.toString());
@@ -75,21 +79,23 @@ public class AddressServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
         System.out.println("Check path " + path);
         switch (path) {
             case "/update":
-                System.out.println(">>>>>>>>>>>>>>>>>>>>>. Check update");
                 try {
                     long addressIdUpdate = Long.parseLong(req.getParameter("addressId"));
 
                     String recipientName = req.getParameter("fullName");
                     String phone = req.getParameter("phone");
-                    String city = req.getParameter("city");
-                    String ward = req.getParameter("ward");
+                    String city = req.getParameter("cityName");
+                    String district = req.getParameter("districtName");
+                    String ward = req.getParameter("wardName");
                     String description = req.getParameter("description");
+                    int districtId = Integer.parseInt(req.getParameter("districtId"));
+                    String wardCode = req.getParameter("wardCode");
                     boolean isDefault = req.getParameter("isDefault") != null;
 
                     Address address = new Address();
@@ -97,29 +103,45 @@ public class AddressServlet extends HttpServlet {
                     address.setRecipientName(recipientName);
                     address.setPhone(phone);
                     address.setCity(city);
+                    address.setDistrict(district);
+                    address.setDistrictId(districtId);
                     address.setWard(ward);
+                    address.setWardCode(wardCode);
                     address.setDescription(description);
                     this.addressDAO.updateAddress(user.getId(), address, isDefault);
 
+                    String from = req.getParameter("from");
+                    if (from.equalsIgnoreCase("checkout")) {
+                        resp.sendRedirect(req.getContextPath() + "/checkout");
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/address");
+                    }
                 } catch (Exception e) {
-                    System.out.println(">>>>>>>>>>>>>>>>>>>>>>>Check lỗi");
                     System.out.println(e.getMessage());
                 }
-                resp.sendRedirect(req.getContextPath() + "/address");
+
                 break;
             case "/add":
                 String recipientName = req.getParameter("fullName");
                 String phone = req.getParameter("phone");
-                String city = req.getParameter("city");
-                String ward = req.getParameter("ward");
+                String city = req.getParameter("cityName");
+                String district = req.getParameter("districtName");
+                String ward = req.getParameter("wardName");
                 String description = req.getParameter("description");
+                int provinceId = Integer.parseInt(req.getParameter("provinceId"));
+                int districtId = Integer.parseInt(req.getParameter("districtId"));
+                String wardCode = req.getParameter("wardCode");
                 boolean isDefault = req.getParameter("isDefault") != null;
 
                 Address address = new Address();
                 address.setRecipientName(recipientName);
                 address.setPhone(phone);
                 address.setCity(city);
+                address.setProvinceId(provinceId);
+                address.setDistrict(district);
+                address.setDistrictId(districtId);
                 address.setWard(ward);
+                address.setWardCode(wardCode);
                 address.setDescription(description);
                 this.addressDAO.addAddress(user.getId(), address, isDefault);
 
