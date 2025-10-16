@@ -5,7 +5,7 @@
         <div class="sb-sidenav-menu">
           <div class="nav">
             <div class="sb-sidenav-menu-heading">Tổng quan</div>
-            <a class="nav-link" href="/dashboard">
+            <a class="nav-link" href="/shop/dashboard">
               <div class="sb-nav-link-icon"><i class="bi bi-speedometer2"></i></div>
               Dashboard
             </a>
@@ -19,7 +19,7 @@
               <div class="sb-nav-link-icon"><i class="bi bi-box-seam"></i></div>
               Sản phẩm
             </a>
-            <a class="nav-link" href="/shop/order">
+            <a class="nav-link" href="/shop/orders">
               <div class="sb-nav-link-icon"><i class="bi bi-cart3"></i></div>
               Đơn hàng
             </a>

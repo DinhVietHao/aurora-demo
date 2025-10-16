@@ -112,8 +112,7 @@
                                                         <div class="mb-3">
                                                             <label for="shopAddress" class="form-label">Địa chỉ chi
                                                                 tiết</label>
-                                                            <input type="text" class="form-control" id="shopAddress"
-                                                                value="${shop.pickupAddress.line}, ${shop.pickupAddress.ward}" />
+                                                            <input type="text" class="form-control" id="shopAddress" />
                                                         </div>
 
                                                         <div class="d-flex justify-content-end">

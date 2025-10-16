@@ -39,6 +39,8 @@ public class AddressServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
+
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
         if (path == null || path.equals("/")) {
             List<Address> addresses = this.addressDAO.getAddressesByUserId(user.getId());
@@ -82,6 +84,8 @@ public class AddressServlet extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
+
+        req.setAttribute("user", user);
         System.out.println("Check path " + path);
         switch (path) {
             case "/update":

@@ -1,3 +1,16 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.container.information-account {
+  flex: 1 0 auto;
+}
+footer.footer {
+  margin-top: 0 !important;
+  padding-bottom: 16px !important;
+}
+
 .information-account .information-account__sidebar {
     background-color: #fff;
     border-radius: 10px;
@@ -27,18 +40,6 @@
     padding: 20px 20px 50px 20px;
 }
 
-.profile .profile-remove {
-    font-size: 12px;
-    font-weight: 400;
-    border: none;
-    background-color: transparent;
-    color: var(--color-three);
-}
-
-.profile .profile-remove:hover {
-    font-weight: 500;
-}
-
 .profile-des {
     padding-bottom: 10px;
     border-bottom: 1px solid #efefef;
@@ -48,6 +49,16 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
+}
+
+.change-password-link {
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.custom-modal-top {
+  margin-top: 196px;
 }
 
 /* Active TAB */

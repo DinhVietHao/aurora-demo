@@ -75,8 +75,10 @@ public class HomeServlet extends HttpServlet {
                 try {
                     long id = Long.parseLong(idRaw);
                     Product product = productDAO.getProductById(id);
+                    int reviewCount = productDAO.countReviewsByProductId(id);
                     request.setAttribute("title", product.getTitle());
                     request.setAttribute("product", product);
+                    request.setAttribute("reviewCount", reviewCount);
                     request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request,
                             response);
                 } catch (NumberFormatException e) {
