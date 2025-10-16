@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.group01.aurora_demo.auth.model.User;
@@ -22,6 +21,7 @@ import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
 
@@ -34,6 +34,7 @@ public class OrderService {
     private CheckoutService checkoutService;
     private CartItemDAO cartItemDAO;
     private VoucherValidator voucherValidator;
+    private UserVoucherDAO userVoucherDAO;
 
     public OrderService() {
         this.orderDAO = new OrderDAO();
@@ -44,6 +45,7 @@ public class OrderService {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.voucherValidator = new VoucherValidator();
+        this.userVoucherDAO = new UserVoucherDAO();
     }
 
     public boolean createOrder(User user, Address address, Voucher voucherDiscount,
@@ -79,8 +81,8 @@ public class OrderService {
                     .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
-
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
+
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();
                 List<CartItem> items = entry.getValue();
@@ -104,6 +106,15 @@ public class OrderService {
                             conn.rollback();
                             return false;
                         }
+
+                        if (shopVoucher.getPerUserLimit() >= 0) {
+                            int usedCount = this.userVoucherDAO.getUserVoucherUsageCount(user.getId(),
+                                    shopVoucher.getVoucherID());
+                            if (usedCount >= shopVoucher.getPerUserLimit()) {
+                                conn.rollback();
+                                return false;
+                            }
+                        }
                         shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
                         shopVoucherId = shopVoucher.getVoucherID();
                     }
@@ -120,6 +131,7 @@ public class OrderService {
                 orderShop.setFinalAmount(shopSubtotal - shopDiscount + shopShippingFee);
                 orderShop.setStatus("PENDING");
                 long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
+
                 if (orderShopId == -1) {
                     conn.rollback();
                     return false;
@@ -158,13 +170,17 @@ public class OrderService {
 
             if (voucherDiscount != null) {
                 this.voucherDAO.incrementUsage(conn, voucherDiscount.getVoucherID());
+                this.userVoucherDAO.insertUserVoucher(user.getId(), voucherDiscount.getVoucherID());
             }
             if (voucherShip != null) {
                 this.voucherDAO.incrementUsage(conn, voucherShip.getVoucherID());
+                this.userVoucherDAO.insertUserVoucher(user.getId(), voucherShip.getVoucherID());
+
             }
             if (shopVouchers != null) {
                 for (Voucher shopVoucher : shopVoucherCache.values()) {
-                    voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID());
+                    this.voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID());
+                    this.userVoucherDAO.insertUserVoucher(user.getId(), shopVoucher.getVoucherID());
                 }
             }
             conn.commit();

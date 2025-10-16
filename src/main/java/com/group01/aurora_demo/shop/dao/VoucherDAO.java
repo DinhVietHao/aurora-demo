@@ -512,7 +512,7 @@ public class VoucherDAO {
                     UPDATE Vouchers
                     SET
                         Description = ?,
-                        StartAt = ?, 
+                        StartAt = ?,
                         EndAt = ?,
                         Status = ?
                     WHERE VoucherID = ?

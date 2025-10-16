@@ -1,0 +1,39 @@
+package com.group01.aurora_demo.shop.dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.group01.aurora_demo.common.config.DataSourceProvider;
+
+public class UserVoucherDAO {
+    public boolean insertUserVoucher(Long userId, Long voucherId) {
+        String sql = "INSERT INTO UserVouchers(UserID, VoucherID) VALUES (?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            ps.setLong(2, voucherId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
+
+    public int getUserVoucherUsageCount(Long userId, Long voucherId) {
+        String sql = "SELECT COUNT(*) FROM UserVouchers WHERE UserID = ? AND VoucherID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, voucherId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+}
