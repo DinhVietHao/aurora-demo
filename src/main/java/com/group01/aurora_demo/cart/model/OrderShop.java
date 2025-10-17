@@ -23,6 +23,8 @@ public class OrderShop {
     private String voucherCode;
     private String cancelReason;
     private String returnReason;
+    private List<OrderItem> items;
+    private User user;
 
     public Date getUpdateAt() {
         return updateAt;
@@ -65,9 +67,6 @@ public class OrderShop {
     public void setVoucherCode(String voucherCode) {
         this.voucherCode = voucherCode;
     }
-
-    private List<OrderItem> items;
-    private User user;
 
     public User getUser() {
         return user;

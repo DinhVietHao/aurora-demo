@@ -49,7 +49,7 @@ public class VoucherServlet extends HttpServlet {
         }
         if ("delete_failed".equals(error)) {
             request.setAttribute("errorMessage",
-                    "Không thể xóa voucher này vì (đã dùng, hết hạn hoặc gắn với đơn hàng).");
+                    "Không thể xóa voucher này vì đã có khách hàng dùng voucher.");
         }
         if ("create_success".equals(message)) {
             request.setAttribute("successMessage",
@@ -70,6 +70,10 @@ public class VoucherServlet extends HttpServlet {
         if ("update_failed".equals(error)) {
             request.setAttribute("errorMessage",
                     "Không thể cập nhật voucher " + voucherCode + " !");
+        }
+        if ("out_of_stock".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Không thể cập nhật voucher voucher đã được dùng hết!");
         }
 
         try {
@@ -123,24 +127,32 @@ public class VoucherServlet extends HttpServlet {
                         }
 
                         int usageCount = voucherDAO.getUsageCount(voucherId);
+                        Integer usageLimit = voucher.getUsageLimit();
+
                         boolean disableAll = false;
                         boolean restrictToDescription = false;
+
                         LocalDateTime now = LocalDateTime.now();
                         LocalDateTime startAt = voucher.getStartAt().toLocalDateTime();
                         LocalDateTime endAt = voucher.getEndAt().toLocalDateTime();
+
                         String status;
+
                         if (now.isBefore(startAt)) {
                             status = "UPCOMING";
                         } else if (now.isAfter(endAt)) {
                             status = "EXPIRED";
+                        } else if (usageLimit != null && usageCount >= usageLimit) {
+                            status = "OUT_OF_STOCK";
                         } else {
                             status = "ACTIVE";
                         }
+
                         voucher.setStatus(status);
+
                         switch (status) {
                             case "UPCOMING":
                                 break;
-
                             case "ACTIVE":
                                 if (usageCount > 0) {
                                     disableAll = true;
@@ -149,10 +161,18 @@ public class VoucherServlet extends HttpServlet {
                                 }
                                 break;
 
-                            case "EXPIRED":
-                                restrictToDescription = true;
+                            case "OUT_OF_STOCK":
+                                disableAll = true;
                                 request.setAttribute("errorMessage",
-                                        "Voucher hết hạng chỉ được cập nhật \"mô tả\" và \"ngày kết thúc\"");
+                                        "Voucher đã được sử dụng hết lượt. Không thể chỉnh sửa.");
+                                break;
+
+                            case "EXPIRED":
+                                if (usageCount > 0) {
+                                    restrictToDescription = true;
+                                    request.setAttribute("errorMessage",
+                                            "Voucher đã hết hạn, chỉ được phép chỉnh sửa \"mô tả\" và \"ngày kết thúc\".");
+                                }
                                 break;
                             default:
                                 disableAll = true;
@@ -164,21 +184,21 @@ public class VoucherServlet extends HttpServlet {
                         request.setAttribute("restrictToDescription", restrictToDescription);
                         request.setAttribute("disableAll", disableAll);
 
-                        request.getRequestDispatcher("/WEB-INF/views/shop/updateVoucher.jsp").forward(request,
-                                response);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/updateVoucher.jsp")
+                                .forward(request, response);
 
                     } catch (Exception e) {
                         e.printStackTrace();
                         response.sendRedirect(
                                 request.getContextPath() + "/shop/voucher?action=view&error=update_failed");
                     }
-
                     break;
 
                 default:
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                     break;
             }
+
         } catch (Exception e) {
             e.printStackTrace();
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -296,13 +316,17 @@ public class VoucherServlet extends HttpServlet {
                         LocalDateTime originalEndAt = voucher.getEndAt().toLocalDateTime();
 
                         String status;
+
                         if (now.isBefore(voucher.getStartAt().toLocalDateTime())) {
                             status = "UPCOMING";
                         } else if (now.isAfter(originalEndAt)) {
                             status = "EXPIRED";
+                        } else if (voucher.getUsageLimit() != null && usageCount >= voucher.getUsageLimit()) {
+                            status = "OUT_OF_STOCK";
                         } else {
                             status = "ACTIVE";
                         }
+
                         voucher.setStatus(status);
 
                         boolean allowFullUpdate = false;
@@ -312,6 +336,7 @@ public class VoucherServlet extends HttpServlet {
                             case "UPCOMING":
                                 allowFullUpdate = true;
                                 break;
+
                             case "ACTIVE":
                                 if (usageCount == 0) {
                                     allowFullUpdate = true;
@@ -322,6 +347,13 @@ public class VoucherServlet extends HttpServlet {
                                     return;
                                 }
                                 break;
+
+                            case "OUT_OF_STOCK":
+                                response.sendRedirect(
+                                        request.getContextPath()
+                                                + "/shop/voucher?action=view&error=out_of_stock");
+                                return;
+
                             case "EXPIRED":
                                 allowPartialUpdate = true;
                                 break;
