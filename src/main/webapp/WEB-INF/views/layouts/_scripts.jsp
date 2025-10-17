@@ -15,7 +15,7 @@
 
         <!-- Tạo redirect_uri động, đúng host/port/context hiện tại -->
         <c:set var="redirectUri"
-            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth/login" />
+            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth" />
 
         <!-- Tạo URL đăng nhập Google OAuth v2, đã encode tham số -->
         <c:url var="googleAuthUrl" value="https://accounts.google.com/o/oauth2/v2/auth">

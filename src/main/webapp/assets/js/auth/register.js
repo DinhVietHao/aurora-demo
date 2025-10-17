@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
     otpInput: inputOtp,
     emailInput: inputEmail,
     modalElement: registerModalEl,
+    defaultPurpose: "register",
   };
 
   const otpManager = window.createOtpManager(otpConfig);

@@ -2,8 +2,15 @@
  * OTP Manager - Module tổng quát để quản lý gửi và verify OTP
  * Verify OTP bằng cách so sánh client-side với OTP nhận từ server
  */
-function createOtpManager(config) {
-  const { sendOtpBtn, timerLabel, otpInput, emailInput, modalElement } = config;
+function createOtpManager(config = {}) {
+  const {
+    sendOtpBtn,
+    timerLabel,
+    otpInput,
+    emailInput,
+    modalElement,
+    defaultPurpose,
+  } = config;
 
   // ——— State quản lý OTP ———
   let timeLeft = 0;
@@ -50,9 +57,20 @@ function createOtpManager(config) {
   }
 
   /**
+   * Mask email để hiển thị (giữ 1-2 ký tự đầu local-part)
+   */
+  function maskEmail(email) {
+    if (!email || !email.includes("@")) return "*******";
+    const [local, domain] = email.split("@");
+    const head = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2);
+    return head + "*****@" + domain;
+  }
+
+  /**
    * Enable/Disable nút "Gửi OTP"
    */
   function setBtnDisabled(disabled) {
+    if (!sendOtpBtn) return;
     sendOtpBtn.disabled = disabled;
     sendOtpBtn.style.opacity = disabled ? "0.5" : "1";
     sendOtpBtn.style.pointerEvents = disabled ? "none" : "";
@@ -63,6 +81,7 @@ function createOtpManager(config) {
    * Render mm:ss lên timer label
    */
   function updateDisplay(seconds) {
+    if (!timerLabel) return;
     const min = Math.floor(seconds / 60);
     const sec = seconds % 60;
     timerLabel.textContent = `${min}:${sec < 10 ? "0" + sec : sec}`;
@@ -77,15 +96,19 @@ function createOtpManager(config) {
     otpExpired = true;
     correctOtp = null; // Xoá OTP khi hết hạn
 
-    timerLabel.textContent = "Hết hạn";
-    timerLabel.style.color = "red";
+    if (timerLabel) {
+      timerLabel.textContent = "Hết hạn";
+      timerLabel.style.color = "red";
+    }
     setBtnDisabled(false);
 
-    showMessageForInput(
-      otpInput,
-      "Mã OTP đã hết hạn, vui lòng bấm Gửi OTP để nhận mã mới.",
-      "failure"
-    );
+    if (otpInput) {
+      showMessageForInput(
+        otpInput,
+        "Mã OTP đã hết hạn, vui lòng bấm Gửi OTP để nhận mã mới.",
+        "failure"
+      );
+    }
   }
 
   /**
@@ -118,10 +141,14 @@ function createOtpManager(config) {
     timeLeft = 0;
     otpExpired = false;
     correctOtp = null;
-    timerLabel.textContent = "";
+
+    if (timerLabel) {
+      timerLabel.textContent = "";
+    }
+
     setBtnDisabled(false);
-    showMessageForInput(otpInput, "", "");
-    showMessageForInput(emailInput, "", "");
+    if (otpInput) showMessageForInput(otpInput, "", "");
+    if (emailInput) showMessageForInput(emailInput, "", "");
   }
 
   /**
@@ -149,6 +176,7 @@ function createOtpManager(config) {
 
   /**
    * Gửi OTP qua email
+   * @param {string} purpose - "register" hoặc "forgot-password"
    */
   async function sendOtp() {
     const email = (emailInput?.value || "").trim();
@@ -171,6 +199,7 @@ function createOtpManager(config) {
     correctOtp = null; // Reset OTP cũ
 
     // Khoá nút trong lúc gửi
+    if (!sendOtpBtn) return false;
     const oldText = sendOtpBtn.textContent;
     sendOtpBtn.textContent = "Đang gửi...";
     setBtnDisabled(true);
@@ -178,6 +207,7 @@ function createOtpManager(config) {
     const formData = new FormData();
     formData.append("action", "send-otp");
     formData.append("email", email);
+    formData.append("purpose", defaultPurpose);
 
     try {
       const res = await fetch("/auth", {
@@ -261,8 +291,10 @@ function createOtpManager(config) {
   // ——— Public API ———
   return {
     sendOtp,
+    maskEmail,
     isOtpValid,
     verifyOtpNow,
+    isValidEmail,
     invalidateOtp,
     resetCountdown,
     showMessageForInput,
