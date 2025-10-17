@@ -1258,6 +1258,34 @@ public class ProductDAO {
         }
     }
 
+    public Product getBasicProductById(long productId) {
+        Product product = null;
+        String sql = """
+                    SELECT ProductID, ShopID, Title, SalePrice, Quantity, SoldCount, Status
+                    FROM Products
+                    WHERE ProductID = ?
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                product = new Product();
+                product.setProductId(rs.getLong("ProductID"));
+                product.setShopId(rs.getLong("ShopID"));
+                product.setTitle(rs.getString("Title"));
+                product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setQuantity(rs.getInt("Quantity"));
+                product.setSoldCount(rs.getLong("SoldCount"));
+                product.setStatus(rs.getString("Status"));
+            }
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+
+        return product;
+    }
+
     public boolean updateProduct(Product product) throws SQLException {
         String updateProductSql = """
                 UPDATE Products
