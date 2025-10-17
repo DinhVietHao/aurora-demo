@@ -63,6 +63,10 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("successMessage",
                     "Đã thêm sản phẩm thành công.");
         }
+        if ("load_failed".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Load xem chi tiết bị lỗi gián đoạn");
+        }
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
         try {
@@ -103,7 +107,6 @@ public class ProductServlet extends HttpServlet {
                             return;
                         }
 
-                        // Chuyển đổi thành JSON
                         Gson gson = new GsonBuilder()
                                 .registerTypeAdapter(LocalDateTime.class, new TypeAdapter<LocalDateTime>() {
                                     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -127,6 +130,26 @@ public class ProductServlet extends HttpServlet {
                     } catch (Exception e) {
                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                         response.getWriter().write("{\"error\": \"Lỗi server\"}");
+                    }
+                    break;
+                case "detail":
+                    try {
+                        long productId = Long.parseLong(request.getParameter("productId"));
+                        Product product = productDAO.getProductById(productId);
+                        if (product == null) {
+                            request.setAttribute("errorMessage", "Không tìm thấy sản phẩm có ID: " + productId);
+                            request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp")
+                                    .forward(request, response);
+                            return;
+                        }
+                        request.setAttribute("product", product);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/productDetail.jsp")
+                                .forward(request, response);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        request.setAttribute("errorMessage", "Load xem chi tiết bị lỗi " + e.getMessage());
+                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
+                                response);
                     }
                     break;
                 default:

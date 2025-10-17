@@ -1,5 +1,7 @@
 /* Promotion Management Styles */
-
+.action-buttons .btn {
+  margin-right: 6px;
+}
 /* Page Title */
 .promotion-title {
   color: var(--color-one);
@@ -69,6 +71,10 @@
 
 .stats-card-green {
   background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.stats-card-purpel {
+  background: linear-gradient(135deg, #f33b5a 0%, #ecee7a 100%);
 }
 
 .stats-card-green .stats-content {

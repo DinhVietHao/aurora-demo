@@ -6,6 +6,7 @@ import java.util.*;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 
 import jakarta.servlet.ServletException;
@@ -170,6 +171,21 @@ public class ShopOrderServlet extends HttpServlet {
                     boolean updated = orderDAO.updateOrderShopStatus(orderShopId, newStatus);
 
                     if (updated) {
+                        EmailService emailService = new EmailService();
+                        OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
+
+                        String customerEmail = orderShop.getUser().getEmail();
+                        String customerName = orderShop.getCustomerName();
+
+                        String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
+                        String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);
+                        try {
+                            emailService.sendHtml(customerEmail, subject, html);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            request.setAttribute("errorMessage",
+                                    "⚠️ Không thể gửi email xác nhận đơn hàng:" + ex.getMessage());
+                        }
                         request.setAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
                     } else {
                         request.setAttribute("errorMessage", "Không thể cập nhật trạng thái đơn hàng!");
@@ -189,5 +205,26 @@ public class ShopOrderServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request, response);
         }
 
+    }
+
+    private String renderOrderStatusEmail(String name, long orderId, String status) {
+        String statusLabel;
+        switch (status.toUpperCase()) {
+            case "CONFIRMED" -> statusLabel = "Đã xác nhận";
+            case "SHIPPING" -> statusLabel = "Đang giao hàng";
+            case "COMPLETED" -> statusLabel = "Hoàn tất";
+            case "CANCELLED" -> statusLabel = "Đã hủy";
+            default -> statusLabel = "Đang xử lý";
+        }
+
+        return """
+                    <div style="font-family:Arial,sans-serif; color:#333;">
+                        <h2>Xin chào %s,</h2>
+                        <p>Đơn hàng <b>#%d</b> của bạn đã được cập nhật trạng thái:</p>
+                        <h3 style="color:#007bff;">%s</h3>
+                        <p>Cảm ơn bạn đã mua sắm tại Aurora.</p>
+                        <p>Trân trọng,<br/>Đội ngũ Aurora</p>
+                    </div>
+                """.formatted(name, orderId, statusLabel);
     }
 }

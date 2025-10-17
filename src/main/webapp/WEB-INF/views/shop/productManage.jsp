@@ -231,13 +231,11 @@
                                                             <!-- Thao tác -->
                                                             <td>
                                                                 <!-- Xem chi tiết -->
-                                                                <button class="btn btn-sm btn-outline-info me-1"
-                                                                    title="Xem chi tiết" data-bs-toggle="modal"
-                                                                    data-bs-target="#viewProductModal"
-                                                                    data-product-id="${p.productId}">
+                                                                <a href="/shop/product?action=detail&productId=${p.productId}"
+                                                                    class="btn btn-sm btn-outline-info me-1"
+                                                                    title="Xem chi tiết">
                                                                     <i class="bi bi-eye"></i>
-                                                                </button>
-
+                                                                </a>
                                                                 <!-- Chỉnh sửa -->
                                                                 <button
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
