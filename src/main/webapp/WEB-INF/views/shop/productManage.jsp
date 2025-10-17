@@ -741,7 +741,6 @@
                                         enctype="multipart/form-data">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
-                                        <input type="hidden" id="primaryImageUpdate" name="PrimaryImage">
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Thông tin cơ bản</h6>
@@ -1131,6 +1130,8 @@
                                             </small>
                                             <div id="imageErrorMessageUpdate" class="text-danger small mb-2"></div>
                                             <div id="imagePreviewUpdate" class="row mb-3"></div>
+                                            <input type="hidden" name="removedImageIds" id="removedImageIds">
+                                            <input type="hidden" name="primaryImageUpdate" id="primaryImageUpdate">
                                         </div>
 
                                         <!-- Nút submit -->

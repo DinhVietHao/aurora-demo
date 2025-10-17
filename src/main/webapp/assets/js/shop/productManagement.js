@@ -1,504 +1,572 @@
-// // =============================
-// // Modal Create
-// // =============================
-function addAuthorCreate() {
-  const container = document.getElementById("authors-container");
-
-  // Lấy tất cả tên tác giả hiện có
-  const authors = Array.from(
-    container.querySelectorAll('input[name="authors"]')
-  )
-    .map((input) => input.value.trim().toLowerCase())
-    .filter((name) => name !== "");
-
-  // Tạo input mới
-  const div = document.createElement("div");
-  div.className = "input-group mb-2";
-  div.innerHTML = `
-    <input type="text" class="form-control" name="authors" placeholder="Tên tác giả khác" required>
-    <button type="button" class="btn btn-outline-danger" onclick="removeAuthorCreate(this)">🗑</button>
-  `;
-
-  const newInput = div.querySelector('input[name="authors"]');
-
-  newInput.addEventListener("input", function () {
-    const name = this.value.trim().toLowerCase();
-    const allAuthors = Array.from(
-      container.querySelectorAll('input[name="authors"]')
-    ).map((input) => input.value.trim().toLowerCase());
-
-    const duplicates = allAuthors.filter((a) => a === name);
-    if (duplicates.length > 1) {
-      this.setCustomValidity("Tên tác giả đã tồn tại!");
-      this.reportValidity();
-    } else {
-      this.setCustomValidity("");
-    }
-  });
-
-  container.appendChild(div);
-}
-
-function removeAuthorCreate(btn) {
-  const group = btn.parentNode;
-  const container = document.getElementById("authors-container");
-  if (container.children.length > 1) {
-    container.removeChild(group);
-  } else {
-    alert("Phải có ít nhất một tác giả!");
-  }
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("authors-container");
-  const firstInput = container.querySelector('input[name="authors"]');
-  if (firstInput) {
-    firstInput.addEventListener("input", function () {
-      const name = this.value.trim().toLowerCase();
-      const allAuthors = Array.from(
-        container.querySelectorAll('input[name="authors"]')
-      ).map((input) => input.value.trim().toLowerCase());
-      const duplicates = allAuthors.filter((a) => a === name);
-      if (duplicates.length > 1) {
-        this.setCustomValidity("Tên tác giả đã tồn tại!");
-        this.reportValidity();
-      } else {
-        this.setCustomValidity("");
-      }
-    });
+  // =============================
+  // UTILS
+  // =============================
+  const $ = (selector, parent = document) => parent.querySelector(selector);
+  const $$ = (selector, parent = document) =>
+    Array.from(parent.querySelectorAll(selector));
+
+  const showError = (el, msg) => {
+    if (!el) return;
+    el.style.display = "block";
+    el.innerText = msg;
+  };
+  const hideError = (el) => {
+    if (!el) return;
+    el.style.display = "none";
+    el.innerText = "";
+  };
+
+  // =============================
+  // AUTHORS (add/remove + duplicate validation)
+  // =============================
+  window.addAuthorCreate = function () {
+    const container = document.getElementById("authors-container");
+    const div = document.createElement("div");
+    div.className = "input-group mb-2";
+    div.innerHTML = `
+      <input type="text" class="form-control" name="authors" placeholder="Tên tác giả khác" required>
+      <button type="button" class="btn btn-outline-danger btn-remove">🗑</button>
+    `;
+    container.appendChild(div);
+  };
+
+  window.addAuthorUpdate = function () {
+    const container = document.getElementById("authors-containerUpdate");
+    const div = document.createElement("div");
+    div.className = "input-group mb-2";
+    div.innerHTML = `
+      <input type="text" class="form-control" name="authorsUpdate" placeholder="Tên tác giả khác" required>
+      <button type="button" class="btn btn-outline-danger btn-remove">🗑</button>
+    `;
+    container.appendChild(div);
+  };
+
+  window.removeAuthorCreate = function (btn) {
+    removeAuthor("authors-container", btn);
+  };
+
+  window.removeAuthorUpdate = function (btn) {
+    removeAuthor("authors-containerUpdate", btn);
+  };
+
+  function removeAuthor(containerId, btn) {
+    const container = document.getElementById(containerId);
+    const group = btn.closest(".input-group");
+    if (container.children.length > 1) container.removeChild(group);
+    else alert("Phải có ít nhất một tác giả!");
   }
-});
 
-document.addEventListener("DOMContentLoaded", function () {
-  const fileInput = document.getElementById("productImages");
-  const previewContainer = document.getElementById("imagePreview");
-  const errorDiv = document.getElementById("imageError");
-  const form = document.getElementById("addProductForm");
-  let selectedFiles = [];
-
-  fileInput.addEventListener("change", function (event) {
-    const files = Array.from(event.target.files);
-    errorDiv.style.display = "none";
-    errorDiv.innerText = "";
-
-    for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        errorDiv.style.display = "block";
-        errorDiv.innerText = `Ảnh "${file.name}" vượt quá dung lượng 5MB.`;
-        return;
-      }
+  document.body.addEventListener("click", (e) => {
+    if (e.target.classList.contains("btn-remove")) {
+      const parentContainer = e.target.closest("[id^='authors-container']");
+      if (parentContainer) removeAuthor(parentContainer.id, e.target);
     }
-
-    selectedFiles = [...selectedFiles, ...files];
-
-    if (selectedFiles.length > 20) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Chỉ được tải lên tối đa 20 ảnh.";
-      selectedFiles = selectedFiles.slice(0, 20);
-    }
-
-    const dataTransfer = new DataTransfer();
-    selectedFiles.forEach((f) => dataTransfer.items.add(f));
-    fileInput.files = dataTransfer.files;
-
-    renderPreview();
   });
 
-  async function renderPreview() {
-    previewContainer.innerHTML = "";
-    if (selectedFiles.length < 2) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
-    } else {
-      errorDiv.style.display = "none";
-    }
-
-    const submitBtn = form?.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled =
-        selectedFiles.length < 2 || selectedFiles.length > 20;
-    }
-
-    // Sử dụng Promise để đảm bảo render theo thứ tự đúng
-    const promises = selectedFiles.map((file, index) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          resolve({ index, src: e.target.result });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    const results = await Promise.all(promises);
-
-    // Render tuần tự theo thứ tự index
-    results.forEach(({ index, src }) => {
-      const col = document.createElement("div");
-      col.classList.add("col-3", "position-relative");
-
-      // Nếu là ảnh đầu tiên => hiển thị nhãn "Ảnh đại diện"
-      const isMain = index === 0;
-      const mainBadge = isMain
-        ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1"
-                  style="z-index: 2; font-size: 0.75rem; border-radius: 0.25rem;">Ảnh đại diện</span>`
-        : "";
-
-      col.innerHTML = `
-        <div class="border rounded position-relative overflow-hidden">
-          ${mainBadge}
-          <img src="${src}" class="img-fluid rounded"
-            style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
-          <button type="button"
-            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-            style="width: 25px; height: 25px; line-height: 0;"
-            data-index="${index}">×</button>
-        </div>
-      `;
-      previewContainer.appendChild(col);
+  function validateDuplicateNames(container, inputName, message) {
+    if (!container) return;
+    container.addEventListener("input", (e) => {
+      if (e.target.name !== inputName) return;
+      const allNames = $$(`input[name="${inputName}"]`, container)
+        .map((i) => i.value.trim().toLowerCase())
+        .filter(Boolean);
+      const dup = allNames.filter(
+        (n) => n === e.target.value.trim().toLowerCase()
+      );
+      if (dup.length > 1) {
+        e.target.setCustomValidity(message);
+        e.target.reportValidity();
+      } else e.target.setCustomValidity("");
     });
   }
 
-  previewContainer.addEventListener("click", function (e) {
-    if (e.target.tagName === "BUTTON") {
-      const index = parseInt(e.target.getAttribute("data-index"));
-      selectedFiles.splice(index, 1);
-      const dataTransfer = new DataTransfer();
-      selectedFiles.forEach((f) => dataTransfer.items.add(f));
-      fileInput.files = dataTransfer.files;
-      console.log("Check  fileInput.files ", fileInput.files);
+  validateDuplicateNames(
+    $("#authors-container"),
+    "authors",
+    "Tên tác giả đã tồn tại!"
+  );
+  validateDuplicateNames(
+    $("#authors-containerUpdate"),
+    "authorsUpdate",
+    "Tên tác giả đã tồn tại!"
+  );
 
-      renderPreview();
-    }
-  });
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      if (selectedFiles.length < 2 || selectedFiles.length > 20) {
-        e.preventDefault();
-        errorDiv.style.display = "block";
-        errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
-        fileInput.classList.add("is-invalid");
+  // =============================
+  // IMAGE UPLOAD PREVIEW - Create (simple)
+  // =============================
+  function initImageUpload({
+    fileInputId,
+    previewContainerId,
+    errorDivId,
+    formId,
+  }) {
+    const fileInput = document.getElementById(fileInputId);
+    const previewContainer = document.getElementById(previewContainerId);
+    const errorDiv = document.getElementById(errorDivId);
+    const form = formId ? document.getElementById(formId) : null;
+    let selectedFiles = [];
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) submitBtn.disabled = true;
-        return;
-      }
+    if (!fileInput) return;
 
-      // Nếu hợp lệ
-      fileInput.classList.remove("is-invalid");
-      errorDiv.style.display = "none";
+    const renderPreview = async () => {
+      previewContainer.innerHTML = "";
+      const count = selectedFiles.length;
+      if (count < 2) showError(errorDiv, "Vui lòng chọn ít nhất 2 ảnh.");
+      else if (count > 20)
+        showError(errorDiv, "Chỉ được tải lên tối đa 20 ảnh.");
+      else hideError(errorDiv);
 
-      const submitBtn = form.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML =
-          '<i class="bi bi-hourglass-split me-1"></i> Đang lưu...';
-      }
-    });
-  }
-});
+      const submitBtn = form?.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = count < 2 || count > 20;
 
-// =============================
-// Modal Update
-// =============================
-function addAuthorUpdate() {
-  const container = document.getElementById("authors-containerUpdate");
-  const div = document.createElement("div");
-  div.className = "input-group mb-2";
-  div.innerHTML = `
-    <input type="text" class="form-control" name="authorsUpdate" placeholder="Tên tác giả khác" required>
-    <button type="button" class="btn btn-outline-danger" onclick="removeAuthorUpdate(this)">🗑</button>
-  `;
-  container.appendChild(div);
-}
+      const promises = selectedFiles.map(
+        (file, index) =>
+          new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve({ index, src: e.target.result });
+            reader.readAsDataURL(file);
+          })
+      );
 
-function removeAuthorUpdate(btn) {
-  const group = btn.parentNode;
-  const container = document.getElementById("authors-containerUpdate");
-  if (container.children.length > 1) {
-    container.removeChild(group);
-  } else {
-    alert("Phải có ít nhất một tác giả!");
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-  const fileInput = document.getElementById("productImagesUpdate");
-  const previewContainer = document.getElementById("imagePreviewUpdate");
-  const errorDiv = document.getElementById("imageErrorUpdate");
-  let selectedFiles = [];
-
-  fileInput.addEventListener("change", function (event) {
-    const files = Array.from(event.target.files);
-    errorDiv.style.display = "none";
-    errorDiv.innerText = "";
-
-    for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        errorDiv.style.display = "block";
-        errorDiv.innerText = `Ảnh "${file.name}" vượt quá dung lượng 5MB.`;
-        return;
-      }
-    }
-
-    selectedFiles = [...selectedFiles, ...files];
-
-    if (selectedFiles.length > 20) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Chỉ được tải lên tối đa 20 ảnh.";
-      selectedFiles = selectedFiles.slice(0, 20);
-    }
-
-    const dataTransfer = new DataTransfer();
-    selectedFiles.forEach((f) => dataTransfer.items.add(f));
-    fileInput.files = dataTransfer.files;
-
-    renderPreview();
-  });
-
-  function renderPreview() {
-    previewContainer.innerHTML = "";
-    if (selectedFiles.length < 2) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
-    } else {
-      errorDiv.style.display = "none";
-    }
-
-    selectedFiles.forEach((file, index) => {
-      const reader = new FileReader();
-      reader.onload = function (e) {
+      const results = await Promise.all(promises);
+      results.forEach(({ index, src }) => {
+        const isMain = index === 0;
+        const mainBadge = isMain
+          ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1" style="font-size:0.75rem;border-radius:0.25rem;">Ảnh đại diện</span>`
+          : "";
         const col = document.createElement("div");
         col.classList.add("col-3", "position-relative");
         col.innerHTML = `
           <div class="border rounded position-relative overflow-hidden">
-            <img src="${e.target.result}" class="img-fluid rounded"
-              style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
-            <button type="button"
-              class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-              style="width: 25px; height: 25px; line-height: 0;"
-              data-index="${index}">×</button>
-          </div>
-        `;
+            ${mainBadge}
+            <img src="${src}" class="img-fluid rounded" style="object-fit:cover;height:200px;width:100%;aspect-ratio:3/4;">
+            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle" style="width:25px;height:25px;" data-index="${index}">×</button>
+          </div>`;
         previewContainer.appendChild(col);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
+      });
+    };
 
-  previewContainer.addEventListener("click", function (e) {
-    if (e.target.tagName === "BUTTON") {
-      const index = e.target.getAttribute("data-index");
-      selectedFiles.splice(index, 1);
+    fileInput.addEventListener("change", (e) => {
+      const files = Array.from(e.target.files);
+      hideError(errorDiv);
+
+      for (const f of files) {
+        if (f.size > 5 * 1024 * 1024)
+          return showError(errorDiv, `Ảnh "${f.name}" vượt quá 5MB.`);
+      }
+
+      selectedFiles = [...selectedFiles, ...files].slice(0, 20);
+
+      const dt = new DataTransfer();
+      selectedFiles.forEach((f) => dt.items.add(f));
+      fileInput.files = dt.files;
       renderPreview();
-      const dataTransfer = new DataTransfer();
-      selectedFiles.forEach((f) => dataTransfer.items.add(f));
-      fileInput.files = dataTransfer.files;
-    }
-  });
-});
-
-// Bắt lỗi giá bán và giá gốc
-document.addEventListener("DOMContentLoaded", function () {
-  const originalPriceInput = document.getElementById("productOriginalPrice");
-  const salePriceInput = document.getElementById("productSalePrice");
-  const errorDiv = document.getElementById("priceError");
-  const form = originalPriceInput.closest("form");
-
-  function validatePrices() {
-    const originalPrice = parseFloat(originalPriceInput.value);
-    const salePrice = parseFloat(salePriceInput.value);
-
-    if (isNaN(originalPrice) || isNaN(salePrice)) {
-      errorDiv.style.display = "none";
-      return true;
-    }
-
-    if (originalPrice < 0 || salePrice < 0) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Giá không được âm.";
-      return false;
-    }
-
-    if (originalPrice < salePrice) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Giá gốc phải lớn hơn hoặc bằng giá bán.";
-      return false;
-    }
-
-    errorDiv.style.display = "none";
-    return true;
-  }
-
-  // Khi người dùng nhập -> kiểm tra
-  originalPriceInput.addEventListener("input", validatePrices);
-  salePriceInput.addEventListener("input", validatePrices);
-
-  // Khi submit -> chặn nếu sai
-  form.addEventListener("submit", function (e) {
-    if (!validatePrices()) {
-      e.preventDefault();
-    }
-  });
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-  const deleteButtons = document.querySelectorAll(".btn-delete");
-  const deleteMessage = document.getElementById("deleteMessage");
-  const deleteProductId = document.getElementById("deleteProductId");
-
-  deleteButtons.forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const productTitle = this.getAttribute("data-product-title");
-      const productId = this.getAttribute("data-product-id");
-
-      deleteMessage.innerHTML = `Bạn có chắc chắn muốn xóa sản phẩm <strong>"${productTitle}"</strong> này không?`;
-      deleteProductId.value = productId;
     });
-  });
-});
 
-document.addEventListener("DOMContentLoaded", function () {
-  const publishedDateInput = document.getElementById("publishedDate");
-
-  // Tạo phần hiển thị lỗi dưới ô input (nếu chưa có)
-  let errorMsg = document.createElement("div");
-  errorMsg.classList.add("invalid-feedback");
-  errorMsg.style.display = "none"; // Ẩn ban đầu
-  publishedDateInput.parentNode.appendChild(errorMsg);
-
-  // Hàm kiểm tra ngày
-  function validatePublishedDate() {
-    const dateValue = publishedDateInput.value;
-    errorMsg.textContent = ""; // Xóa thông báo cũ
-    errorMsg.style.display = "none";
-
-    if (dateValue) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Đặt về đầu ngày để so sánh chính xác
-
-      const publishedDate = new Date(dateValue);
-
-      if (publishedDate > today) {
-        // Báo lỗi: làm input đỏ và hiển thị thông báo
-        publishedDateInput.classList.add("is-invalid");
-        errorMsg.textContent =
-          "⚠️ Ngày xuất bản không được lớn hơn ngày hiện tại!";
-        errorMsg.style.display = "block";
-      } else {
-        // Hợp lệ: xóa lỗi
-        publishedDateInput.classList.remove("is-invalid");
-        errorMsg.style.display = "none";
+    previewContainer.addEventListener("click", (e) => {
+      if (e.target.closest("button[data-index]")) {
+        const i = +e.target.closest("button").dataset.index;
+        selectedFiles.splice(i, 1);
+        const dt = new DataTransfer();
+        selectedFiles.forEach((f) => dt.items.add(f));
+        fileInput.files = dt.files;
+        renderPreview();
       }
-    } else {
-      // Nếu bỏ trống: xóa lỗi
-      publishedDateInput.classList.remove("is-invalid");
-      errorMsg.style.display = "none";
-    }
-  }
+    });
 
-  // Gọi hàm kiểm tra khi người dùng chọn ngày (event blur hoặc change)
-  publishedDateInput.addEventListener("blur", validatePublishedDate);
-  publishedDateInput.addEventListener("change", validatePublishedDate);
-
-  // Tùy chọn: Kiểm tra khi submit form (để chặn submit nếu sai)
-  const form = document.getElementById("addProductForm");
-  if (form) {
-    form.addEventListener("submit", function (event) {
-      validatePublishedDate(); // Kiểm tra lại
-      if (publishedDateInput.classList.contains("is-invalid")) {
-        event.preventDefault(); // Ngăn submit nếu có lỗi
+    form?.addEventListener("submit", (e) => {
+      const count = selectedFiles.length;
+      if (count < 2 || count > 20) {
+        e.preventDefault();
+        showError(errorDiv, "Cần tải lên từ 2 đến 20 ảnh sản phẩm.");
       }
     });
   }
-});
 
-// =============================
-// Modal Update: Populate Data via AJAX
-// =============================
-document.addEventListener("DOMContentLoaded", function () {
-  const updateButtons = document.querySelectorAll(".btn-update");
+  // init for create
+  initImageUpload({
+    fileInputId: "productImages",
+    previewContainerId: "imagePreview",
+    errorDivId: "imageError",
+    formId: "addProductForm",
+  });
 
-  updateButtons.forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const productId = this.getAttribute("data-product-id");
+  // =============================
+  // IMAGE UPLOAD PREVIEW - Update (KEEP old images + ADD new ones)
+  // =============================
+  function initImageUploadForUpdate({
+    fileInputId,
+    previewContainerId,
+    errorDivId,
+    formId,
+    hiddenRemovedIdName = "removedImageIds", // hidden input name to send removed existing image ids
+  }) {
+    const fileInput = document.getElementById(fileInputId);
+    const previewContainer = document.getElementById(previewContainerId);
+    const errorDiv = document.getElementById(errorDivId);
+    const form = document.getElementById(formId);
+    if (!previewContainer || !form) return;
 
-      fetch(`/shop/product?action=getProduct&id=${productId}`)
-        .then((response) => {
-          if (!response.ok) throw new Error("Không thể tải dữ liệu sản phẩm");
-          return response.json();
-        })
-        .then((product) => populateUpdateModal(product))
-        .catch((error) => {
-          console.error("Lỗi:", error);
-          alert("Không thể tải thông tin sản phẩm. Vui lòng thử lại.");
+    // currentImages holds both existing (from server) and new files
+    // { id?, url, isNew: boolean, file?, isPrimary: boolean }
+    let currentImages = [];
+    let removedImageIds = new Set();
+
+    // expose helper to populate (used by populateUpdateModal)
+    function setInitialImages(images) {
+      currentImages = images.map((img, idx) => ({
+        id: img.id || null,
+        url: img.url || "",
+        isNew: !!img.isNew,
+        file: img.file || null,
+        isPrimary: !!img.isPrimary || idx === 0,
+      }));
+      removedImageIds = new Set();
+      render();
+    }
+
+    function render() {
+      previewContainer.innerHTML = "";
+      const count = currentImages.length;
+      if (count < 2) showError(errorDiv, "Vui lòng chọn ít nhất 2 ảnh.");
+      else if (count > 20) showError(errorDiv, "Không được vượt quá 20 ảnh.");
+      else hideError(errorDiv);
+
+      // Update file input to contain only NEW files
+      const dt = new DataTransfer();
+
+      currentImages.forEach((it) => {
+        if (it.isNew && it.file) dt.items.add(it.file);
+      });
+      if (fileInput) fileInput.files = dt.files;
+
+      currentImages.forEach((img, index) => {
+        const col = document.createElement("div");
+        col.classList.add("col-3", "position-relative");
+
+        const mainBadge = img.isPrimary
+          ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1" style="font-size:0.75rem;">Ảnh đại diện</span>`
+          : "";
+
+        // mark existing vs new (for debugging can remove)
+        const removeBtn = `<button type="button" class="btn btn-light text-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-2 fw-bold" data-index="${index}">×</button>`;
+        const setPrimaryBtn = `<button type="button" class="btn btn-sm btn-outline-secondary position-absolute bottom-0 start-0 m-1 set-primary" data-index="${index}" style="font-size:0.7rem;">Đặt làm chính</button>`;
+
+        col.innerHTML = `
+          <div class="border rounded position-relative overflow-hidden">
+            ${mainBadge}
+            <img src="${
+              img.url
+            }" class="img-fluid rounded" style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3/4;">
+            ${removeBtn}
+            ${!img.isPrimary ? setPrimaryBtn : ""}
+          </div>`;
+        previewContainer.appendChild(col);
+      });
+    }
+
+    // when user picks new files -> append as new entries
+    if (fileInput) {
+      fileInput.addEventListener("change", (e) => {
+        const files = Array.from(e.target.files || []);
+        hideError(errorDiv);
+        for (const f of files) {
+          if (f.size > 5 * 1024 * 1024)
+            return showError(errorDiv, `Ảnh "${f.name}" vượt quá 5MB.`);
+        }
+
+        // Append as new images
+        files.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            currentImages.push({
+              id: null,
+              url: ev.target.result,
+              isNew: true,
+              file,
+              isPrimary: currentImages.length === 0, // if no images, first new becomes primary
+            });
+            // ensure primary uniqueness: if this is primary, unset others
+            if (currentImages[currentImages.length - 1].isPrimary) {
+              currentImages.forEach((it, idx) => {
+                if (idx !== currentImages.length - 1) it.isPrimary = false;
+              });
+            }
+            // limit
+            if (currentImages.length > 20) {
+              showError(errorDiv, "Chỉ được tải lên tối đa 20 ảnh.");
+              currentImages = currentImages.slice(0, 20);
+            }
+            render();
+          };
+          reader.readAsDataURL(file);
         });
+      });
+    }
+
+    // click handlers for remove and set-primary
+    previewContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-index]");
+      if (!btn) {
+        const sp = e.target.closest(".set-primary");
+        if (sp) {
+          const i = +sp.dataset.index;
+          if (!isNaN(i) && currentImages[i]) {
+            currentImages.forEach((it) => (it.isPrimary = false));
+            currentImages[i].isPrimary = true;
+            render();
+          }
+        }
+        return;
+      }
+      const index = +btn.dataset.index;
+      if (isNaN(index)) return;
+      const removed = currentImages.splice(index, 1)[0];
+      if (removed && removed.id) {
+        removedImageIds.add(removed.id);
+      }
+      // ensure there is still a primary; if removed main image was primary, set first as primary
+      if (!currentImages.some((it) => it.isPrimary) && currentImages.length) {
+        currentImages[0].isPrimary = true;
+      }
+      render();
     });
+
+    // prepare data before submit
+    form.addEventListener("submit", (e) => {
+      // validations
+      const count = currentImages.length;
+      if (count < 2 || count > 20) {
+        e.preventDefault();
+        showError(errorDiv, "Cần tải lên từ 2 đến 20 ảnh sản phẩm.");
+        return;
+      }
+
+      // Create/replace hidden input for removed image ids
+      let removedInput = form.querySelector(
+        `input[name="${hiddenRemovedIdName}"]`
+      );
+      if (!removedInput) {
+        removedInput = document.createElement("input");
+        removedInput.type = "hidden";
+        removedInput.name = hiddenRemovedIdName;
+        form.appendChild(removedInput);
+      }
+      removedInput.value = Array.from(removedImageIds).join(",");
+
+      // Ensure fileInput.files contains only NEW files (we already set that in render())
+      // Additionally, create hidden inputs for existing image ids we want to keep and their primary flags.
+      // Remove previous if any:
+      $$("#existingImageIds", form).forEach((el) => el.remove());
+      $$("#existingImagePrimary", form).forEach((el) => el.remove());
+
+      currentImages.forEach((it, idx) => {
+        if (!it.isNew && it.id) {
+          // existing image that will be kept
+          const inp = document.createElement("input");
+          inp.type = "hidden";
+          inp.name = "existingImageIds";
+          inp.value = it.id;
+          inp.id = "existingImageIds";
+          form.appendChild(inp);
+
+          const p = document.createElement("input");
+          p.type = "hidden";
+          p.name = "existingImagePrimary";
+          p.value = `${it.id}:${it.isPrimary ? 1 : 0}`;
+          p.id = "existingImagePrimary";
+          form.appendChild(p);
+        }
+        if (it.isNew && it.file && it.isPrimary) {
+          // If primary is a new file, mark it so backend can know (we'll add index-based info)
+          const pnew = document.createElement("input");
+          pnew.type = "hidden";
+          pnew.name = "newPrimaryIndex";
+          pnew.value = Array.from(fileInput.files).findIndex(
+            (f) => f.name === it.file.name && f.size === it.file.size
+          );
+          form.appendChild(pnew);
+        }
+      });
+
+      // At this point fileInput.files already contains the new files (render() set it).
+      // Let the form submit normally (multipart/form-data expected on server).
+    });
+
+    // return setter for populateUpdateModal
+    return { setInitialImages };
+  }
+
+  // Initialize update image handler and store setter
+  const imageUpdateHandler = initImageUploadForUpdate({
+    fileInputId: "productImagesUpdate",
+    previewContainerId: "imagePreviewUpdate",
+    errorDivId: "imageErrorUpdate",
+    formId: "updateProductForm",
+    hiddenRemovedIdName: "removedImageIds",
   });
+
+  // =============================
+  // PRICE VALIDATION (Create + Update)
+  // =============================
+  function initPriceValidation(originalId, saleId, errorId, formId) {
+    const orig = document.getElementById(originalId);
+    const sale = document.getElementById(saleId);
+    const error = document.getElementById(errorId);
+    const form = document.getElementById(formId);
+    if (!orig || !sale) return;
+
+    const validate = () => {
+      const o = parseFloat(orig.value),
+        s = parseFloat(sale.value);
+      hideError(error);
+      if (isNaN(o) || isNaN(s)) return true;
+      if (o < 0 || s < 0) return showError(error, "Giá không được âm."), false;
+      if (o < s)
+        return (
+          showError(error, "Giá gốc phải lớn hơn hoặc bằng giá bán."), false
+        );
+      return true;
+    };
+
+    orig.addEventListener("input", validate);
+    sale.addEventListener("input", validate);
+
+    form?.addEventListener("submit", (e) => {
+      if (!validate()) e.preventDefault();
+    });
+  }
+
+  initPriceValidation(
+    "productOriginalPrice",
+    "productSalePrice",
+    "priceError",
+    "addProductForm"
+  );
+  initPriceValidation(
+    "productOriginalPriceUpdate",
+    "productSalePriceUpdate",
+    "priceErrorUpdate",
+    "updateProductForm"
+  );
+
+  // =============================
+  // DATE VALIDATION (Create + Update)
+  // =============================
+  function initDateValidation(inputId, formId) {
+    const input = document.getElementById(inputId);
+    const form = document.getElementById(formId);
+    if (!input) return;
+
+    let errorMsg = document.createElement("div");
+    errorMsg.classList.add("invalid-feedback");
+    errorMsg.style.display = "none";
+    input.parentNode.appendChild(errorMsg);
+
+    const validate = () => {
+      const val = input.value;
+      errorMsg.textContent = "";
+      errorMsg.style.display = "none";
+      if (!val) return;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const date = new Date(val);
+
+      if (date > today) {
+        input.classList.add("is-invalid");
+        errorMsg.textContent = "⚠️ Ngày xuất bản không được lớn hơn hiện tại!";
+        errorMsg.style.display = "block";
+      } else input.classList.remove("is-invalid");
+    };
+
+    input.addEventListener("blur", validate);
+    input.addEventListener("change", validate);
+    form?.addEventListener("submit", (e) => {
+      validate();
+      if (input.classList.contains("is-invalid")) e.preventDefault();
+    });
+  }
+
+  initDateValidation("publishedDate", "addProductForm");
+  initDateValidation("publishedDateUpdate", "updateProductForm");
+
+  // =============================
+  // DELETE CONFIRM MODAL
+  // =============================
+  const deleteButtons = $$(".btn-delete");
+  const deleteMsg = $("#deleteMessage");
+  const deleteId = $("#deleteProductId");
+  deleteButtons.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      deleteMsg.innerHTML = `Bạn có chắc chắn muốn xóa sản phẩm <strong>"${btn.dataset.productTitle}"</strong>?`;
+      deleteId.value = btn.dataset.productId;
+    })
+  );
+
+  // =============================
+  // POPULATE UPDATE MODAL (AJAX) - tích hợp với imageUpdateHandler
+  // =============================
+  const updateButtons = $$(".btn-update");
+  updateButtons.forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.productId;
+      fetch(`/shop/product?action=getProduct&id=${id}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject("Fetch error")))
+        .then(populateUpdateModal)
+        .catch((err) => {
+          console.error(err);
+          alert("Không thể tải thông tin sản phẩm!");
+        });
+    })
+  );
 
   function populateUpdateModal(product) {
-    const dateString = product.publishedDate;
-    const date = new Date(dateString);
-    const formattedDate = date.toISOString().split("T")[0];
+    const formatDate = (d) => new Date(d).toISOString().split("T")[0];
+    const updateForm = $("#updateProductForm");
+    if (updateForm)
+      updateForm.action = `/shop/product?action=update&productId=${product.productId}`;
 
-    document.getElementById("updateProductForm").action =
-      "/shop/product?action=update&productId=" + product.productId;
+    $("#productTitleUpdate").value = product.title || "";
+    $("#productDescriptionUpdate").value = product.description || "";
+    $("#productOriginalPriceUpdate").value = product.originalPrice || "";
+    $("#productSalePriceUpdate").value = product.salePrice || "";
+    $("#productQuantityUpdate").value = product.quantity || "";
+    $("#weightUpdate").value = product.weight || "";
+    $("#publisherNameUpdate").value = product.publisher?.name || "";
+    $("#publishedDateUpdate").value = product.publishedDate
+      ? formatDate(product.publishedDate)
+      : "";
+    $("#translatorUpdate").value = product.bookDetail?.translator || "";
+    $("#versionUpdate").value = product.bookDetail?.version || "";
+    $("#coverTypeUpdate").value = product.bookDetail?.coverType || "";
+    $("#pagesUpdate").value = product.bookDetail?.pages || "";
+    $("#sizeUpdate").value = product.bookDetail?.size || "";
+    $("#languageCodeUpdate").value = product.bookDetail?.languageCode || "";
+    $("#isbnUpdate").value = product.bookDetail?.isbn || "";
 
-    document.getElementById("productTitleUpdate").value = product.title || "";
-    document.getElementById("productDescriptionUpdate").value =
-      product.description || "";
-    document.getElementById("productOriginalPriceUpdate").value =
-      product.originalPrice || "";
-    document.getElementById("productSalePriceUpdate").value =
-      product.salePrice || "";
-    document.getElementById("productQuantityUpdate").value =
-      product.quantity || "";
-    document.getElementById("weightUpdate").value = product.weight || "";
-    document.getElementById("publisherNameUpdate").value =
-      product.publisher.name || "";
-    document.getElementById("publishedDateUpdate").value = formattedDate;
-    document.getElementById("translatorUpdate").value =
-      product.bookDetail?.translator || "";
-    document.getElementById("versionUpdate").value =
-      product.bookDetail?.version || "";
-    document.getElementById("coverTypeUpdate").value =
-      product.bookDetail?.coverType || "";
-    document.getElementById("pagesUpdate").value =
-      product.bookDetail?.pages || "";
-    document.getElementById("sizeUpdate").value =
-      product.bookDetail?.size || "";
-    document.getElementById("languageCodeUpdate").value =
-      product.bookDetail?.languageCode || "";
-    document.getElementById("isbnUpdate").value =
-      product.bookDetail?.isbn || "";
-
-    // ======== Authors ========
-    const authorsContainer = document.getElementById("authors-containerUpdate");
+    // Authors
+    const authorsContainer = $("#authors-containerUpdate");
     authorsContainer.innerHTML = "";
-    if (product.authors && product.authors.length > 0) {
-      product.authors.forEach((author) => {
-        const div = document.createElement("div");
-        div.className = "input-group mb-2";
-        div.innerHTML = `
-          <input type="text" class="form-control" name="authorsUpdate" value="${author.authorName}" required>
-          <button type="button" class="btn btn-outline-danger" onclick="removeAuthorUpdate(this)">🗑</button>
-        `;
-        authorsContainer.appendChild(div);
-      });
-    } else {
+    (product.authors && product.authors.length > 0
+      ? product.authors
+      : [{ authorName: "" }]
+    ).forEach((a) => {
       const div = document.createElement("div");
       div.className = "input-group mb-2";
       div.innerHTML = `
-        <input type="text" class="form-control" name="authorsUpdate" placeholder="Tên tác giả" required>
-        <button type="button" class="btn btn-outline-danger" onclick="removeAuthorUpdate(this)">🗑</button>
-      `;
+        <input type="text" class="form-control" name="authorsUpdate" value="${
+          a.authorName || ""
+        }" required>
+        <button type="button" class="btn btn-outline-danger btn-remove">🗑</button>`;
       authorsContainer.appendChild(div);
-    }
+    });
 
-    // ======== Categories ========
-    document
-      .querySelectorAll('#updateProductModal input[name="CategoryIDs"]')
-      .forEach((cb) => (cb.checked = false));
+    // Categories: uncheck all then check those from product
+    $$('#updateProductModal input[name="CategoryIDs"]').forEach(
+      (cb) => (cb.checked = false)
+    );
     if (product.categories) {
       product.categories.forEach((cat) => {
         const cb = document.querySelector(
@@ -508,329 +576,21 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
 
-    // ======== Images ========
-    const imageInput = document.getElementById("productImagesUpdate");
-    const previewContainer = document.getElementById("imagePreviewUpdate");
-    const errorDiv = document.getElementById("imageErrorUpdate");
-    imageInput.value = ""; // reset input
-
-    let currentImages = product.images
-      ? product.images.map((img, index) => ({
-          id: img.imageId,
-          url: `http://localhost:8080/assets/images/catalog/products/${img.url}`,
-          isPrimary: img.isPrimary || index === 0,
-          isNew: false,
-        }))
-      : [];
-
-    renderImagePreview();
-
-    imageInput.onchange = function (event) {
-      const files = Array.from(event.target.files || []);
-      if (!errorDiv) return;
-      errorDiv.style.display = "none";
-      errorDiv.innerText = "";
-
-      for (const file of files) {
-        if (file.size > 5 * 1024 * 1024) {
-          errorDiv.style.display = "block";
-          errorDiv.innerText = `Ảnh "${file.name}" vượt quá 5MB.`;
-          return;
-        }
-      }
-
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          currentImages.push({
-            file,
-            url: e.target.result,
-            isPrimary: false,
-            isNew: true,
-          });
-          renderImagePreview();
-        };
-        reader.readAsDataURL(file);
-      });
-    };
-
-    function renderImagePreview() {
-      previewContainer.innerHTML = "";
-
-      currentImages.forEach((img, index) => {
-        const col = document.createElement("div");
-        col.classList.add("col-3", "position-relative");
-
-        const mainBadge = img.isPrimary
-          ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1" style="font-size: 0.75rem;">Ảnh đại diện</span>`
-          : "";
-
-        col.innerHTML = `
-          <div class="border rounded position-relative overflow-hidden">
-            ${mainBadge}
-            <img src="${img.url}" class="img-fluid rounded"
-                 style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3/4;">
-            <button type="button"
-                    class="btn btn-light text-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-2 fw-bold"
-                    data-index="${index}">×</button>
-          </div>`;
-        previewContainer.appendChild(col);
-      });
-
-      validateImageCount();
+    // Images: prepare structure for imageUpdateHandler
+    const images = (product.images || []).map((img, idx) => ({
+      id: img.imageId,
+      url: img.url
+        ? `http://localhost:8080/assets/images/catalog/products/${img.url}`
+        : "",
+      isPrimary: !!img.isPrimary || idx === 0,
+      isNew: false,
+      file: null,
+    }));
+    if (imageUpdateHandler && imageUpdateHandler.setInitialImages) {
+      imageUpdateHandler.setInitialImages(images);
     }
-
-    // chỉ gắn 1 lần
-    previewContainer.onclick = function (e) {
-      const btn = e.target.closest("button[data-index]");
-      if (!btn) return;
-      const index = parseInt(btn.dataset.index);
-      if (isNaN(index)) return;
-      currentImages.splice(index, 1);
-      renderImagePreview();
-    };
-
-    // ✅ Chỉ 1 hàm validate duy nhất
-    function validateImageCount() {
-      if (!errorDiv) return;
-      const count = currentImages.length;
-      if (count < 2) {
-        errorDiv.style.display = "block";
-        errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
-      } else if (count > 20) {
-        errorDiv.style.display = "block";
-        errorDiv.innerText = "Không được vượt quá 20 ảnh.";
-      } else {
-        errorDiv.style.display = "none";
-      }
-    }
+    // reset file input value to empty (so change event will contain only newly selected files)
+    const fi = document.getElementById("productImagesUpdate");
+    if (fi) fi.value = "";
   }
-
-  // Xóa tác giả
-  window.removeAuthorUpdate = function (btn) {
-    const group = btn.parentNode;
-    const container = document.getElementById("authors-containerUpdate");
-    if (container.children.length > 1) {
-      container.removeChild(group);
-    } else {
-      alert("Phải có ít nhất một tác giả!");
-    }
-  };
-});
-
-// =============================
-// Validate Form Update
-// =============================
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("updateProductForm");
-
-  // --- Validate giá ---
-  const originalPriceInput = document.getElementById(
-    "productOriginalPriceUpdate"
-  );
-  const salePriceInput = document.getElementById("productSalePriceUpdate");
-  const priceErrorDiv =
-    document.getElementById("priceErrorUpdate") ||
-    document.createElement("div");
-
-  priceErrorDiv.id = "priceErrorUpdate";
-  priceErrorDiv.classList.add("text-danger", "mt-1");
-  originalPriceInput.parentNode.appendChild(priceErrorDiv);
-
-  function validatePricesUpdate() {
-    const originalPrice = parseFloat(originalPriceInput.value);
-    const salePrice = parseFloat(salePriceInput.value);
-
-    if (isNaN(originalPrice) || isNaN(salePrice)) {
-      priceErrorDiv.style.display = "none";
-      return true;
-    }
-
-    if (originalPrice < 0 || salePrice < 0) {
-      priceErrorDiv.style.display = "block";
-      priceErrorDiv.innerText = "Giá không được âm.";
-      return false;
-    }
-
-    if (originalPrice < salePrice) {
-      priceErrorDiv.style.display = "block";
-      priceErrorDiv.innerText = "Giá gốc phải lớn hơn hoặc bằng giá bán.";
-      return false;
-    }
-
-    priceErrorDiv.style.display = "none";
-    return true;
-  }
-
-  originalPriceInput.addEventListener("input", validatePricesUpdate);
-  salePriceInput.addEventListener("input", validatePricesUpdate);
-
-  // --- Validate ngày phát hành ---
-  const publishedDateInput = document.getElementById("publishedDateUpdate");
-  let errorMsg = document.createElement("div");
-  errorMsg.classList.add("invalid-feedback");
-  errorMsg.style.display = "none";
-  publishedDateInput.parentNode.appendChild(errorMsg);
-
-  function validatePublishedDateUpdate() {
-    const dateValue = publishedDateInput.value;
-    errorMsg.textContent = "";
-    errorMsg.style.display = "none";
-
-    if (dateValue) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const publishedDate = new Date(dateValue);
-
-      if (publishedDate > today) {
-        publishedDateInput.classList.add("is-invalid");
-        errorMsg.textContent =
-          "⚠️ Ngày xuất bản không được lớn hơn ngày hiện tại!";
-        errorMsg.style.display = "block";
-      } else {
-        publishedDateInput.classList.remove("is-invalid");
-        errorMsg.style.display = "none";
-      }
-    }
-  }
-
-  publishedDateInput.addEventListener("blur", validatePublishedDateUpdate);
-  publishedDateInput.addEventListener("change", validatePublishedDateUpdate);
-
-  // --- Validate trùng tác giả ---
-  const authorContainer = document.getElementById("authors-containerUpdate");
-  authorContainer.addEventListener("input", function (e) {
-    if (e.target.name === "authorsUpdate") {
-      const allAuthors = Array.from(
-        authorContainer.querySelectorAll('input[name="authorsUpdate"]')
-      )
-        .map((input) => input.value.trim().toLowerCase())
-        .filter((name) => name !== "");
-
-      const duplicates = allAuthors.filter(
-        (a) => a === e.target.value.trim().toLowerCase()
-      );
-      if (duplicates.length > 1) {
-        e.target.setCustomValidity("Tên tác giả đã tồn tại!");
-        e.target.reportValidity();
-      } else {
-        e.target.setCustomValidity("");
-      }
-    }
-  });
-
-  // --- Validate ảnh upload (2–20 ảnh) ---
-  const fileInput = document.getElementById("productImagesUpdate");
-  const previewContainer = document.getElementById("imagePreviewUpdate");
-  const errorDiv = document.getElementById("imageErrorUpdate");
-  let selectedFiles = [];
-
-  fileInput.addEventListener("change", function (event) {
-    const files = Array.from(event.target.files);
-    if (!errorDiv) return;
-    errorDiv.style.display = "none";
-    errorDiv.innerText = "";
-
-    for (const file of files) {
-      if (file.size > 5 * 1024 * 1024) {
-        errorDiv.style.display = "block";
-        errorDiv.innerText = `Ảnh "${file.name}" vượt quá dung lượng 5MB.`;
-        return;
-      }
-    }
-
-    selectedFiles = [...selectedFiles, ...files];
-
-    if (selectedFiles.length > 20) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Chỉ được tải lên tối đa 20 ảnh.";
-      selectedFiles = selectedFiles.slice(0, 20);
-    }
-
-    const dataTransfer = new DataTransfer();
-    selectedFiles.forEach((f) => dataTransfer.items.add(f));
-    fileInput.files = dataTransfer.files;
-
-    renderPreviewUpdate();
-  });
-
-  async function renderPreviewUpdate() {
-    if (!Array.isArray(selectedFiles)) selectedFiles = [];
-    if (!previewContainer) return;
-    previewContainer.innerHTML = "";
-    if (selectedFiles.length < 2) {
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Vui lòng chọn ít nhất 2 ảnh.";
-    } else {
-      errorDiv.style.display = "none";
-    }
-
-    const promises = selectedFiles.map((file, index) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          resolve({ index, src: e.target.result });
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    const results = await Promise.all(promises);
-
-    results.forEach(({ index, src }) => {
-      const col = document.createElement("div");
-      col.classList.add("col-3", "position-relative");
-      const isMain = index === 0;
-      const mainBadge = isMain
-        ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1"
-                  style="z-index: 2; font-size: 0.75rem; border-radius: 0.25rem;">Ảnh đại diện</span>`
-        : "";
-      col.innerHTML = `
-        <div class="border rounded position-relative overflow-hidden">
-          ${mainBadge}
-          <img src="${src}" class="img-fluid rounded"
-            style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3 / 4;">
-          <button type="button"
-            class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle"
-            style="width: 25px; height: 25px; line-height: 0;"
-            data-index="${index}">×</button>
-        </div>`;
-      previewContainer.appendChild(col);
-    });
-  }
-
-  previewContainer.addEventListener("click", function (e) {
-    if (e.target.tagName === "BUTTON") {
-      const index = parseInt(e.target.getAttribute("data-index"));
-      selectedFiles.splice(index, 1);
-      const dataTransfer = new DataTransfer();
-      selectedFiles.forEach((f) => dataTransfer.items.add(f));
-      fileInput.files = dataTransfer.files;
-      renderPreviewUpdate();
-    }
-  });
-
-  // --- Validate tổng thể khi submit ---
-  form.addEventListener("submit", function (e) {
-    validatePricesUpdate();
-    validatePublishedDateUpdate();
-
-    if (
-      publishedDateInput.classList.contains("is-invalid") ||
-      !validatePricesUpdate()
-    ) {
-      e.preventDefault();
-      return;
-    }
-
-    if (
-      selectedFiles.length > 0 &&
-      (selectedFiles.length < 2 || selectedFiles.length > 20)
-    ) {
-      e.preventDefault();
-      errorDiv.style.display = "block";
-      errorDiv.innerText = "Cần tải lên từ 2 đến 20 ảnh sản phẩm.";
-      return;
-    }
-  });
 });
