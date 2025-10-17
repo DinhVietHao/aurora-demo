@@ -84,11 +84,11 @@
 
                                                     <div class="col-1 text-center">
                                                         <span class="price unit-price">
-                                                            <fmt:formatNumber value="${cartItem.unitPrice}"
+                                                            <fmt:formatNumber value="${cartItem.product.salePrice}"
                                                                 type="currency" />
                                                         </span><br>
                                                         <c:if
-                                                            test="${cartItem.product.originalPrice != cartItem.unitPrice}">
+                                                            test="${cartItem.product.originalPrice != cartItem.product.salePrice}">
                                                             <span class="text-muted text-decoration-line-through">
                                                                 <fmt:formatNumber
                                                                     value="${cartItem.product.originalPrice}"
@@ -140,10 +140,9 @@
                                                 </div>
                                             </div>
                                             <!-- Modal Voucher Shop -->
-
                                             <div class="modal fade cart-shop-voucher"
                                                 id="shopVoucherModal_${shopCart.shop.shopId}" tabindex="-1"
-                                                aria-hidden="true">
+                                                aria-hidden="true" data-shop-id="${shopCart.shop.shopId}">
                                                 <div class="modal-dialog modal-dialog-scrollable">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
@@ -154,13 +153,17 @@
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
                                                                 <div class="col-8">
-                                                                    <input type="text" class="form-control"
+                                                                    <input type="text"
+                                                                        class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
                                                                 <div class="col-4">
-                                                                    <button class="button-four w-100">Áp
+                                                                    <button
+                                                                        class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
                                                                 </div>
+                                                                <span class="text-danger small voucherShopMessage">
+                                                                </span>
                                                             </div>
                                                             <c:choose>
                                                                 <c:when test="${empty shopCart.vouchers}">
@@ -220,12 +223,14 @@
                                                                                 </div>
                                                                                 <input type="radio"
                                                                                     name="voucherShopDiscount_${shopCart.shop.shopId}"
-                                                                                    value="discount1"
+                                                                                    value="${voucher.code}"
+                                                                                    data-value="${voucher.code}"
                                                                                     data-text="Giảm 8% tối đa 30K"
                                                                                     data-discount="${voucher.value}"
                                                                                     data-type="${voucher.discountType}"
                                                                                     data-max="${voucher.maxAmount}"
-                                                                                    data-min-order-amount="${voucher.minOrderAmount}">
+                                                                                    data-min-order-amount="${voucher.minOrderAmount}"
+                                                                                    data-shop-id="${shopCart.shop.shopId}">
                                                                             </label>
                                                                         </c:forEach>
                                                                     </div>
@@ -304,11 +309,14 @@
                                             <div class="row mb-3 align-items-center">
                                                 <div class="col-8">
                                                     <input type="text" class="form-control"
-                                                        placeholder="Nhập mã giảm giá">
+                                                        placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
                                                 <div class="col-4">
-                                                    <button class="button-four w-100">Áp dụng</button>
+                                                    <button class="button-four w-100" id="applySystemVoucher">Áp
+                                                        dụng</button>
                                                 </div>
+                                                <span class="text-danger small" id="voucherSystemMessage">
+                                                </span>
                                             </div>
                                             <c:choose>
                                                 <c:when test="${empty systemVouchers}">
@@ -453,7 +461,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
             </body>
 
             </html>

@@ -276,7 +276,6 @@ confirmShopVoucher.forEach((btn) => {
     const selectedVoucher = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
-    console.log("Check selectedVoucher ", selectedVoucher);
 
     if (selectedVoucher) {
       const code = selectedVoucher.dataset.value;
@@ -497,7 +496,20 @@ applyVoucherShops.forEach((btn) => {
       });
   });
 });
+document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    const input = modalEl.querySelector(".voucherShopInput");
+    const msg = modalEl.querySelector(".voucherShopMessage");
 
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "voucherShopMessage";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+});
 // ====================== SYSTEM VOUCHER HANDLER ======================
 const applySystemVoucher = document.getElementById("applySystemVoucher");
 applySystemVoucher.addEventListener("click", () => {
@@ -556,6 +568,22 @@ applySystemVoucher.addEventListener("click", () => {
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
     });
 });
+
+const voucherModalEl = document.getElementById("voucherModal");
+if (voucherModalEl) {
+  voucherModalEl.addEventListener("hidden.bs.modal", () => {
+    const msg = document.getElementById("voucherSystemMessage");
+    const input = document.getElementById("voucherSystemInput");
+
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+}
 // ====================== KHÔI PHỤC VOUCHER SAU KHI RELOAD ======================
 function loadSavedVouchers() {
   document.querySelectorAll(".voucher-input-shop").forEach((input) => {
