@@ -203,45 +203,42 @@
             </div>
           </div>
 
-          <%-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) --%>
-            <div class="row mt-4">
-              <div class="col-12">
-                <div class="book-review">
-                  <div class="book-review-header">Đánh giá sản phẩm</div>
-                  <div class="book-review-body">
-                    <div class="row align-items-center ">
-                      <div class="col-md-2">
-                        <h2>0/5</h2>
-                        <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
-                        <i class="bi bi-star"></i><i class="bi bi-star"></i>
-                        <p>(0 đánh giá)</p>
-                      </div>
-                      <div class="col-md-4"><%-- thanh phân bố sao: TODO bind dữ liệu --%></div>
-                      <div class="col-md-6 text-center">
-                        <p class="text-muted m-0">Chỉ có thành viên mới có thể viết nhận xét.</p>
-                        <p class="text-muted">
-                          Vui lòng <a href="${ctx}/auth/login">đăng nhập</a> /
-                          <a href="${ctx}/auth/register">đăng ký</a>.
-                        </p>
-                      </div>
+          <!-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="book-review">
+                <div class="book-review-header">Đánh giá sản phẩm</div>
+                <div class="book-review-body">
+                  <div class="row align-items-center ">
+                    <div class="col-md-2">
+                      <h2>0/5</h2>
+                      <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                      <i class="bi bi-star"></i><i class="bi bi-star"></i>
+                      <p>(0 đánh giá)</p>
+                    </div>
+                    <div class="col-md-4"><%-- thanh phân bố sao: TODO bind dữ liệu --%></div>
+                    <div class="col-md-6 text-center">
+                      <p class="text-muted m-0">Chỉ có thành viên mới có thể viết nhận xét.</p>
+                      <p class="text-muted">
+                        Vui lòng <a href="${ctx}/auth/login">đăng nhập</a> /
+                        <a href="${ctx}/auth/register">đăng ký</a>.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
-            <div class="book-introduction container">
-              <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-              <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
-                <jsp:param name="carouselId" value="bookIntroduction" />
-              </jsp:include>
-            </div>
+          <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
+          <div class="book-introduction container">
+            <h5 class="book-introduction-title">Aurora giới thiệu</h5>
+            <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
+              <jsp:param name="carouselId" value="bookIntroduction" />
+            </jsp:include>
+          </div>
 
         </div>
-
-        <!-- Toast notification Add To Cart -->
-        <div id="notify-toast"></div>
 
         <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
