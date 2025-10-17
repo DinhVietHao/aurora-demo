@@ -207,8 +207,8 @@
         </div>
         <!-- End Modal Forget Password -->
 
-        <!-- Modal Create Password -->
-        <div class="modal fade authFormModal" id="createPasswordModal" tabindex="-1"
+        <!-- Modal Reset Password -->
+        <div class="modal fade authFormModal" id="resetPasswordModal" tabindex="-1"
             aria-labelledby="createPasswordModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -218,43 +218,42 @@
                     <div class="modal-body">
                         <div class="row auth-form">
                             <div class="col-12 col-lg-12 auth-form-right forget-password">
-                                <h4 class="auth-form-title text-center">
-                                    Tạo mật khẩu mới
-                                </h4>
+                                <h4 class="auth-form-title text-center">Tạo mật khẩu mới</h4>
                                 <p class="auth-form-desc text-center">
-                                    Mã xác nhận đã gửi về email *******fc28@mail.copm
+                                    Mã xác nhận đã gửi về email *******fc28@mail.com
                                 </p>
                                 <form class="auth-form-form" id="form-create-password">
                                     <div class="form-group mb-2">
-                                        <label for="create-password-otp" class="form-label">Mã
-                                            OTP</label>
-                                        <input id="create-password-otp" type="number" class="form-control"
-                                            placeholder="Nhập mã OTP" />
+                                        <label for="forgotPassword-otp" class="form-label">Mã OTP</label>
+                                        <label for="forgotPassword-time" class="form-label"
+                                            id="otp-timer-forgot"></label>
+                                        <div class="input-group">
+                                            <input id="forgotPassword-otp" type="number" class="form-control"
+                                                placeholder="Nhập mã OTP" />
+                                            <button type="button" class="button-two" id="send-otp-forgot">
+                                                Gửi OTP
+                                            </button>
+                                        </div>
                                         <span class="form-message"></span>
                                     </div>
                                     <div class="form-group mb-2">
-                                        <label for="create-password-password" class="form-label">Mật
-                                            khẩu</label>
+                                        <label for="setupNewPassword" class="form-label">Mật khẩu</label>
                                         <div class="password">
-                                            <input id="create-password-password" type="password" class="form-control"
+                                            <input id="setupNewPassword" type="password" class="form-control"
                                                 placeholder="Nhập mật khẩu của bạn" />
                                             <i class="bi bi-eye-slash toggle-password"></i>
                                         </div>
                                         <span class="form-message"></span>
                                     </div>
                                     <div class="form-group mb-2">
-                                        <label for="create-password-password-confirmation" class="form-label">Xác
-                                            nhận mật khẩu</label>
+                                        <label for="setupNewPassword-confirmation" class="form-label">Xác nhận mật
+                                            khẩu</label>
                                         <div class="password">
-                                            <input id="create-password-password-confirmation" type="password"
+                                            <input id="setupNewPassword-confirmation" type="password"
                                                 class="form-control" placeholder="Xác nhận mật khẩu của bạn" />
                                             <i class="bi bi-eye-slash toggle-password"></i>
                                         </div>
                                         <span class="form-message"></span>
-                                    </div>
-                                    <div class="text-center auth-form-have-account">
-                                        <span>Bạn chưa có OTP?
-                                            <a href="#"> Gửi lại </a></span>
                                     </div>
                                     <button class="button-three mt-3">Xong</button>
                                 </form>
@@ -264,4 +263,3 @@
                 </div>
             </div>
         </div>
-        <!-- End Modal Create Password -->

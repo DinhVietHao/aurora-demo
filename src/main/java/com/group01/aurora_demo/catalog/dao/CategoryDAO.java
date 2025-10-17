@@ -52,4 +52,22 @@ public class CategoryDAO {
         return list;
     }
 
+    public void deleteCategoriesByProductId(long productId) throws SQLException {
+        String sql = "DELETE FROM ProductCategory WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void addCategoryToProduct(long productId, long categoryId) throws SQLException {
+        String sql = "INSERT INTO ProductCategory (ProductID, CategoryID) VALUES (?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, categoryId);
+            ps.executeUpdate();
+        }
+    }
 }

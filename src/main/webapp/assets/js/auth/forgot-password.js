@@ -1,18 +1,7 @@
 /* global bootstrap */
-/**
- * Luồng "Quên mật khẩu" phía client (2 modal):
- *  - Modal 1 (forgetPasswordModal): nhập email, gửi yêu cầu START để nhận OTP.
- *  - Modal 2 (createPasswordModal): nhập OTP + mật khẩu mới, gửi COMPLETE để đặt lại.
- * Có hỗ trợ RESEND OTP.
- *
- * Lưu ý UI:
- *  - Disable nút khi request đang chạy hoặc khi form chưa thay đổi sau lần lỗi trước.
- *  - Khi chuyển modal: ẩn modal cũ, dọn state, rồi mới mở modal mới/đăng nhập.
- */
 document.addEventListener("DOMContentLoaded", function () {
-  // --------- Cache phần tử UI chính ---------
   const forgetModalEl = document.getElementById("forgetPasswordModal");
-  const createModalEl = document.getElementById("createPasswordModal");
+  const resetPassModalEl = document.getElementById("resetPasswordModal");
   const loginModalEl = document.getElementById("loginModal");
 
   const btnCheckMail = document.querySelector(
@@ -23,71 +12,60 @@ document.addEventListener("DOMContentLoaded", function () {
   const btnUpdatePass = document.querySelector(
     "#form-create-password .button-three"
   );
-  const inputOtp = document.getElementById("create-password-otp");
-  const inputPw = document.getElementById("create-password-password");
-  const inputPw2 = document.getElementById(
-    "create-password-password-confirmation"
+  const inputOtp = document.getElementById("forgotPassword-otp");
+  const inputResetPassword = document.getElementById("setupNewPassword");
+  const inputConfirmPassword = document.getElementById(
+    "setupNewPassword-confirmation"
   );
-  const resendLink = createModalEl?.querySelector(".auth-form-have-account a");
-  const createDesc = createModalEl?.querySelector(".auth-form-desc");
 
-  // Trạng thái đang thao tác
-  let workingEmail = null; // email được xác nhận ở bước START
-  let lastEmailAttempt = null; // snapshot input email lần gửi trước (để kiểm tra "đã thay đổi chưa")
-  let lastResetAttempt = null; // snapshot tổ hợp (otp|pw1|pw2) lần gửi trước
+  const createDesc = resetPassModalEl?.querySelector(".auth-form-desc");
+  const timerLabel = document.getElementById("otp-timer-forgot");
 
-  /**
-   * Tìm phần tử hiển thị thông báo đi kèm input ('.form-group > .form-message')
-   * @param {HTMLElement} inputElement - input cần tìm message element
-   * @returns {HTMLElement|null}
-   */
-  function getMessageElementOf(inputElement) {
-    if (!inputElement) return null;
-    const container =
-      inputElement.closest(".form-group") || inputElement.parentElement;
-    return container?.querySelector(".form-message") || null;
-  }
+  // Khai báo biến state
+  let workingEmail = null;
+  let lastEmailAttempt = null;
+  let lastResetAttempt = null;
 
-  /**
-   * Hiển thị thông báo cho 1 input, kèm trạng thái để tô màu.
-   * @param {HTMLElement} inputElement
-   * @param {string} message
-   * @param {"success"|"failure"|""} outcomes
-   */
-  function showMessageForInput(inputElement, message, outcomes) {
-    const msgElement = getMessageElementOf(inputElement);
-    if (!msgElement) return;
-    msgElement.textContent = message || "";
-    msgElement.style.color =
-      outcomes === "success" ? "green" : outcomes === "failure" ? "red" : "";
-  }
+  const otpConfig = {
+    sendOtpBtn: document.getElementById("send-otp-forgot"),
+    timerLabel: document.getElementById("otp-timer-forgot"),
+    otpInput: inputOtp,
+    emailInput: inputEmail,
+    modalElement: resetPassModalEl,
+    defaultPurpose: "forgot-password",
+  };
+
+  const otpManager = window.createOtpManager(otpConfig);
 
   /**
-   * Kiểm tra email cơ bản (client-side)
-   * @param {string} email
-   * @returns {boolean}
+   * Ẩn modal cũ rồi mở modal mới
    */
-  function isValidEmail(email) {
-    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/.test(email);
-  }
+  function swapModals(oldEl, newEl, afterHideCb) {
+    const oldInst = oldEl ? bootstrap.Modal.getOrCreateInstance(oldEl) : null;
+    const newInst = newEl ? bootstrap.Modal.getOrCreateInstance(newEl) : null;
 
-  /**
-   * Mask email để hiển thị (giữ 1-2 ký tự đầu local-part)
-   * @param {string} email
-   * @returns {string}
-   */
-  function maskEmail(email) {
-    if (!email || !email.includes("@")) return "*******";
-    const [local, domain] = email.split("@");
-    const head = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2);
-    return head + "*****@" + domain;
+    if (!oldInst && newInst) {
+      newInst.show();
+      return;
+    }
+
+    if (!oldInst) return;
+
+    const handler = () => {
+      oldEl.removeEventListener("hidden.bs.modal", handler);
+      document.querySelectorAll(".modal-backdrop").forEach((bd, idx) => {
+        if (idx > 0) bd.remove();
+      });
+      if (typeof afterHideCb === "function") afterHideCb();
+      if (newInst) newInst.show();
+    };
+
+    oldEl.addEventListener("hidden.bs.modal", handler, { once: true });
+    oldInst.hide();
   }
 
   /**
    * Đặt trạng thái nút (disable/enable) + đổi nhãn khi disable
-   * @param {HTMLButtonElement} btn
-   * @param {boolean} disabled
-   * @param {string} [textWhenDisabled]
    */
   function setBtnState(btn, disabled, textWhenDisabled) {
     if (!btn) return;
@@ -110,50 +88,20 @@ document.addEventListener("DOMContentLoaded", function () {
     return strKey !== (lastKey ?? null);
   }
 
-  /**
-   * Ẩn modal cũ rồi (tuỳ chọn) mở modal mới. Đảm bảo backdrop không bị nhân đôi.
-   * @param {HTMLElement|null} oldEl - modal đang mở
-   * @param {HTMLElement|null} newEl - modal sẽ mở (có thể null nếu chỉ đóng)
-   * @param {Function} [afterHideCb] - callback chạy sau khi oldEl ẩn xong
-   */
-  // function swapModals(oldEl, newEl, afterHideCb) {
-  //     const oldInst = oldEl
-  //         ? bootstrap.Modal.getOrCreateInstance(oldEl)
-  //         : null;
-  //     const newInst = newEl
-  //         ? bootstrap.Modal.getOrCreateInstance(newEl)
-  //         : null;
-  //     if (!oldInst && newInst) {
-  //         newInst.show();
-  //         return;
-  //     }
-  //     if (!oldInst) return;
-  //     const handler = () => {
-  //         oldEl.removeEventListener("hidden.bs.modal", handler);
-  //         // Xoá backdrop dư (nếu có)
-  //         document.querySelectorAll(".modal-backdrop").forEach((bd, idx) => {
-  //             if (idx > 0) bd.remove();
-  //         });
-  //         if (typeof afterHideCb === "function") afterHideCb();
-  //         if (newInst) newInst.show();
-  //     };
-  //     oldEl.addEventListener("hidden.bs.modal", handler, { once: true });
-  //     oldInst.hide();
-  // }
-
   /** Dọn form nhập email (modal 1) */
   function clearForgetForm() {
-    inputEmail && (inputEmail.value = "");
-    showMessageForInput(inputEmail, "", "");
+    otpManager.showMessageForInput(inputEmail, "", "");
     lastEmailAttempt = null;
     updateEmailBtnState();
   }
 
   /** Dọn form nhập OTP & password (modal 2) */
-  function clearCreateForm() {
-    [inputOtp, inputPw, inputPw2].forEach((i) => i && (i.value = ""));
-    [inputOtp, inputPw, inputPw2].forEach((i) =>
-      showMessageForInput(i, "", "")
+  function clearResetForm() {
+    [inputOtp, inputResetPassword, inputConfirmPassword].forEach(
+      (i) => i && (i.value = "")
+    );
+    [inputOtp, inputResetPassword, inputConfirmPassword].forEach((i) =>
+      otpManager.showMessageForInput(i, "", "")
     );
     lastResetAttempt = null;
     updateResetBtnState();
@@ -161,19 +109,21 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /** Enable/disable nút gửi email dựa trên tính hợp lệ và thay đổi input */
   function updateEmailBtnState() {
-    const email = (inputEmail.value || "").trim().toLowerCase();
-    const valid = !!email && isValidEmail(email);
+    const email = inputEmail.value.trim().toLowerCase();
+    const valid = otpManager.isValidEmail(
+      inputEmail.value.trim().toLowerCase()
+    );
     const changed = hasChangedSince(email, lastEmailAttempt);
     setBtnState(btnCheckMail, !(valid && changed));
-    if (!valid) showMessageForInput(inputEmail, "", "");
+    if (!valid) otpManager.showMessageForInput(inputEmail, "", "");
   }
 
   /** Tạo snapshot khóa cho modal 2 để so sánh thay đổi (otp|pw1|pw2) */
   function buildResetKey() {
-    const otp = (inputOtp.value || "").trim();
-    const pw1 = (inputPw.value || "").trim();
-    const pw2 = (inputPw2.value || "").trim();
-    return `${otp}|${pw1}|${pw2}`;
+    const otp = inputOtp.value.trim();
+    const resetPassword = inputResetPassword.value.trim();
+    const confirmPassword = inputConfirmPassword.value.trim();
+    return `${otp}|${resetPassword}|${confirmPassword}`;
   }
 
   /**
@@ -183,12 +133,12 @@ document.addEventListener("DOMContentLoaded", function () {
    *  - Mật khẩu nhập lại khớp
    */
   function validateResetInputs() {
-    const otp = (inputOtp.value || "").trim();
-    const pw1 = (inputPw.value || "").trim();
-    const pw2 = (inputPw2.value || "").trim();
+    const otp = inputOtp.value.trim();
+    const resetPassword = inputResetPassword.value.trim();
+    const confirmPassword = inputConfirmPassword.value.trim();
     if (!otp) return false;
-    if (!pw1 || pw1.length < 6) return false;
-    if (pw1 !== pw2) return false;
+    if (resetPassword.length < 8) return false;
+    if (resetPassword !== confirmPassword) return false;
     return true;
   }
 
@@ -199,15 +149,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const changed = hasChangedSince(key, lastResetAttempt);
     setBtnState(btnUpdatePass, !(valid && changed));
     if (valid) {
-      [inputOtp, inputPw, inputPw2].forEach((i) =>
-        showMessageForInput(i, "", "")
-      );
+      otpManager.showMessageForInput(inputResetPassword, "", "");
+      otpManager.showMessageForInput(inputConfirmPassword, "", "");
     }
   }
 
   // Lắng nghe thay đổi để bật/tắt nút đúng thời điểm
   inputEmail?.addEventListener("input", updateEmailBtnState);
-  [inputOtp, inputPw, inputPw2].forEach((el) =>
+  [inputOtp, inputResetPassword, inputConfirmPassword].forEach((el) =>
     el?.addEventListener("input", updateResetBtnState)
   );
 
@@ -215,159 +164,149 @@ document.addEventListener("DOMContentLoaded", function () {
   setBtnState(btnCheckMail, true);
   setBtnState(btnUpdatePass, true);
 
-  // ============= STEP 1: gửi email để nhận OTP (action=start) =============
+  // ============= STEP 1: Gửi email để nhận OTP =============
   btnCheckMail?.addEventListener("click", async function () {
-    const email = (inputEmail.value || "").trim().toLowerCase();
+    const email = inputEmail.value.trim().toLowerCase();
+
     if (!email) {
-      showMessageForInput(inputEmail, "Vui lòng nhập email.", "failure");
-      inputEmail.focus();
-      return;
-    }
-    if (!isValidEmail(email)) {
-      showMessageForInput(inputEmail, "Email không hợp lệ.", "failure");
+      otpManager.showMessageForInput(
+        inputEmail,
+        "Vui lòng nhập email.",
+        "failure"
+      );
       inputEmail.focus();
       return;
     }
 
-    // Ghi snapshot để chỉ re-enable khi user sửa email
+    if (!otpManager.isValidEmail(email)) {
+      otpManager.showMessageForInput(
+        inputEmail,
+        "Email không hợp lệ.",
+        "failure"
+      );
+      inputEmail.focus();
+      return;
+    }
+
     lastEmailAttempt = email;
     setBtnState(btnCheckMail, true, "Đang xử lý...");
 
-    try {
-      // Gọi servlet gộp với action=start
-      const res = await fetch("/auth/forgot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "start", email }),
-      });
-      const data = await res.json().catch(() => null);
+    // ✅ Gọi sendOtp với purpose="forgot-password"
+    const success = await otpManager.sendOtp();
 
-      // Thất bại → hiện thông báo và giữ disable (đến khi user sửa input)
-      if (!data || data.ok !== true) {
-        const msg =
-          data && data.message
-            ? data.message
-            : "Không thể xử lý. Vui lòng thử lại.";
-        showMessageForInput(inputEmail, msg, "failure");
-        return;
-      }
-
-      // Thành công → lưu email, cập nhật mô tả, dọn modal 1 và chuyển sang modal 2
+    if (success) {
       workingEmail = email;
       if (createDesc) {
-        const display = data.masked || maskEmail(email);
-        createDesc.textContent = `Mã xác nhận đã gửi về email ${display}`;
+        createDesc.textContent = `Mã xác nhận đã gửi về email ${otpManager.maskEmail(
+          email
+        )}`;
       }
       clearForgetForm();
-      swapModals(forgetModalEl, createModalEl, () => {
-        clearCreateForm(); // đảm bảo modal-2 sạch
+      swapModals(forgetModalEl, resetPassModalEl, () => {
+        clearResetForm();
       });
-    } catch (err) {
-      showMessageForInput(
-        inputEmail,
-        "Không thể kết nối máy chủ. Vui lòng thử lại.",
-        "failure"
-      );
-    }
-    // Không enable lại ở đây: chỉ enable khi người dùng sửa input (updateEmailBtnState)
-  });
-
-  // ============= Gửi lại OTP (action=resend) =============
-  resendLink?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (!workingEmail) return; // chưa qua bước start
-    try {
-      const res = await fetch("/auth/forgot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "resend", email: workingEmail }),
-      });
-      const data = await res.json().catch(() => null);
-      showMessageForInput(
-        inputOtp,
-        data?.ok
-          ? "Đã gửi lại OTP."
-          : data?.message || "Không thể gửi lại OTP.",
-        data?.ok ? "success" : "failure"
-      );
-    } catch (_) {
-      showMessageForInput(inputOtp, "Không thể gửi lại OTP.", "failure");
+    } else {
+      setBtnState(btnUpdatePass, false);
     }
   });
 
-  // ============= STEP 2: hoàn tất đặt lại mật khẩu (action=complete) =============
+  // ============= STEP 2: Hoàn tất đặt lại mật khẩu =============
   btnUpdatePass?.addEventListener("click", async (e) => {
     e.preventDefault();
-    const otp = (inputOtp.value || "").trim();
-    const pw1 = (inputPw.value || "").trim();
-    const pw2 = (inputPw2.value || "").trim();
+    const otp = inputOtp.value.trim();
+    const resetPassword = inputResetPassword.value.trim();
+    const confirmPassword = inputConfirmPassword.value.trim();
 
-    // Validate client-side cơ bản
-    if (!otp) {
-      showMessageForInput(inputOtp, "Vui lòng nhập OTP.", "failure");
-      inputOtp.focus();
+    if (!otpManager.isOtpValid()) {
+      const timerText = (timerLabel?.textContent || "").trim();
+      if (timerText === "Hết hạn" || timerText === "0:00") {
+        otpManager.showMessageForInput(
+          inputOtp,
+          "Mã OTP đã hết hạn, vui lòng bấm Gửi OTP để nhận mã mới.",
+          "failure"
+        );
+      } else {
+        otpManager.showMessageForInput(
+          inputOtp,
+          "Vui lòng xác thực OTP trước khi đăng ký.",
+          "failure"
+        );
+      }
       return;
     }
-    if (!pw1 || pw1.length < 6) {
-      showMessageForInput(inputPw, "Mật khẩu tối thiểu 6 ký tự.", "failure");
-      inputPw.focus();
+
+    if (resetPassword.length < 8) {
+      otpManager.showMessageForInput(
+        inputResetPassword,
+        "Mật khẩu tối thiểu 8 ký tự.",
+        "failure"
+      );
+      inputResetPassword.focus();
       return;
     }
-    if (pw1 !== pw2) {
-      showMessageForInput(inputPw2, "Mật khẩu xác nhận không khớp.", "failure");
-      inputPw2.focus();
+
+    if (resetPassword !== confirmPassword) {
+      otpManager.showMessageForInput(
+        inputConfirmPassword,
+        "Mật khẩu xác nhận không khớp.",
+        "failure"
+      );
+      inputConfirmPassword.focus();
       return;
     }
 
     // Ghi snapshot để chỉ re-enable khi user sửa bất kỳ trường nào
-    lastResetAttempt = `${otp}|${pw1}|${pw2}`;
+    lastResetAttempt = `${otp}|${resetPassword}|${confirmPassword}`;
     setBtnState(btnUpdatePass, true, "Đang cập nhật...");
 
-    try {
-      // Gọi servlet gộp với action=complete
-      const res = await fetch("/auth/forgot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "complete",
-          email: workingEmail,
-          otp,
-          password: pw1,
-        }),
-      });
-      const data = await res.json().catch(() => null);
+    const formData = new FormData();
+    formData.append("action", "forgotPassword");
+    formData.append("email", workingEmail);
+    formData.append("password", resetPassword);
 
-      if (data?.ok) {
-        // Thông báo thành công ngắn → đóng modal 2 → mở modal đăng nhập
-        showMessageForInput(
-          inputOtp,
-          "Đặt lại mật khẩu thành công. Vui lòng đăng nhập.",
-          "success"
-        );
+    try {
+      const res = await fetch("/auth", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setBtnState(btnUpdatePass, true, data.message);
+
         const afterHide = () => {
-          clearCreateForm();
+          clearResetForm();
           workingEmail = null;
           if (loginModalEl) {
             const loginInst = bootstrap.Modal.getOrCreateInstance(loginModalEl);
             loginInst.show();
           }
         };
-        swapModals(createModalEl, null, afterHide);
+
+        setTimeout(() => {
+          [
+            inputEmail,
+            inputOtp,
+            inputResetPassword,
+            inputConfirmPassword,
+          ].forEach((i) => i && (i.value = ""));
+          swapModals(resetPassModalEl, null, afterHide);
+        }, 2000);
       } else {
-        showMessageForInput(
-          inputOtp,
-          data?.message || "Không thể đặt lại mật khẩu.",
+        otpManager.showMessageForInput(
+          inputConfirmPassword,
+          data.message,
           "failure"
         );
       }
     } catch (_) {
-      showMessageForInput(
-        inputOtp,
+      otpManager.showMessageForInput(
+        inputConfirmPassword,
         "Không thể kết nối máy chủ. Vui lòng thử lại.",
         "failure"
       );
     }
-    // Không enable lại ở đây: chỉ enable khi người dùng sửa input (updateResetBtnState)
   });
 
   // Khi modal 1 đóng thủ công → dọn trạng thái
@@ -376,7 +315,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Khi modal 2 mở → cập nhật trạng thái nút theo dữ liệu hiện có (phòng cache)
-  createModalEl?.addEventListener("shown.bs.modal", () => {
+  resetPassModalEl?.addEventListener("shown.bs.modal", () => {
     updateResetBtnState();
   });
 });

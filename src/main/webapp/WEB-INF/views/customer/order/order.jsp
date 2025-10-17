@@ -156,7 +156,13 @@
                                                                         </div>
                                                                         <div class="col-10">
                                                                             <h6>${order.productName}</h6>
-                                                                            <p class="mb-2 text-color">Thể loại: Fiction
+                                                                            <p class="mb-2 text-color">Thể loại:
+                                                                                <c:forEach var="category"
+                                                                                    items="${order.categories}"
+                                                                                    varStatus="st">
+                                                                                    <c:out value="${category.name}" />
+                                                                                    <c:if test="${!st.last}">, </c:if>
+                                                                                </c:forEach>
                                                                             </p>
                                                                             <div class="d-flex justify-content-between">
                                                                                 <p class="text-color">Số lượng:
@@ -231,154 +237,6 @@
                                                     </div>
                                                 </c:otherwise>
                                             </c:choose>
-
-
-                                            <!-- Chờ xác nhận -->
-                                            <!-- <div class="tab-pane fade order-card" id="pending" role="tabpanel">
-                                                <div class="order-card__header">
-                                                    <span><strong><i class="bi bi-shop me-2"></i> BookHaven
-                                                            Store</strong>
-                                                        <a href="./viewShop.html" class="button-outline mx-2"> Xem
-                                                            shop</a></span>
-                                                    <div>
-                                                        <span class="text-color">Trạng thái: </span>
-                                                        <span class="badge bg-success">Giao hàng</span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="order-card__body">
-                                                    <div class="col-2">
-                                                        <img class="order-card__image"
-                                                            src="./assets/images/product-1.png" alt="product">
-                                                    </div>
-                                                    <div class="col-10">
-                                                        <h6>The Great Adventure - Fantasy Novel</h6>
-                                                        <p class="mb-2 text-color">Phân loại: Fiction</p>
-                                                        <div class="d-flex justify-content-between">
-                                                            <p class="text-color">Số lượng: 2</p>
-                                                            <div>
-                                                                <span
-                                                                    class="text-decoration-line-through text-color">188.000đ</span>
-                                                                <span class="fw-bold text-danger">149.000đ</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="text-end">
-                                                    <p class="text-color">Thành tiền: <span
-                                                            class="order-card__price">50.000đ</span>
-                                                    </p>
-                                                    <button class="button-six" data-bs-toggle="modal"
-                                                        data-bs-target="#cancelOrderModal"> Hủy
-                                                        đơn</button>
-                                                </div>
-                                            </div> -->
-
-                                            <!-- Đang giao -->
-                                            <!-- <div class="tab-pane fade order-card" id="shipping" role="tabpanel">
-                                                <div class="text-center">
-                                                    <img src="./assets/images/common/empty-order.png" alt="">
-                                                    <p class="text-muted">Chưa có đơn hàng</p>
-                                                </div>
-                                            </div> -->
-
-                                            <!-- Đang Chờ giao -->
-                                            <!-- <div class="tab-pane fade order-card" id="ready" role="tabpanel">
-                                                <div class="order-card__header">
-                                                    <span><strong><i class="bi bi-shop me-2"></i> BookHaven
-                                                            Store</strong>
-                                                        <a href="./viewShop.html" class="button-outline mx-2"> Xem
-                                                            shop</a></span>
-                                                    <div>
-                                                        <span class="text-color">Trạng thái: </span>
-                                                        <span class="badge bg-success">Giao hàng thành công</span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="order-card__body">
-                                                    <div class="col-2">
-                                                        <img class="order-card__image"
-                                                            src="./assets/images/product-1.png" alt="product">
-                                                    </div>
-                                                    <div class="col-10">
-                                                        <h6>The Great Adventure - Fantasy Novel</h6>
-                                                        <p class="mb-2 text-color">Phân loại: Fiction</p>
-                                                        <div class="d-flex justify-content-between">
-                                                            <p class="text-color">Số lượng: 2</p>
-                                                            <div>
-                                                                <span
-                                                                    class="text-decoration-line-through text-color">188.000đ</span>
-                                                                <span class="fw-bold text-danger">149.000đ</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="text-end">
-                                                    <p class="text-color">Thành tiền: <span
-                                                            class="order-card__price">50.000đ</span>
-                                                    </p>
-                                                    <button class="button-four" data-bs-toggle="modal"
-                                                        data-bs-target="#confirmOrderModal">Đã nhận
-                                                        hàng</button>
-                                                </div>
-                                            </div>
-
-                                            <div class="tab-pane fade order-card" id="done" role="tabpanel">
-                                                <div class="order-card__header">
-                                                    <span><strong><i class="bi bi-shop me-2"></i> BookHaven
-                                                            Store</strong>
-                                                        <a href="./viewShop.html" class="button-outline mx-2"> Xem
-                                                            shop</a></span>
-                                                    <div>
-                                                        <span class="text-color">Trạng thái: </span>
-                                                        <span class="badge bg-success">Giao hàng thành công</span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="order-card__body">
-                                                    <div class="col-2">
-                                                        <img class="order-card__image"
-                                                            src="./assets/images/product-1.png" alt="product">
-                                                    </div>
-                                                    <div class="col-10">
-                                                        <h6>The Great Adventure - Fantasy Novel</h6>
-                                                        <p class="mb-2 text-color">Phân loại: Fiction</p>
-                                                        <div class="d-flex justify-content-between">
-                                                            <p class="text-color">Số lượng: 2</p>
-                                                            <div>
-                                                                <span
-                                                                    class="text-decoration-line-through text-color">188.000đ</span>
-                                                                <span class="fw-bold text-danger">149.000đ</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="text-end">
-                                                    <p class="text-color">Thành tiền: <span
-                                                            class="order-card__price">50.000đ</span>
-                                                    </p>
-                                                    <button class="button-four"><i class="bi bi-arrow-repeat me-1"></i>
-                                                        Mua
-                                                        lại</button>
-                                                    <button class="button-five" data-bs-toggle="modal"
-                                                        data-bs-target="#ratingModal">
-                                                        Đánh giá
-                                                        shop</button>
-
-                                                </div>
-                                            </div> -->
-
-                                            <!-- Đã hủy -->
-                                            <!-- <div class="tab-pane fade order-card" id="cancel" role="tabpanel">
-                                                <div class="text-center">
-                                                    <img src="./assets/images/common/empty-order.png" alt="">
-                                                    <p class="text-muted">Chưa có đơn hàng</p>
-                                                </div>
-                                            </div> -->
-
                                         </div>
                                     </div>
                                 </div>
@@ -400,13 +258,27 @@
                                     class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                             </div> <!-- Body -->
                             <div class="modal-body">
-                                <p>Bạn có chắc chắn muốn huỷ đơn hàng <strong>#12345</strong> không?</p>
+                                <p>Bạn có chắc chắn muốn huỷ đơn hàng này không?</p>
                                 <form id="cancelOrderForm">
-                                    <div class="mt-3"> <label for="otherReason" class="form-label">Lý do hủy</label>
-                                        <textarea class="form-control" id="otherReason" name="otherReason" rows="2"
-                                            placeholder="Nhập lý do khác..."></textarea>
-                                    </div> <input type="hidden" name="orderId" id="orderId" value="">
-                                </form>
+                                    <div class="mt-3">
+                                        <label for="cancelReason" class="form-label">Lý do hủy đơn hàng</label>
+                                        <select class="form-select" id="cancelReason" name="cancelReason" required>
+                                            <option value="" selected disabled>-- Chọn lý do hủy --</option>
+                                            <option value="update_phone_address">Cập nhật số điện thoại hoặc địa chỉ
+                                                nhận hàng</option>
+                                            <option value="ordered_wrong_product">Đặt nhầm sản phẩm</option>
+                                            <option value="ordered_wrong_quantity">Nhập sai số lượng sản phẩm</option>
+                                            <option value="ordered_duplicate">Đặt trùng đơn hàng</option>
+                                            <option value="changed_mind">Không muốn mua nữa</option>
+                                            <option value="found_better_price">Tìm thấy sản phẩm giá rẻ hơn ở nơi khác
+                                            </option>
+                                            <option value="choose_other_shop">Muốn mua ở shop khác</option>
+                                            <option value="shipping_fee_changed">Phí vận chuyển thay đổi so với khi đặt
+                                            </option>
+                                            <option value="personal_reason">Lý do cá nhân / không tiện nhận hàng
+                                            </option>
+                                        </select>
+                                    </div>
                             </div>
                             <div class="modal-footer"> <button type="button" class="button-five"
                                     data-bs-dismiss="modal">Đóng</button> <button type="submit" form="cancelOrderForm"
@@ -415,8 +287,6 @@
                     </div>
                 </div>
                 <!--End Cancel Order Modal -->
-
-
 
                 <!-- Confirm Order Received Modal -->
                 <div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderLabel"

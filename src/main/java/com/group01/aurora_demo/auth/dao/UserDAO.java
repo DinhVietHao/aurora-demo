@@ -416,17 +416,17 @@ public class UserDAO {
         }
     }
 
-    public boolean updateLocalPasswordByUserId(long userId, String newHash) {
-        final String sql = "UPDATE dbo.Users SET Password=? WHERE UserID=? AND AuthProvider='LOCAL'";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, newHash);
-            ps.setLong(2, userId);
+    public boolean updatePasswordByEmail(String email, String resetPassword) {
+        final String sql = "UPDATE Users SET Password=? WHERE Email=? AND AuthProvider='LOCAL'";
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setString(1, resetPassword);
+            ps.setString(2, email);
             return ps.executeUpdate() > 0;
         } catch (java.sql.SQLException e) {
             System.out.println(e.getMessage());
-            return false;
         }
+        return false;
     }
 
     public boolean updateAvatarCustomer(long userID, String avatarUrl) {

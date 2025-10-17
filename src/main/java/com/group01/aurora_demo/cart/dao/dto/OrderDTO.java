@@ -1,6 +1,9 @@
 package com.group01.aurora_demo.cart.dao.dto;
 
 import java.util.Date;
+import java.util.List;
+
+import com.group01.aurora_demo.catalog.model.Category;
 
 public class OrderDTO {
     private long orderId;
@@ -17,6 +20,7 @@ public class OrderDTO {
     private String shopStatus;
     private String orderStatus;
     private Date orderDate;
+    List<Category> categories;
 
     public long getOrderId() {
         return orderId;
@@ -128,6 +132,14 @@ public class OrderDTO {
 
     public void setOrderDate(Date orderDate) {
         this.orderDate = orderDate;
+    }
+
+    public List<Category> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Category> categories) {
+        this.categories = categories;
     }
 
 }

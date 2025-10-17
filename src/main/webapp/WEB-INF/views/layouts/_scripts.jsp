@@ -15,7 +15,7 @@
 
         <!-- Tạo redirect_uri động, đúng host/port/context hiện tại -->
         <c:set var="redirectUri"
-            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth/login" />
+            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth" />
 
         <!-- Tạo URL đăng nhập Google OAuth v2, đã encode tham số -->
         <c:url var="googleAuthUrl" value="https://accounts.google.com/o/oauth2/v2/auth">
@@ -46,7 +46,7 @@
                         Validator.isRequired('#register-email', 'Vui lòng nhập email'),
                         Validator.isEmail('#register-email', 'Email không hợp lệ'),
                         Validator.isRequired('#register-password', 'Vui lòng nhập mật khẩu'),
-                        Validator.minLength('#register-password', 6),
+                        Validator.minLength('#register-password', 8),
                         Validator.isRequired('#register-password-confirmation', 'Vui lòng nhập lại mật khẩu'),
                         Validator.isConfirmed('#register-password-confirmation', function () {
                             return document.querySelector('#form-register #register-password').value;
@@ -107,7 +107,7 @@
                     rules: [
                         Validator.isRequired('#create-password-otp', 'Vui lòng nhập mã OTP'),
                         Validator.isRequired('#create-password-password', 'Vui lòng nhập mật khẩu'),
-                        Validator.minLength('#create-password-password', 6),
+                        Validator.minLength('#create-password-password', 8),
                         Validator.isRequired('#create-password-password-confirmation', 'Vui lòng nhập lại mật khẩu'),
                         Validator.isConfirmed('#create-password-password-confirmation', function () {
                             return document.querySelector('#form-create-password #create-password-password').value;

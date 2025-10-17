@@ -1223,4 +1223,120 @@ public class ProductDAO {
         }
         return product;
     }
+
+    public boolean updateStock(Connection conn, long productId, int quantity) {
+        String sql = """
+                    UPDATE Products
+                    SET Quantity = Quantity - ?,
+                        SoldCount = SoldCount + ?,
+                        Status = CASE WHEN Quantity - ? <= 0 THEN 'OUT_OF_STOCK' ELSE 'ACTIVE' END
+                    WHERE ProductID = ? AND Quantity >= ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setLong(4, productId);
+            ps.setInt(5, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean hasEnoughQuantity(Connection conn, long productId, int quantity) {
+        String sql = "SELECT Quantity FROM Products WHERE ProductID = ? AND Quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setInt(2, quantity);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateProduct(Product product) throws SQLException {
+        String updateProductSql = """
+                UPDATE Products
+                SET
+                    Title = ?,
+                    Description = ?,
+                    OriginalPrice = ?,
+                    SalePrice = ?,
+                    Quantity = ?,
+                    PublisherID = ?,
+                    PublishedDate = ?,
+                    Weight = ?
+                WHERE ProductID = ?
+                """;
+
+        String upsertBookDetailSql = """
+                INSERT INTO BookDetails (
+                    ProductID, Translator, Version, CoverType, Pages, LanguageCode, Size, ISBN
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    Translator = VALUES(Translator),
+                    Version = VALUES(Version),
+                    CoverType = VALUES(CoverType),
+                    Pages = VALUES(Pages),
+                    LanguageCode = VALUES(LanguageCode),
+                    Size = VALUES(Size),
+                    ISBN = VALUES(ISBN)
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            cn.setAutoCommit(false);
+            try (PreparedStatement psProd = cn.prepareStatement(updateProductSql)) {
+
+                // --- Cập nhật bảng Products ---
+                psProd.setString(1, product.getTitle());
+                psProd.setString(2, product.getDescription());
+                psProd.setDouble(3, product.getOriginalPrice());
+                psProd.setDouble(4, product.getSalePrice());
+                psProd.setInt(5, product.getQuantity());
+
+                if (product.getPublisherId() != null)
+                    psProd.setLong(6, product.getPublisherId());
+                else
+                    psProd.setNull(6, Types.BIGINT);
+
+                if (product.getPublishedDate() != null)
+                    psProd.setDate(7, java.sql.Date.valueOf(product.getPublishedDate().toString()));
+                else
+                    psProd.setNull(7, Types.DATE);
+
+                psProd.setDouble(8, product.getWeight());
+                psProd.setLong(9, product.getProductId());
+
+                int updatedRows = psProd.executeUpdate();
+
+                // --- Cập nhật hoặc thêm BookDetails ---
+                BookDetail bd = product.getBookDetail();
+                try (PreparedStatement psBD = cn.prepareStatement(upsertBookDetailSql)) {
+                    psBD.setLong(1, product.getProductId());
+                    psBD.setString(2, bd.getTranslator());
+                    psBD.setString(3, bd.getVersion());
+                    psBD.setString(4, bd.getCoverType());
+                    psBD.setInt(5, bd.getPages());
+                    psBD.setString(6, bd.getLanguageCode());
+                    psBD.setString(7, bd.getSize());
+                    psBD.setString(8, bd.getIsbn());
+                    psBD.executeUpdate();
+                }
+
+                cn.commit();
+                return updatedRows > 0;
+
+            } catch (SQLException ex) {
+                cn.rollback();
+                throw ex;
+            } finally {
+                cn.setAutoCommit(true);
+            }
+        }
+    }
+
 }
