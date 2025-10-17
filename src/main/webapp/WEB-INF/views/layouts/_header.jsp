@@ -82,7 +82,7 @@
                     </div>
                 </div>
             </div>
-
+            <div id="notify-toast"></div>
             <!-- Include modal dùng chung -->
             <jsp:include page="/WEB-INF/views/auth/_modals.jsp" />
 

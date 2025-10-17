@@ -2,6 +2,7 @@ package com.group01.aurora_demo.cart.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.service.OrderService;
+import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
@@ -60,16 +62,11 @@ public class OrderServlet extends HttpServlet {
 
                 Map<Long, List<OrderDTO>> grouped = orders.stream()
                         .collect(Collectors.groupingBy(order -> order.getShopId()));
-
-                // List<Category> categories =
-                // this.categoryDAO.getCategoriesByProductId(orders.get(0).getProductId());
                 req.setAttribute("orders", grouped);
-                // req.setAttribute("categories", categories);
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -122,16 +119,13 @@ public class OrderServlet extends HttpServlet {
                         }
                     });
 
-                    boolean success = this.orderService.createOrder(user, address, discountVoucher, shipVoucher,
+                    ServiceResponse result = this.orderService.createOrder(user, address, discountVoucher, shipVoucher,
                             shopVouchers);
 
-                    if (success) {
-                        json.put("success", true);
-                        json.put("message", "Đặt hàng thành công!");
-                    } else {
-                        json.put("success", false);
-                        json.put("message", "Không thể tạo đơn hàng. Vui lòng thử lại.");
-                    }
+                    json.put("success", "success".equals(result.getType()));
+                    json.put("type", result.getType());
+                    json.put("title", result.getTitle());
+                    json.put("message", result.getMessage());
 
                 } catch (Exception e) {
                     e.printStackTrace();

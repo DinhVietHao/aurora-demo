@@ -1,5 +1,19 @@
 /* Order Management Styles */
-
+.order-tabs .nav-link {
+  position: relative;
+}
+.order-tabs .nav-link .order-count {
+  position: absolute;
+  top: 3px;
+  right: 1px;
+  color: #dc3545;
+  font-size: 15px;
+  font-weight: 700;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  line-height: 1;
+}
 /* Page Title */
 .order-card-hover {
   transition: all 0.25s ease;

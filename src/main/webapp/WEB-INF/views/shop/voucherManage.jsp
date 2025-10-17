@@ -21,7 +21,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/voucherManagement.css">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/voucherManagement.css?1.0.1">
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -62,8 +62,8 @@
                                     </div>
 
                                     <!-- Statistics Cards -->
-                                    <div class="row mt-4">
-                                        <div class="col-md-3">
+                                    <div class="row mt-4 row-cols-5">
+                                        <div class="col">
                                             <div class="card stats-card stats-card-blue">
                                                 <div class="card-body">
                                                     <div class="stats-content">
@@ -76,7 +76,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col">
                                             <div class="card stats-card stats-card-orange">
                                                 <div class="card-body">
                                                     <div class="stats-content">
@@ -89,7 +89,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col">
                                             <div class="card stats-card stats-card-red">
                                                 <div class="card-body">
                                                     <div class="stats-content">
@@ -102,7 +102,18 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col">
+                                            <div class="card stats-card stats-card-purpel">
+                                                <div class="card-body">
+                                                    <div class="stats-content">
+                                                        <div class="stats-number">${stats.outofstockCount}</div>
+                                                        <div class="stats-label">Voucher đã hết lượt</div>
+                                                    </div>
+                                                    <div class="stats-icon"><i class="bi bi-slot"></i></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col">
                                             <div class="card stats-card stats-card-green">
                                                 <div class="card-body">
                                                     <div class="stats-content">
@@ -142,6 +153,7 @@
                                                                 <option value="">Tất cả</option>
                                                                 <option value="active">Hoạt động</option>
                                                                 <option value="pending">Sắp diễn ra</option>
+                                                                <option value="out_of_stock">Hết voucher</option>
                                                                 <option value="expired">Hết hạn</option>
                                                             </select>
                                                         </div>
@@ -282,6 +294,12 @@
                                                                                         class="badge bg-warning status-badge">Sắp
                                                                                         diễn ra</span>
                                                                                 </c:when>
+                                                                                <c:when
+                                                                                    test="${v.status == 'OUT_OF_STOCK'}">
+                                                                                    <span
+                                                                                        class="badge bg-secondary status-badge">Hết
+                                                                                        Voucher</span>
+                                                                                </c:when>
                                                                                 <c:when test="${v.status == 'EXPIRED'}">
                                                                                     <span
                                                                                         class="badge bg-danger status-badge">Hết
@@ -297,22 +315,28 @@
                                                                         <!-- Thao tác -->
                                                                         <td>
                                                                             <div class="action-buttons">
-                                                                                <a href="/shop/voucher?action=detail&voucherID=${v.voucherID}"
+                                                                                <a href="${ctx}/shop/voucher?action=detail&voucherID=${v.voucherID}"
                                                                                     class="btn btn-sm btn-outline-primary"
                                                                                     title="Xem chi tiết">
                                                                                     <i class="bi bi-eye"></i>
                                                                                 </a>
-                                                                                <a href="/shop/voucher?action=update&voucherID=${v.voucherID}"
-                                                                                    class="btn btn-sm btn-outline-warning"
-                                                                                    title="Chỉnh sửa">
-                                                                                    <i class="bi bi-pencil"></i>
-                                                                                </a>
-                                                                                <button
-                                                                                    class="btn btn-sm btn-outline-danger"
-                                                                                    onclick="deleteVoucher('${v.code}')"
-                                                                                    title="Xóa">
-                                                                                    <i class="bi bi-trash"></i>
-                                                                                </button>
+                                                                                <c:if
+                                                                                    test="${v.status == 'UPCOMING' || (v.status == 'EXPIRED' && v.usageCount == 0) || (v.status == 'ACTIVE' && v.usageCount == 0)}">
+                                                                                    <a href="${ctx}/shop/voucher?action=update&voucherID=${v.voucherID}"
+                                                                                        class="btn btn-sm btn-outline-warning"
+                                                                                        title="Chỉnh sửa">
+                                                                                        <i class="bi bi-pencil"></i>
+                                                                                    </a>
+                                                                                </c:if>
+                                                                                <c:if
+                                                                                    test="${v.status == 'UPCOMING' || (v.status == 'EXPIRED' && v.usageCount == 0) || (v.status == 'ACTIVE' && v.usageCount == 0)}">
+                                                                                    <button
+                                                                                        class="btn btn-sm btn-outline-danger"
+                                                                                        onclick="deleteVoucher('${v.code}')"
+                                                                                        title="Xóa voucher">
+                                                                                        <i class="bi bi-trash"></i>
+                                                                                    </button>
+                                                                                </c:if>
                                                                             </div>
                                                                         </td>
                                                                     </tr>

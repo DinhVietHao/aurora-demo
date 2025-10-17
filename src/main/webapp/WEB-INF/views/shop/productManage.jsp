@@ -129,7 +129,7 @@
                                             <table id="datatablesSimple" class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>Sách/th>
+                                                        <th>Sách </th>
                                                         <th>Thể loại</th>
                                                         <th>Giá bán</th>
                                                         <th>Số lượng</th>
@@ -231,13 +231,11 @@
                                                             <!-- Thao tác -->
                                                             <td>
                                                                 <!-- Xem chi tiết -->
-                                                                <button class="btn btn-sm btn-outline-info me-1"
-                                                                    title="Xem chi tiết" data-bs-toggle="modal"
-                                                                    data-bs-target="#viewProductModal"
-                                                                    data-product-id="${p.productId}">
+                                                                <a href="/shop/product?action=detail&productId=${p.productId}"
+                                                                    class="btn btn-sm btn-outline-info me-1"
+                                                                    title="Xem chi tiết">
                                                                     <i class="bi bi-eye"></i>
-                                                                </button>
-
+                                                                </a>
                                                                 <!-- Chỉnh sửa -->
                                                                 <button
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
@@ -743,7 +741,6 @@
                                         enctype="multipart/form-data">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
-                                        <input type="hidden" id="primaryImageUpdate" name="PrimaryImage">
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Thông tin cơ bản</h6>
@@ -1133,6 +1130,8 @@
                                             </small>
                                             <div id="imageErrorMessageUpdate" class="text-danger small mb-2"></div>
                                             <div id="imagePreviewUpdate" class="row mb-3"></div>
+                                            <input type="hidden" name="removedImageIds" id="removedImageIds">
+                                            <input type="hidden" name="primaryImageUpdate" id="primaryImageUpdate">
                                         </div>
 
                                         <!-- Nút submit -->
