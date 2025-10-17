@@ -22,14 +22,14 @@ public class CheckoutService {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private AddressDAO addressDAO;
-    private GHNShippingService ghnShippingService;
+    private GHNService ghnService;
     private VoucherValidator voucherValidator;
 
     public CheckoutService() {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.addressDAO = new AddressDAO();
-        this.ghnShippingService = new GHNShippingService();
+        this.ghnService = new GHNService();
         this.voucherValidator = new VoucherValidator();
     }
 
@@ -115,8 +115,8 @@ public class CheckoutService {
                 jsonItems.put(item);
             }
 
-            double fee = ghnShippingService.calculateFee(
-                    1454, "21211", 1452, "21012", shopWeight, jsonItems, 53320, null);
+            double fee = this.ghnService.calculateFee(
+                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
 
             totalShipping += fee;
         }
@@ -148,8 +148,8 @@ public class CheckoutService {
                 jsonItems.put(item);
             }
 
-            double fee = ghnShippingService.calculateFee(
-                    1454, "21211", 1452, "21012", shopWeight, jsonItems, 53320, null);
+            double fee = this.ghnService.calculateFee(
+                    1454, "21211", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
 
             shopShippingFees.put(shopId, fee);
         }
