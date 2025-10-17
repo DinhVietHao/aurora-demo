@@ -24,7 +24,7 @@ public class User {
     public void setUserID(long userID) {
         this.userID = userID;
     }
-    
+
     // For backward compatibility
     public long getId() {
         return userID;
@@ -57,7 +57,7 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-    
+
     // For backward compatibility
     public String getPasswordHash() {
         return password;
@@ -82,16 +82,17 @@ public class User {
     public void setAuthProvider(String authProvider) {
         this.authProvider = authProvider;
     }
-    
+
     public String getStatus() {
-        if (status == null) return "active";
+        if (status == null)
+            return "active";
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
     }
-    
+
     public String getPhone() {
         return phone;
     }
@@ -99,7 +100,7 @@ public class User {
     public void setPhone(String phone) {
         this.phone = phone;
     }
-    
+
     public int getPoints() {
         return points;
     }
@@ -107,7 +108,7 @@ public class User {
     public void setPoints(int points) {
         this.points = points;
     }
-    
+
     public String getNationalID() {
         return nationalID;
     }
@@ -115,7 +116,7 @@ public class User {
     public void setNationalID(String nationalID) {
         this.nationalID = nationalID;
     }
-    
+
     // For backward compatibility
     public String getNationalId() {
         return nationalID;
@@ -124,7 +125,7 @@ public class User {
     public void setNationalId(String nationalId) {
         this.nationalID = nationalId;
     }
-    
+
     public String getAvatarUrl() {
         return avatarUrl;
     }
@@ -132,7 +133,7 @@ public class User {
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
     }
-    
+
     public String getRoles() {
         return roles;
     }

@@ -11,7 +11,7 @@
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Quản lý Sản phẩm - Aurora Bookstore</title>
+                    <title>Quản lý sách - Aurora Bookstore</title>
                     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
                         rel="stylesheet">
                     <link rel="stylesheet"
@@ -50,13 +50,13 @@
                                 </c:if>
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h1 class="mt-4 product-management-title">Quản lý Sản phẩm</h1>
+                                        <h1 class="mt-4 product-management-title">Quản lý Sách</h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
                                                 <li class="breadcrumb-item"><a href="home.html">Trang chủ</a></li>
                                                 <li class="breadcrumb-item"><a href="adminDashboard.html">Dashboard</a>
                                                 </li>
-                                                <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
+                                                <li class="breadcrumb-item active" aria-current="page">Sách</li>
                                             </ol>
                                         </nav>
                                     </div>
@@ -67,7 +67,7 @@
                                             <button type="button" class="btn btn-success float-end"
                                                 data-bs-toggle="modal" data-bs-target="#addProductModal">
                                                 <i class="bi bi-plus-circle me-1"></i>
-                                                Thêm sản phẩm
+                                                Thêm sách
                                             </button>
                                             <br /><br />
                                             <div class="card mb-4">
@@ -75,7 +75,7 @@
                                                     class="card-header d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <i class="bi bi-funnel me-1"></i>
-                                                        Bộ lọc sản phẩm
+                                                        Bộ lọc sách
                                                     </div>
                                                 </div>
                                                 <div class="card-body">
@@ -129,7 +129,7 @@
                                             <table id="datatablesSimple" class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>Sản phẩm</th>
+                                                        <th>Sách </th>
                                                         <th>Thể loại</th>
                                                         <th>Giá bán</th>
                                                         <th>Số lượng</th>
@@ -142,7 +142,7 @@
                                                         <tr>
                                                             <td colspan="6">
                                                                 <div class="alert alert-warning mb-0">
-                                                                    Chưa có sản phẩm để hiển thị.
+                                                                    Chưa có sách để hiển thị.
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -219,6 +219,9 @@
                                                                         <span class="badge bg-info text-dark">Chờ
                                                                             Duyệt</span>
                                                                     </c:when>
+                                                                    <c:when test="${p.status eq 'OUT_OF_STOCK'}">
+                                                                        <span class="badge bg-danger">Hết hàng</span>
+                                                                    </c:when>
                                                                     <c:otherwise>
                                                                         <span class="badge bg-dark">Không xác
                                                                             định</span>
@@ -240,33 +243,7 @@
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
                                                                     data-bs-toggle="modal"
                                                                     data-bs-target="#updateProductModal"
-                                                                    data-product-id="${p.productId}"
-                                                                    data-product-title="${p.title}"
-                                                                    data-product-description="${p.description}"
-                                                                    data-product-originalprice="${p.originalPrice}"
-                                                                    data-product-saleprice="${p.salePrice}"
-                                                                    data-product-quantity="${p.quantity}"
-                                                                    data-product-weight="${p.weight}"
-                                                                    data-product-publisherid="${p.publisherId}"
-                                                                    data-product-publisheddate="${p.publishedDate}"
-                                                                    data-product-translator="${p.bookDetail.translator}"
-                                                                    data-product-version="${p.bookDetail.version}"
-                                                                    data-product-covertype="${p.bookDetail.coverType}"
-                                                                    data-product-pages="${p.bookDetail.pages}"
-                                                                    data-product-size="${p.bookDetail.size}"
-                                                                    data-product-languagecode="${p.bookDetail.languageCode}"
-                                                                    data-product-isbn="${p.bookDetail.isbn}"
-                                                                    data-product-authors="<c:forEach var='a'
-                                                                        items='${p.authors}' varStatus='st'>${a.authorName}
-                                                                        <c:if test='${!st.last}'>|</c:if>
-                                                                    </c:forEach>" data-product-categories="<c:forEach var='c'
-                                                                        items='${p.categories}' varStatus='st'>
-                                                                        ${c.categoryId}<c:if test='${!st.last}'>,</c:if>
-                                                                    </c:forEach>" data-product-images="<c:forEach var='img'
-                                                                        items='${p.imageUrls}' varStatus='st'>
-                                                                        ${img}*${img == p.primaryImageUrl ? '1':'0'}
-                                                                        <c:if test='${!st.last}'>|</c:if>
-                                                                    </c:forEach>">
+                                                                    data-product-id="${p.productId}">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
 
@@ -303,13 +280,13 @@
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header custom-delete">
-                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Xác nhận xóa sản phẩm</h5>
+                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Xác nhận xóa sách</h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                         aria-label="Đóng"></button>
                                 </div>
 
                                 <div class="modal-body">
-                                    <p id="deleteMessage">Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                                    <p id="deleteMessage">Bạn có chắc chắn muốn xóa sách này không?</p>
                                 </div>
 
                                 <div class="modal-footer">
@@ -331,7 +308,7 @@
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="addProductModalLabel">Thêm sản phẩm mới</h5>
+                                    <h5 class="modal-title" id="addProductModalLabel">Thêm sách mới</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
@@ -710,7 +687,7 @@
                                                 </div>
 
                                                 <div class="form-text">
-                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sách.
                                                 </div>
                                             </div>
                                         </div>
@@ -718,7 +695,7 @@
 
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Hình ảnh sản phẩm</h6>
+                                                <h6 class="text-muted mb-3">Hình ảnh sách</h6>
                                             </div>
                                         </div>
 
@@ -742,7 +719,7 @@
                                                 data-bs-dismiss="modal">Hủy</button>
                                             <button type="submit" form="addProductForm" class="btn btn-success">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sản phẩm
+                                                Lưu sách
                                             </button>
                                         </div>
                                     </form>
@@ -757,14 +734,16 @@
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="updateProductModalLabel">Update sản phẩm mới</h5>
+                                    <h5 class="modal-title" id="updateProductModalLabel">Update sách mới</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="updateProductForm" action="/products/create?action=create" method="POST"
+                                    <form id="updateProductForm" action="/shop/product?action=update" method="POST"
                                         enctype="multipart/form-data">
-                                        <!-- Thông tin cơ bản -->
+                                        <input type="hidden" id="productIdUpdate" name="ProductID">
+                                        <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
+                                        <input type="hidden" id="primaryImageUpdate" name="PrimaryImage">
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Thông tin cơ bản</h6>
@@ -790,7 +769,7 @@
                                         <!-- Giá và tồn kho -->
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Giá và tồn kho</h6>
+                                                <h6 class="text-muted mb-3">Giá và số lượng</h6>
                                             </div>
                                         </div>
 
@@ -798,28 +777,28 @@
                                             <div class="col-md-3">
                                                 <label for="productOriginalPrice" class="form-label">Giá gốc <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control"
+                                                <input type="number" step="1" min="1" class="form-control"
                                                     id="productOriginalPriceUpdate" name="OriginalPrice"
                                                     placeholder="140000" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productSalePrice" class="form-label">Giá bán <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control"
+                                                <input type="number" step="1" min="1" class="form-control"
                                                     id="productSalePriceUpdate" name="SalePrice" placeholder="122000"
                                                     required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productQuantity" class="form-label">Số lượng tồn kho <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="productQuantityUpdate"
-                                                    name="Quantity" placeholder="0" required>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="productQuantityUpdate" name="Quantity" placeholder="0" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="weight" class="form-label">Khối lượng (gram) <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control" id="weightUpdate"
-                                                    name="Weight" placeholder="500" required>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="weightUpdate" name="Weight" placeholder="500" required>
                                             </div>
                                         </div>
 
@@ -832,19 +811,39 @@
 
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label for="publisherId" class="form-label">Nhà xuất bản
-                                                    (PublisherID)</label>
-                                                <select class="form-select" id="publisherIdUpdate" name="PublisherID">
-                                                    <option value="">Chọn NXB</option>
-                                                    <!-- render danh sách Publisher từ DB -->
-                                                    <option value="1">NXB Trẻ</option>
-                                                    <option value="2">NXB Giáo dục</option>
-                                                </select>
+                                                <label for="publisherName" class="form-label">Nhà xuất bản</label>
+                                                <input list="publisherList" class="form-control"
+                                                    id="publisherNameUpdate" name="PublisherName"
+                                                    placeholder="Nhập tên nhà xuất bản..." required>
                                             </div>
+                                            <datalist id="publisherListUpdate">
+                                                <option value="Nhà xuất bản Giáo dục Việt Nam">
+                                                <option value="Nhà xuất bản Trẻ">
+                                                <option value="Nhà xuất bản Kim Đồng">
+                                                <option value="Nhà xuất bản Tổng hợp Thành phố Hồ Chí Minh">
+                                                <option value="Nhà Xuất Bản TP.HCM">
+                                                <option value="Nhà xuất bản Hội Nhà văn">
+                                                <option value="Nhà xuất bản Chính trị Quốc gia Sự thật">
+                                                <option value="Nhà xuất bản Phụ nữ Việt Nam">
+                                                <option value="Nhà xuất bản Lao Động">
+                                                <option value="Nhà xuất bản Hồng Đức">
+                                                <option value="Nhà xuất bản Dân Trí">
+                                                <option value="Nhà xuất bản Tư pháp">
+                                                <option value="Nhà xuất bản Khoa học Xã hội">
+                                                <option value="Nhà xuất bản Khoa học và Kỹ thuật">
+                                                <option value="Nhà xuất bản Y học">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Hà Nội">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Thành phố Hồ Chí Minh">
+                                                <option value="Nhà xuất bản Xây dựng">
+                                                <option value="Nhà xuất bản Thông tin & Truyền thông">
+                                                <option value="Nhà xuất bản Tri thức">
+                                                <option value="Nhà xuất bản Hà Nội">
+                                            </datalist>
                                             <div class="col-md-6">
-                                                <label for="publishedDate" class="form-label">Ngày phát hành</label>
+                                                <label for="publishedDateUpdate" class="form-label">Ngày phát
+                                                    hành</label>
                                                 <input type="date" class="form-control" id="publishedDateUpdate"
-                                                    name="PublishedDate">
+                                                    name="PublishedDate" required>
                                             </div>
                                         </div>
 
@@ -882,8 +881,8 @@
                                             <div class="col-md-6">
                                                 <label for="pages" class="form-label">Số trang <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="pagesUpdate" name="Pages"
-                                                    placeholder="250" required>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="pagesUpdate" name="Pages" placeholder="250" required>
                                             </div>
                                         </div>
 
@@ -925,7 +924,7 @@
                                                 <!-- Vùng chứa các ô nhập tác giả -->
                                                 <div id="authors-containerUpdate">
                                                     <div class="input-group mb-2">
-                                                        <input type="text" class="form-control" name="authorsUpdate"
+                                                        <input type="text" class="form-control" name="authors"
                                                             placeholder="Tên tác giả" required>
                                                         <button type="button" class="btn btn-outline-danger"
                                                             onclick="removeAuthor(this)">🗑</button>
@@ -1113,7 +1112,7 @@
                                                 </div>
 
                                                 <div class="form-text">
-                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sách.
                                                 </div>
                                             </div>
                                         </div>
@@ -1121,20 +1120,20 @@
                                         <!-- Hình ảnh sản phẩm -->
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Hình ảnh sản phẩm</h6>
+                                                <h6 class="text-muted mb-3">Hình ảnh sách</h6>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="productImages" class="form-label">Chọn hình ảnh</label>
-                                            <input type="file" class="form-control" id="productImagesUpdate"
-                                                name="ProductImagesUpdate" multiple accept="image/*">
-                                            <div class="form-text">Chọn tối đa 5 hình ảnh. Kích thước tối đa mỗi file:
-                                                2MB</div>
-                                            <div id="imageErrorUpdate" class="text-danger mt-1" style="display:none;">
-                                            </div>
+                                            <label class="form-label fw-semibold">Chọn hình ảnh</label>
+                                            <input type="file" id="productImagesUpdate" name="productImagesUpdate"
+                                                class="form-control mb-2" accept="image/*" multiple />
+                                            <small class="text-muted d-block mb-2">
+                                                Có thể đăng từ <b>2 đến 20</b> ảnh. Mỗi ảnh tối đa <b>5 MB</b>.
+                                            </small>
+                                            <div id="imageErrorMessageUpdate" class="text-danger small mb-2"></div>
+                                            <div id="imagePreviewUpdate" class="row mb-3"></div>
                                         </div>
-                                        <div id="imagePreviewUpdate" class="row mb-3"></div>
 
                                         <!-- Nút submit -->
                                         <div class="modal-footer">
@@ -1142,7 +1141,7 @@
                                                 data-bs-dismiss="modal">Hủy</button>
                                             <button type="submit" form="updateProductForm" class="btn btn-success">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sản phẩm
+                                                Thay đổi sách
                                             </button>
                                         </div>
                                     </form>
@@ -1156,7 +1155,7 @@
                         src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
                     <script src="${ctx}/assets/js/shop/scripts.js"></script>
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js"></script>
                 </body>
 
                 </html>

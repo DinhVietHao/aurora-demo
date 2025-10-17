@@ -14,8 +14,8 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.service.OrderService;
+import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
-import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
@@ -52,6 +52,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
 
         if (path == null || path.equals("/")) {
@@ -85,6 +86,7 @@ public class OrderServlet extends HttpServlet {
             return;
         }
 
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
         if (path == null) {
             resp.sendRedirect(req.getContextPath() + "/checkout");
@@ -117,16 +119,13 @@ public class OrderServlet extends HttpServlet {
                         }
                     });
 
-                    boolean success = this.orderService.createOrder(user, address, discountVoucher, shipVoucher,
+                    ServiceResponse result = this.orderService.createOrder(user, address, discountVoucher, shipVoucher,
                             shopVouchers);
 
-                    if (success) {
-                        json.put("success", true);
-                        json.put("message", "Đặt hàng thành công!");
-                    } else {
-                        json.put("success", false);
-                        json.put("message", "Không thể tạo đơn hàng. Vui lòng thử lại.");
-                    }
+                    json.put("success", "success".equals(result.getType()));
+                    json.put("type", result.getType());
+                    json.put("title", result.getTitle());
+                    json.put("message", result.getMessage());
 
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -15,4 +15,4 @@
         <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css" />
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
         <link rel="stylesheet" href="${ctx}/assets/css/auth/auth_form.css" />
-        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css" />
+        <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1" />

@@ -18,7 +18,9 @@ import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.cart.model.Payment;
+import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
@@ -35,6 +37,7 @@ public class OrderService {
     private CartItemDAO cartItemDAO;
     private VoucherValidator voucherValidator;
     private UserVoucherDAO userVoucherDAO;
+    private ProductDAO productDAO;
 
     public OrderService() {
         this.orderDAO = new OrderDAO();
@@ -46,14 +49,16 @@ public class OrderService {
         this.voucherDAO = new VoucherDAO();
         this.voucherValidator = new VoucherValidator();
         this.userVoucherDAO = new UserVoucherDAO();
+        this.productDAO = new ProductDAO();
     }
 
-    public boolean createOrder(User user, Address address, Voucher voucherDiscount,
+    public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
             Voucher voucherShip, Map<Long, String> shopVouchers) {
         Connection conn = null;
         try {
             conn = DataSourceProvider.get().getConnection();
             conn.setAutoCommit(false);
+
             Order order = new Order();
             CheckoutSummaryDTO summary = this.checkoutService.calculateCheckoutSummary(
                     user.getId(), address.getAddressId(), voucherDiscount != null ? voucherDiscount.getCode() : null,
@@ -74,7 +79,8 @@ public class OrderService {
             long orderId = orderDAO.createOrder(conn, order);
             if (orderId == -1) {
                 conn.rollback();
-                return false;
+                return new ServiceResponse("error", "Lỗi tạo đơn hàng",
+                        "Không thể tạo đơn hàng. Vui lòng thử lại sau.");
             }
             List<CartItem> cartItems = this.cartItemDAO.getCheckedCartItems(user.getId());
             Map<Long, List<CartItem>> groupByShop = cartItems.stream()
@@ -97,22 +103,26 @@ public class OrderService {
                         Voucher shopVoucher = this.voucherDAO.getVoucherByCode(shopId, shopVoucherCode, true);
                         if (shopVoucher == null) {
                             conn.rollback();
-                            return false;
+                            return new ServiceResponse("warning", "Mã giảm giá không hợp lệ",
+                                    "Mã shop #" + shopVoucherCode + " đã hết hạn hoặc không tồn tại.");
                         }
-                        shopVoucherCache.put(shopId, shopVoucher);
+                        if (shopVoucher != null) {
+                            shopVoucherCache.put(shopId, shopVoucher);
+                        }
 
                         String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId);
                         if (validation != null) {
                             conn.rollback();
-                            return false;
+                            return new ServiceResponse("warning", "Không thể áp dụng mã giảm giá", validation);
                         }
 
-                        if (shopVoucher.getPerUserLimit() >= 0) {
+                        if (shopVoucher.getPerUserLimit() > 0) {
                             int usedCount = this.userVoucherDAO.getUserVoucherUsageCount(user.getId(),
                                     shopVoucher.getVoucherID());
                             if (usedCount >= shopVoucher.getPerUserLimit()) {
                                 conn.rollback();
-                                return false;
+                                return new ServiceResponse("warning", "Vượt giới hạn sử dụng mã",
+                                        "Bạn đã sử dụng mã giảm giá này quá số lần cho phép.");
                             }
                         }
                         shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
@@ -134,7 +144,8 @@ public class OrderService {
 
                 if (orderShopId == -1) {
                     conn.rollback();
-                    return false;
+                    return new ServiceResponse("error", "Lỗi hệ thống",
+                            "Không thể tạo đơn hàng cho shop #" + shopId + ".");
                 }
 
                 for (CartItem item : items) {
@@ -149,7 +160,14 @@ public class OrderService {
 
                     if (orderItemDAO.createOrderItem(conn, orderItem) == -1) {
                         conn.rollback();
-                        return false;
+                        return new ServiceResponse("error", "Lỗi hệ thống",
+                                "Đã xảy ra sự cố. Vui lòng thử lại sau.");
+                    }
+
+                    if (!productDAO.updateStock(conn, item.getProduct().getProductId(), item.getQuantity())) {
+                        conn.rollback();
+                        return new ServiceResponse("warning", "Sản phẩm hết hàng",
+                                "Sản phẩm '" + item.getProduct().getTitle() + "' không đủ số lượng.");
                     }
                 }
             }
@@ -161,36 +179,68 @@ public class OrderService {
 
             if (paymentDAO.createPayment(conn, payment) == -1) {
                 conn.rollback();
-                return false;
+                return new ServiceResponse("error", "Lỗi thanh toán",
+                        "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.");
             }
             if (!cartItemDAO.deleteCheckout(conn, user.getId())) {
                 conn.rollback();
-                return false;
+                return new ServiceResponse("error", "Lỗi hệ thống",
+                        "Đã xảy ra sự cố. Vui lòng thử lại sau.");
             }
 
             if (voucherDiscount != null) {
-                this.voucherDAO.incrementUsage(conn, voucherDiscount.getVoucherID());
-                this.userVoucherDAO.insertUserVoucher(user.getId(), voucherDiscount.getVoucherID());
+                if (!voucherDAO.incrementUsage(conn, voucherDiscount.getVoucherID()) ||
+                        !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherDiscount.getVoucherID())) {
+                    conn.rollback();
+                    return new ServiceResponse("warning", "Mã giảm giá hết lượt",
+                            "Mã giảm giá đơn hàng đã hết lượt sử dụng.");
+                }
             }
             if (voucherShip != null) {
-                this.voucherDAO.incrementUsage(conn, voucherShip.getVoucherID());
-                this.userVoucherDAO.insertUserVoucher(user.getId(), voucherShip.getVoucherID());
+                if (!voucherDAO.incrementUsage(conn, voucherShip.getVoucherID()) ||
+                        !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherShip.getVoucherID())) {
+                    conn.rollback();
+                    return new ServiceResponse("warning", "Mã vận chuyển hết lượt",
+                            "Mã giảm giá phí vận chuyển đã hết lượt sử dụng.");
+                }
 
             }
-            if (shopVouchers != null) {
+            System.out.println("ShopVouchers size: " + shopVouchers.size());
+            System.out.println("ShopVoucherCache size: " + shopVoucherCache.size());
+            if (shopVouchers != null && !shopVoucherCache.isEmpty()) {
                 for (Voucher shopVoucher : shopVoucherCache.values()) {
-                    this.voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID());
-                    this.userVoucherDAO.insertUserVoucher(user.getId(), shopVoucher.getVoucherID());
+                    if (!voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID()) ||
+                            !userVoucherDAO.insertUserVoucher(conn, user.getId(), shopVoucher.getVoucherID())) {
+                        conn.rollback();
+                        return new ServiceResponse("warning", "Mã giảm giá shop hết lượt",
+                                "Một trong các mã shop đã vượt giới hạn sử dụng.");
+                    }
                 }
             }
             conn.commit();
-            return true;
+            return new ServiceResponse("success", "Đặt hàng thành công", "Đơn hàng của bạn đã được tạo thành công!");
 
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Error cause: " + e.getCause());
             System.err.println("Error message: " + e.getMessage());
-            return false;
+            System.out.println("insertUserVoucher ERROR: " + e.getMessage());
+            try {
+                if (conn != null)
+                    conn.rollback();
+            } catch (Exception rbEx) {
+                rbEx.printStackTrace();
+            }
+            return new ServiceResponse("error", "Lỗi hệ thống", "Đã xảy ra sự cố. Vui lòng thử lại sau.");
+        } finally {
+            try {
+                if (conn != null)
+                    conn.setAutoCommit(true);
+                if (conn != null)
+                    conn.close();
+            } catch (Exception closeEx) {
+                closeEx.printStackTrace();
+            }
         }
     }
 

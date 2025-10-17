@@ -87,9 +87,9 @@ public class ImageDAO {
 
         return imageNames;
     }
-    
+
     public String uploadAvatar(Part filePart, String uploadDir) throws IOException, ServletException {
-        
+
         String originalFileName = filePart.getSubmittedFileName();
         String sanitizedFileName = originalFileName.replaceAll("[^a-zA-Z0-9\\.\\-_]", "_");
         String fileName = System.currentTimeMillis() + "_" + sanitizedFileName;
@@ -97,7 +97,6 @@ public class ImageDAO {
         String fullPath = uploadDir + File.separator + fileName;
         filePart.write(fullPath);
 
-        
         return fileName;
     }
 }

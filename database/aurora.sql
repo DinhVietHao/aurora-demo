@@ -31,7 +31,11 @@ CREATE TABLE Addresses
     RecipientName NVARCHAR(150) NOT NULL,
     Phone NVARCHAR(20) NOT NULL,
     City NVARCHAR(100) NOT NULL,
+    ProvinceID INT NULL,
+    District NVARCHAR(100) NOT NULL,
+    DistrictID INT NULL,
     Ward NVARCHAR(100) NOT NULL,
+    WardCode NVARCHAR(20) NULL,
     Description NVARCHAR(255) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
@@ -55,7 +59,7 @@ CREATE TABLE Shops
     [Status] NVARCHAR(20) NOT NULL,
     OwnerUserID BIGINT NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    PickupAddressID BIGINT NOT NULL,
+    PickupAddressID BIGINT NOT NULL UNIQUE,
     InvoiceEmail NVARCHAR(255) NOT NULL,
     AvatarUrl NVARCHAR(2000) NULL,
     RejectReason NVARCHAR(255) NULL,
@@ -99,7 +103,6 @@ CREATE TABLE Products
     PublishedDate DATE NULL,
     Weight DECIMAL(10,2) NOT NULL,
     RejectReason NVARCHAR(255) NULL,
-    ReturnReason NVARCHAR(255) NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_Products_Shop      FOREIGN KEY (ShopID)      REFERENCES Shops(ShopID),
     CONSTRAINT FK_Products_Publisher FOREIGN KEY (PublisherID) REFERENCES Publishers(PublisherID)
@@ -234,7 +237,6 @@ CREATE TABLE Orders
     --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED,    CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     DeliveredAt DATETIME2(6) NULL,
-    CancelReason NVARCHAR(255) NULL,
     CancelledAt DATETIME2(6) NULL,
     CONSTRAINT FK_Orders_User FOREIGN KEY (UserID) REFERENCES Users(UserID),
     CONSTRAINT FK_Orders_Address FOREIGN KEY (AddressID) REFERENCES Addresses(AddressID),
@@ -260,6 +262,8 @@ CREATE TABLE OrderShops
     [Status] NVARCHAR(20) NOT NULL,
     --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+    CancelReason NVARCHAR(255) NULL,
+    ReturnReason NVARCHAR(255) NULL,
     CONSTRAINT FK_OrderShops_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
     CONSTRAINT FK_OrderShops_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
     CONSTRAINT FK_OrderShops_Voucher FOREIGN KEY (VoucherID) REFERENCES Vouchers(VoucherID)
@@ -283,12 +287,10 @@ CREATE TABLE FlashSales
 (
     FlashSaleID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL,
-    ShopID BIGINT NOT NULL,
     StartAt DATETIME2(6) NOT NULL,
     EndAt DATETIME2(6) NOT NULL,
     [Status] NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_FlashSales_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID)
 );
 
 CREATE TABLE FlashSaleItems
@@ -305,7 +307,6 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_FlashSale FOREIGN KEY (FlashSaleID) REFERENCES FlashSales(FlashSaleID),
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
-
 
 
 CREATE TABLE Payments
@@ -337,12 +338,13 @@ CREATE TABLE BalanceChanges
     ChangeAmount DECIMAL(18,2) NOT NULL,
     ActionType NVARCHAR(50) NOT NULL,
     -- ví dụ: ORDER_PAYMENT, REFUND, BONUS
-    OrderRef BIGINT NULL,
+    OrderID BIGINT NULL,
     -- tham chiếu tới đơn hàng (nếu có)
     TransactionRef NVARCHAR(100) NOT NULL,
     -- mã giao dịch duy nhất
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_BalanceChanges_Account FOREIGN KEY (AccountID) REFERENCES AccountBalances(AccountID)
+    CONSTRAINT FK_BalanceChanges_Account FOREIGN KEY (AccountID) REFERENCES AccountBalances(AccountID),
+    CONSTRAINT FK_BalanceChanges_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
 );
 
 CREATE TABLE Reviews

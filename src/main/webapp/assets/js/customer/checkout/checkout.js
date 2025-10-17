@@ -641,6 +641,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 const btnPlaceOrder = document.getElementById("btnPlaceOrder");
 btnPlaceOrder.addEventListener("click", () => {
+  btnPlaceOrder.disabled = true;
+  const originalText = btnPlaceOrder.innerHTML;
+  btnPlaceOrder.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Đang xử lý...
+  `;
   const params = new URLSearchParams();
   const addressId =
     document.querySelector(`[name='addressId']:checked`)?.value || "";
@@ -678,13 +684,34 @@ btnPlaceOrder.addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        alert(data.message);
-        window.location.href = "/home";
+        toast({
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          duration: 3000,
+        });
+        setTimeout(() => {
+          window.location.href = "/home";
+        }, 800);
       } else {
-        alert(data.message);
+        toast({
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          duration: 3000,
+        });
       }
     })
     .catch(() => {
-      console.log("Lỗi Khi đặt hàng");
+      toast({
+        title: "Lỗi hệ thống",
+        message: "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
+        type: "error",
+        duration: 3000,
+      });
+    })
+    .finally(() => {
+      btnPlaceOrder.disabled = false;
+      btnPlaceOrder.innerHTML = originalText;
     });
 });

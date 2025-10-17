@@ -3,6 +3,7 @@ package com.group01.aurora_demo.catalog.dao;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.catalog.model.Category;
+import com.group01.aurora_demo.catalog.model.Language;
 import com.group01.aurora_demo.catalog.model.Author;
 import com.group01.aurora_demo.catalog.model.Publisher;
 import com.group01.aurora_demo.catalog.model.Product;
@@ -1101,20 +1102,34 @@ public class ProductDAO {
         }
     }
 
+    public int countReviewsByProductId(long productId) {
+        String sql = "SELECT COUNT(*) FROM Reviews WHERE OrderItemID IN (SELECT OrderItemID FROM OrderItems WHERE ProductID = ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in ProductDAO.countReviewsByProductId: " + e.getMessage());
+        }
+        return 0;
+    }
+
     public Product getProductById(long productId) {
         Product product = null;
         String sql = """
                  SELECT p.ProductID, p.ShopID, p.Title, p.Description,
                     p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
-                    pub.Name AS PublisherName, p.PublishedDate,
-                    b.Translator, b.Version, b.CoverType, b.Pages, l.LanguageName, b.[Size], b.ISBN,
-                    a.AuthorName AS Author
+                    p.Status, p.PublishedDate, p.Weight, p.CreatedAt,
+                    pub.Name AS PublisherName,
+                    b.Translator, b.Version, b.CoverType, b.Pages, b.LanguageCode, l.LanguageName, b.[Size], b.ISBN
                 FROM Products p
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
                 LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
                 LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
-                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID
                 WHERE p.ProductID = ?
                 """;
 
@@ -1132,6 +1147,10 @@ public class ProductDAO {
                 product.setSalePrice(rs.getDouble("SalePrice"));
                 product.setSoldCount(rs.getLong("SoldCount"));
                 product.setQuantity(rs.getInt("Quantity"));
+                product.setStatus(rs.getString("Status"));
+                product.setWeight(rs.getDouble("Weight"));
+                product.setPublishedDate(rs.getDate("PublishedDate"));
+                product.setCreatedAt(rs.getDate("CreatedAt"));
 
                 BookDetail bookDetail = new BookDetail();
                 bookDetail.setProductId(product.getProductId());
@@ -1139,17 +1158,51 @@ public class ProductDAO {
                 bookDetail.setVersion(rs.getString("Version"));
                 bookDetail.setCoverType(rs.getString("CoverType"));
                 bookDetail.setPages(rs.getInt("Pages"));
+                bookDetail.setLanguageCode(rs.getString("LanguageCode"));
                 bookDetail.setSize(rs.getString("Size"));
-
+                bookDetail.setIsbn(rs.getString("ISBN"));
+                // Set language if needed
+                if (rs.getString("LanguageCode") != null) {
+                    Language lang = new Language();
+                    lang.setLanguageCode(rs.getString("LanguageCode"));
+                    lang.setLanguageName(rs.getString("LanguageName"));
+                    bookDetail.setLanguage(lang);
+                }
                 product.setBookDetail(bookDetail);
+
+                Publisher pub = new Publisher();
+                pub.setName(rs.getString("PublisherName"));
+                product.setPublisher(pub);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println(
+                    "Error in ProductDAO.getProductById main query (tables Products, Publishers, BookDetails, Languages): "
+                            + e.getMessage());
         }
 
         if (product != null) {
+            // Set authors list
+            AuthorDAO authorDAO = new AuthorDAO();
+            try {
+                product.setAuthors(authorDAO.getAuthorsByProductId(productId));
+            } catch (SQLException e) {
+                System.out.println("Error in ProductDAO.getProductById setting authors (tables BookAuthors, Authors): "
+                        + e.getMessage());
+            }
+
+            // Set categories list
+            CategoryDAO cateDAO = new CategoryDAO();
+            try {
+                product.setCategories(cateDAO.getCategoriesByProductId(productId));
+            } catch (SQLException e) {
+                System.out.println(
+                        "Error in ProductDAO.getProductById setting categories (tables ProductCategory, Category): "
+                                + e.getMessage());
+            }
+
+            // Images
             List<ProductImage> images = new ArrayList<>();
-            String imgSql = "SELECT ImageID, Url FROM ProductImages WHERE ProductID = ? ORDER BY IsPrimary DESC";
+            String imgSql = "SELECT ImageID, Url, IsPrimary FROM ProductImages WHERE ProductID = ? ORDER BY IsPrimary DESC";
             try (Connection cn = DataSourceProvider.get().getConnection()) {
                 PreparedStatement ps = cn.prepareStatement(imgSql);
                 ps.setLong(1, productId);
@@ -1159,14 +1212,49 @@ public class ProductDAO {
                     productImages.setImageId(rs.getLong("ImageID"));
                     productImages.setProductId(productId);
                     productImages.setUrl(rs.getString("Url"));
+                    productImages.setIsPrimary(rs.getBoolean("IsPrimary"));
                     images.add(productImages);
                 }
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                System.out.println(
+                        "Error in ProductDAO.getProductById setting images (table ProductImages): " + e.getMessage());
             }
             product.setImages(images);
         }
-
         return product;
+    }
+
+    public boolean updateStock(Connection conn, long productId, int quantity) {
+        String sql = """
+                    UPDATE Products
+                    SET Quantity = Quantity - ?,
+                        SoldCount = SoldCount + ?,
+                        Status = CASE WHEN Quantity - ? <= 0 THEN 'OUT_OF_STOCK' ELSE 'ACTIVE' END
+                    WHERE ProductID = ? AND Quantity >= ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setLong(4, productId);
+            ps.setInt(5, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean hasEnoughQuantity(Connection conn, long productId, int quantity) {
+        String sql = "SELECT Quantity FROM Products WHERE ProductID = ? AND Quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setInt(2, quantity);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
