@@ -506,7 +506,15 @@ buyButton.addEventListener("click", () => {
     return;
   }
 
-  window.location.href = "/checkout";
+  const originalText = buyButton.innerHTML;
+  buyButton.disabled = true;
+  buyButton.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Đang xử lý...
+  `;
+  setTimeout(() => {
+    window.location.href = "/checkout";
+  }, 800);
 });
 
 updateCartSummary();
@@ -588,17 +596,20 @@ applyVoucherShops.forEach((btn) => {
       .value.trim()
       .toUpperCase();
     const msg = modal.querySelector(".voucherShopMessage");
+
+    msg.textContent = "";
+    msg.classList.remove("text-danger", "text-success", "text-warning");
     if (!code) {
+      msg.classList.add("text-warning");
       msg.textContent = "Vui lòng nhập mã giảm giá.";
+      btn.disabled = false;
+      btn.innerHTML = originalText;
       return;
     }
-    console.log(code + " " + shopId);
-
     const selectedShopRadio = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
     if (selectedShopRadio && selectedShopRadio.value === code) {
-      msg.classList.remove("text-success");
       msg.classList.add("text-warning");
       msg.textContent = "Mã này đã áp dụng rồi.";
       return;
@@ -620,20 +631,18 @@ applyVoucherShops.forEach((btn) => {
           }
         } else {
           localStorage.removeItem(`shopVoucher_${shopId}`);
-          msg.classList.remove("text-success");
           msg.classList.add("text-danger");
           msg.textContent = data.message || "Mã không hợp lệ.";
+          btn.innerHTML = originalText;
         }
       })
       .catch((error) => {
         console.error("Fetch voucher error:", error);
-        console.log("Check msg element:", msg);
-        console.log(code + " " + shopId);
+        msg.classList.add("text-danger");
         msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
       })
       .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = originalText;
       });
   });
 });
@@ -665,8 +674,14 @@ applySystemVoucher.addEventListener("click", () => {
     .getElementById("voucherSystemInput")
     .value.toUpperCase();
   const msg = document.getElementById("voucherSystemMessage");
+
+  msg.textContent = "";
+  msg.classList.remove("text-danger", "text-success", "text-warning");
   if (!code) {
     msg.textContent = "Vui lòng nhập mã giảm giá.";
+    msg.classList.add("text-warning");
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
     return;
   }
 
@@ -681,9 +696,10 @@ applySystemVoucher.addEventListener("click", () => {
     (selectedDiscount && selectedDiscount.value === code) ||
     (selectedShip && selectedShip.value === code)
   ) {
-    msg.classList.remove("text-success");
     msg.classList.add("text-warning");
     msg.textContent = "Mã này đã áp dụng rồi.";
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
     return;
   }
 
@@ -709,17 +725,19 @@ applySystemVoucher.addEventListener("click", () => {
         }
         loadSystemVouchers();
       } else {
-        msg.classList.remove("text-success");
+        localStorage.removeItem("systemVoucherShip");
+        localStorage.removeItem("systemVoucherDiscount");
         msg.classList.add("text-danger");
         msg.textContent = data.message || "Mã không hợp lệ.";
+        applySystemVoucher.innerHTML = originalText;
       }
     })
     .catch(() => {
+      msg.classList.add("text-danger");
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
     })
     .finally(() => {
       applySystemVoucher.disabled = false;
-      applySystemVoucher.innerHTML = originalText;
     });
 });
 

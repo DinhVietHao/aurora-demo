@@ -192,7 +192,70 @@ public class CartServlet extends HttpServlet {
                 out.print(json.toString());
                 break;
             }
+            case "/buyNow": {
+                try {
+                    long productId = Long.parseLong(req.getParameter("productId"));
+                    Product product = productDAO.getBasicProductById(productId);
+                    if (product == null) {
+                        json.put("success", false);
+                        json.put("type", "error");
+                        json.put("title", "Lỗi hệ thống");
+                        json.put("message", "Không tìm thấy sản phẩm.");
+                        out.print(json.toString());
+                        break;
+                    }
+                    if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
+                        json.put("success", false);
+                        json.put("type", "warning");
+                        json.put("title", "Sản phẩm không khả dụng");
+                        json.put("message", "Sản phẩm này hiện không được bán.");
+                        out.print(json.toString());
+                        break;
+                    }
 
+                    if (product.getQuantity() == null || product.getQuantity() <= 0) {
+                        json.put("success", false);
+                        json.put("type", "warning");
+                        json.put("title", "Hết hàng");
+                        json.put("message", "Sản phẩm này hiện đã hết hàng.");
+                        out.print(json.toString());
+                        break;
+                    }
+
+                    this.cartItemDAO.updateAllChecked(user.getId(), false);
+
+                    CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
+                    if (existingItem != null) {
+                        existingItem.setQuantity(1);
+                        cartItemDAO.updateQuantity(existingItem);
+                        cartItemDAO.updateIsChecked(existingItem.getCartItemId(), true);
+                    } else {
+                        CartItem newItem = new CartItem();
+                        newItem.setUserId(user.getId());
+                        newItem.setProductId(productId);
+                        newItem.setQuantity(1);
+                        newItem.setUnitPrice(product.getSalePrice());
+                        cartItemDAO.addCartItem(newItem);
+
+                        CartItem added = cartItemDAO.getCartItem(user.getId(), productId);
+                        if (added != null) {
+                            cartItemDAO.updateIsChecked(added.getCartItemId(), true);
+                        }
+                    }
+                    int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
+                    session.setAttribute("cartCount", cartCount);
+                    json.put("cartCount", cartCount);
+                    json.put("success", true);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    json.put("success", false);
+                    json.put("type", "error");
+                    json.put("title", "Lỗi hệ thống");
+                    json.put("message", "Đã xảy ra lỗi, vui lòng thử lại sau.");
+                }
+                out.print(json.toString());
+                break;
+            }
             case "/delete": {
                 try {
                     long cartItemId = Long.parseLong(req.getParameter("cartItemId"));
