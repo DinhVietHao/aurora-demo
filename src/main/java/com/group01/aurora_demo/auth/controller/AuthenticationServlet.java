@@ -341,7 +341,7 @@ public class AuthenticationServlet extends HttpServlet {
 
             if (flag) {
                 flag = userDAO.updatePasswordByEmail(email, BCrypt.hashpw(resetPassword, BCrypt.gensalt(10)));
-                message = flag ? "Đặt lại mật khẩu thành công." : "Không thể cập nhật mật khẩu. Vui lòng thử lại.";
+                message = flag ? "🎉Đặt lại mật khẩu thành công!" : "Không thể cập nhật mật khẩu. Vui lòng thử lại.";
             }
         } catch (Exception e) {
             System.out.println("Error in \"handleForgotPassword\" function: " + e.getMessage());

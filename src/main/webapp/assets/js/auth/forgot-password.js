@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await res.json();
 
       if (data.success) {
-        setBtnState(btnUpdatePass, true, "🎉Đặt lại mật khẩu thành công!");
+        setBtnState(btnUpdatePass, true, data.message);
 
         const afterHide = () => {
           clearResetForm();
