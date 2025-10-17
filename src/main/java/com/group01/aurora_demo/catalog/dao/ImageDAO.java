@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import java.sql.PreparedStatement;
 import jakarta.servlet.http.Part;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -99,4 +100,68 @@ public class ImageDAO {
 
         return fileName;
     }
+
+    public void deleteAuthorsByProductId(long productId) throws SQLException {
+        String sql = "DELETE FROM BookAuthors WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    public long insertImage(long productId, String url, boolean isPrimary) throws SQLException {
+        String sql = "INSERT INTO ProductImages (ProductID, Url, IsPrimary) VALUES (?, ?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, productId);
+            ps.setString(2, url);
+            ps.setBoolean(3, isPrimary);
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next())
+                    return rs.getLong(1);
+            }
+        }
+        return -1;
+    }
+
+    public void deleteImageByUrl(String url) throws SQLException {
+        String sql = "DELETE FROM ProductImages WHERE Url = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, url);
+            ps.executeUpdate();
+        }
+    }
+
+    public void updatePrimaryImage(long productId, String imageUrl) throws SQLException {
+        String sql = "UPDATE ProductImages SET IsPrimary = CASE WHEN Url = ? THEN 1 ELSE 0 END WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, imageUrl);
+            ps.setLong(2, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<ProductImage> getImagesByProductId(long productId) throws SQLException {
+        List<ProductImage> list = new ArrayList<>();
+        String sql = "SELECT ImageID, ProductID, Url, IsPrimary FROM ProductImages WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ProductImage img = new ProductImage();
+                img.setImageId(rs.getLong("ImageID"));
+                img.setProductId(rs.getLong("ProductID"));
+                img.setUrl(rs.getString("Url"));
+                img.setIsPrimary(rs.getBoolean("IsPrimary"));
+                list.add(img);
+            }
+        }
+        return list;
+    }
+
 }
