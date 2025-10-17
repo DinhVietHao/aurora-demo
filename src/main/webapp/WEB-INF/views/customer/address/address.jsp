@@ -204,10 +204,20 @@
                     const addProvinceNameInput = document.getElementById("provinceNameInput");
                     const addDistrictNameInput = document.getElementById("districtNameInput");
                     const addWardNameInput = document.getElementById("wardNameInput");
+                    const addProvinceIdInput = document.getElementById("provinceIdInput");
                     const addDistrictIdInput = document.getElementById("districtIdInput");
                     const addWardCodeInput = document.getElementById("wardCodeInput");
 
-                    initAddressSelects(addProvince, addDistrict, addWard, addProvinceNameInput, addDistrictNameInput, addWardNameInput, addDistrictIdInput, addWardCodeInput);
+                    initAddressSelects(addProvince,
+                        addDistrict,
+                        addWard,
+                        addProvinceNameInput,
+                        addDistrictNameInput,
+                        addWardNameInput,
+                        addProvinceIdInput,
+                        addDistrictIdInput,
+                        addWardCodeInput
+                    );
                 </script>
 
 
@@ -231,6 +241,7 @@
                     const provinceNameInput = document.getElementById("updateProvinceNameInput");
                     const districtNameInput = document.getElementById("updateDistrictNameInput");
                     const wardNameInput = document.getElementById("updateWardNameInput");
+                    const provinceIdInput = document.getElementById("updateProvinceIdInput");
                     const districtIdInput = document.getElementById("updateDistrictIdInput");
                     const wardCodeInput = document.getElementById("updateWardCodeInput");
                     initAddressSelects(
@@ -240,11 +251,12 @@
                         provinceNameInput,
                         districtNameInput,
                         wardNameInput,
+                        provinceIdInput,
                         districtIdInput,
                         wardCodeInput
                     );
                 </script>
-                <script src="./assets/js/customer/address/address.js"></script>
+                <script src="./assets/js/customer/address/address.js?v=1.0.1"></script>
             </body>
 
             </html>

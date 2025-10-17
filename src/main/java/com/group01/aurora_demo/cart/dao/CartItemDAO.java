@@ -244,9 +244,6 @@ public class CartItemDAO {
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
 
-                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
-                product.setAuthors(authors);
-
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);
             }
@@ -312,9 +309,6 @@ public class CartItemDAO {
                 ProductImage productImages = new ProductImage();
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
-
-                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
-                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);

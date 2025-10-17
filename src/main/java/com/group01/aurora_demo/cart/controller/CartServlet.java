@@ -221,8 +221,6 @@ public class CartServlet extends HttpServlet {
                 try {
                     long cartItemId = Long.parseLong(req.getParameter("cartItemId"));
                     int quantity = Integer.parseInt(req.getParameter("quantity"));
-                    System.out.println("Check cartItemId" + cartItemId);
-                    System.out.println("Check quantity" + quantity);
                     int MAX_QUANTITY_PER_PRODUCT = 20;
                     CartItem cartItem = cartItemDAO.getCartItemById(cartItemId);
                     if (cartItem == null) {

@@ -77,11 +77,7 @@
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
-                                                        <p class="author">
-                                                            <c:out value="${cartItem.product.bookDetail.author}" />
-                                                        </p>
                                                     </div>
-
                                                     <div class="col-1 text-center">
                                                         <span class="price unit-price">
                                                             <fmt:formatNumber value="${cartItem.product.salePrice}"
@@ -152,12 +148,12 @@
                                                         </div>
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
-                                                                <div class="col-8">
+                                                                <div class="col-7">
                                                                     <input type="text"
                                                                         class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
-                                                                <div class="col-4">
+                                                                <div class="col-5">
                                                                     <button
                                                                         class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
@@ -221,7 +217,8 @@
                                                                                             pattern="dd/MM/yyyyy" />
                                                                                     </small>
                                                                                 </div>
-                                                                                <input type="radio"
+                                                                                <input class="voucher-input-shop"
+                                                                                    type="radio"
                                                                                     name="voucherShopDiscount_${shopCart.shop.shopId}"
                                                                                     value="${voucher.code}"
                                                                                     data-value="${voucher.code}"
@@ -307,11 +304,11 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="row mb-3 align-items-center">
-                                                <div class="col-8">
+                                                <div class="col-7">
                                                     <input type="text" class="form-control"
                                                         placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
-                                                <div class="col-4">
+                                                <div class="col-5">
                                                     <button class="button-four w-100" id="applySystemVoucher">Áp
                                                         dụng</button>
                                                 </div>
@@ -394,12 +391,14 @@
                                                                         </c:otherwise>
                                                                     </c:choose>
                                                                     <input type="radio" name="voucherDiscount"
-                                                                        value="discount1" data-text="${voucherText}"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
+                                                                        data-text="${voucherText}"
                                                                         data-discount="${systemVoucher.value}"
-                                                                        data-type="${voucher.discountType}"
-                                                                        data-max="${voucher.maxAmount}"
-                                                                        data-min-order-amount="${voucher.minOrderAmount}"
-                                                                        data-voucherid="${voucher.maxAmount}">
+                                                                        data-type="${systemVoucher.discountType}"
+                                                                        data-max="${systemVoucher.maxAmount}"
+                                                                        data-min-order-amount="${systemVoucher.minOrderAmount}"
+                                                                        data-voucherid="${systemVoucher.maxAmount}">
                                                                 </label>
                                                             </c:if>
                                                         </c:forEach>
@@ -428,7 +427,9 @@
                                                                                 pattern="dd/MM/yyyyy" />
                                                                         </small>
                                                                     </div>
-                                                                    <input type="radio" name="voucherShip" value="ship1"
+                                                                    <input type="radio" name="voucherShip"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
                                                                         data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
                                                                         data-ship="${systemVoucher.value}"
                                                                         data-min-order-amount="${systemVoucher.minOrderAmount}">

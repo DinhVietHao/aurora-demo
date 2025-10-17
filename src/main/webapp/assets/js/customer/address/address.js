@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log("Check provinceId", data.provinceId);
 
           provinceNameInput.value = data.province;
+          provinceIdInput.value = data.provinceId;
 
           fetch("/api/address?type=district&province_id=" + data.provinceId)
             .then((res) => res.json())

@@ -67,33 +67,82 @@
                                     <div class="card mt-3">
                                         <div class="card-body">
                                             <ul class="nav nav-tabs order-tabs">
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'ALL' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=ALL">Tất cả</a></li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'PENDING' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=PENDING">Chờ xác nhận</a></li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'SHIPPING' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=SHIPPING">Vận chuyển</a></li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'WAITING_SHIP' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=WAITING_SHIP">Chờ giao hàng</a>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'ALL' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=ALL">
+                                                        Tất cả
+                                                        <c:if test="${orderCountAll > 0}">
+                                                            <span class="order-count">${orderCountAll}</span>
+                                                        </c:if>
+                                                    </a>
                                                 </li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'COMPLETED' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=COMPLETED">Hoàn thành</a></li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'CANCELLED' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=CANCELLED">Hủy</a>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'PENDING' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=PENDING">
+                                                        Chờ xác nhận
+                                                        <c:if test="${orderCountPending > 0}">
+                                                            <span class="order-count">${orderCountPending}</span>
+                                                        </c:if>
+                                                    </a>
                                                 </li>
-                                                <li class="nav-item"><a
-                                                        class="nav-link ${status == 'RETURNED' ? 'active' : ''}"
-                                                        href="${ctx}/shop/orders?status=RETURNED">Hoàn Tiền</a>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'SHIPPING' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=SHIPPING">
+                                                        Vận chuyển
+                                                        <c:if test="${orderCountShipping > 0}">
+                                                            <span class="order-count">${orderCountShipping}</span>
+                                                        </c:if>
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'WAITING_SHIP' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=WAITING_SHIP">
+                                                        Chờ giao hàng
+                                                        <c:if test="${orderCountWaiting > 0}">
+                                                            <span class="order-count">${orderCountWaiting}</span>
+                                                        </c:if>
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'CONFIRM' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=CONFIRM">
+                                                        Xác nhận đã giao
+                                                        <c:if test="${orderCountConfirm > 0}">
+                                                            <span class="order-count">${orderCountConfirm}</span>
+                                                        </c:if>
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'COMPLETED' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=COMPLETED">
+                                                        Hoàn thành
+                                                        <c:if test="${orderCountCompleted > 0}">
+                                                            <span class="order-count">${orderCountCompleted}</span>
+                                                        </c:if>
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'CANCELLED' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=CANCELLED">
+                                                        Hủy
+                                                        <c:if test="${orderCountCancelled > 0}">
+                                                            <span class="order-count">${orderCountCancelled}</span>
+                                                        </c:if>
+                                                    </a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link ${status == 'RETURNED' ? 'active' : ''}"
+                                                        href="${ctx}/shop/orders?status=RETURNED">
+                                                        Hoàn Tiền
+                                                        <c:if test="${orderCountReturned > 0}">
+                                                            <span class="order-count">${orderCountReturned}</span>
+                                                        </c:if>
+                                                    </a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </div>
+
 
                                     <!-- Cảnh báo -->
                                     <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
@@ -157,10 +206,24 @@
                                                     <div
                                                         class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top">
                                                         <div>
-                                                            <strong class="text-primary">Mã đơn hàng:
-                                                                #${orderShop.orderShopId}</strong>
+                                                            <strong class="text-primary">
+                                                                Mã đơn hàng: #${orderShop.orderShopId}
+                                                            </strong>
                                                             <span
-                                                                class="text-muted ms-2">(${orderShop.customerName})</span>
+                                                                class="ms-2 text-dark fw-semibold">(${orderShop.customerName})</span>
+                                                        </div>
+
+                                                        <div class="text-muted small">
+                                                            Cập nhật:
+                                                            <fmt:formatDate value="${orderShop.updateAt}"
+                                                                pattern="dd/MM/yyyy HH:mm" />
+                                                            <br>
+                                                            <c:if test="${orderShop.status == 'PENDING'}">
+                                                                <span class="countdown text-danger fw-semibold"
+                                                                    data-created-at="${orderShop.createdAt.time}">
+                                                                    Đang tính thời gian...
+                                                                </span>
+                                                            </c:if>
                                                         </div>
                                                     </div>
 
@@ -211,6 +274,10 @@
                                                                             class="badge bg-info text-dark px-3 py-2 fs-6">Chờ
                                                                             giao hàng</span>
                                                                     </c:when>
+                                                                    <c:when test="${orderShop.status == 'CONFIRM'}">
+                                                                        <span class="badge bg-muted px-3 py-2 fs-6">Đợi
+                                                                            xác nhận từ khách hàng</span>
+                                                                    </c:when>
                                                                     <c:when test="${orderShop.status == 'COMPLETED'}">
                                                                         <span
                                                                             class="badge bg-success px-3 py-2 fs-6">Hoàn
@@ -253,7 +320,7 @@
 
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/orderManagement.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/orderManagement.js"></script>
                 </body>
 
                 </html>

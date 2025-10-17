@@ -16,22 +16,57 @@ public class OrderShop {
     private double finalAmount;
     private String status;
     private Date createdAt;
+    private Date updateAt;
+    private String customerName;
+    private String orderStatus;
+    private double orderTotal;
+    private String voucherCode;
+    private String cancelReason;
+    private String returnReason;
+    private List<OrderItem> items;
+    private User user;
+
+    public Date getUpdateAt() {
+        return updateAt;
+    }
+
+    public void setUpdateAt(Date updateAt) {
+        this.updateAt = updateAt;
+    }
+
     private String shippingAddress;
 
     public String getShippingAddress() {
         return shippingAddress;
     }
 
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
+    }
+
+    public String getReturnReason() {
+        return returnReason;
+    }
+
+    public void setReturnReason(String returnReason) {
+        this.returnReason = returnReason;
+    }
+
     public void setShippingAddress(String shippingAddress) {
         this.shippingAddress = shippingAddress;
     }
 
-    private String customerName;
-    private String orderStatus;
-    private double orderTotal;
+    public String getVoucherCode() {
+        return voucherCode;
+    }
 
-    private List<OrderItem> items;
-    private User user;
+    public void setVoucherCode(String voucherCode) {
+        this.voucherCode = voucherCode;
+    }
 
     public User getUser() {
         return user;

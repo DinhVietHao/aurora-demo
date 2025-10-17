@@ -130,7 +130,7 @@ function updateCartSummary() {
     "-" + formatCurrency(systemDiscount + allShopDiscount);
 
   totalProductPrice.textContent = formatCurrency(total);
-  let sum = Math.max(total - systemDiscount - allShopDiscount);
+  let sum = Math.max(total - systemDiscount - allShopDiscount, 0);
   totalPayment.textContent = formatCurrency(sum);
 
   // refresh lại voucher của tất cả shop mỗi lần update
@@ -306,8 +306,10 @@ removeVoucherDiscount.addEventListener("click", () => {
   const selectedDiscount = document.querySelector(
     'input[name="voucherDiscount"]:checked'
   );
-  if (selectedDiscount) selectedDiscount.checked = false;
-
+  if (selectedDiscount) {
+    selectedDiscount.checked = false;
+    localStorage.removeItem("systemVoucherDiscount");
+  }
   voucherTextDiscount.innerText = "";
   appliedVoucherDiscount.classList.add("d-none");
   updateCartSummary();
@@ -317,7 +319,10 @@ removeVoucherShip.addEventListener("click", () => {
   const selectedShip = document.querySelector(
     'input[name="voucherShip"]:checked'
   );
-  if (selectedShip) selectedShip.checked = false;
+  if (selectedShip) {
+    selectedShip.checked = false;
+    localStorage.removeItem("systemVoucherShip");
+  }
 
   voucherTextShip.innerText = "";
   appliedVoucherShip.classList.add("d-none");
@@ -426,7 +431,10 @@ function toggleVoucherAvailability(shopId) {
         const shopVoucher = document.querySelector(
           `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
         );
-        if (shopVoucher) shopVoucher.innerText = "Chưa đủ điều kiện";
+        if (shopVoucher) {
+          shopVoucher.innerText = "Chưa đủ điều kiện";
+          localStorage.removeItem(`shopVoucher_${shopId}`);
+        }
       }
       label.classList.add("disabled");
     } else {
@@ -442,12 +450,12 @@ function toggleSystemVoucherAvailability() {
     'input[name="voucherDiscount"]'
   );
 
-  // Xử lý voucher giảm giá sản phẩm
   discountVouchers.forEach((voucher) => {
     const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
     const label = voucher.closest("label");
     if (total < minOrderAmount) {
       if (voucher.checked) {
+        localStorage.removeItem("systemVoucherDiscount");
         voucherTextDiscount.innerText = "Chưa đủ điều kiện";
       }
       label.classList.add("disabled");
@@ -466,6 +474,7 @@ function toggleSystemVoucherAvailability() {
     const label = voucher.closest("label");
     if (total < minOrderAmount) {
       if (voucher.checked) {
+        localStorage.removeItem("systemVoucherShip");
         voucherTextShip.innerText = "Chưa đủ điều kiện ";
       }
       label.classList.add("disabled");
@@ -566,9 +575,18 @@ confirmDeleteCartItem.addEventListener("click", () => {
 const applyVoucherShops = document.querySelectorAll(".applyVoucherShop");
 applyVoucherShops.forEach((btn) => {
   btn.addEventListener("click", () => {
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
     const modal = btn.closest(".cart-shop-voucher");
     const shopId = modal.dataset.shopId;
-    const code = modal.querySelector(".voucherShopInput").value.trim();
+    const code = modal
+      .querySelector(".voucherShopInput")
+      .value.trim()
+      .toUpperCase();
     const msg = modal.querySelector(".voucherShopMessage");
     if (!code) {
       msg.textContent = "Vui lòng nhập mã giảm giá.";
@@ -612,9 +630,14 @@ applyVoucherShops.forEach((btn) => {
         console.log("Check msg element:", msg);
         console.log(code + " " + shopId);
         msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
       });
   });
 });
+
 document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
   modalEl.addEventListener("hidden.bs.modal", () => {
     const input = modalEl.querySelector(".voucherShopInput");
@@ -632,7 +655,15 @@ document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
 // ====================== SYSTEM VOUCHER HANDLER ======================
 const applySystemVoucher = document.getElementById("applySystemVoucher");
 applySystemVoucher.addEventListener("click", () => {
-  const code = document.getElementById("voucherSystemInput").value.trim();
+  applySystemVoucher.disabled = true;
+  const originalText = applySystemVoucher.innerHTML;
+  applySystemVoucher.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
+  const code = document
+    .getElementById("voucherSystemInput")
+    .value.toUpperCase();
   const msg = document.getElementById("voucherSystemMessage");
   if (!code) {
     msg.textContent = "Vui lòng nhập mã giảm giá.";
@@ -685,6 +716,10 @@ applySystemVoucher.addEventListener("click", () => {
     })
     .catch(() => {
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+    })
+    .finally(() => {
+      applySystemVoucher.disabled = false;
+      applySystemVoucher.innerHTML = originalText;
     });
 });
 
@@ -738,8 +773,6 @@ function loadSavedVouchers() {
       }
     }
   });
-
-  updateCartSummary();
 }
 
 function loadSystemVouchers() {
@@ -777,5 +810,9 @@ function loadSystemVouchers() {
       voucherModal.hide();
     }
   }
-  updateCartSummary();
 }
+window.addEventListener("DOMContentLoaded", () => {
+  loadSavedVouchers();
+  loadSystemVouchers();
+  refreshShopVoucher();
+});

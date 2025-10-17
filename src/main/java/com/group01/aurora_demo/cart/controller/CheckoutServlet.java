@@ -78,8 +78,6 @@ public class CheckoutServlet extends HttpServlet {
             }).toList();
 
             List<Address> addressList = this.addressDAO.getAddressesByUserId(user.getId());
-            boolean isAddress = addressDAO.hasAddress(user.getId());
-
             Address selectedAddress = this.addressDAO.getDefaultAddress(user.getId());
             String addressId = req.getParameter("addressId");
             if (addressId != null && !addressId.isEmpty()) {
@@ -92,10 +90,8 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("shopCarts", shopCarts);
             req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
             req.setAttribute("addresses", addressList);
-            req.setAttribute("isAddress", isAddress);
             req.setAttribute("address", selectedAddress);
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
-
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout/checkout.jsp").forward(req, resp);
         }
     }

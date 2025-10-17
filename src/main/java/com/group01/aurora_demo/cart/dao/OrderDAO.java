@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -263,7 +264,7 @@ public class OrderDAO {
     public List<OrderShop> getOrdersByShopId(long shopId) throws SQLException {
         String sql = """
                 SELECT
-                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    os.OrderShopID, os.OrderID, os.ShopID, os.UpdateAt, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
                     o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
                     oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
                     p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
@@ -295,6 +296,7 @@ public class OrderDAO {
                         os.setStatus(rs.getString("ShopStatus"));
                         os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
                         os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+                        os.setUpdateAt(rs.getTimestamp("UpdateAt"));
 
                         // Gán thông tin Order trực tiếp
                         os.setCustomerName(rs.getString("CustomerName"));
@@ -337,16 +339,18 @@ public class OrderDAO {
     public List<OrderShop> getOrdersByShopIdAndStatus(long shopId, String status) throws SQLException {
         String sql = """
                 SELECT
-                    os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
-                    o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    os.OrderShopID, os.OrderID, os.ShopID, os.UpdateAt, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
+                    os.Discount, o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
                     oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
-                    p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
+                    p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl,
+                    vc.Code, vc.VoucherID
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
                 JOIN Users u ON o.UserID = u.UserID
                 LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
                 LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                LEFT JOIN Vouchers vc ON os.VoucherID = vc.VoucherID
                 WHERE os.ShopID = ? AND os.Status = ?
                 ORDER BY os.CreatedAt DESC
                 """;
@@ -372,8 +376,11 @@ public class OrderDAO {
                         os.setStatus(rs.getString("ShopStatus"));
                         os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
                         os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
+                        os.setDiscount(rs.getDouble("Discount"));
+                        os.setVoucherCode(rs.getString("Code"));
+                        os.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                        os.setVoucherId(rs.getLong("VoucherID"));
 
-                        // Gán thông tin Order trực tiếp
                         os.setCustomerName(rs.getString("CustomerName"));
                         os.setOrderStatus(rs.getString("OrderStatus"));
                         os.setOrderTotal(rs.getDouble("OrderTotal"));
@@ -415,7 +422,7 @@ public class OrderDAO {
                 SELECT
                     os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus,
                     os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
-                    os.ShippingFee,
+                    os.ShippingFee, os.Discount, os.UpdateAt, os.CancelReason, os.ReturnReason,
                     o.TotalAmount AS OrderTotal, o.CreatedAt AS OrderCreatedAt,
                     o.OrderStatus AS OrderStatus, o.UserID,
 
@@ -424,14 +431,15 @@ public class OrderDAO {
                     a.[Description], a.Ward, a.District, a.City,
 
                     oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal,
-                    p.Title AS ProductTitle, p.SalePrice AS ProductSalePrice, pi.Url AS ProductImage
-
+                    p.Title AS ProductTitle, p.SalePrice AS ProductSalePrice, pi.Url AS ProductImage,
+                    vc.Code
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
                 JOIN Users u ON o.UserID = u.UserID
                 LEFT JOIN Addresses a ON o.AddressID = a.AddressID
                 LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN Vouchers vc ON os.VoucherID = vc.VoucherID
                 LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
                 WHERE os.OrderShopID = ?
                 ORDER BY oi.OrderItemID
@@ -457,19 +465,22 @@ public class OrderDAO {
                         orderShop.setFinalAmount(rs.getDouble("ShopFinalAmount"));
                         orderShop.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
                         orderShop.setShippingFee(rs.getDouble("ShippingFee"));
+                        orderShop.setDiscount(rs.getDouble("Discount"));
+                        orderShop.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                        orderShop.setVoucherCode(rs.getString("Code"));
+                        orderShop.setCancelReason(rs.getString("CancelReason"));
+                        orderShop.setReturnReason(rs.getString("ReturnReason"));
 
                         orderShop.setCustomerName(rs.getString("CustomerName"));
                         orderShop.setOrderTotal(rs.getDouble("OrderTotal"));
                         orderShop.setOrderStatus(rs.getString("OrderStatus"));
 
-                        // Thông tin khách hàng (User)
                         User customer = new User();
                         customer.setFullName(rs.getString("CustomerName"));
                         customer.setEmail(rs.getString("CustomerEmail"));
                         customer.setPhone(rs.getString("CustomerPhone"));
                         orderShop.setUser(customer);
 
-                        // Địa chỉ giao hàng (lọc null/blank trước khi join)
                         String address = Stream.of(
                                 rs.getString("Description"),
                                 rs.getString("Ward"),
@@ -513,7 +524,7 @@ public class OrderDAO {
     }
 
     public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ? WHERE OrderShopId = ?";
+        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderShopId = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
@@ -524,5 +535,108 @@ public class OrderDAO {
             return false;
         }
     }
+
+    public Map<String, Integer> getOrderCountsByShopId(Long shopId) throws SQLException {
+        String sql = "SELECT Status, COUNT(*) AS Count FROM OrderShops WHERE ShopID = ? GROUP BY Status";
+        Map<String, Integer> counts = new HashMap<>();
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                counts.put(rs.getString("Status"), rs.getInt("Count"));
+            }
+        }
+        return counts;
+    }
+
+    public int countOrdersByShop(Long shopId) {
+        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int cancelExpiredOrders() {
+        String selectSql = """
+                    SELECT os.OrderShopId, os.VoucherID
+                    FROM OrderShops os
+                    WHERE os.Status IN ('PENDING')
+                      AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
+                """;
+
+        String cancelOrderSql = """
+                    UPDATE OrderShops
+                    SET Status = 'CANCELLED', UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()), CancelReason = N'Hủy do quá hạng xác nhận đơn.'
+                    WHERE OrderShopId = ?
+                """;
+
+        String restoreStockSql = """
+                    UPDATE p
+                    SET p.Quantity = p.Quantity + oi.Quantity
+                    FROM Products p
+                    JOIN OrderItems oi ON p.ProductID = oi.ProductID
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        int cancelledCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(selectSql);
+                ResultSet rs = ps.executeQuery()) {
+
+            conn.setAutoCommit(false);
+
+            while (rs.next()) {
+                long orderShopId = rs.getLong("OrderShopId");
+                Long voucherId = rs.getLong("VoucherID");
+                if (rs.wasNull())
+                    voucherId = null;
+
+                try (PreparedStatement psCancel = conn.prepareStatement(cancelOrderSql);
+                        PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
+
+                    psCancel.setLong(1, orderShopId);
+                    psCancel.executeUpdate();
+
+                    psRestoreStock.setLong(1, orderShopId);
+                    psRestoreStock.executeUpdate();
+
+                    if (voucherId != null && voucherId > 0) {
+                        try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                            psRestoreVoucher.setLong(1, voucherId);
+                            psRestoreVoucher.executeUpdate();
+                        }
+                    }
+
+                    cancelledCount++;
+                }
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return cancelledCount;
+    }
+
 
 }

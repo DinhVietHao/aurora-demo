@@ -205,10 +205,20 @@ public class VoucherDAO {
     public List<Voucher> getAllVouchersByShopId(long shopId) {
         List<Voucher> list = new ArrayList<>();
         String sql = """
-                    SELECT * FROM Vouchers
-                    WHERE IsShopVoucher = 1 AND ShopID = ?
-                    ORDER BY CreatedAt DESC
-                """;
+                SELECT *
+                FROM Vouchers
+                WHERE IsShopVoucher = 1
+                  AND ShopID = ?
+                ORDER BY
+                  CASE
+                    WHEN Status = 'UPCOMING' THEN 1
+                    WHEN Status = 'ACTIVE' THEN 2
+                    WHEN Status = 'OUT_OF_STOCK' THEN 3
+                    WHEN Status = 'EXPIRED' THEN 4
+                    ELSE 5
+                  END,
+                  CreatedAt DESC;
+                                """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -241,12 +251,16 @@ public class VoucherDAO {
 
                 if (now.before(start)) {
                     status = "UPCOMING";
-                } else if (now.after(end) || (usageLimit != null && usageCount != null && usageCount >= usageLimit)) {
+
+                } else if (now.after(end)) {
                     status = "EXPIRED";
+
+                } else if (usageLimit != null && usageCount != null && usageCount >= usageLimit) {
+                    status = "OUT_OF_STOCK";
+
                 } else {
                     status = "ACTIVE";
                 }
-
                 v.setStatus(status);
                 list.add(v);
             }
@@ -264,6 +278,7 @@ public class VoucherDAO {
                         SUM(CASE WHEN Status = 'ACTIVE' THEN 1 ELSE 0 END) AS activeCount,
                         SUM(CASE WHEN Status = 'UPCOMING' THEN 1 ELSE 0 END) AS upcomingCount,
                         SUM(CASE WHEN Status = 'EXPIRED' THEN 1 ELSE 0 END) AS expiredCount,
+                        SUM(CASE WHEN Status = 'OUT_OF_STOCK' THEN 1 ELSE 0 END) AS outofstockCount,
                         SUM(ISNULL(UsageCount, 0)) AS totalUsage
                     FROM Vouchers
                     WHERE ShopID = ?
@@ -280,6 +295,7 @@ public class VoucherDAO {
                     stats.put("activeCount", rs.getInt("activeCount"));
                     stats.put("upcomingCount", rs.getInt("upcomingCount"));
                     stats.put("expiredCount", rs.getInt("expiredCount"));
+                    stats.put("outofstockCount", rs.getInt("outofstockCount"));
                     stats.put("totalUsage", rs.getInt("totalUsage"));
                 }
             }
@@ -408,7 +424,8 @@ public class VoucherDAO {
             }
 
             boolean canDelete = "UPCOMING".equalsIgnoreCase(status) ||
-                    ("ACTIVE".equalsIgnoreCase(status) && usageCount == 0);
+                    ("ACTIVE".equalsIgnoreCase(status) && usageCount == 0)
+                    || ("EXPIRED".equalsIgnoreCase(status) && usageCount == 0);
 
             if (!canDelete) {
                 return false;
