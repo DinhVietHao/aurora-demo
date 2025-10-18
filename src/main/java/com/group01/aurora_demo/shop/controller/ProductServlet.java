@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.io.File;
@@ -79,6 +80,10 @@ public class ProductServlet extends HttpServlet {
         if ("load_failed".equals(error)) {
             request.setAttribute("errorMessage",
                     "Load xem chi tiết bị lỗi gián đoạn");
+        }
+        if ("update_success".equals(message)) {
+            request.setAttribute("successMessage",
+                    "Thay đổi sản phẩm thành công.");
         }
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
@@ -417,53 +422,169 @@ public class ProductServlet extends HttpServlet {
 
                     // --- 6️⃣ Xử lý ảnh:
 
+                    // Load existing images (to map ids -> urls)
                     List<ProductImage> existingImages = imageDAO.getImagesByProductId(productId);
-                    Set<String> existingUrls = existingImages.stream()
-                            .map(ProductImage::getUrl)
-                            .collect(Collectors.toSet());
+                    // Map id->url for existing
+                    Map<String, String> existingIdToUrl = existingImages.stream()
+                            .collect(Collectors.toMap(i -> String.valueOf(i.getImageId()), ProductImage::getUrl));
 
-                    Set<String> submittedUrls = new HashSet<>();
-
-                    // 6.1: Ảnh cũ còn lại (JS thêm input hidden: name="existingImageUrls")
-                    String[] existingFromForm = request.getParameterValues("existingImageUrls");
-                    if (existingFromForm != null) {
-                        submittedUrls.addAll(Arrays.asList(existingFromForm));
+                    // Collect submitted existing image ids from form (hidden inputs created by JS)
+                    String[] existingIdsFromForm = request.getParameterValues("existingImageIds");
+                    Set<String> keptExistingIds = new HashSet<>();
+                    if (existingIdsFromForm != null) {
+                        keptExistingIds.addAll(Arrays.asList(existingIdsFromForm));
                     }
 
-                    // 6.2: Upload ảnh mới
+                    // 6.2: Upload new images (accept both ProductImages and productImagesUpdate
+                    // names)
                     List<String> newUploadedUrls = imageDAO.handleImageUpload(request);
-                    submittedUrls.addAll(newUploadedUrls);
 
-                    // 6.3: Xóa ảnh bị remove (JS thêm input hidden: name="RemovedImages")
-                    String removedImagesParam = request.getParameter("RemovedImages");
+                    // Insert new images (non-primary for now) and collect their urls
+                    List<String> insertedNewUrls = new ArrayList<>();
+                    for (String newUrl : newUploadedUrls) {
+                        imageDAO.insertImage(productId, newUrl, false);
+                        insertedNewUrls.add(newUrl);
+                    }
+
+                    // 6.3: Removed images param may contain ids (from JS removedImageIds hidden) or
+                    // urls separated by comma
+                    String removedImagesParam = request.getParameter("removedImageIds");
+                    if (removedImagesParam == null || removedImagesParam.isBlank()) {
+                        // older naming fallback
+                        removedImagesParam = request.getParameter("RemovedImages");
+                    }
                     if (removedImagesParam != null && !removedImagesParam.isBlank()) {
                         String[] removedArray = removedImagesParam.split(",");
-                        for (String url : removedArray) {
-                            url = url.trim();
-                            if (!url.isEmpty()) {
-                                imageDAO.deleteImageByUrl(url); // xóa logic, không xóa file
-                                existingUrls.remove(url);
+                        for (String token : removedArray) {
+                            token = token.trim();
+                            if (token.isEmpty())
+                                continue;
+                            // try parse as id
+                            try {
+                                long imgId = Long.parseLong(token);
+                                // delete by id (new method)
+                                imageDAO.deleteImageById(imgId);
+                            } catch (NumberFormatException nfe) {
+                                // not an id, try delete by url
+                                imageDAO.deleteImageByUrl(token);
                             }
                         }
                     }
 
-                    // 6.4: Xóa những ảnh cũ không còn trong submittedUrls
-                    Set<String> toDelete = new HashSet<>(existingUrls);
-                    toDelete.removeAll(submittedUrls);
-                    for (String url : toDelete) {
-                        imageDAO.deleteImageByUrl(url);
+                    // 6.4: Any existing images not present in keptExistingIds should be deleted
+                    for (ProductImage pi : existingImages) {
+                        String sid = String.valueOf(pi.getImageId());
+                        if (!keptExistingIds.contains(sid)) {
+                            // if it wasn't explicitly kept, delete it
+                            imageDAO.deleteImageById(pi.getImageId());
+                        }
                     }
 
-                    // 6.5: Thêm ảnh mới vào DB
-                    for (String newUrl : newUploadedUrls) {
-                        imageDAO.insertImage(productId, newUrl, false);
+                    // 6.5: Handle primary image setting with proper order
+                    // First reset all primary flags
+                    imageDAO.resetAllPrimaryImages(productId);
+
+                    // Track if primary has been set
+                    boolean primarySet = false;
+
+                    // 1. Check primaryImageUpdate first (highest priority - from explicit "Set as
+                    // primary" action)
+                    String primaryImageUpdate = request.getParameter("primaryImageUpdate");
+                    if (primaryImageUpdate != null && !primaryImageUpdate.isEmpty()) {
+                        if (primaryImageUpdate.startsWith("new:")) {
+                            // Format: new:index:1
+                            String[] parts = primaryImageUpdate.split(":");
+                            if (parts.length == 3) {
+                                try {
+                                    int newPrimaryIndex = Integer.parseInt(parts[1]);
+                                    if (newPrimaryIndex >= 0 && newPrimaryIndex < newUploadedUrls.size()) {
+                                        String newPrimaryUrl = newUploadedUrls.get(newPrimaryIndex);
+                                        imageDAO.updatePrimaryImage(productId, newPrimaryUrl);
+                                        product.setPrimaryImageUrl(newPrimaryUrl);
+                                        primarySet = true;
+                                    }
+                                } catch (NumberFormatException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        } else {
+                            // Format: imageId:1
+                            String[] parts = primaryImageUpdate.split(":");
+                            if (parts.length == 2) {
+                                try {
+                                    long imageId = Long.parseLong(parts[0]);
+                                    // Get URL from the existing image map
+                                    String url = existingIdToUrl.get(String.valueOf(imageId));
+                                    if (url != null) {
+                                        imageDAO.updatePrimaryImage(productId, url);
+                                        product.setPrimaryImageUrl(url);
+                                        primarySet = true;
+                                    }
+                                } catch (NumberFormatException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                     }
 
-                    // 6.6: Cập nhật ảnh chính
-                    String primaryUrl = request.getParameter("PrimaryImage");
-                    if (primaryUrl != null && !primaryUrl.isBlank()) {
-                        imageDAO.updatePrimaryImage(productId, primaryUrl);
-                        product.setPrimaryImageUrl(primaryUrl);
+                    // 2. If no primary set yet, check newPrimaryIndex for newly uploaded images
+                    if (!primarySet) {
+                        String newPrimaryIndexStr = request.getParameter("newPrimaryIndex");
+                        if (newPrimaryIndexStr != null && !newPrimaryIndexStr.isEmpty()) {
+                            try {
+                                int newIdx = Integer.parseInt(newPrimaryIndexStr);
+                                if (newIdx >= 0 && newIdx < insertedNewUrls.size()) {
+                                    String newUrl = insertedNewUrls.get(newIdx);
+                                    imageDAO.updatePrimaryImage(productId, newUrl);
+                                    product.setPrimaryImageUrl(newUrl);
+                                    primarySet = true;
+                                }
+                            } catch (NumberFormatException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    // 3. If still no primary, check legacy PrimaryImage parameter
+                    if (!primarySet) {
+                        String primaryExisting = request.getParameter("PrimaryImage");
+                        if (primaryExisting != null && !primaryExisting.isEmpty()) {
+                            try {
+                                long pid = Long.parseLong(primaryExisting);
+                                String url = existingIdToUrl.get(String.valueOf(pid));
+                                if (url != null) {
+                                    imageDAO.updatePrimaryImage(productId, url);
+                                    product.setPrimaryImageUrl(url);
+                                    primarySet = true;
+                                }
+                            } catch (NumberFormatException nfe) {
+                                // If not a number, treat as URL
+                                imageDAO.updatePrimaryImage(productId, primaryExisting);
+                                product.setPrimaryImageUrl(primaryExisting);
+                                primarySet = true;
+                            }
+                        }
+                    }
+
+                    // 4. Final fallback: if no primary set and there are images, use first
+                    // available
+                    if (!primarySet) {
+                        // First check kept existing images
+                        if (!keptExistingIds.isEmpty()) {
+                            String firstExistingId = keptExistingIds.iterator().next();
+                            String url = existingIdToUrl.get(firstExistingId);
+                            if (url != null) {
+                                imageDAO.updatePrimaryImage(productId, url);
+                                product.setPrimaryImageUrl(url);
+                                primarySet = true;
+                            }
+                        }
+                        // If still no primary, check new uploads
+                        if (!primarySet && !insertedNewUrls.isEmpty()) {
+                            String firstNewUrl = insertedNewUrls.get(0);
+                            imageDAO.updatePrimaryImage(productId, firstNewUrl);
+                            product.setPrimaryImageUrl(firstNewUrl);
+                        }
                     }
                     // --- 7️⃣ Cập nhật thông tin sản phẩm
                     boolean updated = productDAO.updateProduct(product);
