@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="./assets/css/common/globals.css?v=1.0.1'">
-                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css?v=1.0.1">
+                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css">
             </head>
 
             <body>
@@ -64,8 +64,12 @@
                                                     data-userid="${cartItem.userId}">
                                                     <div class="col-2 d-flex align-items-center">
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
-                                                            type="checkbox" ${cartItem.isChecked ? "checked" : "" }>
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
+                                                            type="checkbox" ${cartItem.isChecked &&
+                                                            cartItem.product.status !='OUT_OF_STOCK' &&
+                                                            cartItem.product.status !='INACTIVE' ? "checked" : "" }
+                                                            ${status=='OUT_OF_STOCK' || status=='INACTIVE' ? "disabled"
+                                                            : "" }>
+                                                        <a href="${ctx}/home?action=detail&id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
@@ -73,12 +77,18 @@
                                                     </div>
 
                                                     <div class="col-4">
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
+                                                        <a href="${ctx}/home?action=detail&id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <h6 class="cart-book-title">
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
+                                                        <c:if test="${status == 'OUT_OF_STOCK'}">
+                                                            <span class="badge bg-danger">Hết hàng</span>
+                                                        </c:if>
+                                                        <c:if test="${status == 'INACTIVE'}">
+                                                            <span class="badge bg-secondary">Ngừng kinh doanh</span>
+                                                        </c:if>
                                                     </div>
                                                     <div class="col-1 text-center">
                                                         <span class="price unit-price">
@@ -98,14 +108,17 @@
                                                     <div class="col-2">
                                                         <div class="text-center">
                                                             <button class="btn btn-outline-secondary btn-sm minus"
-                                                                data-cartitemid="${cartItem.cartItemId}">
+                                                                data-cartitemid="${cartItem.cartItemId}"
+                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
+                                                                ? "disabled" : "" }>
                                                                 -
                                                             </button>
                                                             <span class="mx-2 number">
                                                                 <c:out value="${cartItem.quantity}" />
                                                             </span>
-                                                            <button
-                                                                class="btn btn-outline-secondary btn-sm plus">+</button>
+                                                            <button class="btn btn-outline-secondary btn-sm plus"
+                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
+                                                                ? "disabled" : "" }>+</button>
                                                         </div>
                                                     </div>
 
@@ -464,7 +477,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
             </body>
 
             </html>

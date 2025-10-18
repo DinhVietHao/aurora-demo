@@ -60,16 +60,14 @@
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
                                                             type="checkbox" ${cartItem.isChecked ? "checked" : "" }
                                                             hidden>
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
-                                                            target="_blank">
+                                                        <a target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
                                                         </a>
                                                     </div>
 
                                                     <div class="col-4">
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
-                                                            target="_blank">
+                                                        <a target="_blank">
                                                             <h6 class="cart-book-title">
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
