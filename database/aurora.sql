@@ -382,8 +382,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @Blocked TABLE (ProductID BIGINT,
-        Reason NVARCHAR(255));
+    DECLARE @Blocked TABLE (
+        ProductID BIGINT,
+        Reason NVARCHAR(255)
+    );
 
     -- 1️⃣ Kiểm tra sản phẩm đang tham gia Flash Sale
     INSERT INTO @Blocked
@@ -396,7 +398,7 @@ BEGIN
     WHERE f.ProductID = d.ProductID
     );
 
-    -- 2️⃣ Kiểm tra sản phẩm nằm trong các đơn hàng đang xử lý (đã xác nhận, đã đóng gói, đang giao)
+    -- 2️⃣ Kiểm tra sản phẩm nằm trong các đơn hàng đang xử lý
     INSERT INTO @Blocked
         (ProductID, Reason)
     SELECT DISTINCT d.ProductID, N'Sản phẩm đang nằm trong đơn hàng đang xử lý'
@@ -404,9 +406,17 @@ BEGIN
         JOIN OrderItems oi ON oi.ProductID = d.ProductID
         JOIN OrderShops os ON os.OrderShopID = oi.OrderShopID
         JOIN Orders o ON o.OrderID = os.OrderID
-    WHERE o.OrderStatus IN (N'Đã xác nhận', N'Đã đóng gói', N'Đang giao');
+    WHERE os.[Status] IN (N'PENDING', N'SHIPPING', N'WAITING_SHIP', N'CONFIRM', N'COMPLETED', N'CANCELLED', N'RETURNED');
 
-    -- 3️⃣ Nếu có sản phẩm bị chặn xóa thì báo lỗi, không xóa
+    -- 3️⃣ Kiểm tra sản phẩm đang hoạt động
+    INSERT INTO @Blocked
+        (ProductID, Reason)
+    SELECT d.ProductID, N'Sản phẩm đang hoạt động'
+    FROM deleted d
+        JOIN Products p ON p.ProductID = d.ProductID
+    WHERE p.Status = N'ACTIVE';
+
+    -- 4️⃣ Nếu có sản phẩm bị chặn xóa thì báo lỗi, không xóa
     IF EXISTS (SELECT 1
     FROM @Blocked)
     BEGIN
@@ -419,7 +429,7 @@ BEGIN
         RETURN;
     END;
 
-    -- 4️⃣ Nếu hợp lệ → Xóa dữ liệu liên quan trước
+    -- 5️⃣ Nếu hợp lệ → Xóa dữ liệu liên quan trước
     DELETE FROM BookDetails WHERE ProductID IN (SELECT ProductID
     FROM deleted);
     DELETE FROM BookAuthors WHERE ProductID IN (SELECT ProductID
@@ -441,7 +451,7 @@ BEGIN
     FROM deleted)
     );
 
-    -- Cuối cùng xóa Product
+    -- 6️⃣ Cuối cùng xóa Product
     DELETE FROM Products WHERE ProductID IN (SELECT ProductID
     FROM deleted);
 END;

@@ -71,7 +71,7 @@ public class ProductServlet extends HttpServlet {
         }
         if ("delete_failed".equals(error)) {
             request.setAttribute("errorMessage",
-                    "Không thể xóa sản phẩm vì đang trong Flash Sale hoặc đang được giao hàng.");
+                    "Không thể xóa sản phẩm vì đang trong Flash Sale, đang trong đơn hàng hoặc đang hoạt động.");
         }
         if ("create_success".equals(message)) {
             request.setAttribute("successMessage",
@@ -327,7 +327,7 @@ public class ProductServlet extends HttpServlet {
                                 request.getContextPath() + "/shop/product?action=view&message=delete_success");
                     } else {
                         response.sendRedirect(
-                                request.getContextPath() + "/shop/product?action=view&message=delete_success");
+                                request.getContextPath() + "/shop/product?action=view&error=delete_failed");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -604,7 +604,6 @@ public class ProductServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                 }
                 break;
-
             default:
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
                 break;
