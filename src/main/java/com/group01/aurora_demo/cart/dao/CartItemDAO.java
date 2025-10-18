@@ -205,6 +205,7 @@ public class CartItemDAO {
                      p.Title,
                      p.OriginalPrice,
                      p.SalePrice,
+                     p.status,
                 	 s.ShopID,
                      s.Name AS ShopName,
                      img.Url AS ImageUrl
@@ -233,6 +234,7 @@ public class CartItemDAO {
                 product.setTitle(rs.getString("Title"));
                 product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                 product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setStatus(rs.getString("status"));
 
                 Shop shop = new Shop();
                 shop.setShopId(rs.getLong("ShopID"));
@@ -275,7 +277,9 @@ public class CartItemDAO {
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                WHERE ci.UserID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND ci.IsChecked = 1
+                AND p.Status = 'ACTIVE'
+                ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -341,7 +345,9 @@ public class CartItemDAO {
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1
+                AND p.Status = 'ACTIVE'
+                ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);

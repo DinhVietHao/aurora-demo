@@ -505,16 +505,7 @@ buyButton.addEventListener("click", () => {
     emptySelectionModal.show();
     return;
   }
-
-  const originalText = buyButton.innerHTML;
-  buyButton.disabled = true;
-  buyButton.innerHTML = `
-    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-    Đang xử lý...
-  `;
-  setTimeout(() => {
-    window.location.href = "/checkout";
-  }, 800);
+  window.location.href = "/checkout";
 });
 
 updateCartSummary();
