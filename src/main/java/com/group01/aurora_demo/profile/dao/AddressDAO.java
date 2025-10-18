@@ -10,23 +10,6 @@ import com.group01.aurora_demo.profile.model.UserAddress;
 
 public class AddressDAO {
 
-    public boolean hasAddress(long userId) {
-        String sql = "SELECT COUNT(*) AS addressCount FROM Users_Addresses WHERE UserID = ?";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("addressCount") > 0;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
     public List<Address> getAddressesByUserId(long userId) {
         List<Address> list = new ArrayList<>();
         String sql = """
@@ -70,7 +53,7 @@ public class AddressDAO {
 
     public Address getDefaultAddress(long userId) {
         String sql = """
-                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.Ward, a.Description, ua.IsDefault
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.District, a.Ward, a.Description, ua.IsDefault
                     FROM Addresses a
                     JOIN Users_Addresses ua ON a.AddressID = ua.AddressID
                     WHERE ua.UserID = ? AND ua.IsDefault = 1
@@ -87,6 +70,7 @@ public class AddressDAO {
                 address.setRecipientName(rs.getString("RecipientName"));
                 address.setPhone(rs.getString("Phone"));
                 address.setCity(rs.getString("City"));
+                address.setDistrict(rs.getString("District"));
                 address.setWard(rs.getString("Ward"));
                 address.setDescription(rs.getString("Description"));
 
@@ -107,7 +91,7 @@ public class AddressDAO {
 
     public Address getAddressById(long userId, long addressId) {
         String sql = """
-                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.ProvinceID, a.District, a.DistrictID,
+                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.District, a.ProvinceID, a.District, a.DistrictID,
                            a.Description, a.Ward, a.WardCode, ua.IsDefault
                     FROM Addresses a
                     JOIN Users_Addresses ua ON a.AddressID = ua.AddressID
@@ -127,6 +111,7 @@ public class AddressDAO {
                 address.setRecipientName(rs.getString("RecipientName"));
                 address.setPhone(rs.getString("Phone"));
                 address.setCity(rs.getString("City"));
+                address.setDistrict(rs.getString("District"));
                 address.setProvinceId(rs.getInt("ProvinceID"));
                 address.setDistrict(rs.getString("District"));
                 address.setDistrictId(rs.getInt("DistrictID"));
@@ -152,7 +137,7 @@ public class AddressDAO {
     public void addAddress(long userId, Address address, boolean isDefault) {
         String insertAddress = """
                     INSERT INTO Addresses (RecipientName, Phone, City, ProvinceID, District, DistrictID, Ward, WardCode, Description)
-                    VALUES (?, ?, ?, ?, ?, ?, ? , ?< ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ? , ?, ?)
                 """;
         String insertUserAddress = """
                     INSERT INTO Users_Addresses (UserID, AddressID, IsDefault)
@@ -219,6 +204,7 @@ public class AddressDAO {
             ps1.setString(7, address.getWard());
             ps1.setString(8, address.getWardCode());
             ps1.setString(9, address.getDescription());
+            ps1.setLong(10, address.getAddressId());
             ps1.executeUpdate();
 
             if (setAsDefault) {

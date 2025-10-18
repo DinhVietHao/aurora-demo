@@ -98,6 +98,7 @@ public class AddressServlet extends HttpServlet {
                     String district = req.getParameter("districtName");
                     String ward = req.getParameter("wardName");
                     String description = req.getParameter("description");
+                    int provinceId = Integer.parseInt(req.getParameter("provinceId"));
                     int districtId = Integer.parseInt(req.getParameter("districtId"));
                     String wardCode = req.getParameter("wardCode");
                     boolean isDefault = req.getParameter("isDefault") != null;
@@ -107,6 +108,7 @@ public class AddressServlet extends HttpServlet {
                     address.setRecipientName(recipientName);
                     address.setPhone(phone);
                     address.setCity(city);
+                    address.setProvinceId(provinceId);
                     address.setDistrict(district);
                     address.setDistrictId(districtId);
                     address.setWard(ward);
@@ -116,11 +118,12 @@ public class AddressServlet extends HttpServlet {
 
                     String from = req.getParameter("from");
                     if (from.equalsIgnoreCase("checkout")) {
-                        resp.sendRedirect(req.getContextPath() + "/checkout");
+                        resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
                     } else {
                         resp.sendRedirect(req.getContextPath() + "/address");
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     System.out.println(e.getMessage());
                 }
 
@@ -155,7 +158,6 @@ public class AddressServlet extends HttpServlet {
                 } else {
                     resp.sendRedirect(req.getContextPath() + "/address");
                 }
-
                 break;
             case "/delete":
                 try {

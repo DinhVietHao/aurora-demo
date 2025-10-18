@@ -9,7 +9,7 @@
                 </div>
                 <div class="modal-body">
                     <form class="shipping-address" id="form-update-address" method="POST" action="/address/update">
-                        <input type="hidden" id="updateAddressId" value="" />
+                        <input type="hidden" id="updateAddressId" name="addressId" value="" />
                         <input type="hidden" name="from" value="address">
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
@@ -51,6 +51,7 @@
                             <input type="hidden" id="updateDistrictNameInput" name="districtName">
                             <input type="hidden" id="updateWardNameInput" name="wardName">
 
+                            <input type="hidden" id="updateProvinceIdInput" name="provinceId">
                             <input type="hidden" id="updateDistrictIdInput" name="districtId">
                             <input type="hidden" id="updateWardCodeInput" name="wardCode">
                         </div>

@@ -82,61 +82,6 @@ function calculateShipDiscount(total) {
   return 0;
 }
 
-// ====================== GET ALL DISCOUNTS ======================
-// function getAllDiscounts(total) {
-//   let systemDiscount = calculateDiscount(total);
-//   let shipDiscount = calculateShipDiscount(total);
-
-//   let allShopDiscount = 0;
-//   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
-//   allShop.forEach((shopElement) => {
-//     const shopId = shopElement.getAttribute("data-shop-id");
-//     const selectedShopDiscount = document.querySelector(
-//       `input[name="voucherShopDiscount_${shopId}"]:checked`
-//     );
-
-//     if (selectedShopDiscount && shopId) {
-//       const shopTotal = calculateShopTotal(shopId);
-//       const shopDiscount = calculateShopDiscount(shopTotal, shopId);
-//       allShopDiscount += shopDiscount;
-//       const shopVoucher = document.querySelector(
-//         `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
-//       );
-//       if (shopVoucher) {
-//         shopVoucher.innerText =
-//           shopDiscount > 0
-//             ? `Đã giảm ${formatCurrency(shopDiscount)}`
-//             : "Chưa áp dụng";
-//       }
-//     }
-//   });
-
-//   return { systemDiscount, shipDiscount, allShopDiscount };
-// }
-// ====================== UPDATE SUMMARY ======================
-// function updateCartSummary() {
-//   let total = calculateTotalProduct();
-//   let { systemDiscount, shipDiscount, allShopDiscount } =
-//     getAllDiscounts(total);
-
-//   discountElement.innerText =
-//     "-" + formatCurrency(systemDiscount + allShopDiscount);
-//   shipElement.innerText = "-" + formatCurrency(shipDiscount);
-
-//   // Shipping Fee
-//   let shippingFee = parseInt(shippingFeePayment.textContent.replace(/\D/g, ""));
-
-//   totalProductPrice.textContent = formatCurrency(total);
-//   let sum = Math.max(
-//     total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
-//     0
-//   );
-//   totalPayment.textContent = formatCurrency(sum);
-
-//   // refresh lại voucher của tất cả shop mỗi lần update
-//   refreshShopVoucher();
-// }
-
 // ====================== VOUCHER HANDLER ======================
 const confirmVoucher = document.getElementById("confirmVoucher");
 
@@ -273,21 +218,13 @@ shopVoucherModal.forEach((btn) => {
 confirmShopVoucher.forEach((btn) => {
   btn.addEventListener("click", () => {
     const shopId = btn.getAttribute("data-shop-id");
-    const selectedVoucher = document.querySelector(
-      `input[name="voucherShopDiscount_${shopId}"]:checked`
-    );
-    console.log("Check selectedVoucher ", selectedVoucher);
-
-    if (selectedVoucher) {
-      const code = selectedVoucher.dataset.value;
-      localStorage.setItem(`shopVoucher_${shopId}`, code);
-    }
-
     const selectedShopDiscount = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
 
     if (selectedShopDiscount) {
+      const code = selectedShopDiscount.dataset.value;
+      localStorage.setItem(`shopVoucher_${shopId}`, code);
       const shopVoucher = document.querySelector(
         `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
       );
@@ -383,23 +320,6 @@ function refreshShopVoucher() {
   });
   toggleSystemVoucherAvailability();
 }
-
-// Check payment method selection when clicking "Pay" button, if not selected then report error, if VNPAY is selected then open VNPAY modal.
-// const PayBtn = document.getElementById("btnPay");
-// PayBtn.addEventListener("click", () => {
-//   const selected = document.querySelector('input[name="payment"]:checked');
-//   const errorPayment = document.getElementById("paymentErrorModal");
-//   const vnPayModalElement = document.getElementById("vnpayModal");
-//   if (!selected) {
-//     const errorPaymentModal = new bootstrap.Modal(errorPayment);
-//     errorPaymentModal.show();
-//   } else {
-//     if (selected.id === "vnpay") {
-//       const vnPayModalModal = new bootstrap.Modal(vnPayModalElement);
-//       vnPayModalModal.show();
-//     }
-//   }
-// });
 // ====================== SYNC SERVER ======================
 
 function syncWithServer() {
@@ -497,7 +417,20 @@ applyVoucherShops.forEach((btn) => {
       });
   });
 });
+document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    const input = modalEl.querySelector(".voucherShopInput");
+    const msg = modalEl.querySelector(".voucherShopMessage");
 
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "voucherShopMessage";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+});
 // ====================== SYSTEM VOUCHER HANDLER ======================
 const applySystemVoucher = document.getElementById("applySystemVoucher");
 applySystemVoucher.addEventListener("click", () => {
@@ -556,6 +489,22 @@ applySystemVoucher.addEventListener("click", () => {
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
     });
 });
+
+const voucherModalEl = document.getElementById("voucherModal");
+if (voucherModalEl) {
+  voucherModalEl.addEventListener("hidden.bs.modal", () => {
+    const msg = document.getElementById("voucherSystemMessage");
+    const input = document.getElementById("voucherSystemInput");
+
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+}
 // ====================== KHÔI PHỤC VOUCHER SAU KHI RELOAD ======================
 function loadSavedVouchers() {
   document.querySelectorAll(".voucher-input-shop").forEach((input) => {

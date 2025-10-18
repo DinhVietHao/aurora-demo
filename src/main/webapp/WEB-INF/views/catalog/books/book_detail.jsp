@@ -46,7 +46,8 @@
                   <button class="button-two col-lg-5" id="add-to-cart" data-product-id="${product.productId}">
                     <i class="bi bi-cart3"></i> Thêm vào giỏ hàng
                   </button>
-                  <button class="button-three col-lg-5">Mua Ngay</button>
+                  <button class="button-three col-lg-5" id="buyNow" data-product-id="${product.productId}">Mua
+                    Ngay</button>
                 </div>
               </div>
             </div>
@@ -202,94 +203,48 @@
             </div>
           </div>
 
-          <%-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) --%>
-            <div class="row mt-4">
-              <div class="col-12">
-                <div class="book-review">
-                  <div class="book-review-header">Đánh giá sản phẩm</div>
-                  <div class="book-review-body">
-                    <div class="row align-items-center ">
-                      <div class="col-md-2">
-                        <h2>0/5</h2>
-                        <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
-                        <i class="bi bi-star"></i><i class="bi bi-star"></i>
-                        <p>(0 đánh giá)</p>
-                      </div>
-                      <div class="col-md-4"><%-- thanh phân bố sao: TODO bind dữ liệu --%></div>
-                      <div class="col-md-6 text-center">
-                        <p class="text-muted m-0">Chỉ có thành viên mới có thể viết nhận xét.</p>
-                        <p class="text-muted">
-                          Vui lòng <a href="${ctx}/auth/login">đăng nhập</a> /
-                          <a href="${ctx}/auth/register">đăng ký</a>.
-                        </p>
-                      </div>
+          <!-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="book-review">
+                <div class="book-review-header">Đánh giá sản phẩm</div>
+                <div class="book-review-body">
+                  <div class="row align-items-center ">
+                    <div class="col-md-2">
+                      <h2>0/5</h2>
+                      <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
+                      <i class="bi bi-star"></i><i class="bi bi-star"></i>
+                      <p>(0 đánh giá)</p>
+                    </div>
+                    <div class="col-md-4"><%-- thanh phân bố sao: TODO bind dữ liệu --%></div>
+                    <div class="col-md-6 text-center">
+                      <p class="text-muted m-0">Chỉ có thành viên mới có thể viết nhận xét.</p>
+                      <p class="text-muted">
+                        Vui lòng <a href="${ctx}/auth/login">đăng nhập</a> /
+                        <a href="${ctx}/auth/register">đăng ký</a>.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
-            <div class="book-introduction container">
-              <h5 class="book-introduction-title">Aurora giới thiệu</h5>
-              <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
-                <jsp:param name="carouselId" value="bookIntroduction" />
-              </jsp:include>
-            </div>
+          <!-- CAROUSEL: AURORA GIỚI THIỆU (tái dùng thẻ sản phẩm) -->
+          <div class="book-introduction container">
+            <h5 class="book-introduction-title">Aurora giới thiệu</h5>
+            <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
+              <jsp:param name="carouselId" value="bookIntroduction" />
+            </jsp:include>
+          </div>
 
         </div>
-
-        <!-- Toast notification Add To Cart -->
-        <div id="notify-toast"></div>
 
         <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
         <!-- JS riêng của trang -->
-        <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.1"></script>
-
-        <!-- Send AJAX to controller -->
-        <script>
-          const addToCartBtn = document.getElementById("add-to-cart");
-          addToCartBtn.addEventListener("click", () => {
-            const productId = addToCartBtn.dataset.productId;
-            fetch("/cart/add", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: "productId=" + productId,
-            })
-              .then((res) => res.json())
-              .then((data) => {
-                if (data.success) {
-                  toast({
-                    title: "Thành công!",
-                    message: data.message,
-                    type: "success",
-                    duration: 3000,
-                  });
-                  const cartCountBadge = document.getElementById("cartCountBadge");
-                  if (cartCountBadge) {
-                    cartCountBadge.innerText = data.cartCount;
-                  }
-                } else {
-                  toast({
-                    title: data.title,
-                    message: data.message,
-                    type: data.type,
-                    duration: 3000,
-                  });
-                  const loginModalEl = document.getElementById("loginModal");
-                  if (data.user == null && loginModalEl) {
-                    setTimeout(() => {
-                      new bootstrap.Modal(loginModalEl).show();
-                    }, 3000);
-                  }
-                }
-              });
-          });
-        </script>
+        <script src="${ctx}/assets/js/catalog/book_detail.js"></script>
       </body>
 
       </html>
