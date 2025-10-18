@@ -16,6 +16,8 @@ CREATE TABLE Users
     AuthProvider NVARCHAR(20) NOT NULL
 );
 
+SELECT * FROM Users;
+
 CREATE TABLE UserRoles
 (
     UserID BIGINT NOT NULL,
