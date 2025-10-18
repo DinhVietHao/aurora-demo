@@ -94,7 +94,6 @@ public class CheckoutServlet extends HttpServlet {
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout/checkout.jsp").forward(req, resp);
         }
-
     }
 
     @Override

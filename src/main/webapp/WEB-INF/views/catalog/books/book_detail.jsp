@@ -46,7 +46,8 @@
                   <button class="button-two col-lg-5" id="add-to-cart" data-product-id="${product.productId}">
                     <i class="bi bi-cart3"></i> Thêm vào giỏ hàng
                   </button>
-                  <button class="button-three col-lg-5">Mua Ngay</button>
+                  <button class="button-three col-lg-5" id="buyNow" data-product-id="${product.productId}">Mua
+                    Ngay</button>
                 </div>
               </div>
             </div>
@@ -243,50 +244,7 @@
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
         <!-- JS riêng của trang -->
-        <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.1"></script>
-
-        <!-- Send AJAX to controller -->
-        <script>
-          const addToCartBtn = document.getElementById("add-to-cart");
-          addToCartBtn.addEventListener("click", () => {
-            const productId = addToCartBtn.dataset.productId;
-            fetch("/cart/add", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: "productId=" + productId,
-            })
-              .then((res) => res.json())
-              .then((data) => {
-                if (data.success) {
-                  toast({
-                    title: "Thành công!",
-                    message: data.message,
-                    type: "success",
-                    duration: 3000,
-                  });
-                  const cartCountBadge = document.getElementById("cartCountBadge");
-                  if (cartCountBadge) {
-                    cartCountBadge.innerText = data.cartCount;
-                  }
-                } else {
-                  toast({
-                    title: data.title,
-                    message: data.message,
-                    type: data.type,
-                    duration: 3000,
-                  });
-                  const loginModalEl = document.getElementById("loginModal");
-                  if (data.user == null && loginModalEl) {
-                    setTimeout(() => {
-                      new bootstrap.Modal(loginModalEl).show();
-                    }, 3000);
-                  }
-                }
-              });
-          });
-        </script>
+        <script src="${ctx}/assets/js/catalog/book_detail.js"></script>
       </body>
 
       </html>

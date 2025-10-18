@@ -74,18 +74,15 @@
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
-                                                        <p class="author">
-                                                            <c:out value="${cartItem.product.bookDetail.author}" />
-                                                        </p>
                                                     </div>
 
                                                     <div class="col-2 text-center">
                                                         <span class="price unit-price">
-                                                            <fmt:formatNumber value="${cartItem.unitPrice}"
+                                                            <fmt:formatNumber value="${cartItem.product.salePrice}"
                                                                 type="currency" />
                                                         </span><br>
                                                         <c:if
-                                                            test="${cartItem.product.originalPrice != cartItem.unitPrice}">
+                                                            test="${cartItem.product.originalPrice != cartItem.product.salePrice}">
                                                             <span class="text-muted text-decoration-line-through">
                                                                 <fmt:formatNumber
                                                                     value="${cartItem.product.originalPrice}"
@@ -775,7 +772,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/checkout/checkout.js?v=1.0.1'/>"></script>
+                <script src="<c:url value='/assets/js/customer/checkout/checkout.js'/>"></script>
 
                 <!-- Link javascript of Shipping Address -->
                 <script src="./assets/js/common/address.js?v=1.0.1"></script>
