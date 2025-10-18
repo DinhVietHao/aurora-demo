@@ -1302,17 +1302,24 @@ public class ProductDAO {
                 """;
 
         String upsertBookDetailSql = """
-                INSERT INTO BookDetails (
+                MERGE INTO BookDetails AS target
+                USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?)) AS source (
                     ProductID, Translator, Version, CoverType, Pages, LanguageCode, Size, ISBN
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    Translator = VALUES(Translator),
-                    Version = VALUES(Version),
-                    CoverType = VALUES(CoverType),
-                    Pages = VALUES(Pages),
-                    LanguageCode = VALUES(LanguageCode),
-                    Size = VALUES(Size),
-                    ISBN = VALUES(ISBN)
+                )
+                ON target.ProductID = source.ProductID
+                WHEN MATCHED THEN
+                    UPDATE SET
+                        Translator = source.Translator,
+                        Version = source.Version,
+                        CoverType = source.CoverType,
+                        Pages = source.Pages,
+                        LanguageCode = source.LanguageCode,
+                        Size = source.Size,
+                        ISBN = source.ISBN
+                WHEN NOT MATCHED THEN
+                    INSERT (ProductID, Translator, Version, CoverType, Pages, LanguageCode, Size, ISBN)
+                    VALUES (source.ProductID, source.Translator, source.Version, source.CoverType,
+                           source.Pages, source.LanguageCode, source.Size, source.ISBN);
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection()) {

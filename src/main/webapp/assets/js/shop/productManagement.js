@@ -227,6 +227,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function render() {
+      // Preserve reference to form for later use
+      const form = document.getElementById("updateProductForm");
+
       previewContainer.innerHTML = "";
       const count = currentImages.length;
       if (count < 2) showError(errorDiv, "Vui lòng chọn ít nhất 2 ảnh.");
@@ -234,13 +237,15 @@ document.addEventListener("DOMContentLoaded", () => {
       else hideError(errorDiv);
 
       // Update file input to contain only NEW files
-      const dt = new DataTransfer();
+      if (fileInput) {
+        const dt = new DataTransfer();
+        currentImages.forEach((it) => {
+          if (it.isNew && it.file) dt.items.add(it.file);
+        });
+        fileInput.files = dt.files;
+      }
 
-      currentImages.forEach((it) => {
-        if (it.isNew && it.file) dt.items.add(it.file);
-      });
-      if (fileInput) fileInput.files = dt.files;
-
+      // Render each image
       currentImages.forEach((img, index) => {
         const col = document.createElement("div");
         col.classList.add("col-3", "position-relative");
@@ -249,18 +254,17 @@ document.addEventListener("DOMContentLoaded", () => {
           ? `<span class="badge bg-primary position-absolute top-0 start-0 m-1 px-2 py-1" style="font-size:0.75rem;">Ảnh đại diện</span>`
           : "";
 
-        // mark existing vs new (for debugging can remove)
         const removeBtn = `<button type="button" class="btn btn-light text-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-2 fw-bold" data-index="${index}">×</button>`;
-        const setPrimaryBtn = `<button type="button" class="btn btn-sm btn-outline-secondary position-absolute bottom-0 start-0 m-1 set-primary" data-index="${index}" style="font-size:0.7rem;">Đặt làm chính</button>`;
+        const setPrimaryBtn = !img.isPrimary
+          ? `<button type="button" class="btn btn-sm btn-outline-secondary position-absolute bottom-0 start-0 m-1 set-primary" data-index="${index}" style="font-size:0.7rem;">Đặt làm chính</button>`
+          : "";
 
         col.innerHTML = `
           <div class="border rounded position-relative overflow-hidden">
             ${mainBadge}
-            <img src="${
-              img.url
-            }" class="img-fluid rounded" style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3/4;">
+            <img src="${img.url}" class="img-fluid rounded" style="object-fit: cover; height: 200px; width: 100%; aspect-ratio: 3/4;">
             ${removeBtn}
-            ${!img.isPrimary ? setPrimaryBtn : ""}
+            ${setPrimaryBtn}
           </div>`;
         previewContainer.appendChild(col);
       });
@@ -305,32 +309,71 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // click handlers for remove and set-primary
+    // Click handlers for all image-related actions
     previewContainer.addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-index]");
-      if (!btn) {
-        const sp = e.target.closest(".set-primary");
-        if (sp) {
-          const i = +sp.dataset.index;
-          if (!isNaN(i) && currentImages[i]) {
-            currentImages.forEach((it) => (it.isPrimary = false));
-            currentImages[i].isPrimary = true;
-            render();
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Handle "Set as primary" button clicks
+      const setPrimaryBtn = e.target.closest(".set-primary");
+      if (setPrimaryBtn) {
+        const index = +setPrimaryBtn.dataset.index;
+        if (!isNaN(index) && currentImages[index]) {
+          // Update primary status
+          currentImages.forEach((img) => (img.isPrimary = false));
+          currentImages[index].isPrimary = true;
+
+          // Update form hidden input
+          const form = document.getElementById("updateProductForm");
+          if (form) {
+            // Clear existing primary updates
+            $$('input[name="primaryImageUpdate"]', form).forEach((el) =>
+              el.remove()
+            );
+
+            // Add new primary update
+            const primaryInput = document.createElement("input");
+            primaryInput.type = "hidden";
+            primaryInput.name = "primaryImageUpdate";
+
+            if (currentImages[index].isNew && fileInput) {
+              const fileIndex = Array.from(fileInput.files).findIndex(
+                (f) =>
+                  f.name === currentImages[index].file.name &&
+                  f.size === currentImages[index].file.size
+              );
+              if (fileIndex !== -1) {
+                primaryInput.value = `new:${fileIndex}:1`;
+              }
+            } else if (currentImages[index].id) {
+              primaryInput.value = `${currentImages[index].id}:1`;
+            }
+
+            form.appendChild(primaryInput);
           }
+          render();
         }
         return;
       }
-      const index = +btn.dataset.index;
-      if (isNaN(index)) return;
-      const removed = currentImages.splice(index, 1)[0];
-      if (removed && removed.id) {
-        removedImageIds.add(removed.id);
+
+      // Handle remove button clicks
+      const removeBtn = e.target.closest("button[data-index]");
+      if (removeBtn) {
+        const index = +removeBtn.dataset.index;
+        if (isNaN(index)) return;
+
+        const removed = currentImages.splice(index, 1)[0];
+        if (removed?.id) {
+          removedImageIds.add(removed.id);
+        }
+
+        // If we removed the primary image, make the first remaining image primary
+        if (removed?.isPrimary && currentImages.length > 0) {
+          currentImages[0].isPrimary = true;
+        }
+
+        render();
       }
-      // ensure there is still a primary; if removed main image was primary, set first as primary
-      if (!currentImages.some((it) => it.isPrimary) && currentImages.length) {
-        currentImages[0].isPrimary = true;
-      }
-      render();
     });
 
     // prepare data before submit
@@ -361,32 +404,40 @@ document.addEventListener("DOMContentLoaded", () => {
       $$("#existingImageIds", form).forEach((el) => el.remove());
       $$("#existingImagePrimary", form).forEach((el) => el.remove());
 
+      // Clear existing primary inputs first
+      $$('input[name="primaryImageUpdate"]', form).forEach((el) => el.remove());
+      $$('input[name="existingImageIds"]', form).forEach((el) => el.remove());
+
       currentImages.forEach((it, idx) => {
         if (!it.isNew && it.id) {
-          // existing image that will be kept
+          // Add existing image ID to form
           const inp = document.createElement("input");
           inp.type = "hidden";
           inp.name = "existingImageIds";
           inp.value = it.id;
-          inp.id = "existingImageIds";
           form.appendChild(inp);
 
-          const p = document.createElement("input");
-          p.type = "hidden";
-          p.name = "existingImagePrimary";
-          p.value = `${it.id}:${it.isPrimary ? 1 : 0}`;
-          p.id = "existingImagePrimary";
-          form.appendChild(p);
+          // If this is primary, add primary update info
+          if (it.isPrimary) {
+            const primaryInput = document.createElement("input");
+            primaryInput.type = "hidden";
+            primaryInput.name = "primaryImageUpdate";
+            primaryInput.value = `${it.id}:1`;
+            form.appendChild(primaryInput);
+          }
         }
         if (it.isNew && it.file && it.isPrimary) {
-          // If primary is a new file, mark it so backend can know (we'll add index-based info)
-          const pnew = document.createElement("input");
-          pnew.type = "hidden";
-          pnew.name = "newPrimaryIndex";
-          pnew.value = Array.from(fileInput.files).findIndex(
+          // For new primary image, send the index in the uploaded files
+          const newIndex = Array.from(fileInput.files).findIndex(
             (f) => f.name === it.file.name && f.size === it.file.size
           );
-          form.appendChild(pnew);
+          if (newIndex !== -1) {
+            const primaryInput = document.createElement("input");
+            primaryInput.type = "hidden";
+            primaryInput.name = "primaryImageUpdate";
+            primaryInput.value = `new:${newIndex}:1`;
+            form.appendChild(primaryInput);
+          }
         }
       });
 
@@ -417,39 +468,108 @@ document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById(formId);
     if (!orig || !sale) return;
 
+    // Add classes for visual feedback
+    orig.classList.add("price-input");
+    sale.classList.add("price-input");
+
+    // Ensure error element exists and is properly styled
+    if (error) {
+      error.classList.add("mt-2");
+      error.style.display = "none";
+    }
+
     const validate = () => {
-      const o = parseFloat(orig.value),
-        s = parseFloat(sale.value);
-      hideError(error);
+      const o = parseFloat(orig.value);
+      const s = parseFloat(sale.value);
+
+      // Reset validation state
+      orig.classList.remove("is-invalid");
+      sale.classList.remove("is-invalid");
+      if (error) error.style.display = "none";
+
+      // Skip validation if either field is empty or not a number
       if (isNaN(o) || isNaN(s)) return true;
-      if (o < 0 || s < 0) return showError(error, "Giá không được âm."), false;
-      if (o < s)
-        return (
-          showError(error, "Giá gốc phải lớn hơn hoặc bằng giá bán."), false
-        );
+
+      // Validate negative numbers
+      if (o < 0 || s < 0) {
+        if (error) {
+          error.textContent = "⚠️ Giá không được âm.";
+          error.style.display = "block";
+        }
+        if (o < 0) orig.classList.add("is-invalid");
+        if (s < 0) sale.classList.add("is-invalid");
+        return false;
+      }
+
+      // Validate sale price not greater than original
+      if (o < s) {
+        if (error) {
+          error.textContent = "⚠️ Giá gốc phải lớn hơn hoặc bằng giá bán.";
+          error.style.display = "block";
+        }
+        orig.classList.add("is-invalid");
+        sale.classList.add("is-invalid");
+        return false;
+      }
+
       return true;
     };
 
+    // Add input event listeners for real-time validation
     orig.addEventListener("input", validate);
     sale.addEventListener("input", validate);
 
+    // Add submit validation
     form?.addEventListener("submit", (e) => {
-      if (!validate()) e.preventDefault();
+      if (!validate()) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     });
+
+    // Initial validation
+    validate();
   }
 
+  // Initialize validation for create form
   initPriceValidation(
     "productOriginalPrice",
     "productSalePrice",
     "priceError",
     "addProductForm"
   );
+
+  // Initialize validation for update form
   initPriceValidation(
     "productOriginalPriceUpdate",
     "productSalePriceUpdate",
     "priceErrorUpdate",
     "updateProductForm"
   );
+
+  // For create form
+  let createPriceError = document.getElementById("priceError");
+  if (!createPriceError) {
+    createPriceError = document.createElement("div");
+    createPriceError.id = "priceError";
+    createPriceError.className = "alert alert-danger mt-2";
+    createPriceError.style.display = "none";
+    document
+      .getElementById("productSalePrice")
+      ?.parentNode.appendChild(createPriceError);
+  }
+
+  // For update form
+  let updatePriceError = document.getElementById("priceErrorUpdate");
+  if (!updatePriceError && document.getElementById("productSalePriceUpdate")) {
+    updatePriceError = document.createElement("div");
+    updatePriceError.id = "priceErrorUpdate";
+    updatePriceError.className = "alert alert-danger mt-2";
+    updatePriceError.style.display = "none";
+    document
+      .getElementById("productSalePriceUpdate")
+      .parentNode.appendChild(updatePriceError);
+  }
 
   // =============================
   // DATE VALIDATION (Create + Update)

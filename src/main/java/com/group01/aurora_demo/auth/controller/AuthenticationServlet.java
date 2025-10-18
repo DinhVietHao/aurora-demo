@@ -113,12 +113,12 @@ public class AuthenticationServlet extends HttpServlet {
             if (flag) {
                 User existingUser = userDAO.findByEmailAndProvider(email, "LOCAL");
 
-                if ("register".equals(purpose)) {
+                if ("register".equals(purpose) || "change-email-verify-new".equals(purpose)) {
                     if (existingUser != null) {
                         flag = false;
                         message = "Email đã được sử dụng.";
                     }
-                } else if ("forgot-password".equals(purpose)) {
+                } else if ("forgot-password".equals(purpose) || "change-email-verify-old".equals(purpose)) {
                     if (existingUser == null) {
                         flag = false;
                         message = "Email chưa được đăng ký.";
@@ -128,9 +128,19 @@ public class AuthenticationServlet extends HttpServlet {
 
             if (flag) {
                 String otp = String.format("%06d", random.nextInt(1_000_000));
-                String subject = "register".equals(purpose)
-                        ? "Mã xác thực OTP - Đăng ký tài khoản Aurora"
-                        : "Mã xác thực OTP - Đặt lại mật khẩu Aurora";
+                String subject = "";
+                switch (purpose) {
+                    case "register":
+                        subject = "Mã xác thực OTP - Đăng ký tài khoản Aurora";
+                        break;
+                    case "forgot-password":
+                        subject = "Mã xác thực OTP - Đặt lại mật khẩu Aurora";
+                        break;
+                    case "change-email-verify-old":
+                    case "change-email-verify-new":
+                        subject = "Mã xác thực OTP - Thay đổi email tài khoản Aurora";
+                        break;
+                }
                 String html = renderOtpEmailHtml(otp, OTP_LIFETIME_SECONDS);
 
                 if (emailService.sendHtml(email, subject, html)) {
