@@ -771,19 +771,25 @@
                                         </div>
 
                                         <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <label for="productOriginalPrice" class="form-label">Giá gốc <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="number" step="1" min="1" class="form-control"
-                                                    id="productOriginalPriceUpdate" name="OriginalPrice"
-                                                    placeholder="140000" required>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="productSalePrice" class="form-label">Giá bán <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="number" step="1" min="1" class="form-control"
-                                                    id="productSalePriceUpdate" name="SalePrice" placeholder="122000"
-                                                    required>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="productOriginalPrice" class="form-label">Giá gốc
+                                                            <span class="text-danger">*</span></label>
+                                                        <input type="number" step="1" min="1" class="form-control"
+                                                            id="productOriginalPriceUpdate" name="OriginalPrice"
+                                                            placeholder="140000" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="productSalePrice" class="form-label">Giá bán <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="number" step="1" min="1" class="form-control"
+                                                            id="productSalePriceUpdate" name="SalePrice"
+                                                            placeholder="122000" required>
+                                                    </div>
+                                                    <div id="priceErrorUpdate" class="mt-2"
+                                                        style="display: none; color: red;"></div>
+                                                </div>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="productQuantity" class="form-label">Số lượng tồn kho <span

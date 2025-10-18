@@ -672,15 +672,16 @@ btnPlaceOrder.addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        toast({
-          title: data.title,
-          message: data.message,
-          type: data.type,
-          duration: 3000,
-        });
-        setTimeout(() => {
-          window.location.href = "/home";
-        }, 800);
+        // toast({
+        //   title: data.title,
+        //   message: data.message,
+        //   type: data.type,
+        //   duration: 3000,
+        // });
+        // setTimeout(() => {
+        //   window.location.href = "/home";
+        // }, 800);
+        window.location.href = data.url;
       } else {
         toast({
           title: data.title,

@@ -14,6 +14,7 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.service.OrderService;
+import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
 import com.group01.aurora_demo.profile.model.Address;
@@ -67,6 +68,14 @@ public class OrderServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else if (path.equals("/payment")) {
+            if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
+                String vnp_TransactionNo = req.getParameter("vnp_TransactionNo");
+                String vnp_Amount = req.getParameter("vnp_Amount");
+                
+            } else {
+
+            }
         }
     }
 
@@ -118,11 +127,12 @@ public class OrderServlet extends HttpServlet {
                             shopVouchers.put(shopId, values[0]);
                         }
                     });
-
+                    String paymentUrl = VNPayService.getPaymentUrl(req, resp, 100000);
                     ServiceResponse result = this.orderService.createOrder(user, address, discountVoucher, shipVoucher,
                             shopVouchers);
 
                     json.put("success", "success".equals(result.getType()));
+                    json.put("url", paymentUrl);
                     json.put("type", result.getType());
                     json.put("title", result.getTitle());
                     json.put("message", result.getMessage());
