@@ -57,7 +57,9 @@
                                                 </span>
                                             </div>
                                             <c:forEach var="cartItem" items="${shopCart.items}">
-                                                <div class="row cart-body__item" id="cartItemId${cartItem.cartItemId}"
+                                                <c:set var="status" value="${cartItem.product.status}" />
+                                                <div class="row cart-body__item  ${status == 'OUT_OF_STOCK' || status == 'INACTIVE' ? 'disabled-item opacity-50' : ''}"
+                                                    id="cartItemId${cartItem.cartItemId}"
                                                     data-cartitemid="${cartItem.cartItemId}"
                                                     data-userid="${cartItem.userId}">
                                                     <div class="col-2 d-flex align-items-center">

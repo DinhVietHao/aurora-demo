@@ -135,12 +135,12 @@
                                                         </div>
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
-                                                                <div class="col-8">
+                                                                <div class="col-7">
                                                                     <input type="text"
                                                                         class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
-                                                                <div class="col-4">
+                                                                <div class="col-5">
                                                                     <button
                                                                         class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
@@ -369,11 +369,11 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="row mb-3 align-items-center">
-                                                <div class="col-8">
+                                                <div class="col-7">
                                                     <input type="text" class="form-control"
                                                         placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
-                                                <div class="col-4">
+                                                <div class="col-5">
                                                     <button class="button-four w-100" id="applySystemVoucher">Áp
                                                         dụng</button>
                                                 </div>
