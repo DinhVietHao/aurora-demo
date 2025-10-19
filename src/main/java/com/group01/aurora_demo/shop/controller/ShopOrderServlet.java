@@ -45,7 +45,7 @@ public class ShopOrderServlet extends HttpServlet {
             request.setAttribute("orderCountConfirm", orderCounts.getOrDefault("CONFIRM", 0));
             request.setAttribute("orderCountCompleted", orderCounts.getOrDefault("COMPLETED", 0));
             request.setAttribute("orderCountCancelled", orderCounts.getOrDefault("CANCELLED", 0));
-            request.setAttribute("orderCountReturned", orderCounts.getOrDefault("RETURNED", 0));
+            request.setAttribute("orderCountReturned", orderCounts.getOrDefault("RETURNED_GROUP", 0));
 
             if (action != null) {
                 try {
@@ -160,6 +160,7 @@ public class ShopOrderServlet extends HttpServlet {
             response.sendRedirect("/home");
             return;
         }
+
         String action = request.getParameter("action");
 
         try {
@@ -168,63 +169,109 @@ public class ShopOrderServlet extends HttpServlet {
                     long orderShopId = Long.parseLong(request.getParameter("orderShopId"));
                     String newStatus = request.getParameter("newStatus");
 
-                    boolean updated = orderDAO.updateOrderShopStatus(orderShopId, newStatus);
+                    boolean updated = false;
+                    if ("RETURNED".equals(newStatus)) {
+                        updated = orderDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
+                    } else {
+                        updated = orderDAO.updateOrderShopStatus(orderShopId, newStatus);
+                    }
 
                     if (updated) {
-                        EmailService emailService = new EmailService();
-                        OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
 
-                        String customerEmail = orderShop.getUser().getEmail();
-                        String customerName = orderShop.getCustomerName();
+                        Set<String> notifiableStatuses = Set.of(
+                                "CONFIRM", "SHIPPING", "COMPLETED",
+                                "CANCELLED", "RETURNED", "RETURNED_REJECTED", "WAITING_SHIP");
 
-                        String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
-                        String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);
-                        try {
-                            emailService.sendHtml(customerEmail, subject, html);
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                            request.setAttribute("errorMessage",
-                                    "⚠️ Không thể gửi email xác nhận đơn hàng:" + ex.getMessage());
+                        boolean shouldSendEmail = notifiableStatuses
+                                .contains(newStatus != null ? newStatus.toUpperCase() : "");
+
+                        if (shouldSendEmail) {
+                            try {
+                                EmailService emailService = new EmailService();
+                                OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
+
+                                String customerEmail = orderShop.getUser().getEmail();
+                                String customerName = orderShop.getCustomerName();
+
+                                String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
+                                String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);
+                                emailService.sendHtml(customerEmail, subject, html);
+
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                request.setAttribute("errorMessage",
+                                        "⚠️ Không thể gửi email xác nhận đơn hàng: " + ex.getMessage());
+                            }
                         }
+
                         request.setAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
                     } else {
                         request.setAttribute("errorMessage", "Không thể cập nhật trạng thái đơn hàng!");
                     }
-                    Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
-                    List<OrderShop> orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, newStatus);
-
-                    request.setAttribute("orderShops", orderShops);
+                    if (newStatus.equals("RETURNED_REJECTED")) {
+                        newStatus = "RETURNED";
+                    }
                     request.setAttribute("status", newStatus);
-                    request.setAttribute("pageTitle", "Đơn hàng trạng thái: " + newStatus);
-
-                    request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                    response.sendRedirect(request.getContextPath() + "/shop/orders?status=" + newStatus);
                     break;
             }
+
         } catch (Exception e) {
             e.printStackTrace();
+            request.setAttribute("errorMessage", "Lỗi xử lý yêu cầu: " + e.getMessage());
             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request, response);
         }
-
     }
 
     private String renderOrderStatusEmail(String name, long orderId, String status) {
         String statusLabel;
+        String message;
+
         switch (status.toUpperCase()) {
-            case "CONFIRMED" -> statusLabel = "Đã xác nhận";
-            case "SHIPPING" -> statusLabel = "Đang giao hàng";
-            case "COMPLETED" -> statusLabel = "Hoàn tất";
-            case "CANCELLED" -> statusLabel = "Đã hủy";
-            default -> statusLabel = "Đang xử lý";
+            case "CONFIRM" -> {
+                statusLabel = "Đơn hàng đang chờ xác nhận của bạn";
+                message = "Đơn hàng của bạn đã được người bán xác nhận. Chúng tôi đang đợi bạn xác nhận đơn hàng được giao thành công.";
+            }
+            case "SHIPPING" -> {
+                statusLabel = "Đơn hàng đã giao cho đơn vị vận chuyển";
+                message = "Đơn hàng của bạn đã giao cho đơn vị vận chuyển, chúng tôi sẽ giao đơn hàng cho bạn sớm nhất có thể!";
+            }
+            case "WAITING_SHIP" -> {
+                statusLabel = "Đơn hàng đang được giao";
+                message = "Đơn hàng của bạn đang trên đường đến địa chỉ nhận. Hãy chuẩn bị để nhận hàng nhé!";
+            }
+            case "COMPLETED" -> {
+                statusLabel = "Đơn hàng đã hoàn tất";
+                message = "Cảm ơn bạn đã tin tưởng Aurora! Rất mong sớm được phục vụ bạn trong những lần mua sắm tiếp theo.";
+            }
+            case "CANCELLED" -> {
+                statusLabel = "Đơn hàng đã bị hủy";
+                message = "Rất tiếc, đơn hàng của bạn đã bị hủy. Nếu đây là sự nhầm lẫn, bạn có thể đặt lại bất cứ lúc nào.";
+            }
+            case "RETURNED" -> {
+                statusLabel = "Xác nhận trả hàng thành công";
+                message = "Chúng tôi đã xác nhận yêu cầu trả hàng của bạn. Sản phẩm sẽ được xử lý hoàn trả theo chính sách của Aurora.";
+            }
+            case "RETURNED_REJECTED" -> {
+                statusLabel = "Yêu cầu trả hàng bị từ chối";
+                message = "Rất tiếc, yêu cầu trả hàng của bạn không được chấp nhận. Vui lòng liên hệ chủ shop để biết thêm chi tiết.";
+            }
+            default -> {
+                statusLabel = "Đơn hàng đang được xử lý";
+                message = "Đơn hàng của bạn hiện đang được xử lý. Chúng tôi sẽ thông báo cho bạn ngay khi có cập nhật mới.";
+            }
         }
 
         return """
-                    <div style="font-family:Arial,sans-serif; color:#333;">
+                    <div style="font-family:Arial,sans-serif; color:#333; line-height:1.6;">
                         <h2>Xin chào %s,</h2>
                         <p>Đơn hàng <b>#%d</b> của bạn đã được cập nhật trạng thái:</p>
                         <h3 style="color:#007bff;">%s</h3>
-                        <p>Cảm ơn bạn đã mua sắm tại Aurora.</p>
+                        <p>%s</p>
+                        <p style="margin-top:20px;">Cảm ơn bạn đã mua sắm tại <b>Aurora</b>.</p>
                         <p>Trân trọng,<br/>Đội ngũ Aurora</p>
                     </div>
-                """.formatted(name, orderId, statusLabel);
+                """.formatted(name, orderId, statusLabel, message);
     }
+
 }
