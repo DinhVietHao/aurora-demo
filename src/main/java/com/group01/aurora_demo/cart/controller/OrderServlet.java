@@ -72,7 +72,7 @@ public class OrderServlet extends HttpServlet {
             if ("00".equals(req.getParameter("vnp_ResponseCode"))) {
                 String vnp_TransactionNo = req.getParameter("vnp_TransactionNo");
                 String vnp_Amount = req.getParameter("vnp_Amount");
-                
+
             } else {
 
             }
