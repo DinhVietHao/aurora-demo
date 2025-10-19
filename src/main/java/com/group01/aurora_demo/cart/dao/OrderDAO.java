@@ -77,6 +77,7 @@ public class OrderDAO {
         StringBuilder sql = new StringBuilder("""
                    SELECT
                     os.OrderID,
+                    os.OrderShopID,
                     s.Name AS ShopName,
                     o.FinalAmount,
                     os.Status AS ShopStatus,
@@ -96,19 +97,26 @@ public class OrderDAO {
                 AND img.IsPrimary = 1
                 """);
         if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-            sql.append(" AND os.Status = ? ");
+            if (status.equalsIgnoreCase("waiting_ship")) {
+                sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
+            } else {
+                sql.append(" AND os.Status = ? ");
+            }
         }
         sql.append(" ORDER BY os.CreatedAt DESC");
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql.toString());
             ps.setLong(1, userId);
             if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-                ps.setString(2, status.toUpperCase());
+                if (!status.equalsIgnoreCase("waiting_ship")) {
+                    ps.setString(2, status.toUpperCase());
+                }
             }
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 OrderDTO order = new OrderDTO();
                 order.setOrderId(rs.getLong("OrderID"));
+                order.setOrderShopId(rs.getLong("OrderShopID"));
                 order.setShopName(rs.getString("ShopName"));
                 order.setFinalAmount(rs.getDouble("FinalAmount"));
                 order.setShopStatus(rs.getString("ShopStatus"));

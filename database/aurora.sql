@@ -504,3 +504,75 @@ VALUES
     (N'Nghệ thuật', N'VAT10'),
     (N'Tôn giáo', N'VAT5'),
     (N'Trinh Thám', N'VAT5');
+
+CREATE OR ALTER PROCEDURE CancelOrderShop
+    @orderShopId BIGINT,
+    @reason NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRANSACTION;
+
+    -- 1. Cập nhật trạng thái hủy
+    UPDATE OrderShops
+    SET [Status] = 'CANCELLED',
+        CancelReason = @reason,
+        UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+    WHERE OrderShopID = @orderShopId;
+
+    -- 2. Hoàn lại số lượng sản phẩm
+    UPDATE P
+    SET 
+        P.Quantity = P.Quantity + OI.Quantity,
+        P.SoldCount = CASE WHEN P.SoldCount >= OI.Quantity THEN P.SoldCount - OI.Quantity ELSE 0 END
+    FROM Products AS P
+        JOIN OrderItems AS OI ON OI.ProductID = P.ProductID
+    WHERE OI.OrderShopID = @orderShopId;
+
+    -- 3. Hoàn voucher của shop
+    DECLARE @shopVoucherId BIGINT, @userId BIGINT, @orderId BIGINT;
+    SELECT @shopVoucherId = VoucherID, @orderId = OrderID
+    FROM OrderShops
+    WHERE OrderShopID = @orderShopId;
+    SELECT @userId = UserID
+    FROM Orders
+    WHERE OrderID = @orderId;
+
+    IF @shopVoucherId IS NOT NULL
+    BEGIN
+        UPDATE Vouchers
+        SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+        WHERE VoucherID = @shopVoucherId;
+
+        DELETE FROM UserVouchers WHERE VoucherID = @shopVoucherId AND UserID = @userId;
+    END
+
+    -- 4. Hoàn voucher hệ thống
+    DECLARE @sysVoucherDiscount BIGINT, @sysVoucherShip BIGINT;
+    SELECT
+        @sysVoucherDiscount = VoucherDiscountID,
+        @sysVoucherShip = VoucherShipID
+    FROM Orders
+    WHERE OrderID = @orderId;
+
+    IF @sysVoucherDiscount IS NOT NULL
+    BEGIN
+        UPDATE Vouchers
+        SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+        WHERE VoucherID = @sysVoucherDiscount;
+
+        DELETE FROM UserVouchers WHERE VoucherID = @sysVoucherDiscount AND UserID = @userId;
+    END
+
+    IF @sysVoucherShip IS NOT NULL
+    BEGIN
+        UPDATE Vouchers
+        SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+        WHERE VoucherID = @sysVoucherShip;
+
+        DELETE FROM UserVouchers WHERE VoucherID = @sysVoucherShip AND UserID = @userId;
+    END
+
+    COMMIT TRANSACTION;
+END

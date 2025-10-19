@@ -1,5 +1,6 @@
 package com.group01.aurora_demo.cart.dao;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -62,6 +63,22 @@ public class OrderShopDAO {
             ps.setString(1, newStatus);
             ps.setLong(2, orderId);
             return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean cancelOrderShop(Long orderShopId, String cancelReason) {
+        String sql = "{CALL CancelOrderShop(?, ?)}";
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setLong(1, orderShopId);
+            cs.setString(2, cancelReason);
+            cs.execute();
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

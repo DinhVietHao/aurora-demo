@@ -95,8 +95,8 @@
                                                     href="order?status=shipping">Vận chuyển</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link ${param.status == 'watting_ship' ? 'active' : ''}"
-                                                    href="order?status=watting_ship">Chờ giao hàng</a>
+                                                <a class="nav-link ${param.status == 'waiting_ship' ? 'active' : ''}"
+                                                    href="order?status=waiting_ship">Chờ giao hàng</a>
                                             </li>
                                             <li class="nav-item">
                                                 <a class="nav-link ${param.status == 'completed' ? 'active' : ''}"
@@ -200,9 +200,11 @@
 
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'PENDING'}">
-                                                                        <button class="button-six"
+                                                                        <button class="button-six btn-cancel-order"
                                                                             data-bs-toggle="modal"
-                                                                            data-bs-target="#cancelOrderModal"> Hủy
+                                                                            data-bs-target="#cancelOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Hủy
                                                                             đơn</button>
                                                                     </c:if>
                                                                     <c:if
@@ -234,7 +236,7 @@
                                                                             shop</button>
                                                                     </c:if>
                                                                     <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'WAITING_SHIP'}">
+                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
                                                                         <button class="button-four"
                                                                             data-bs-toggle="modal"
                                                                             data-bs-target="#confirmOrderModal">Đã nhận
@@ -258,43 +260,38 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- Cancel Order Modal -->
-                <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content"> <!-- Header -->
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="cancelOrderLabel">Huỷ đơn hàng</h5> <button type="button"
-                                    class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-                            </div> <!-- Body -->
-                            <div class="modal-body">
-                                <p>Bạn có chắc chắn muốn huỷ đơn hàng này không?</p>
-                                <form id="cancelOrderForm">
+                <form id="cancelOrderForm" method="POST" action="/order/cancel">
+                    <input type="hidden" name="orderShopId" value="" id="cancelOrderShopId">
+                    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content"> <!-- Header -->
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="cancelOrderLabel">Huỷ đơn hàng</h5> <button
+                                        type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div> <!-- Body -->
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn huỷ đơn hàng này không?</p>
+
                                     <div class="mt-3">
                                         <label for="cancelReason" class="form-label">Lý do hủy đơn hàng</label>
                                         <select class="form-select" id="cancelReason" name="cancelReason" required>
                                             <option value="" selected disabled>-- Chọn lý do hủy --</option>
-                                            <option value="update_phone_address">Cập nhật số điện thoại hoặc địa chỉ
-                                                nhận hàng</option>
-                                            <option value="ordered_wrong_product">Đặt nhầm sản phẩm</option>
-                                            <option value="ordered_wrong_quantity">Nhập sai số lượng sản phẩm</option>
-                                            <option value="ordered_duplicate">Đặt trùng đơn hàng</option>
-                                            <option value="changed_mind">Không muốn mua nữa</option>
-                                            <option value="found_better_price">Tìm thấy sản phẩm giá rẻ hơn ở nơi khác
-                                            </option>
-                                            <option value="choose_other_shop">Muốn mua ở shop khác</option>
-                                            <option value="shipping_fee_changed">Phí vận chuyển thay đổi so với khi đặt
-                                            </option>
-                                            <option value="personal_reason">Lý do cá nhân / không tiện nhận hàng
-                                            </option>
+                                            <c:forEach var="reason" items="${cancelReasons}">
+                                                <option value="${reason.label}">${reason.label}</option>
+                                            </c:forEach>
                                         </select>
                                     </div>
+                                </div>
+                                <div class="modal-footer"> <button type="button" class="button-five"
+                                        data-bs-dismiss="modal">Đóng</button> <button type="submit"
+                                        form="cancelOrderForm" class="button-seven">Xác nhận huỷ</button>
+                                </div>
                             </div>
-                            <div class="modal-footer"> <button type="button" class="button-five"
-                                    data-bs-dismiss="modal">Đóng</button> <button type="submit" form="cancelOrderForm"
-                                    class="button-seven">Xác nhận huỷ</button> </div>
                         </div>
                     </div>
-                </div>
+                </form>
                 <!--End Cancel Order Modal -->
 
                 <!-- Confirm Order Received Modal -->
@@ -320,10 +317,13 @@
                 </div>
                 <!--End Confirm Order Received Modal -->
 
-                <!-- Link Javascript of Comment -->
+                <!-- Link Javascript of Order -->
                 <script src="./assets/js/customer/order/order.js"></script>
 
+                <!-- Link Javascript of Information Account -->
                 <script src="./assets/js/customer/profile/information_account.js"></script>
+
+
                 <c:if test="${not empty sessionScope.toastMsg}">
                     <script>
                         toast({

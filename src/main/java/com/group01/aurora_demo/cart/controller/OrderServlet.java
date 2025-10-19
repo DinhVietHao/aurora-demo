@@ -1,7 +1,10 @@
 package com.group01.aurora_demo.cart.controller;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
@@ -70,12 +74,17 @@ public class OrderServlet extends HttpServlet {
         if (path == null || path.equals("/")) {
             try {
                 String status = req.getParameter("status");
+                System.out.println(">>>>CHECK Status" + status);
                 List<OrderDTO> orders = this.orderDAO.getOrdersByStatus(user.getId(), status);
                 Map<Long, List<OrderDTO>> grouped = orders.stream()
                         .collect(Collectors.groupingBy(order -> order.getOrderId(),
                                 LinkedHashMap::new,
                                 Collectors.toList()));
                 req.setAttribute("orders", grouped);
+
+                String filePath = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
+                List<Map<String, String>> cancelReasons = loadCancelReasons(filePath);
+                req.setAttribute("cancelReasons", cancelReasons);
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -229,8 +238,50 @@ public class OrderServlet extends HttpServlet {
                 }
                 break;
             }
+            case "/cancel": {
+                try {
+                    Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+                    String cancelReason = req.getParameter("cancelReason");
+
+                    boolean success = orderShopDAO.cancelOrderShop(orderShopId, cancelReason);
+
+                    if (success) {
+                        session.setAttribute("toastType", "success");
+                        session.setAttribute("toastMsg", "Đã huỷ đơn hàng thành công.");
+                    } else {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không thể huỷ đơn hàng. Vui lòng thử lại.");
+                    }
+
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Có lỗi xảy ra khi huỷ đơn hàng.");
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                }
+            }
             default:
                 resp.sendRedirect(req.getContextPath() + "/checkout");
         }
+    }
+
+    public List<Map<String, String>> loadCancelReasons(String filePath) {
+        List<Map<String, String>> reasons = new ArrayList<>();
+        try (InputStream is = new FileInputStream(filePath)) {
+            String json = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject obj = arr.getJSONObject(i);
+                Map<String, String> map = new HashMap<>();
+                map.put("code", obj.getString("code"));
+                map.put("label", obj.getString("label"));
+                reasons.add(map);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return reasons;
     }
 }

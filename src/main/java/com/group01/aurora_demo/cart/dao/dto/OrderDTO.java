@@ -6,6 +6,7 @@ import com.group01.aurora_demo.catalog.model.Category;
 
 public class OrderDTO {
     private long orderId;
+    private long orderShopId;
     private String shopName;
     private String productName;
     private String imageUrl;
@@ -94,6 +95,14 @@ public class OrderDTO {
 
     public void setCategories(List<Category> categories) {
         this.categories = categories;
+    }
+
+    public long getOrderShopId() {
+        return orderShopId;
+    }
+
+    public void setOrderShopId(long orderShopId) {
+        this.orderShopId = orderShopId;
     }
 
 }
