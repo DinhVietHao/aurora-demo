@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -81,6 +84,7 @@ public class OrderDAO {
                     s.Name AS ShopName,
                     o.FinalAmount,
                     os.Status AS ShopStatus,
+                    os.UpdateAt,
                     p.ProductID,
                     p.Title AS ProductName,
                     img.Url AS ImageUrl,
@@ -99,16 +103,19 @@ public class OrderDAO {
         if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
             if (status.equalsIgnoreCase("waiting_ship")) {
                 sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
+            } else if (status.equalsIgnoreCase("returned")) {
+                sql.append(
+                        " AND (os.Status = 'RETURN_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURN_REJECTED') ");
             } else {
                 sql.append(" AND os.Status = ? ");
             }
         }
-        sql.append(" ORDER BY os.CreatedAt DESC");
+        sql.append(" ORDER BY os.UpdateAt DESC");
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql.toString());
             ps.setLong(1, userId);
             if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-                if (!status.equalsIgnoreCase("waiting_ship")) {
+                if (!status.equalsIgnoreCase("waiting_ship") && !status.equalsIgnoreCase("returned")) {
                     ps.setString(2, status.toUpperCase());
                 }
             }
@@ -120,6 +127,8 @@ public class OrderDAO {
                 order.setShopName(rs.getString("ShopName"));
                 order.setFinalAmount(rs.getDouble("FinalAmount"));
                 order.setShopStatus(rs.getString("ShopStatus"));
+                order.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                order.setProductId(rs.getLong("ProductID"));
                 order.setProductName(rs.getString("ProductName"));
                 order.setImageUrl(rs.getString("ImageUrl"));
                 order.setQuantity(rs.getInt("Quantity"));
@@ -128,6 +137,12 @@ public class OrderDAO {
 
                 List<Category> categories = categoryDAO.getCategoriesByProductId(rs.getLong("ProductID"));
                 order.setCategories(categories);
+
+                boolean canReturn = "COMPLETED".equalsIgnoreCase(order.getShopStatus())
+                        && ChronoUnit.DAYS.between(
+                                order.getUpdateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                                LocalDate.now()) < 7;
+                order.setCanReturn(canReturn);
 
                 orders.add(order);
             }

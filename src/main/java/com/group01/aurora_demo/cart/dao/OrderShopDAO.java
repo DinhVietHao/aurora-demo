@@ -4,6 +4,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 
@@ -84,4 +85,65 @@ public class OrderShopDAO {
             return false;
         }
     }
+
+    public boolean returnOrderShop(long orderShopId, String returnReason) {
+        String sql = """
+                    UPDATE OrderShops
+                    SET Status = 'RETURN_REQUESTED',
+                        ReturnReason = ?,
+                        UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopID = ?
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, returnReason);
+            ps.setLong(2, orderShopId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public int autoCompleteConfirmOrders() {
+        String sql = """
+                    UPDATE OrderShops
+                    SET Status = 'COMPLETED',
+                        UpdateAt = SYSUTCDATETIME()
+                    WHERE Status = 'CONFIRM'
+                      AND UpdateAt <= DATEADD(DAY, -7, SYSUTCDATETIME())
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            return ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public int autoCancelPendingPaymentOrders() {
+        String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdateAt, GETDATE()) >= 1";
+        int count = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Long orderShopId = rs.getLong("OrderShopID");
+                if (cancelOrderShop(orderShopId, "Quá thời hạn thanh toán")) {
+                    count++;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
 }

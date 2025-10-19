@@ -22,7 +22,7 @@
                 <!-- Header + các modal auth dùng chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
-                <div class="container mt-3 information-account">
+                <div class="container my-3 information-account">
                     <div class="row ">
                         <div class="col-3 col-md-2 information-account__sidebar">
 
@@ -144,7 +144,7 @@
                                                                     <div>
                                                                         <span class="text-color">Trạng thái: </span>
                                                                         <span
-                                                                            class="badge bg-success">${entry.value[0].shopStatus}</span>
+                                                                            class="badge bg-success">${entry.value[0].vietnameseStatus}</span>
                                                                     </div>
                                                                 </div>
                                                                 <c:forEach var="order" items="${entry.value}">
@@ -209,7 +209,8 @@
                                                                     </c:if>
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'CANCELLED'}">
-                                                                        <button class="button-four"><i
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i> Mua
                                                                             lại</button>
                                                                     </c:if>
@@ -226,7 +227,8 @@
                                                                     </c:if>
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'COMPLETED'}">
-                                                                        <button class="button-four"><i
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i> Mua
                                                                             lại</button>
                                                                         <button class="button-five"
@@ -236,10 +238,22 @@
                                                                             shop</button>
                                                                     </c:if>
                                                                     <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
-                                                                        <button class="button-four"
+                                                                        test="${entry.value[0].shopStatus == 'COMPLETED' && entry.value[0].canReturn}">
+                                                                        <button class="button-seven btn-return-order"
                                                                             data-bs-toggle="modal"
-                                                                            data-bs-target="#confirmOrderModal">Đã nhận
+                                                                            data-bs-target="#returnOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Trả hàng
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
+                                                                        <button class="button-four btn-confirm-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">Đã
+                                                                            nhận
                                                                             hàng</button>
                                                                     </c:if>
                                                                 </div>
@@ -264,7 +278,7 @@
                     <input type="hidden" name="orderShopId" value="" id="cancelOrderShopId">
                     <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderLabel"
                         aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-dialog">
                             <div class="modal-content"> <!-- Header -->
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="cancelOrderLabel">Huỷ đơn hàng</h5> <button
@@ -284,9 +298,10 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div class="modal-footer"> <button type="button" class="button-five"
-                                        data-bs-dismiss="modal">Đóng</button> <button type="submit"
-                                        form="cancelOrderForm" class="button-seven">Xác nhận huỷ</button>
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" form="cancelOrderForm" class="button-seven">Xác nhận
+                                        huỷ</button>
                                 </div>
                             </div>
                         </div>
@@ -294,27 +309,66 @@
                 </form>
                 <!--End Cancel Order Modal -->
 
-                <!-- Confirm Order Received Modal -->
-                <div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="confirmOrderLabel">Xác nhận đã nhận hàng</h5> <button
-                                    type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                <!-- Return Order Modal -->
+                <form id="returnOrderForm" method="POST" action="/order/return">
+                    <input type="hidden" name="orderShopId" value="" id="returnOrderShopId">
+                    <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-labelledby="returnOrderLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="returnOrderLabel">Trả hàng</h5> <button type="button"
+                                        class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn trả hàng này không?</p>
+                                    <div class="mt-3">
+                                        <label for="returnReason" class="form-label">Lý do trả hàng</label>
+                                        <select class="form-select" id="returnReason" name="returnReason" required>
+                                            <option value="" selected disabled>-- Chọn lý do trả hàng --</option>
+                                            <c:forEach var="reason" items="${returnReasons}">
+                                                <option value="${reason.label}">${reason.label}</option>
+                                            </c:forEach>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" form="returnOrderForm" class="button-seven">Xác nhận
+                                        trả hàng</button>
+                                </div>
                             </div>
-                            <div class="modal-body">
-                                <p>Bạn đã chắc chắn nhận đủ hàng từ đơn <strong>#12345</strong> chưa?</p>
-                                <p>Sau khi xác nhận, đơn hàng sẽ được chuyển sang trạng thái <strong>Hoàn
-                                        thành</strong>.</p> <input type="hidden" name="orderId" id="confirmOrderId"
-                                    value="">
-                            </div>
-                            <div class="modal-footer"> <button type="button" class="button-five"
-                                    data-bs-dismiss="modal">Đóng</button> <button type="button" id="btnConfirmOrder"
-                                    class="button-four">Xác nhận</button> </div>
                         </div>
                     </div>
-                </div>
+                </form>
+                <!--End Return Order Modal -->
+
+                <!-- Confirm Order Received Modal -->
+                <form action="/order/confirm" method="post">
+                    <input type="hidden" name="orderShopId" value="" id="confirmOrderShopId">
+                    <div class="modal fade" id="confirmOrderModal" tabindex="-1" aria-labelledby="confirmOrderLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="confirmOrderLabel">Xác nhận đã nhận hàng</h5> <button
+                                        type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Bạn đã chắc chắn nhận đủ hàng từ đơn hàng này chưa?</p>
+                                    <p>Sau khi xác nhận, đơn hàng sẽ được chuyển sang trạng thái <strong>Hoàn
+                                            thành</strong>.</p> <input type="hidden" name="orderId" id="confirmOrderId"
+                                        value="">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Đóng</button>
+                                    <button type="submit" id="btnConfirmOrder" class="button-four">Xác nhận</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
                 <!--End Confirm Order Received Modal -->
 
                 <!-- Link Javascript of Order -->

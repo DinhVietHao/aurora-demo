@@ -403,7 +403,6 @@ public class CartServlet extends HttpServlet {
                 out.print(json.toString());
                 break;
             }
-
             default:
                 json.put("success", false);
                 json.put("title", "Lỗi!");
