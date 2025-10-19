@@ -55,8 +55,9 @@
 }
 
 .order-management .order-content .order-body .order-card__image {
-    width: 150px;
-    height: auto;
+    width: 100px;
+    height: 140px;
+    object-fit: cover;
 }
 
 .order-management .order-content .order-body .order-card__price {

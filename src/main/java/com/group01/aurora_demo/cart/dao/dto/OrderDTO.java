@@ -1,25 +1,19 @@
 package com.group01.aurora_demo.cart.dao.dto;
 
-import java.util.Date;
 import java.util.List;
 
 import com.group01.aurora_demo.catalog.model.Category;
 
 public class OrderDTO {
     private long orderId;
-    private long shopId;
     private String shopName;
-    private long productId;
     private String productName;
     private String imageUrl;
     private int quantity;
     private Double originalPrice;
     private Double salePrice;
-    private double subtotal;
     private double finalAmount;
     private String shopStatus;
-    private String orderStatus;
-    private Date orderDate;
     List<Category> categories;
 
     public long getOrderId() {
@@ -30,28 +24,12 @@ public class OrderDTO {
         this.orderId = orderId;
     }
 
-    public long getShopId() {
-        return shopId;
-    }
-
-    public void setShopId(long shopId) {
-        this.shopId = shopId;
-    }
-
     public String getShopName() {
         return shopName;
     }
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
-    }
-
-    public long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(long productId) {
-        this.productId = productId;
     }
 
     public String getProductName() {
@@ -94,14 +72,6 @@ public class OrderDTO {
         this.salePrice = salePrice;
     }
 
-    public double getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
-    }
-
     public double getFinalAmount() {
         return finalAmount;
     }
@@ -116,22 +86,6 @@ public class OrderDTO {
 
     public void setShopStatus(String shopStatus) {
         this.shopStatus = shopStatus;
-    }
-
-    public String getOrderStatus() {
-        return orderStatus;
-    }
-
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
-    public Date getOrderDate() {
-        return orderDate;
-    }
-
-    public void setOrderDate(Date orderDate) {
-        this.orderDate = orderDate;
     }
 
     public List<Category> getCategories() {

@@ -149,8 +149,11 @@ public class CheckoutService {
             }
 
             double fee = this.ghnService.calculateFee(
-                    1454, "21211", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
-
+                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
+            System.out.printf(">>>>>>>>>>>>>>>>>>>>>>>>Shop #%d - Weight: %.2f - Fee: %.2f%n", shopId, shopWeight, fee);
+            System.out.printf(
+                    ">>>>>>>>>>>>>>>>>GHN request → fromDistrict: %d, fromWard: %s, toDistrict: %d, toWard: %s, weight: %.2f%n",
+                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight);
             shopShippingFees.put(shopId, fee);
         }
 

@@ -75,35 +75,30 @@ public class OrderDAO {
     public List<OrderDTO> getOrdersByStatus(long userId, String status) {
         List<OrderDTO> orders = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
-                    SELECT
-                        s.ShopID,
-                        s.Name AS ShopName,
-                        os.OrderShopID,
-                        os.FinalAmount AS ShopTotal,
-                        os.Status AS ShopStatus,
-                        o.OrderID,
-                        o.OrderStatus,
-                        o.CreatedAt AS OrderDate,
-                        p.ProductID,
-                        p.Title AS ProductName,
-                        img.Url AS ImageUrl,
-                        oi.Quantity,
-                        oi.OriginalPrice,
-                        oi.SalePrice,
-                        os.Subtotal
-                    FROM Orders o
-                    JOIN OrderShops os ON o.OrderID = os.OrderID
-                    JOIN Shops s ON os.ShopID = s.ShopID
-                    JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
-                    JOIN Products p ON oi.ProductID = p.ProductID
-                    JOIN ProductImages img ON p.ProductID = img.ProductID
-                    WHERE o.UserID = ?
-                      AND img.IsPrimary = 1
+                   SELECT
+                    os.OrderID,
+                    s.Name AS ShopName,
+                    os.FinalAmount AS ShopTotal,
+                    os.Status AS ShopStatus,
+                    p.ProductID,
+                    p.Title AS ProductName,
+                    img.Url AS ImageUrl,
+                    oi.Quantity,
+                    oi.OriginalPrice,
+                    oi.SalePrice
+                FROM Orders o
+                JOIN OrderShops os ON o.OrderID = os.OrderID
+                JOIN Shops s ON os.ShopID = s.ShopID
+                JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                JOIN Products p ON oi.ProductID = p.ProductID
+                JOIN ProductImages img ON p.ProductID = img.ProductID
+                WHERE o.UserID = ?
+                AND img.IsPrimary = 1
                 """);
         if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-            sql.append(" AND o.OrderStatus = ? ");
+            sql.append(" AND os.Status = ? ");
         }
-        sql.append(" ORDER BY o.CreatedAt DESC");
+        sql.append(" ORDER BY os.CreatedAt DESC");
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql.toString());
             ps.setLong(1, userId);
@@ -114,21 +109,18 @@ public class OrderDAO {
             while (rs.next()) {
                 OrderDTO order = new OrderDTO();
                 order.setOrderId(rs.getLong("OrderID"));
-                order.setShopId(rs.getLong("ShopID"));
                 order.setShopName(rs.getString("ShopName"));
-                order.setProductId(rs.getLong("ProductID"));
+                order.setFinalAmount(rs.getDouble("ShopTotal"));
+                order.setShopStatus(rs.getString("ShopStatus"));
                 order.setProductName(rs.getString("ProductName"));
                 order.setImageUrl(rs.getString("ImageUrl"));
                 order.setQuantity(rs.getInt("Quantity"));
                 order.setOriginalPrice(rs.getDouble("OriginalPrice"));
                 order.setSalePrice(rs.getDouble("SalePrice"));
-                order.setSubtotal(rs.getDouble("Subtotal"));
-                order.setFinalAmount(rs.getDouble("ShopTotal"));
-                order.setShopStatus(rs.getString("ShopStatus"));
-                order.setOrderStatus(rs.getString("OrderStatus"));
-                order.setOrderDate(rs.getDate("OrderDate"));
-                List<Category> categories = this.categoryDAO.getCategoriesByProductId(rs.getLong("ProductID"));
+
+                List<Category> categories = categoryDAO.getCategoriesByProductId(rs.getLong("ProductID"));
                 order.setCategories(categories);
+
                 orders.add(order);
             }
         } catch (Exception e) {
@@ -523,19 +515,6 @@ public class OrderDAO {
         }
     }
 
-    public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderShopId = ?";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
-            ps.setLong(2, orderShopId);
-            return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
     public Map<String, Integer> getOrderCountsByShopId(Long shopId) throws SQLException {
         String sql = "SELECT Status, COUNT(*) AS Count FROM OrderShops WHERE ShopID = ? GROUP BY Status";
         Map<String, Integer> counts = new HashMap<>();
@@ -638,5 +617,17 @@ public class OrderDAO {
         return cancelledCount;
     }
 
+    public boolean updateOrderStatus(long orderId, String newStatus) {
+        String sql = "UPDATE Orders SET OrderStatus = ? WHERE OrderID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

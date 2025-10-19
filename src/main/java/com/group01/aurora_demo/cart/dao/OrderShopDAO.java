@@ -7,6 +7,7 @@ import java.sql.Statement;
 import java.sql.Types;
 
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderShopDAO {
     public long createOrderShop(Connection conn, OrderShop orderShop) {
@@ -39,5 +40,31 @@ public class OrderShopDAO {
             System.out.println(e.getMessage());
         }
         return -1;
+    }
+
+    public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
+        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderShopId = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, orderShopId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateOrderShopStatusByOrderId(long orderId, String newStatus) {
+        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

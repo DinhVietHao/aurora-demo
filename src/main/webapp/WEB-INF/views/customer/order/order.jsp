@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
-                <link rel="stylesheet" href="./assets/css/customer/order/order.css?v=1.0.1">
+                <link rel="stylesheet" href="./assets/css/customer/order/order.css">
                 <link rel="stylesheet" href="./assets/css/customer/address/address.css?v=1.0.1">
             </head>
 
@@ -144,12 +144,12 @@
                                                                     <div>
                                                                         <span class="text-color">Trạng thái: </span>
                                                                         <span
-                                                                            class="badge bg-success">${entry.value[0].orderStatus}</span>
+                                                                            class="badge bg-success">${entry.value[0].shopStatus}</span>
                                                                     </div>
                                                                 </div>
                                                                 <c:forEach var="order" items="${entry.value}">
                                                                     <div class="order-card__body">
-                                                                        <div class="col-2">
+                                                                        <div class="col-2 text-center">
                                                                             <img class="order-card__image"
                                                                                 src="${ctx}/assets/images/catalog/products/${order.imageUrl}"
                                                                                 alt="Ảnh sảm phẩm">
@@ -173,17 +173,15 @@
                                                                                         test="${order.originalPrice != order.salePrice}">
                                                                                         <span
                                                                                             class="text-decoration-line-through text-color">
-
                                                                                             <fmt:formatNumber
                                                                                                 value="${order.originalPrice}"
                                                                                                 type="currency" />
                                                                                         </span>
                                                                                     </c:if>
-                                                                                    <span
-                                                                                        class="fw-bold text-danger"></span>
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.salePrice}"
-                                                                                        type="currency" />
+                                                                                    <span class="fw-bold text-danger">
+                                                                                        <fmt:formatNumber
+                                                                                            value="${order.salePrice}"
+                                                                                            type="currency" />
                                                                                     </span>
                                                                                 </div>
                                                                             </div>
@@ -201,20 +199,26 @@
                                                                     </p>
 
                                                                     <c:if
-                                                                        test="${entry.value[0].orderStatus == 'PENDING'}">
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING'}">
                                                                         <button class="button-six"
                                                                             data-bs-toggle="modal"
                                                                             data-bs-target="#cancelOrderModal"> Hủy
                                                                             đơn</button>
                                                                     </c:if>
                                                                     <c:if
-                                                                        test="${entry.value[0].orderStatus == 'CANCELLED'}">
+                                                                        test="${entry.value[0].shopStatus  == 'CANCELLED'}">
                                                                         <button class="button-four"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i> Mua
                                                                             lại</button>
                                                                     </c:if>
                                                                     <c:if
-                                                                        test="${entry.value[0].orderStatus == 'COMPLETED'}">
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
+                                                                        <button class="button-four">
+                                                                            Thanh toán
+                                                                            lại</button>
+                                                                    </c:if>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'COMPLETED'}">
                                                                         <button class="button-four"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i> Mua
                                                                             lại</button>
@@ -225,7 +229,7 @@
                                                                             shop</button>
                                                                     </c:if>
                                                                     <c:if
-                                                                        test="${entry.value[0].orderStatus == 'WAITING_SHIP'}">
+                                                                        test="${entry.value[0].shopStatus  == 'WAITING_SHIP'}">
                                                                         <button class="button-four"
                                                                             data-bs-toggle="modal"
                                                                             data-bs-target="#confirmOrderModal">Đã nhận
@@ -314,8 +318,20 @@
                 <!-- Link Javascript of Comment -->
                 <script src="./assets/js/customer/order/order.js"></script>
 
-
                 <script src="./assets/js/customer/profile/information_account.js"></script>
+                <c:if test="${not empty sessionScope.toastMsg}">
+                    <script>
+                        toast({
+                            title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Thất bại'}",
+                            message: "${sessionScope.toastMsg}",
+                            type: "${sessionScope.toastType}",
+                            duration: 3000
+                        });
+                    </script>
+                    <c:remove var="toastMsg" scope="session" />
+                    <c:remove var="toastType" scope="session" />
+                </c:if>
+
             </body>
 
             </html>
