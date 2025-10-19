@@ -22,7 +22,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v-1.0.1">
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -294,7 +294,8 @@
                                     <!-- Nút Xóa -->
                                     <form id="deleteForm" action="/shop/product?action=delete" method="post">
                                         <input type="hidden" name="productId" id="deleteProductId">
-                                        <button type="submit" class="btn btn-confirm-delete">Xóa</button>
+                                        <button type="submit" class="btn btn-confirm-delete"
+                                            data-action-text="Đang xóa...">Xóa</button>
                                     </form>
                                 </div>
                             </div>
@@ -715,7 +716,8 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="addProductForm" class="btn btn-success">
+                                            <button type="submit" form="addProductForm" class="btn btn-success"
+                                                data-action-text="Đang lưu...">
                                                 <i class="bi bi-check-circle me-1"></i>
                                                 Lưu sách
                                             </button>
@@ -739,6 +741,7 @@
                                 <div class="modal-body">
                                     <form id="updateProductForm" action="/shop/product?action=update" method="POST"
                                         enctype="multipart/form-data">
+                                        <input type="hidden" id="updateMode" name="updateMode">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
                                         <div class="row">
@@ -1144,9 +1147,11 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="updateProductForm" class="btn btn-success">
+                                            <button type="submit" form="updateProductForm" class="btn btn-success"
+                                                data-action-text="Đang cập nhật sách...">
+
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Thay đổi sách
+                                                Cập nhật sách
                                             </button>
                                         </div>
                                     </form>
@@ -1161,6 +1166,7 @@
                     <script src="${ctx}/assets/js/shop/scripts.js"></script>
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
                     <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+
                 </body>
 
                 </html>
