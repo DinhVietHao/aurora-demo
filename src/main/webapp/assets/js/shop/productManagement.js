@@ -2,6 +2,40 @@ document.addEventListener("DOMContentLoaded", () => {
   // =============================
   // UTILS
   // =============================
+  function initSubmitButtonHandler(selector = "form") {
+    document.querySelectorAll(selector).forEach((form) => {
+      form.addEventListener("submit", function () {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (!submitBtn) return;
+
+        // Ngăn bấm nhiều lần
+        submitBtn.disabled = true;
+        submitBtn.classList.add("disabled");
+
+        // Lưu nội dung gốc để khôi phục sau
+        const originalHTML = submitBtn.innerHTML;
+
+        // Lấy text hành động
+        const actionText =
+          submitBtn.getAttribute("data-action-text") || "Đang xử lý...";
+
+        // Spinner + text
+        submitBtn.innerHTML = `
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          ${actionText}
+        `;
+
+        // Tự bật lại sau 10s (phòng ngừa lỗi)
+        setTimeout(() => {
+          if (submitBtn.disabled) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("disabled");
+            submitBtn.innerHTML = originalHTML;
+          }
+        }, 10000);
+      });
+    });
+  }
   const $ = (selector, parent = document) => parent.querySelector(selector);
   const $$ = (selector, parent = document) =>
     Array.from(parent.querySelectorAll(selector));
@@ -453,7 +487,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const imageUpdateHandler = initImageUploadForUpdate({
     fileInputId: "productImagesUpdate",
     previewContainerId: "imagePreviewUpdate",
-    errorDivId: "imageErrorUpdate",
+    errorDivId: "imageErrorMessageUpdate",
     formId: "updateProductForm",
     hiddenRemovedIdName: "removedImageIds",
   });
@@ -629,20 +663,47 @@ document.addEventListener("DOMContentLoaded", () => {
   // POPULATE UPDATE MODAL (AJAX) - tích hợp với imageUpdateHandler
   // =============================
   const updateButtons = $$(".btn-update");
+
   updateButtons.forEach((btn) =>
     btn.addEventListener("click", () => {
       const id = btn.dataset.productId;
+      console.log("🟢 [DEBUG] Click update, productId =", id);
+
       fetch(`/shop/product?action=getProduct&id=${id}`)
-        .then((r) => (r.ok ? r.json() : Promise.reject("Fetch error")))
-        .then(populateUpdateModal)
+        .then((r) => {
+          console.log("🟢 [DEBUG] Fetch response status =", r.status);
+          return r.ok ? r.json() : Promise.reject(`Fetch error ${r.status}`);
+        })
+        .then((data) => {
+          console.log("🟢 [DEBUG] Raw JSON data:", data);
+          const { product, updateMode } = data || {};
+
+          if (!product) {
+            console.warn("⚠️ [DEBUG] product is null/undefined in response");
+            alert("Không tìm thấy sản phẩm!");
+            return;
+          }
+
+          console.log("🟢 [DEBUG] Calling populateUpdateModal...");
+          populateUpdateModal(product);
+
+          console.log(
+            "🟢 [DEBUG] Calling handleUpdateMode, mode =",
+            updateMode
+          );
+          handleUpdateMode(updateMode);
+          const hiddenMode = document.getElementById("updateMode");
+          if (hiddenMode) hiddenMode.value = updateMode || "";
+        })
         .catch((err) => {
-          console.error(err);
+          console.error("❌ [DEBUG] Fetch or JSON parse failed:", err);
           alert("Không thể tải thông tin sản phẩm!");
         });
     })
   );
 
   function populateUpdateModal(product) {
+    console.log("🟣 [DEBUG] populateUpdateModal() start:", product.productId);
     const formatDate = (d) => new Date(d).toISOString().split("T")[0];
     const updateForm = $("#updateProductForm");
     if (updateForm)
@@ -676,14 +737,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const div = document.createElement("div");
       div.className = "input-group mb-2";
       div.innerHTML = `
-        <input type="text" class="form-control" name="authorsUpdate" value="${
-          a.authorName || ""
-        }" required>
-        <button type="button" class="btn btn-outline-danger btn-remove">🗑</button>`;
+      <input type="text" class="form-control" name="authorsUpdate" value="${
+        a.authorName || ""
+      }" required>
+      <button type="button" class="btn btn-outline-danger btn-remove">🗑</button>`;
       authorsContainer.appendChild(div);
     });
 
-    // Categories: uncheck all then check those from product
+    // Categories
     $$('#updateProductModal input[name="CategoryIDs"]').forEach(
       (cb) => (cb.checked = false)
     );
@@ -696,7 +757,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // Images: prepare structure for imageUpdateHandler
+    // Images
     const images = (product.images || []).map((img, idx) => ({
       id: img.imageId,
       url: img.url
@@ -709,8 +770,131 @@ document.addEventListener("DOMContentLoaded", () => {
     if (imageUpdateHandler && imageUpdateHandler.setInitialImages) {
       imageUpdateHandler.setInitialImages(images);
     }
-    // reset file input value to empty (so change event will contain only newly selected files)
     const fi = document.getElementById("productImagesUpdate");
     if (fi) fi.value = "";
   }
+
+  function handleUpdateMode(mode) {
+    console.debug("[DEBUG] handleUpdateMode() mode =", mode);
+
+    const modalSelector = "#updateProductModal";
+    const formControls = Array.from(
+      document.querySelectorAll(
+        `${modalSelector} input, ${modalSelector} textarea, ${modalSelector} select`
+      )
+    );
+    const submitBtn = document.querySelector(
+      "#updateProductForm button[type='submit']"
+    );
+    const fileInput = document.getElementById("productImagesUpdate");
+    const previewContainer = document.getElementById("imagePreviewUpdate");
+    const authorsContainer = document.getElementById("authors-containerUpdate");
+
+    // --- Helper functions ---
+    function setPreviewEnabled(enabled) {
+      if (fileInput) fileInput.disabled = !enabled;
+      if (previewContainer) {
+        previewContainer
+          .querySelectorAll("button, .set-primary")
+          .forEach((b) => (b.disabled = !enabled));
+        previewContainer.classList.toggle("disabled-area", !enabled);
+      }
+    }
+
+    function setAuthorRemoveEnabled(enabled) {
+      if (!authorsContainer) return;
+      authorsContainer
+        .querySelectorAll(".btn-remove")
+        .forEach((b) => (b.disabled = !enabled));
+    }
+
+    // --- Reset form: enable all first ---
+    formControls.forEach((el) => (el.disabled = false));
+    if (submitBtn) submitBtn.disabled = false;
+    setPreviewEnabled(true);
+    setAuthorRemoveEnabled(true);
+
+    // --- Apply mode rules ---
+    if (mode === "FULL") {
+      console.debug("[DEBUG] FULL mode: enable everything");
+      formControls.forEach((el) => (el.disabled = false));
+      setPreviewEnabled(true);
+      setAuthorRemoveEnabled(true);
+      if (submitBtn) submitBtn.disabled = false;
+      showNotice("Bạn có thể chỉnh sửa toàn bộ thông tin sản phẩm.", "success");
+    } else if (mode === "PARTIAL") {
+      console.debug("[DEBUG] PARTIAL mode: limit some fields");
+      formControls.forEach((el) => (el.disabled = true));
+
+      const allowedIds = new Set([
+        "productDescriptionUpdate",
+        "productOriginalPriceUpdate",
+        "productSalePriceUpdate",
+        "productQuantityUpdate",
+        "versionUpdate",
+        "productImagesUpdate",
+        "updateMode",
+      ]);
+
+      formControls.forEach((el) => {
+        if (el.id && allowedIds.has(el.id)) el.disabled = false;
+      });
+
+      setPreviewEnabled(true);
+      setAuthorRemoveEnabled(true);
+      if (submitBtn) submitBtn.disabled = false;
+
+      showNotice(
+        "Sản phẩm đang hoạt động — chỉ được phép chỉnh sửa một số thông tin (bao gồm ảnh).",
+        "warning"
+      );
+    } else {
+      console.debug("[DEBUG] NONE mode: disable everything");
+      formControls.forEach((el) => (el.disabled = true));
+      setPreviewEnabled(false);
+      setAuthorRemoveEnabled(false);
+      if (submitBtn) submitBtn.disabled = true;
+
+      showNotice(
+        "Sản phẩm này đang trong đơn hàng hoặc flash sale — không thể chỉnh sửa.",
+        "danger"
+      );
+    }
+  }
+
+  function showNotice(message, type = "info") {
+    const modalBody = document.querySelector("#updateProductModal .modal-body");
+    if (!modalBody) {
+      console.warn("⚠ Không tìm thấy modal-body để hiển thị thông báo");
+      alert(message);
+      return;
+    }
+
+    // Xóa thông báo cũ (nếu có)
+    const oldNotice = modalBody.querySelector(".modal-notice");
+    if (oldNotice) oldNotice.remove();
+
+    // Màu theo loại thông báo
+    const colorClass =
+      type === "success"
+        ? "alert-success"
+        : type === "warning"
+        ? "alert-warning"
+        : type === "danger"
+        ? "alert-danger"
+        : "alert-info";
+
+    // Tạo alert Bootstrap
+    const notice = document.createElement("div");
+    notice.className = `modal-notice alert ${colorClass}`;
+    notice.textContent = message;
+    notice.style.marginBottom = "1rem";
+
+    // Chèn vào đầu modal-body
+    modalBody.prepend(notice);
+
+    // Tự động ẩn sau 3 giây
+    setTimeout(() => notice.remove(), 5000);
+  }
+  initSubmitButtonHandler();
 });

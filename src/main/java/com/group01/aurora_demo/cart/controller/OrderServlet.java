@@ -106,7 +106,6 @@ public class OrderServlet extends HttpServlet {
             String responseCode = req.getParameter("vnp_ResponseCode");
             String txnRef = req.getParameter("vnp_TxnRef");
             String transactionNo = req.getParameter("vnp_TransactionNo");
-
             try {
                 long orderId = Long.parseLong(txnRef);
                 if ("00".equals(responseCode)) {

@@ -224,6 +224,13 @@
                                                                     Đang tính thời gian...
                                                                 </span>
                                                             </c:if>
+                                                            <c:if test="${orderShop.status == 'RETURNED_REQUESTED'}">
+                                                                <span class="countdown text-danger fw-semibold"
+                                                                    data-type="RETURNED_REQUESTED"
+                                                                    data-created-at="${orderShop.createdAt.time}">
+                                                                    Đang tính thời gian xử lý trả hàng...
+                                                                </span>
+                                                            </c:if>
                                                         </div>
                                                     </div>
 
@@ -288,9 +295,19 @@
                                                                             hủy</span>
                                                                     </c:when>
                                                                     <c:when test="${orderShop.status == 'RETURNED'}">
+                                                                        <span class="badge bg-success px-3 py-2 fs-6">Đã
+                                                                            xác nhận trả hàng</span>
+                                                                    </c:when>
+                                                                    <c:when
+                                                                        test="${orderShop.status == 'RETURNED_REQUESTED'}">
                                                                         <span
-                                                                            class="badge bg-secondary px-3 py-2 fs-6">Hoàn
-                                                                            tiền</span>
+                                                                            class="badge bg-warning px-3 py-2 fs-6">Yêu
+                                                                            cầu trả hàng</span>
+                                                                    </c:when>
+                                                                    <c:when
+                                                                        test="${orderShop.status == 'RETURNED_REJECTED'}">
+                                                                        <span class="badge bg-danger px-3 py-2 fs-6">Trả
+                                                                            hàng tất bại</span>
                                                                     </c:when>
                                                                     <c:otherwise>
                                                                         <span

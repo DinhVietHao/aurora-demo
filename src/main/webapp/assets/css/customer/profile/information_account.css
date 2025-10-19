@@ -78,3 +78,66 @@ footer.footer {
 .nav-tabs .nav-link.active {
   border-color: transparent;
 }
+
+/* Badge countdown animation */
+#emailChangeDaysLeft {
+  display: inline-block;
+  min-width: 45px;
+  text-align: center;
+  font-variant-numeric: tabular-nums; /* Số không nhảy khi đổi */
+}
+
+/* Tooltip styling */
+.tooltip .tooltip-inner {
+  max-width: 250px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Badge hover effect */
+.badge.bg-secondary:hover {
+  background-color: #5a6268 !important;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+/* Lock icon animation */
+.badge .bi-lock-fill {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Badge đỏ cho password lockout */
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge.bg-danger:hover {
+  background-color: #c82333 !important;
+  transform: scale(1.05);
+  transition: all 0.2s ease;
+}
+
+/* Animation cho lock icon password */
+.badge.bg-danger .bi-lock-fill {
+  animation: shake 0.5s ease-in-out;
+  animation-delay: 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+/* Tooltip cho password lockout */
+#pwdTooltipCountdown {
+  font-weight: bold;
+  color: #dc3545;
+}
