@@ -16,6 +16,7 @@ import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.dao.PaymentDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
+import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
@@ -197,6 +198,36 @@ public class OrderServlet extends HttpServlet {
                 out.print(json.toString());
                 break;
 
+            }
+            case "/repayment": {
+                try {
+                    long orderId = Long.parseLong(req.getParameter("orderId"));
+                    Order order = orderDAO.getOrderById(orderId);
+
+                    if (order == null) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán lại.");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        break;
+                    }
+
+                    if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
+                        session.setAttribute("toastType", "warning");
+                        session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        break;
+                    }
+
+                    String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId, order.getFinalAmount());
+                    resp.sendRedirect(paymentUrl);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Không thể khởi tạo lại thanh toán. Vui lòng thử lại sau.");
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                }
+                break;
             }
             default:
                 resp.sendRedirect(req.getContextPath() + "/checkout");

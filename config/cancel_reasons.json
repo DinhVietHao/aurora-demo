@@ -1,0 +1,11 @@
+[
+  { "code": "update_phone_address", "label": "Cập nhật số điện thoại hoặc địa chỉ nhận hàng" },
+  { "code": "ordered_wrong_product", "label": "Đặt nhầm sản phẩm" },
+  { "code": "ordered_wrong_quantity", "label": "Nhập sai số lượng sản phẩm" },
+  { "code": "ordered_duplicate", "label": "Đặt trùng đơn hàng" },
+  { "code": "changed_mind", "label": "Không muốn mua nữa" },
+  { "code": "found_better_price", "label": "Tìm thấy sản phẩm giá rẻ hơn ở nơi khác" },
+  { "code": "choose_other_shop", "label": "Muốn mua ở shop khác" },
+  { "code": "shipping_fee_changed", "label": "Phí vận chuyển thay đổi so với khi đặt" },
+  { "code": "personal_reason", "label": "Lý do cá nhân / không tiện nhận hàng" }
+]

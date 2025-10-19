@@ -78,7 +78,7 @@ public class OrderDAO {
                    SELECT
                     os.OrderID,
                     s.Name AS ShopName,
-                    os.FinalAmount AS ShopTotal,
+                    o.FinalAmount,
                     os.Status AS ShopStatus,
                     p.ProductID,
                     p.Title AS ProductName,
@@ -110,7 +110,7 @@ public class OrderDAO {
                 OrderDTO order = new OrderDTO();
                 order.setOrderId(rs.getLong("OrderID"));
                 order.setShopName(rs.getString("ShopName"));
-                order.setFinalAmount(rs.getDouble("ShopTotal"));
+                order.setFinalAmount(rs.getDouble("FinalAmount"));
                 order.setShopStatus(rs.getString("ShopStatus"));
                 order.setProductName(rs.getString("ProductName"));
                 order.setImageUrl(rs.getString("ImageUrl"));
@@ -630,4 +630,50 @@ public class OrderDAO {
         }
     }
 
+    public Order getOrderById(long orderId) {
+        String sql = """
+                    SELECT
+                        OrderID,
+                        UserID,
+                        AddressID,
+                        VoucherDiscountID,
+                        VoucherShipID,
+                        TotalAmount,
+                        DiscountAmount,
+                        TotalShippingFee,
+                        ShippingDiscount,
+                        FinalAmount,
+                        OrderStatus,
+                        CreatedAt
+                    FROM Orders WHERE OrderID = ?
+                """;
+
+        try (Connection conn = com.group01.aurora_demo.common.config.DataSourceProvider.get().getConnection();) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Order order = new Order();
+                    order.setOrderId(rs.getLong("OrderID"));
+                    order.setUserId(rs.getLong("UserID"));
+                    order.setAddressId(rs.getLong("AddressID"));
+                    order.setVoucherDiscountId(rs.getLong("VoucherDiscountID"));
+                    order.setVoucherShipId(rs.getLong("VoucherShipID"));
+                    order.setTotalAmount(rs.getDouble("TotalAmount"));
+                    order.setDiscountAmount(rs.getDouble("DiscountAmount"));
+                    order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
+                    order.setShippingDiscount(rs.getDouble("ShippingDiscount"));
+                    order.setFinalAmount(rs.getDouble("FinalAmount"));
+                    order.setOrderStatus(rs.getString("OrderStatus"));
+                    order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    return order;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

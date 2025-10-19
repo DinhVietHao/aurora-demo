@@ -213,9 +213,14 @@
                                                                     </c:if>
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
-                                                                        <button class="button-four">
-                                                                            Thanh toán
-                                                                            lại</button>
+                                                                        <form action="/order/repayment" method="post">
+                                                                            <input type="hidden" name="orderId"
+                                                                                value="${entry.value[0].orderId}" />
+                                                                            <button class="button-four">
+                                                                                Thanh toán
+                                                                                lại</button>
+                                                                        </form>
+
                                                                     </c:if>
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'COMPLETED'}">
