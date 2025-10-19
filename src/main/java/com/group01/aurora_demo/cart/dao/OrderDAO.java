@@ -274,7 +274,7 @@ public class OrderDAO {
                 LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
                 LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
-                WHERE os.ShopID = ?
+                WHERE os.ShopID = ? AND os.Status <> 'PENDING_PAYMENT'
                 ORDER BY os.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -351,14 +351,14 @@ public class OrderDAO {
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
                 LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
                 LEFT JOIN Vouchers vc ON os.VoucherID = vc.VoucherID
-                WHERE os.ShopID = ? AND os.Status = ?
+                WHERE os.ShopID = ? AND os.Status LIKE ? AND os.Status <> 'PENDING_PAYMENT'
                 ORDER BY os.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, shopId);
-            ps.setString(2, status);
+            ps.setString(2, status + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
 
@@ -537,14 +537,29 @@ public class OrderDAO {
     }
 
     public Map<String, Integer> getOrderCountsByShopId(Long shopId) throws SQLException {
-        String sql = "SELECT Status, COUNT(*) AS Count FROM OrderShops WHERE ShopID = ? GROUP BY Status";
+        String sql = """
+                    SELECT
+                        CASE
+                            WHEN Status LIKE 'RETURNED%' THEN 'RETURNED_GROUP'
+                            ELSE Status
+                        END AS StatusGroup,
+                        COUNT(*) AS Count
+                    FROM OrderShops
+                    WHERE ShopID = ?
+                    GROUP BY
+                        CASE
+                            WHEN Status LIKE 'RETURNED%' THEN 'RETURNED_GROUP'
+                            ELSE Status
+                        END
+                """;
+
         Map<String, Integer> counts = new HashMap<>();
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                counts.put(rs.getString("Status"), rs.getInt("Count"));
+                counts.put(rs.getString("StatusGroup"), rs.getInt("Count"));
             }
         }
         return counts;
@@ -583,7 +598,12 @@ public class OrderDAO {
 
         String restoreStockSql = """
                     UPDATE p
-                    SET p.Quantity = p.Quantity + oi.Quantity
+                    SET p.Quantity = p.Quantity + oi.Quantity,
+                        p.Status = CASE
+                                       WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
+                                            AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
+                                       ELSE p.Status
+                                   END
                     FROM Products p
                     JOIN OrderItems oi ON p.ProductID = oi.ProductID
                     WHERE oi.OrderShopId = ?
@@ -638,5 +658,163 @@ public class OrderDAO {
         return cancelledCount;
     }
 
+    public boolean updateOrderShopStatusByBR(long orderShopId, String newStatus) {
+        String selectSql = """
+                    SELECT os.VoucherID
+                    FROM OrderShops os
+                    WHERE os.OrderShopId = ?
+                """;
+
+        String updateOrderSql = """
+                    UPDATE OrderShops
+                    SET Status = ?,
+                        UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopId = ?
+                """;
+
+        String restoreStockSql = """
+                    UPDATE p
+                    SET p.Quantity = p.Quantity + oi.Quantity,
+                        p.Status = CASE
+                                       WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
+                                            AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
+                                       ELSE p.Status
+                                   END
+                    FROM Products p
+                    JOIN OrderItems oi ON p.ProductID = oi.ProductID
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement psSelect = conn.prepareStatement(selectSql)) {
+
+            conn.setAutoCommit(false);
+
+            // 🔹 Lấy thông tin voucher (nếu có)
+            psSelect.setLong(1, orderShopId);
+            ResultSet rs = psSelect.executeQuery();
+
+            Long voucherId = null;
+            if (rs.next()) {
+                voucherId = rs.getLong("VoucherID");
+                if (rs.wasNull())
+                    voucherId = null;
+            }
+
+            // 🔹 Cập nhật trạng thái đơn hàng
+            try (PreparedStatement psUpdateOrder = conn.prepareStatement(updateOrderSql)) {
+                psUpdateOrder.setString(1, newStatus);
+                psUpdateOrder.setLong(2, orderShopId);
+                psUpdateOrder.executeUpdate();
+            }
+
+            // 🔹 Hoàn lại số lượng sản phẩm
+            try (PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
+                psRestoreStock.setLong(1, orderShopId);
+                psRestoreStock.executeUpdate();
+            }
+
+            // 🔹 Hoàn lại voucher (nếu có)
+            if (voucherId != null && voucherId > 0) {
+                try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                    psRestoreVoucher.setLong(1, voucherId);
+                    psRestoreVoucher.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int autoApproveReturnRequests() {
+        String selectSql = """
+                    SELECT OrderShopID, VoucherID
+                    FROM OrderShops
+                    WHERE Status = 'RETURNED_REQUESTED'
+                      AND DATEDIFF(DAY, CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
+                """;
+
+        String updateStatusSql = """
+                    UPDATE OrderShops
+                    SET Status = 'RETURNED',
+                        UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopID = ?
+                """;
+
+        String restoreStockSql = """
+                    UPDATE p
+                    SET p.Quantity = p.Quantity + oi.Quantity,
+                        p.Status = CASE
+                                       WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
+                                            AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
+                                       ELSE p.Status
+                                   END
+                    FROM Products p
+                    JOIN OrderItems oi ON p.ProductID = oi.ProductID
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        int autoApprovedCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement psSelect = conn.prepareStatement(selectSql);
+                ResultSet rs = psSelect.executeQuery()) {
+
+            conn.setAutoCommit(false);
+
+            while (rs.next()) {
+                long orderShopId = rs.getLong("OrderShopID");
+                Long voucherId = rs.getLong("VoucherID");
+                if (rs.wasNull())
+                    voucherId = null;
+
+                // ✅ Cập nhật trạng thái
+                try (PreparedStatement psUpdate = conn.prepareStatement(updateStatusSql)) {
+                    psUpdate.setLong(1, orderShopId);
+                    psUpdate.executeUpdate();
+                }
+
+                // ✅ Hoàn lại tồn kho (và phục hồi trạng thái sản phẩm nếu cần)
+                try (PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
+                    psRestoreStock.setLong(1, orderShopId);
+                    psRestoreStock.executeUpdate();
+                }
+
+                // ✅ Hoàn lại voucher (nếu có)
+                if (voucherId != null && voucherId > 0) {
+                    try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                        psRestoreVoucher.setLong(1, voucherId);
+                        psRestoreVoucher.executeUpdate();
+                    }
+                }
+
+                autoApprovedCount++;
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return autoApprovedCount;
+    }
 
 }

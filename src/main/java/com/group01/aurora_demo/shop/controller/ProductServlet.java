@@ -85,7 +85,7 @@ public class ProductServlet extends HttpServlet {
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
         FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
-        BookDetailDAO bookDetailDAO = new BookDetailDAO();
+
         try {
             switch (action) {
                 case "view":
@@ -361,10 +361,6 @@ public class ProductServlet extends HttpServlet {
                         updateMode = "FULL";
                     }
                     Product product = productDAO.getProductById(productId);
-                    System.out.println("--------------------------------------------------------->"
-                            + product.getBookDetail().getPages());
-                    System.out.println("--------------------------------------------------------->"
-                            + product.getBookDetail().getCoverType());
                     if ("FULL".equals(updateMode)) {
                         String title = request.getParameter("Title");
                         String description = request.getParameter("Description");

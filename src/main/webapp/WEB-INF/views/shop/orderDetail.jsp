@@ -68,6 +68,15 @@
                                                     <c:when test="${orderShop.status == 'COMPLETED'}">
                                                         <span class="badge bg-success">Hoàn thành</span>
                                                     </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED_REJECTED'}">
+                                                        <span class="badge bg-danger">Trả hàng thất bại</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED'}">
+                                                        <span class="badge bg-success">Đã xác nhận trả hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED_REQUESTED'}">
+                                                        <span class="badge bg-warning">Yêu cầu trả hàng</span>
+                                                    </c:when>
                                                     <c:when test="${orderShop.status == 'CANCELLED'}">
                                                         <span class="badge bg-danger">Đã hủy</span>
                                                     </c:when>
@@ -89,7 +98,7 @@
                                                     </div>
                                                 </c:if>
                                                 <c:if
-                                                    test="${orderShop.status == 'RETURNED' && not empty orderShop.returnReason}">
+                                                    test="${(orderShop.status == 'RETURNED' || orderShop.status == 'RETURNED_REJECTED' || orderShop.status == 'RETURNED_REQUESTED') && not empty orderShop.returnReason}">
                                                     <div class="mt-2 text-danger fw-semibold">
                                                         <i class="bi bi-arrow-counterclockwise"></i>
                                                         Lý do hoàn tiền: ${orderShop.returnReason}
@@ -149,6 +158,37 @@
                                                                 data-form="status-form">
                                                                 <i class="bi bi-check2-circle"></i> Đơn hàng đã đến tay
                                                                 người nhận
+                                                            </button>
+                                                        </form>
+                                                    </c:when>
+
+                                                    <c:when test="${orderShop.status == 'RETURNED_REQUESTED'}">
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus"
+                                                                value="RETURNED_REJECTED" />
+                                                            <button type="button"
+                                                                class="btn btn-danger btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Bạn có chắc chắn muốn từ chối yêu cầu trả hàng của khách không?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-x-circle"></i> Từ chối trả hàng
+                                                            </button>
+                                                        </form>
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus" value="RETURNED" />
+                                                            <button type="button"
+                                                                class="btn btn-warning btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Xác nhận đồng ý cho khách trả hàng?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-arrow-counterclockwise"></i> Xác nhận
+                                                                trả hàng
                                                             </button>
                                                         </form>
                                                     </c:when>

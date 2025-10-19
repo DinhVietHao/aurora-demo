@@ -1,34 +1,35 @@
 // ==========================
 // Order Management Script
 // ==========================
+
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("✅ Order Management script loaded");
+
   initializeOrderManagement();
   initializeSidebar();
+  initializeCountdowns();
 });
 
 // ==========================
-// Hover và nút hành động
+// Hover + Nút hành động
 // ==========================
 function initializeOrderManagement() {
-  console.log("Order Management initialized");
+  console.log("🔹 Initializing Order Management...");
 
   // Hover nhẹ khi rê chuột vào từng đơn
-  const orderItems = document.querySelectorAll(".order-item");
-  orderItems.forEach((item) => {
-    item.addEventListener("mouseenter", function () {
-      this.style.transform = "translateY(-2px)";
+  document.querySelectorAll(".order-item").forEach((item) => {
+    item.addEventListener("mouseenter", () => {
+      item.style.transform = "translateY(-2px)";
     });
-
-    item.addEventListener("mouseleave", function () {
-      this.style.transform = "translateY(0)";
+    item.addEventListener("mouseleave", () => {
+      item.style.transform = "translateY(0)";
     });
   });
 
   // Nút "Xem chi tiết"
-  const viewButtons = document.querySelectorAll(".btn-view-order");
-  viewButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      const orderId = this.dataset.orderid;
+  document.querySelectorAll(".btn-view-order").forEach((button) => {
+    button.addEventListener("click", () => {
+      const orderId = button.dataset.orderid;
       if (orderId) {
         window.location.href = `/shop/order-detail?id=${orderId}`;
       }
@@ -40,37 +41,44 @@ function initializeOrderManagement() {
 // Sidebar Toggle
 // ==========================
 function initializeSidebar() {
+  console.log("🔹 Initializing Sidebar...");
+
   const sidebarToggle = document.getElementById("sidebarToggle");
   const layoutSidenav = document.getElementById("layoutSidenav");
 
-  if (sidebarToggle && layoutSidenav) {
-    sidebarToggle.addEventListener("click", function () {
-      layoutSidenav.classList.toggle("sb-sidenav-toggled");
+  if (!sidebarToggle || !layoutSidenav) return;
 
-      // Lưu trạng thái sidebar
-      if (layoutSidenav.classList.contains("sb-sidenav-toggled")) {
-        localStorage.setItem("sb|sidebar-toggle", "true");
-      } else {
-        localStorage.removeItem("sb|sidebar-toggle");
-      }
-    });
+  sidebarToggle.addEventListener("click", function () {
+    layoutSidenav.classList.toggle("sb-sidenav-toggled");
 
-    // Khôi phục trạng thái sidebar khi reload
-    if (localStorage.getItem("sb|sidebar-toggle") === "true") {
-      layoutSidenav.classList.add("sb-sidenav-toggled");
+    // Lưu trạng thái sidebar
+    if (layoutSidenav.classList.contains("sb-sidenav-toggled")) {
+      localStorage.setItem("sb|sidebar-toggle", "true");
+    } else {
+      localStorage.removeItem("sb|sidebar-toggle");
     }
+  });
+
+  // Khôi phục trạng thái sidebar khi reload
+  if (localStorage.getItem("sb|sidebar-toggle") === "true") {
+    layoutSidenav.classList.add("sb-sidenav-toggled");
   }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const countdowns = document.querySelectorAll(".countdown");
+// ==========================
+// Countdown cho đơn hàng chờ
+// ==========================
+function initializeCountdowns() {
+  console.log("🔹 Initializing Countdowns...");
 
-  countdowns.forEach((el) => {
-    const createdAtMillis = parseInt(el.dataset.createdAt);
-    const expireTime = createdAtMillis + 3 * 24 * 60 * 60 * 1000;
+  document.querySelectorAll(".countdown").forEach((el) => {
+    const createdAtMillis = parseInt(el.dataset.createdAt, 10);
+    if (isNaN(createdAtMillis)) return;
+
+    const expireTime = createdAtMillis + 3 * 24 * 60 * 60 * 1000; 
 
     function updateCountdown() {
-      const now = new Date().getTime();
+      const now = Date.now();
       const distance = expireTime - now;
 
       if (distance <= 0) {
@@ -92,4 +100,4 @@ document.addEventListener("DOMContentLoaded", function () {
     updateCountdown();
     setInterval(updateCountdown, 1000);
   });
-});
+}
