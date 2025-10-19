@@ -1,26 +1,23 @@
 package com.group01.aurora_demo.profile.controller;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Timestamp;
-
+import java.io.PrintWriter;
 import org.json.JSONObject;
-
-import com.group01.aurora_demo.auth.dao.UserDAO;
+import java.io.IOException;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
+import jakarta.servlet.http.HttpServletRequest;
+import com.group01.aurora_demo.auth.dao.UserDAO;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.annotation.MultipartConfig;
 import com.group01.aurora_demo.catalog.dao.ImageDAO;
 import com.group01.aurora_demo.common.service.EmailService;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.Part;
 
 @WebServlet("/profile")
 @MultipartConfig
@@ -39,14 +36,15 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // Đọc cooldown từ cookie
+        // ===== Email change cooldown =====
+        String cookieName = "email_change_lock_" + user.getId();
         boolean emailChangeLocked = false;
         long remainingMs = 0;
 
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("email_change_lock".equals(cookie.getName())) {
+                if (cookieName.equals(cookie.getName())) {
                     try {
                         long lockUntil = Long.parseLong(cookie.getValue());
                         long now = System.currentTimeMillis();
@@ -71,9 +69,42 @@ public class ProfileServlet extends HttpServlet {
             }
         }
 
+        // ===== Password change lockout =====
+        String pwdCookiePrefix = "pwd_lock_" + user.getId();
+        boolean passwordChangeLocked = false;
+        long passwordRemainingMs = 0;
+
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ((pwdCookiePrefix + "_until").equals(cookie.getName())) {
+                    try {
+                        long lockUntil = Long.parseLong(cookie.getValue());
+                        long now = System.currentTimeMillis();
+
+                        if (now < lockUntil) {
+                            passwordChangeLocked = true;
+                            passwordRemainingMs = lockUntil - now;
+                        } else {
+                            // Hết hạn → Xóa cookie lockUntil
+                            cookie.setMaxAge(0);
+                            cookie.setPath("/");
+                            response.addCookie(cookie);
+                        }
+                    } catch (NumberFormatException e) {
+                        cookie.setMaxAge(0);
+                        cookie.setPath("/");
+                        response.addCookie(cookie);
+                    }
+                    break;
+                }
+            }
+        }
+
         request.setAttribute("user", user);
         request.setAttribute("emailChangeRemainingMs", remainingMs);
         request.setAttribute("emailChangeLocked", emailChangeLocked);
+        request.setAttribute("passwordChangeLocked", passwordChangeLocked);
+        request.setAttribute("passwordChangeRemainingMs", passwordRemainingMs);
         request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
     }
 
@@ -176,21 +207,50 @@ public class ProfileServlet extends HttpServlet {
     private void handleChangePassword(HttpServletRequest request, HttpServletResponse response, HttpSession session,
             PrintWriter out, JSONObject json, User user) throws IOException {
         try {
-            Integer wrongCount = (Integer) session.getAttribute("changePwdWrongCount");
-            Long lockUntil = (Long) session.getAttribute("changePwdLockUntil");
+            String cookiePrefix = "pwd_lock_" + user.getId();
+            Integer wrongCount = null;
+            Long lockUntil = null;
+            Integer lockLevel = null;
+
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ((cookiePrefix + "_count").equals(cookie.getName())) {
+                        wrongCount = Integer.parseInt(cookie.getValue());
+                    } else if ((cookiePrefix + "_until").equals(cookie.getName())) {
+                        lockUntil = Long.parseLong(cookie.getValue());
+                    } else if ((cookiePrefix + "_level").equals(cookie.getName())) {
+                        lockLevel = Integer.parseInt(cookie.getValue());
+                    }
+                }
+            }
+
             long now = System.currentTimeMillis();
 
+            // Kiểm tra đang bị khóa
             if (lockUntil != null && now < lockUntil) {
-                long minutes = (lockUntil - now) / 60000 + 1;
+                long secondsLeft = (lockUntil - now) / 1000;
+                long minutesLeft = secondsLeft / 60 + 1;
+                long hoursLeft = minutesLeft / 60;
+
+                String timeMsg;
+                if (hoursLeft > 0) {
+                    timeMsg = hoursLeft + " giờ";
+                } else {
+                    timeMsg = minutesLeft + " phút";
+                }
+
                 json.put("success", false);
-                json.put("message",
-                        "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + minutes + " phút.");
+                json.put("message", "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau " + timeMsg + ".");
+                json.put("locked", true);
                 out.print(json.toString());
                 return;
             }
 
             if (wrongCount == null)
                 wrongCount = 0;
+            if (lockLevel == null)
+                lockLevel = 0;
 
             String currentPassword = request.getParameter("currentPassword");
             String newPassword = request.getParameter("newPassword");
@@ -205,43 +265,109 @@ public class ProfileServlet extends HttpServlet {
 
             if (newPassword.length() < 8) {
                 json.put("success", false);
-                json.put("message", "Mật khẩu mới chưa đủ mạnh.");
+                json.put("message", "Mật khẩu mới phải có ít nhất 8 ký tự.");
                 out.print(json.toString());
                 return;
             }
 
             if (!userDAO.checkPassword(user.getId(), currentPassword)) {
                 wrongCount++;
-                session.setAttribute("changePwdWrongCount", wrongCount);
 
-                if (wrongCount >= 12) {
-                    session.setAttribute("changePwdLockUntil", now + 60 * 60 * 1000); // 1h
-                    json.put("message", "Bạn nhập sai quá nhiều lần. Đã khóa chức năng đổi mật khẩu 1 giờ.");
-                } else if (wrongCount >= 10) {
-                    session.setAttribute("changePwdLockUntil", now + 30 * 60 * 1000); // 30p
-                    json.put("message", "Bạn nhập sai quá nhiều lần. Đã khóa chức năng đổi mật khẩu 30 phút.");
-                } else if (wrongCount >= 8) {
-                    session.setAttribute("changePwdLockUntil", now + 15 * 60 * 1000); // 15p
-                    json.put("message", "Bạn nhập sai quá nhiều lần. Đã khóa chức năng đổi mật khẩu 15 phút.");
-                } else if (wrongCount >= 5) {
-                    session.setAttribute("changePwdLockUntil", now + 5 * 60 * 1000); // 5p
-                    json.put("message", "Bạn nhập sai quá nhiều lần. Đã khóa chức năng đổi mật khẩu 5 phút.");
+                boolean shouldLock = false;
+                int lockDurationMinutes = 0;
+                String lockMessage = "";
+
+                // Logic khóa theo level (giữ nguyên)
+                if (lockLevel == 0) {
+                    if (wrongCount >= 5) {
+                        shouldLock = true;
+                        lockDurationMinutes = 5;
+                        lockLevel = 1;
+                        lockMessage = "⛔ Bạn đã nhập sai " + wrongCount
+                                + " lần. Đã khóa chức năng đổi mật khẩu 5 phút.";
+                    } else {
+                        int attemptsLeft = 5 - wrongCount;
+                        json.put("message", "❌ Mật khẩu hiện tại không đúng. " +
+                                "Còn " + attemptsLeft + " lần thử trước khi bị khóa 5 phút.");
+                    }
+                } else if (lockLevel == 1) {
+                    shouldLock = true;
+                    lockDurationMinutes = 15;
+                    lockLevel = 2;
+                    lockMessage = "⛔ Bạn đã nhập sai sau khi mở khóa. Khóa chức năng đổi mật khẩu 15 phút.";
+                } else if (lockLevel == 2) {
+                    shouldLock = true;
+                    lockDurationMinutes = 30;
+                    lockLevel = 3;
+                    lockMessage = "⛔ Bạn đã nhập sai sau khi mở khóa. Khóa chức năng đổi mật khẩu 30 phút.";
+                } else if (lockLevel == 3) {
+                    shouldLock = true;
+                    lockDurationMinutes = 60;
+                    lockLevel = 4;
+                    lockMessage = "⛔ Bạn đã nhập sai sau khi mở khóa. Khóa chức năng đổi mật khẩu 1 giờ.";
                 } else {
-                    json.put("message", "Mật khẩu hiện tại không đúng.");
+                    shouldLock = true;
+                    lockDurationMinutes = 60;
+                    lockMessage = "⛔ Bạn đã nhập sai sau khi mở khóa. Khóa chức năng đổi mật khẩu 1 giờ.";
                 }
+
+                // LƯU VÀO COOKIE
+                if (shouldLock) {
+                    long lockDurationMs = lockDurationMinutes * 60 * 1000L;
+                    lockUntil = now + lockDurationMs;
+
+                    // Cookie lockUntil
+                    Cookie cookieLockUntil = new Cookie(cookiePrefix + "_until", String.valueOf(lockUntil));
+                    cookieLockUntil.setMaxAge(lockDurationMinutes * 60);
+                    cookieLockUntil.setPath("/");
+                    cookieLockUntil.setHttpOnly(true);
+                    response.addCookie(cookieLockUntil);
+
+                    // Cookie lockLevel
+                    Cookie cookieLockLevel = new Cookie(cookiePrefix + "_level", String.valueOf(lockLevel));
+                    cookieLockLevel.setMaxAge(24 * 60 * 60); // 24h
+                    cookieLockLevel.setPath("/");
+                    cookieLockLevel.setHttpOnly(true);
+                    response.addCookie(cookieLockLevel);
+
+                    json.put("message", lockMessage);
+                    json.put("locked", true);
+                }
+
+                // Cookie wrongCount
+                Cookie cookieWrongCount = new Cookie(cookiePrefix + "_count", String.valueOf(wrongCount));
+                cookieWrongCount.setMaxAge(24 * 60 * 60); // 24h
+                cookieWrongCount.setPath("/");
+                cookieWrongCount.setHttpOnly(true);
+                response.addCookie(cookieWrongCount);
+
                 json.put("success", false);
+                json.put("wrongCount", wrongCount);
+                json.put("lockLevel", lockLevel);
                 out.print(json.toString());
                 return;
             }
 
-            // Nếu đúng mật khẩu cũ, reset số lần sai và thời gian khóa
-            session.removeAttribute("changePwdWrongCount");
-            session.removeAttribute("changePwdLockUntil");
+            // NHẬP ĐÚNG → XÓA TẤT CẢ COOKIE
+            Cookie cookieWrongCount = new Cookie(cookiePrefix + "_count", "");
+            cookieWrongCount.setMaxAge(0);
+            cookieWrongCount.setPath("/");
+            response.addCookie(cookieWrongCount);
+
+            Cookie cookieLockUntil = new Cookie(cookiePrefix + "_until", "");
+            cookieLockUntil.setMaxAge(0);
+            cookieLockUntil.setPath("/");
+            response.addCookie(cookieLockUntil);
+
+            Cookie cookieLockLevel = new Cookie(cookiePrefix + "_level", "");
+            cookieLockLevel.setMaxAge(0);
+            cookieLockLevel.setPath("/");
+            response.addCookie(cookieLockLevel);
 
             boolean result = userDAO.updatePassword(user.getId(), newPassword);
             if (result) {
                 json.put("success", true);
-                json.put("message", "Đổi mật khẩu thành công.");
+                json.put("message", "✅ Đổi mật khẩu thành công.");
             } else {
                 json.put("success", false);
                 json.put("message", "Đổi mật khẩu thất bại.");
@@ -249,6 +375,10 @@ public class ProfileServlet extends HttpServlet {
             out.print(json.toString());
         } catch (Exception e) {
             System.out.println("[ERROR] ProfileServlet#handleChangePassword: " + e.getMessage());
+            e.printStackTrace();
+            json.put("success", false);
+            json.put("message", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            out.print(json.toString());
         }
     }
 
@@ -339,7 +469,7 @@ public class ProfileServlet extends HttpServlet {
                     long sevenDaysMs = 7L * 24 * 60 * 60 * 1000;
                     long lockUntil = now + sevenDaysMs;
 
-                    Cookie lockCookie = new Cookie("email_change_lock", String.valueOf(lockUntil));
+                    Cookie lockCookie = new Cookie("email_change_lock_" + user.getId(), String.valueOf(lockUntil));
                     lockCookie.setMaxAge(7 * 24 * 60 * 60);
                     lockCookie.setPath("/");
                     lockCookie.setHttpOnly(true);
@@ -347,7 +477,7 @@ public class ProfileServlet extends HttpServlet {
 
                     // Xóa session và cookie remember
                     if (session != null) {
-                        session.invalidate();
+                        session.invalidate(); // Cần xem lại chỗ này!
                     }
 
                     Cookie cookie = new Cookie("remember_account", "");

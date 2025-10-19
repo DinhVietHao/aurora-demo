@@ -9,19 +9,19 @@ document
     const errorDiv = document.getElementById("changePasswordError");
     errorDiv.classList.add("d-none");
     errorDiv.textContent = "";
-    // Kiểm tra mật khẩu mới và xác nhận
+
     if (newPassword.length < 8) {
       errorDiv.textContent = "Mật khẩu mới phải từ 8 ký tự trở lên.";
       errorDiv.classList.remove("d-none");
       return;
     }
+
     if (newPassword !== confirmNewPassword) {
       errorDiv.textContent = "Xác nhận mật khẩu mới không khớp.";
       errorDiv.classList.remove("d-none");
       return;
     }
-    // Có thể kiểm tra thêm: có số, ký tự đặc biệt, ...
-    // Gửi AJAX
+
     fetch("/profile", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -35,7 +35,6 @@ document
       .then((data) => {
         if (data.success) {
           document.getElementById("formChangePassword").reset();
-
           var modalEl = document.getElementById("changePasswordModal");
           var modalInstance = bootstrap.Modal.getInstance(modalEl);
           if (modalInstance) {
@@ -51,6 +50,18 @@ document
         } else {
           errorDiv.textContent = data.message;
           errorDiv.classList.remove("d-none");
+
+          // Nếu bị khóa → Đóng modal và reload trang
+          if (data.locked) {
+            setTimeout(() => {
+              var modalEl = document.getElementById("changePasswordModal");
+              var modalInstance = bootstrap.Modal.getInstance(modalEl);
+              if (modalInstance) {
+                modalInstance.hide();
+              }
+              location.reload();
+            }, 2000);
+          }
         }
       });
   });
@@ -558,6 +569,102 @@ document.addEventListener("DOMContentLoaded", function () {
       badge.addEventListener("show.bs.tooltip", function () {
         setTimeout(() => {
           const tooltipCountdown = document.getElementById("tooltipCountdown");
+          if (tooltipCountdown) {
+            tooltipCountdown.textContent = formatFullTime(remainingMs);
+          }
+        }, 50);
+      });
+    }
+  }
+});
+
+// ======== Đếm ngược thời gian khóa đổi mật khẩu =========
+document.addEventListener("DOMContentLoaded", function () {
+  const pwdCountdownEl = document.getElementById("passwordChangeLockLeft");
+
+  if (pwdCountdownEl && pwdCountdownEl.dataset.unlockTime) {
+    let remainingMs = parseInt(pwdCountdownEl.dataset.unlockTime, 10);
+
+    // Khởi tạo tooltip
+    const badge = pwdCountdownEl.closest(".badge");
+    let tooltip = null;
+
+    if (badge && badge.hasAttribute("data-bs-toggle")) {
+      tooltip = new bootstrap.Tooltip(badge, {
+        html: true,
+        delay: { show: 200, hide: 100 },
+      });
+    }
+
+    // Hàm format thời gian ngắn gọn
+    function formatTime(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+
+      if (hours > 0) {
+        return `${hours}giờ ${minutes}phút`;
+      } else if (minutes > 0) {
+        return `${minutes}phút ${secs}giây`;
+      } else {
+        return `${secs}giây`;
+      }
+    }
+
+    // Hàm format đầy đủ cho tooltip
+    function formatFullTime(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+
+      let result = [];
+      if (hours > 0) result.push(`${hours} giờ`);
+      if (minutes > 0) result.push(`${minutes} phút`);
+      if (secs > 0 || result.length === 0) result.push(`${secs}s`);
+
+      return result.join(" ");
+    }
+
+    // Cập nhật hiển thị
+    function updateDisplay() {
+      if (remainingMs <= 0) {
+        clearInterval(timer);
+        pwdCountdownEl.textContent = "0s";
+
+        // Reload trang để bỏ khóa
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+        return;
+      }
+
+      // Cập nhật badge
+      pwdCountdownEl.textContent = formatTime(remainingMs);
+
+      // Cập nhật tooltip
+      const tooltipCountdown = document.getElementById("pwdTooltipCountdown");
+      if (tooltipCountdown) {
+        tooltipCountdown.textContent = formatFullTime(remainingMs);
+      }
+
+      remainingMs -= 1000;
+    }
+
+    // Cập nhật ngay lần đầu
+    updateDisplay();
+
+    // Cập nhật mỗi giây
+    const timer = setInterval(updateDisplay, 1000);
+
+    // Cập nhật tooltip khi hover
+    if (badge) {
+      badge.addEventListener("show.bs.tooltip", function () {
+        setTimeout(() => {
+          const tooltipCountdown = document.getElementById(
+            "pwdTooltipCountdown"
+          );
           if (tooltipCountdown) {
             tooltipCountdown.textContent = formatFullTime(remainingMs);
           }

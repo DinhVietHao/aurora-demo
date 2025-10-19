@@ -129,9 +129,28 @@
                                                             <label class="col-sm-3 col-form-label">Mật khẩu:</label>
                                                             <div class="col-sm-9 d-flex align-items-center">
                                                                 <span class="me-2 text-truncate">**********</span>
-                                                                <a href="#" class="text-primary change-password-link"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#changePasswordModal">Thay Đổi</a>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <c:if test="${passwordChangeLocked}">
+                                                                        <span class="text-muted"
+                                                                            style="cursor: not-allowed;">Thay
+                                                                            Đổi</span>
+                                                                        <span class="badge bg-danger"
+                                                                            style="font-size: 0.7rem; padding: 0.25rem 0.5rem; min-width: 70px;"
+                                                                            data-bs-toggle="tooltip" data-bs-html="true"
+                                                                            title="<div class='text-center'>Bị khóa do nhập sai nhiều lần<br>Thời gian còn lại:<br><strong id='pwdTooltipCountdown'></strong></div>">
+                                                                            <i class="bi bi-lock-fill me-1"></i>
+                                                                            <span id="passwordChangeLockLeft"
+                                                                                data-unlock-time="${passwordChangeRemainingMs}"></span>
+                                                                        </span>
+                                                                    </c:if>
+                                                                    <c:if test="${!passwordChangeLocked}">
+                                                                        <a href="#"
+                                                                            class="text-primary change-password-link"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#changePasswordModal">Thay
+                                                                            Đổi</a>
+                                                                    </c:if>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </c:if>
