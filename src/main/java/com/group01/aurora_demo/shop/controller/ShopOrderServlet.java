@@ -5,6 +5,7 @@ import java.util.*;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderDAO;
+import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
@@ -18,6 +19,7 @@ public class ShopOrderServlet extends HttpServlet {
 
     private final OrderDAO orderDAO = new OrderDAO();
     private final ShopDAO shopDAO = new ShopDAO();
+    private final OrderShopDAO orderShopDAO = new OrderShopDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -173,7 +175,7 @@ public class ShopOrderServlet extends HttpServlet {
                     if ("RETURNED".equals(newStatus)) {
                         updated = orderDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
                     } else {
-                        updated = orderDAO.updateOrderShopStatus(orderShopId, newStatus);
+                        updated = orderShopDAO.updateOrderShopStatus(orderShopId, newStatus);
                     }
 
                     if (updated) {

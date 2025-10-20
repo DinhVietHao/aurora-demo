@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="./assets/css/common/globals.css?v=1.0.1'">
-                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css">
+                <link rel="stylesheet" href="./assets/css/customer/cart/cart.css?v=1.0.1">
             </head>
 
             <body>
@@ -58,7 +58,7 @@
                                             </div>
                                             <c:forEach var="cartItem" items="${shopCart.items}">
                                                 <c:set var="status" value="${cartItem.product.status}" />
-                                                <div class="row cart-body__item  ${status == 'OUT_OF_STOCK' || status == 'INACTIVE' ? 'disabled-item opacity-50' : ''}"
+                                                <div class="row cart-body__item  ${status == 'OUT_OF_STOCK' || status == 'INACTIVE' ? 'disabled-item' : ''}"
                                                     id="cartItemId${cartItem.cartItemId}"
                                                     data-cartitemid="${cartItem.cartItemId}"
                                                     data-userid="${cartItem.userId}">

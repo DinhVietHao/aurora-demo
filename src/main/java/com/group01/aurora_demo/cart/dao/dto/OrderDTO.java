@@ -7,19 +7,27 @@ import com.group01.aurora_demo.catalog.model.Category;
 
 public class OrderDTO {
     private long orderId;
-    private long shopId;
-    private String shopName;
+    private long orderShopId;
     private long productId;
+    private String shopName;
     private String productName;
     private String imageUrl;
     private int quantity;
     private Double originalPrice;
     private Double salePrice;
-    private double subtotal;
     private double finalAmount;
     private String shopStatus;
-    private String orderStatus;
-    private Date orderDate;
+    private boolean canReturn;
+    private Date updateAt;
+
+    public Date getUpdateAt() {
+        return updateAt;
+    }
+
+    public void setUpdateAt(Date updateAt) {
+        this.updateAt = updateAt;
+    }
+
     List<Category> categories;
 
     public long getOrderId() {
@@ -30,28 +38,12 @@ public class OrderDTO {
         this.orderId = orderId;
     }
 
-    public long getShopId() {
-        return shopId;
-    }
-
-    public void setShopId(long shopId) {
-        this.shopId = shopId;
-    }
-
     public String getShopName() {
         return shopName;
     }
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
-    }
-
-    public long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(long productId) {
-        this.productId = productId;
     }
 
     public String getProductName() {
@@ -94,14 +86,6 @@ public class OrderDTO {
         this.salePrice = salePrice;
     }
 
-    public double getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
-    }
-
     public double getFinalAmount() {
         return finalAmount;
     }
@@ -118,28 +102,64 @@ public class OrderDTO {
         this.shopStatus = shopStatus;
     }
 
-    public String getOrderStatus() {
-        return orderStatus;
-    }
-
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
-    public Date getOrderDate() {
-        return orderDate;
-    }
-
-    public void setOrderDate(Date orderDate) {
-        this.orderDate = orderDate;
-    }
-
     public List<Category> getCategories() {
         return categories;
     }
 
     public void setCategories(List<Category> categories) {
         this.categories = categories;
+    }
+
+    public long getOrderShopId() {
+        return orderShopId;
+    }
+
+    public void setOrderShopId(long orderShopId) {
+        this.orderShopId = orderShopId;
+    }
+
+    public String getVietnameseStatus() {
+        switch (shopStatus) {
+            case "PENDING":
+                return "Chờ xác nhận";
+            case "PENDING_PAYMENT":
+                return "Chờ thanh toán";
+            case "WAITING_SHIP":
+                return "Chờ giao hàng";
+            case "SHIPPING":
+                return "Đang vận chuyển";
+            case "CONFIRM":
+                return "Đang giao hàng";
+            case "COMPLETED":
+                return "Hoàn thành";
+            case "CANCELLED":
+                return "Đã hủy";
+            case "RETURN_REQUESTED":
+                return "Yêu cầu trả hàng";
+            case "RETURNED":
+                return "Hoàn thành trả hàng";
+            case "RETURN_REJECTED":
+                return "Từ chối trả hàng";
+
+            default:
+                return "Không xác định";
+        }
+    }
+
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public boolean isCanReturn() {
+        return canReturn;
+    }
+
+    public void setCanReturn(boolean canReturn) {
+        this.canReturn = canReturn;
     }
 
 }

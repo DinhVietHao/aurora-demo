@@ -230,38 +230,6 @@
                                             </div>
                                         </div>
                                     </c:forEach>
-                                    <div class="row cart-footer">
-                                        <div class="col-12">
-                                            <h6 class="cart-footer-title">Chọn hình thức thanh toán</h6>
-                                        </div>
-
-                                        <div class="row align-items-center mb-3">
-                                            <div class="col-1">
-                                                <input type="radio" name="payment" id="cash">
-                                            </div>
-                                            <div class="col-1">
-                                                <img src="./assets/images/payment/cash.png" alt="Cash" width="32">
-                                            </div>
-                                            <div class="col">
-                                                <label for="cash" class="mb-0">Thanh toán tiền mặt</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center">
-                                            <div class="col-1">
-                                                <input type="radio" name="payment" id="vnpay">
-                                            </div>
-                                            <div class="col-1">
-                                                <img src="./assets/images/payment/vnpay.png" alt="VNPAY" width="32">
-                                            </div>
-                                            <div class="col">
-                                                <label for="vnpay" class="mb-0">
-                                                    VNPAY <br>
-                                                    <small class="text-muted">Quét Mã QR từ ứng dụng ngân hàng</small>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- RIGHT: địa chỉ + tổng tiền -->
@@ -749,20 +717,6 @@
                     </div>
                 </div>
                 <!--End Modal Update Address -->
-
-                <!-- Modal Error Payment -->
-                <div class="modal fade" id="paymentErrorModal" tabindex="-1" aria-labelledby="paymentErrorLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content text-center p-3">
-                            <div class="modal-body">
-                                <p class="mb-3">Vui lòng chọn hình thức thanh toán</p>
-                                <button type="button" class="button-four" data-bs-dismiss="modal">Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--End Modal Error Payment -->
 
 
                 <!-- Footer & scripts chung -->

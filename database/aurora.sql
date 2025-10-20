@@ -318,9 +318,12 @@ CREATE TABLE Payments
     OrderID BIGINT NOT NULL UNIQUE,
     Amount DECIMAL(12,2) NOT NULL,
     TransactionRef NVARCHAR(100) NOT NULL,
+    Status NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_Payments_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
 );
+
+
 
 -- Bảng lưu số dư của admin/shop
 CREATE TABLE AccountBalances
@@ -503,3 +506,4 @@ VALUES
     (N'Nghệ thuật', N'VAT10'),
     (N'Tôn giáo', N'VAT5'),
     (N'Trinh Thám', N'VAT5');
+
