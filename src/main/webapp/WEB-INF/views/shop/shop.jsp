@@ -21,6 +21,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css" />
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shopInfo.css?v=1.0.2" />
                 </head>
 
                 <body class="sb-nav-fixed">

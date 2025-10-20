@@ -1392,7 +1392,7 @@ public class ProductDAO {
                     FROM OrderItems oi
                     JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
                     WHERE oi.ProductID = ?
-                      AND os.[Status] IN ('PENDING', 'SHIPPING', 'WAITING_SHIP', 'CONFIRM', 'PENDING_PAYMENT')
+                      AND os.[Status] IN ('PENDING', 'SHIPPING', 'WAITING_SHIP', 'CONFIRM', 'PENDING_PAYMENT', 'RETURNED_REQUESTED')
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -1400,6 +1400,20 @@ public class ProductDAO {
             ps.setLong(1, productId);
             ResultSet rs = ps.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    public boolean updateProductStatus(long productId, String newStatus) throws SQLException {
+        String sql = "UPDATE Products SET Status = ? WHERE ProductID = ?";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, newStatus);
+            ps.setLong(2, productId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 

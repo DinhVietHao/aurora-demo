@@ -82,6 +82,18 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("successMessage",
                     "Thay đổi sản phẩm thành công.");
         }
+        if ("change_status_success".equals(message)) {
+            request.setAttribute("successMessage",
+                    "Chuyển trạng thái ngừng kinh doanh sản phẩm thành công.");
+        }
+        if ("change_status_failed".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Chuyển trạng thái ngừng kinh doanh sản phẩm thất bại.");
+        }
+        if ("change_status_error".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Không thể chuyển trạng thái ngừng bán, vì sản phẩm đang nằm trong flash sale hoặc đang trong đơn hàng");
+        }
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
         FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
@@ -128,10 +140,11 @@ public class ProductServlet extends HttpServlet {
                         boolean isInFlashSale = flashSaleDAO.isProductInCurrentFlashSale(productId,
                                 LocalDateTime.now());
 
-                        if ("PENDING".equalsIgnoreCase(product.getStatus())) {
+                        if ("PENDING".equalsIgnoreCase(product.getStatus())
+                                || "INACTIVE".equalsIgnoreCase(product.getStatus())) {
                             updateMode = "FULL";
                         } else if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
-                            if (!isInOrder && !isInFlashSale) {
+                            if (!isInFlashSale) {
                                 updateMode = "PARTIAL";
                             } else {
                                 updateMode = "NONE";
@@ -217,6 +230,7 @@ public class ProductServlet extends HttpServlet {
         AuthorDAO authorDAO = new AuthorDAO();
         CategoryDAO categoryDAO = new CategoryDAO();
         BookDetailDAO bookDetailDAO = new BookDetailDAO();
+        FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
         switch (action) {
             case "create":
 
@@ -349,6 +363,49 @@ public class ProductServlet extends HttpServlet {
                 } catch (Exception e) {
                     e.printStackTrace();
                     request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình xóa sản phẩm.");
+                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                }
+                break;
+            case "toggleStatus":
+                try {
+                    long productId = Long.parseLong(request.getParameter("productId"));
+                    String newStatus = request.getParameter("newStatus");
+                    if (newStatus.equalsIgnoreCase("INACTIVE")) {
+                        boolean isInOrder = productDAO.existsProductInActiveOrders(productId);
+                        boolean isInFlashSale = flashSaleDAO.isProductInCurrentFlashSale(productId,
+                                LocalDateTime.now());
+                        if (!isInFlashSale && !isInOrder) {
+                            boolean updateStatus = productDAO.updateProductStatus(productId, newStatus);
+                            if (updateStatus) {
+                                response.sendRedirect(
+                                        request.getContextPath()
+                                                + "/shop/product?action=view&message=change_status_success");
+                            } else {
+                                response.sendRedirect(
+                                        request.getContextPath()
+                                                + "/shop/product?action=view&error=change_status_failed");
+                            }
+                        } else {
+                            response.sendRedirect(
+                                    request.getContextPath()
+                                            + "/shop/product?action=view&error=change_status_error");
+                        }
+                    } else if ("PENDING".equalsIgnoreCase(newStatus)) {
+                        boolean updateStatus = productDAO.updateProductStatus(productId, newStatus);
+                        if (updateStatus) {
+                            response.sendRedirect(
+                                    request.getContextPath()
+                                            + "/shop/product?action=view&message=change_status_success");
+                        } else {
+                            response.sendRedirect(
+                                    request.getContextPath()
+                                            + "/shop/product?action=view&error=change_status_failed");
+                        }
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình chuyển trạng thái sản phẩm.");
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                 }
                 break;

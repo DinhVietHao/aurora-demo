@@ -159,9 +159,10 @@
                                     </div>
                                 </div>
                                 <div class="progress-label">
-                                    Đã bán <b>${product.soldCount}</b> / <b>${product.quantity}</b> sản phẩm (
+                                    Đã bán <b>${product.soldCount}</b> / <b>${product.quantity + product.soldCount}</b>
+                                    sản phẩm (
                                     <fmt:formatNumber
-                                        value="${product.quantity > 0 ? (product.soldCount * 100 / product.quantity) : 0}"
+                                        value="${product.quantity > 0 ? (product.soldCount * 100 / (product.quantity + product.soldCount)) : 0}"
                                         maxFractionDigits="0" />%)
                                 </div>
                             </div>
