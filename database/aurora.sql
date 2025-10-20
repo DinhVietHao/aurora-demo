@@ -411,21 +411,40 @@ BEGIN
         JOIN OrderItems oi ON oi.ProductID = d.ProductID
         JOIN OrderShops os ON os.OrderShopID = oi.OrderShopID
         JOIN Orders o ON o.OrderID = os.OrderID
-    WHERE os.[Status] IN (N'PENDING', N'SHIPPING', N'WAITING_SHIP', N'CONFIRM', N'COMPLETED', N'CANCELLED', N'RETURNED');
+    WHERE os.[Status] IN (
+        N'PENDING', N'SHIPPING', N'WAITING_SHIP',
+        N'CONFIRM', N'COMPLETED', N'CANCELLED',
+        N'RETURNED', N'RETURNED_REJECTED', N'RETURNED_REQUESTED'
+    );
 
-    -- 3️⃣ Kiểm tra sản phẩm đang hoạt động
+    -- 3️⃣ Kiểm tra sản phẩm có trạng thái không được phép xóa
     INSERT INTO @Blocked
         (ProductID, Reason)
-    SELECT d.ProductID, N'Sản phẩm đang hoạt động'
+    SELECT d.ProductID,
+        CASE p.Status
+            WHEN N'ACTIVE' THEN N'Sản phẩm đang hoạt động'
+            WHEN N'INACTIVE' THEN N'Sản phẩm đang ngừng kinh doanh'
+            WHEN N'OUT_OF_STOCK' THEN N'Sản phẩm đang hết hàng'
+        END
     FROM deleted d
         JOIN Products p ON p.ProductID = d.ProductID
-    WHERE p.Status = N'ACTIVE';
+    WHERE p.Status IN (N'ACTIVE', N'INACTIVE', N'OUT_OF_STOCK');
 
-    -- 4️⃣ Nếu có sản phẩm bị chặn xóa thì báo lỗi, không xóa
+    -- 4️⃣ Kiểm tra sản phẩm PENDING nhưng đã có SoldCount > 0
+    INSERT INTO @Blocked
+        (ProductID, Reason)
+    SELECT d.ProductID, N'Sản phẩm đang ở trạng thái chờ duyệt (PENDING) nhưng đã được bán'
+    FROM deleted d
+        JOIN Products p ON p.ProductID = d.ProductID
+    WHERE p.Status = N'PENDING'
+        AND p.SoldCount > 0;
+
+    -- 5️⃣ Nếu có sản phẩm bị chặn xóa thì báo lỗi
     IF EXISTS (SELECT 1
     FROM @Blocked)
     BEGIN
         DECLARE @msg NVARCHAR(MAX) = N'Không thể xóa các sản phẩm sau do còn ràng buộc:' + CHAR(13);
+
         SELECT @msg = @msg + N'• ProductID: ' + CAST(ProductID AS NVARCHAR) + N' – ' + Reason + CHAR(13)
         FROM @Blocked;
 
@@ -434,7 +453,7 @@ BEGIN
         RETURN;
     END;
 
-    -- 5️⃣ Nếu hợp lệ → Xóa dữ liệu liên quan trước
+    -- 6️⃣ Nếu hợp lệ → Xóa dữ liệu liên quan trước
     DELETE FROM BookDetails WHERE ProductID IN (SELECT ProductID
     FROM deleted);
     DELETE FROM BookAuthors WHERE ProductID IN (SELECT ProductID
@@ -456,7 +475,7 @@ BEGIN
     FROM deleted)
     );
 
-    -- 6️⃣ Cuối cùng xóa Product
+    -- 7️⃣ Cuối cùng xóa Product
     DELETE FROM Products WHERE ProductID IN (SELECT ProductID
     FROM deleted);
 END;
