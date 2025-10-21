@@ -16,7 +16,8 @@ CREATE TABLE Users
     AuthProvider NVARCHAR(20) NOT NULL
 );
 
-SELECT * FROM Users;
+SELECT *
+FROM Users;
 
 CREATE TABLE UserRoles
 (
@@ -374,6 +375,19 @@ CREATE TABLE ReviewImages
     IsPrimary BIT NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_ReviewImages_Review FOREIGN KEY (ReviewID) REFERENCES Reviews(ReviewID)
+);
+
+CREATE TABLE Notifications
+(
+    NotificationID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    RecipientType NVARCHAR(20) NOT NULL CHECK (RecipientType IN ('CUSTOMER', 'SELLER', 'ADMIN')),
+    RecipientID BIGINT NOT NULL,
+    Type NVARCHAR(50) NOT NULL,
+    Title NVARCHAR(255) NOT NULL,
+    Message NVARCHAR(1000) NOT NULL,
+    ReferenceType NVARCHAR(50) NULL,
+    ReferenceID BIGINT NULL,
+    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
 );
 
 -- Trigger 
