@@ -237,7 +237,6 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
-                                                            <!-- Thao tác -->
                                                             <td>
                                                                 <!-- Xem chi tiết -->
                                                                 <a href="/shop/product?action=detail&productId=${p.productId}"
@@ -245,8 +244,6 @@
                                                                     title="Xem chi tiết">
                                                                     <i class="bi bi-eye"></i>
                                                                 </a>
-
-                                                                <!-- Chỉnh sửa -->
                                                                 <button
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
                                                                     data-bs-toggle="modal"
@@ -254,11 +251,8 @@
                                                                     data-product-id="${p.productId}">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
-
-                                                                <!-- Ngừng kinh doanh / Kích hoạt -->
                                                                 <c:choose>
                                                                     <c:when test="${p.status eq 'ACTIVE'}">
-                                                                        <!-- Nút ngừng kinh doanh -->
                                                                         <button
                                                                             class="btn btn-sm btn-outline-warning me-1"
                                                                             title="Ngừng kinh doanh"
@@ -268,9 +262,9 @@
                                                                             <i class="bi bi-slash-circle"></i>
                                                                         </button>
                                                                     </c:when>
-
+                                                                    <c:when test="${p.status eq 'PENDING'}">
+                                                                    </c:when>
                                                                     <c:otherwise>
-                                                                        <!-- Nút kích hoạt lại -->
                                                                         <button
                                                                             class="btn btn-sm btn-outline-success me-1"
                                                                             title="Kích hoạt lại" data-bs-toggle="modal"
@@ -280,8 +274,6 @@
                                                                         </button>
                                                                     </c:otherwise>
                                                                 </c:choose>
-
-                                                                <!-- Xóa -->
                                                                 <button class="btn btn-sm btn-outline-danger btn-delete"
                                                                     title="Xóa" data-product-id="${p.productId}"
                                                                     data-product-title="${p.title}"
