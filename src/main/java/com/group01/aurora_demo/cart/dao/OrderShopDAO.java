@@ -7,11 +7,98 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderShopDAO {
+
+    public List<OrderDTO> getOrderShopsByOrderId(long orderId) {
+        List<OrderDTO> orderShops = new ArrayList<>();
+        String sql = """
+                    SELECT
+                    o.OrderID,
+                    o.VoucherDiscountID,
+                    o.TotalShippingFee,
+                    o.ShippingDiscount AS SystemShippingDiscount,
+                    o.TotalAmount,
+
+                    os.OrderShopID,
+                    s.Name AS ShopName,
+                    os.Discount AS ShopDiscount,
+                    os.ShippingFee AS ShopShippingFee,
+                    os.Status AS ShopStatus,
+                    os.UpdateAt,
+
+                    p.ProductID,
+                    p.Title AS ProductName,
+                    img.Url AS ImageUrl,
+                    oi.Quantity,
+                    oi.OriginalPrice,
+                    oi.SalePrice,
+                    oi.Subtotal
+                FROM Orders o
+                JOIN OrderShops os ON o.OrderID = os.OrderID
+                JOIN Shops s ON os.ShopID = s.ShopID
+                JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                JOIN Products p ON oi.ProductID = p.ProductID
+                JOIN ProductImages img ON p.ProductID = img.ProductID
+                WHERE o.OrderID = ?
+                  AND img.IsPrimary = 1
+                ORDER BY os.UpdateAt DESC
+                    """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, orderId);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                OrderDTO orderShop = new OrderDTO();
+
+                orderShop.setOrderId(rs.getLong("OrderID"));
+                orderShop.setSystemVoucherId(rs.getLong("VoucherDiscountID"));
+                orderShop.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
+                orderShop.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                orderShop.setTotalAmount(rs.getDouble("TotalAmount"));
+
+                // --- Shop ---
+                orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                orderShop.setShopName(rs.getString("ShopName"));
+                orderShop.setShopDiscount(rs.getDouble("ShopDiscount"));
+                orderShop.setShopShippingFee(rs.getDouble("ShopShippingFee"));
+                orderShop.setShopStatus(rs.getString("ShopStatus"));
+                orderShop.setUpdateAt(rs.getDate("UpdateAt"));
+
+                // --- Product ---
+                orderShop.setProductId(rs.getLong("ProductID"));
+                orderShop.setProductName(rs.getString("ProductName"));
+                orderShop.setImageUrl(rs.getString("ImageUrl"));
+                orderShop.setQuantity(rs.getInt("Quantity"));
+                orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                orderShop.setSalePrice(rs.getDouble("SalePrice"));
+                orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                boolean canReturn = "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())
+                        && ChronoUnit.DAYS.between(
+                                orderShop.getUpdateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                                LocalDate.now()) < 7;
+
+                orderShop.setCanReturn(canReturn);
+
+                orderShops.add(orderShop);
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        return orderShops;
+    }
+
     public long createOrderShop(Connection conn, OrderShop orderShop) {
         String sql = """
                     INSERT INTO OrderShops(OrderID, ShopID, VoucherID, Subtotal,
@@ -89,7 +176,7 @@ public class OrderShopDAO {
     public boolean returnOrderShop(long orderShopId, String returnReason) {
         String sql = """
                     UPDATE OrderShops
-                    SET Status = 'RETURN_REQUESTED',
+                    SET Status = 'RETURNED_REQUESTED',
                         ReturnReason = ?,
                         UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
                     WHERE OrderShopID = ?

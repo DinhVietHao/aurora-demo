@@ -13,8 +13,8 @@
                 </jsp:include>
 
                 <!-- CSS riêng trang Cart -->
-                <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
-                <link rel="stylesheet" href="./assets/css/customer/order/order.css?v=1.0.2">
+                <link rel="stylesheet" href="${ctx}/assets/css/customer/profile/information_account.css">
+                <link rel="stylesheet" href="${ctx}/assets/css/customer/order/order.css">
             </head>
 
             <body>
@@ -82,7 +82,7 @@
                                     <div class="order-content">
                                         <div class="tab-content order-body">
                                             <c:choose>
-                                                <c:when test="${empty orders}">
+                                                <c:when test="${empty orderShops}">
                                                     <div class="text-center">
                                                         <img src="./assets/images/common/empty-order.png" alt="">
                                                         <p class="text-muted">Chưa có đơn hàng</p>
@@ -101,138 +101,130 @@
                                                     </div>
 
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
-                                                        <c:forEach var="order" items="${orders}">
+                                                        <c:forEach var="entry" items="${orderShops}">
+
                                                             <div class="order-card">
-                                                                <div class="order-header">
-                                                                    <div
-                                                                        class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                                                        <span class="order-id"><i
-                                                                                class="bi bi-receipt me-1">
-                                                                            </i>#${order.orderId}</span>
-                                                                        <span class="date-badge"><i
-                                                                                class="bi bi-calendar"></i>
-                                                                            <fmt:formatDate value="${order.createdAt}"
-                                                                                pattern="dd/MM/yyyy" />
-                                                                        </span>
+                                                                <div class="order-card__header">
+                                                                    <span><strong><i class="bi bi-shop me-2"></i>
+                                                                            ${entry.value[0].shopName}</strong>
+                                                                        <a href="./viewShop.html"
+                                                                            class="button-outline mx-2">
+                                                                            Xem
+                                                                            shop</a></span>
+                                                                    <div>
+                                                                        <span class="text-color">Trạng thái: </span>
+                                                                        <span
+                                                                            class="badge bg-success">${entry.value[0].vietnameseStatus}</span>
                                                                     </div>
                                                                 </div>
-                                                                <div class="row g-2">
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box">
-                                                                            <i class="bi bi-person-circle"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Người mua</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    ${order.customerName}</div>
+                                                                <c:forEach var="orderShop" items="${entry.value}">
+                                                                    <a
+                                                                        href="/order/order-shop/order-detail?orderShopId=${orderShop.orderShopId}">
+                                                                        <div class="order-card__body">
+                                                                            <div class="col-2 text-center">
+                                                                                <img class="order-card__image"
+                                                                                    src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
+                                                                                    alt="Ảnh sảm phẩm">
                                                                             </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-address">
-                                                                            <i class="bi bi-geo-alt"></i>
-                                                                            <div>
+                                                                            <div class="col-10">
+                                                                                <h6>${orderShop.productName}</h6>
                                                                                 <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Địa chỉ giao hàng</div>
-                                                                                <div class="fw-medium text-dark">789 Võ
-                                                                                    Văn
-                                                                                    Tần, Quận 3, TPHCM</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-total">
-                                                                            <i class="bi bi-wallet2"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Tổng tiền hàng</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.totalAmount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
+                                                                                    class="d-flex justify-content-between">
+                                                                                    <p class="text-color">Số lượng:
+                                                                                        ${orderShop.quantity}
+                                                                                    </p>
+                                                                                    <div>
+                                                                                        <c:if
+                                                                                            test="${orderShop.originalPrice != orderShop.salePrice}">
+                                                                                            <span
+                                                                                                class="text-decoration-line-through text-color">
+                                                                                                <fmt:formatNumber
+                                                                                                    value="${orderShop.originalPrice}"
+                                                                                                    type="currency" />
+                                                                                            </span>
+                                                                                        </c:if>
+                                                                                        <span
+                                                                                            class="fw-bold text-danger">
+                                                                                            <fmt:formatNumber
+                                                                                                value="${orderShop.salePrice}"
+                                                                                                type="currency" />
+                                                                                        </span>
+                                                                                    </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
+                                                                    </a>
+                                                                </c:forEach>
 
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-truck"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Phí vận chuyển</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.totalShippingFee}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
+                                                                <div class="text-end">
+                                                                    <p class="text-color">Thành tiền: <span
+                                                                            class="order-card__price">
+                                                                            <fmt:formatNumber
+                                                                                value="${entry.value[0].shopFinalAmount}"
+                                                                                type="currency" />
+                                                                        </span></span>
+                                                                    </p>
 
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-ticket-perforated"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Voucher giảm giá:</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    -
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.discountAmount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING'}">
+                                                                        <button class="button-six btn-cancel-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#cancelOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Hủy
+                                                                            đơn</button>
+                                                                    </c:if>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'CANCELLED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua
+                                                                            lại</button>
+                                                                    </c:if>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
+                                                                        <form action="/order/repayment" method="post">
+                                                                            <input type="hidden" name="orderId"
+                                                                                value="${entry.value[0].orderId}" />
+                                                                            <button class="button-four">
+                                                                                Thanh toán
+                                                                                lại</button>
+                                                                        </form>
 
-                                                                    </div>
+                                                                    </c:if>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'COMPLETED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua
+                                                                            lại</button>
+                                                                        <button class="button-five"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#ratingModal">
+                                                                            Đánh giá
+                                                                            shop</button>
+                                                                    </c:if>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus == 'COMPLETED' && entry.value[0].canReturn}">
+                                                                        <button class="button-seven btn-return-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#returnOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Trả hàng
+                                                                        </button>
+                                                                    </c:if>
 
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-truck"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Voucher freeship:</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    -
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.shippingDiscount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="section-title mt-3">
-                                                                        <a href="/order/order-shop?orderId=${order.orderId}"
-                                                                            class="btn btn-detail">
-                                                                            <i class="bi bi-eye"></i> Xem chi tiết
-                                                                        </a>
-                                                                        <div class="total-info">
-                                                                            <span>Tổng thanh toán:</span>
-                                                                            <span class="total">
-                                                                                <fmt:formatNumber
-                                                                                    value="${order.finalAmount}"
-                                                                                    type="currency" currencySymbol="₫"
-                                                                                    maxFractionDigits="0" />
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
+                                                                        <button class="button-four btn-confirm-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">Đã
+                                                                            nhận
+                                                                            hàng</button>
+                                                                    </c:if>
                                                                 </div>
                                                             </div>
                                                         </c:forEach>

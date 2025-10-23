@@ -16,7 +16,8 @@ CREATE TABLE Users
     AuthProvider NVARCHAR(20) NOT NULL
 );
 
-SELECT * FROM Users;
+SELECT *
+FROM Users;
 
 CREATE TABLE UserRoles
 (
@@ -229,14 +230,14 @@ CREATE TABLE Orders
     -- tổng tiền hàng
     DiscountAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
     -- giảm giá từ voucher/khuyến mãi
-    ShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
+    TotalShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
     -- phí giao hàng gốc
     ShippingDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
     -- giảm phí ship (voucher freeship)
     FinalAmount DECIMAL(12,2) NOT NULL,
     -- tổng tiền cuối cùng, backend tự tính
     OrderStatus NVARCHAR(20) NOT NULL,
-    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED,    CANCELLED , RETURNED
+    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     DeliveredAt DATETIME2(6) NULL,
     CancelledAt DATETIME2(6) NULL,
@@ -271,6 +272,7 @@ CREATE TABLE OrderShops
     CONSTRAINT FK_OrderShops_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
     CONSTRAINT FK_OrderShops_Voucher FOREIGN KEY (VoucherID) REFERENCES Vouchers(VoucherID)
 );
+
 CREATE TABLE OrderItems
 (
     OrderItemID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,

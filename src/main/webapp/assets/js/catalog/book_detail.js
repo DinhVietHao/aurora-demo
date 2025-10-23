@@ -65,7 +65,7 @@ addToCartBtn.addEventListener("click", () => {
           duration: 3000,
         });
         const loginModalEl = document.getElementById("loginModal");
-        if (data.user == null && loginModalEl) {
+        if (data.user && loginModalEl) {
           setTimeout(() => {
             new bootstrap.Modal(loginModalEl).show();
           }, 3000);

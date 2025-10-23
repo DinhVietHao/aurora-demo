@@ -9,6 +9,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
@@ -68,5 +69,77 @@ public class OrderItemDAO {
         }
 
         return items;
+    }
+
+    public List<OrderDTO> getOrderItemsByOrderShopId(long orderShopId) {
+        List<OrderDTO> orderItems = new ArrayList<>();
+        String sql = """
+                SELECT
+                    os.OrderID,
+                    os.OrderShopID,
+                    s.Name AS ShopName,
+                    o.VoucherDiscountID AS SystemVoucherID,
+                    o.TotalShippingFee,
+                    o.ShippingDiscount AS SystemShippingDiscount,
+                    o.TotalAmount,
+                    os.Discount AS ShopDiscount,
+                    os.ShippingFee AS ShopShippingFee,
+                    os.FinalAmount AS ShopFinalAmount,
+                    p.ProductID,
+                    p.Title AS ProductName,
+                    img.Url AS ImageUrl,
+                    oi.Quantity,
+                    oi.OriginalPrice,
+                    oi.SalePrice,
+                    oi.Subtotal
+                FROM Orders o
+                JOIN OrderShops os ON o.OrderID = os.OrderID
+                JOIN Shops s ON os.ShopID = s.ShopID
+                JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                JOIN Products p ON oi.ProductID = p.ProductID
+                JOIN ProductImages img ON p.ProductID = img.ProductID
+                WHERE os.OrderShopID = ?
+                  AND img.IsPrimary = 1
+                ORDER BY os.UpdateAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                OrderDTO order = new OrderDTO();
+                order.setOrderId(rs.getLong("OrderID"));
+                order.setOrderShopId(rs.getLong("OrderShopID"));
+                order.setShopName(rs.getString("ShopName"));
+
+                // Tổng tiền & sản phẩm
+                order.setProductId(rs.getLong("ProductID"));
+                order.setProductName(rs.getString("ProductName"));
+                order.setImageUrl(rs.getString("ImageUrl"));
+                order.setQuantity(rs.getInt("Quantity"));
+                order.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                order.setSalePrice(rs.getDouble("SalePrice"));
+                order.setSubtotal(rs.getDouble("Subtotal"));
+                order.setTotalAmount(rs.getDouble("TotalAmount"));
+
+                // Shop
+                order.setShopDiscount(rs.getDouble("ShopDiscount"));
+                order.setShopShippingFee(rs.getDouble("ShopShippingFee"));
+                order.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
+
+                // Hệ thống
+                order.setSystemVoucherId(rs.getLong("SystemVoucherID"));
+                order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
+                order.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                orderItems.add(order);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return orderItems;
     }
 }
