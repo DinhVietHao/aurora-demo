@@ -567,4 +567,36 @@ public class VoucherDAO {
         }
     }
 
+    public Map<String, Object> getVoucherStats(long voucherID) throws SQLException {
+        String sql = """
+                    SELECT
+                    COUNT(DISTINCT o.UserID) AS UniqueCustomers,
+                    COUNT(*) AS TotalOrders,
+                    SUM(os.Discount) AS TotalSaved,
+                    AVG(os.Discount) AS AvgSaved
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                WHERE os.VoucherID = ?
+                  AND os.Status NOT IN ('CANCELLED', 'RETURNED')
+                                """;
+
+        Map<String, Object> stats = new HashMap<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, voucherID);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                stats.put("uniqueCustomers", rs.getInt("UniqueCustomers"));
+                stats.put("totalOrders", rs.getInt("TotalOrders"));
+                stats.put("totalSaved", rs.getDouble("TotalSaved"));
+                stats.put("avgSaved", rs.getDouble("AvgSaved"));
+            }
+        }
+
+        return stats;
+    }
+
 }

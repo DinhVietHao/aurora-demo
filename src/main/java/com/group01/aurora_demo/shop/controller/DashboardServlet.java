@@ -50,8 +50,8 @@ public class DashboardServlet extends HttpServlet {
                     request.setAttribute("notifications", notifications);
                     request.getRequestDispatcher("/WEB-INF/views/shop/shopDashboard.jsp").forward(request, response);
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new ServletException("Lỗi khi lấy danh sách thông báo.", e);
+                    request.setAttribute("errorMessage", "Lỗi khi tải trang dashboard" + e);
+                    request.getRequestDispatcher("/WEB-INF/views/shop/shopDashboard.jsp").forward(request, response);
                 }
                 break;
             default:
