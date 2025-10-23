@@ -97,32 +97,17 @@ public class ProductServlet extends HttpServlet {
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
         FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
-
+        CategoryDAO categoryDAO = new CategoryDAO();
         try {
             switch (action) {
                 case "view":
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
-                    int page = 1;
-                    int limit = 15;
-                    String pageParam = request.getParameter("page");
 
-                    if (pageParam != null) {
-                        try {
-                            page = Integer.parseInt(pageParam);
-                        } catch (NumberFormatException e) {
-                            page = 1;
-                        }
-                    }
+                    List<Product> listProduct = productDAO.getProductsByShopId(shopId);
+                    List<Category> listCategoryShop = categoryDAO.getCategoriesByShopId(shopId);
 
-                    int offset = (page - 1) * limit;
-
-                    List<Product> listProduct = productDAO.getProductsByShopId(shopId, offset, limit);
-                    int totalProducts = productDAO.countProductsByShopId(shopId);
-                    int totalPages = (int) Math.ceil((double) totalProducts / limit);
-
+                    request.setAttribute("listCategoryShop", listCategoryShop);
                     request.setAttribute("listProduct", listProduct);
-                    request.setAttribute("page", page);
-                    request.setAttribute("totalPages", totalPages);
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
                     break;
                 case "getProduct":
