@@ -387,7 +387,7 @@ CREATE TABLE Notifications
     Message NVARCHAR(1000) NOT NULL,
     ReferenceType NVARCHAR(50) NULL,
     ReferenceID BIGINT NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
 -- Trigger 
@@ -494,6 +494,276 @@ BEGIN
     FROM deleted);
 END;
 GO
+
+DROP TRIGGER IF EXISTS trg_OrderShopStatusNotification
+GO
+
+CREATE OR ALTER TRIGGER trg_OrderShopStatusNotification
+ON OrderShops
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ---------------------------------------------------
+    -- 1) Đơn hàng mới (Chỉ khi INSERT)
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'ORDER_NEW',
+        N'Đơn hàng mới',
+        CONCAT(N'Bạn có đơn hàng mới #', i.OrderShopID, N' từ khách hàng ', ISNULL(u.FullName, N'Khách hàng')),
+        'ORDER',
+        i.OrderShopID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        LEFT JOIN deleted d ON d.OrderShopID = i.OrderShopID
+        JOIN Orders o ON o.OrderID = i.OrderID
+        LEFT JOIN Users u ON u.UserID = o.UserID
+    WHERE d.OrderShopID IS NULL
+        AND NOT EXISTS (
+            SELECT 1
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'ORDER_NEW'
+            AND n.ReferenceType = 'ORDER'
+            AND n.ReferenceID = i.OrderShopID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+
+    ---------------------------------------------------
+    -- 2) Giao hàng thành công (Customer nhận)
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'ORDER_DELIVERED',
+        N'Đơn hàng đã giao thành công',
+        CONCAT(N'Đơn hàng #', i.OrderShopID, N' của bạn đã được giao thành công.'),
+        'ORDER',
+        i.OrderShopID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.OrderShopID = i.OrderShopID
+        JOIN Orders o ON o.OrderID = i.OrderID
+    WHERE ((d.Status IS NULL OR d.Status <> i.Status))
+        AND i.Status IN ('COMPLETED')
+        AND NOT EXISTS (
+            SELECT 1
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = o.UserID
+            AND n.Type = 'ORDER_DELIVERED'
+            AND n.ReferenceType = 'ORDER'
+            AND n.ReferenceID = i.OrderShopID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+
+    ---------------------------------------------------
+    -- 3) Yêu cầu trả hàng (Seller nhận)
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'RETURN_REQUESTED',
+        N'Yêu cầu trả hàng mới',
+        CONCAT(N'Khách hàng đã yêu cầu trả hàng cho đơn #', i.OrderShopID),
+        'ORDER',
+        i.OrderShopID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.OrderShopID = i.OrderShopID
+    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+        AND i.Status IN ('RETURNED_REQUESTED')
+        AND NOT EXISTS (
+            SELECT 1
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'RETURN_REQUESTED'
+            AND n.ReferenceType = 'ORDER'
+            AND n.ReferenceID = i.OrderShopID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'ORDER_CANCELLED',
+        N'Đơn hàng đã bị hủy',
+        CONCAT(N'Đơn hàng #', i.OrderShopID, N' đã bị hủy.'),
+        'ORDER',
+        i.OrderShopID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.OrderShopID = i.OrderShopID
+    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+        AND i.Status IN ('CANCELLED')
+        AND NOT EXISTS (
+            SELECT 1
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'ORDER_CANCELLED'
+            AND n.ReferenceType = 'ORDER'
+            AND n.ReferenceID = i.OrderShopID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+END;
+GO
+
+
+
+---------------------------------------------------
+-- TRIGGER 2: Hết hàng (Products)
+---------------------------------------------------
+DROP TRIGGER IF EXISTS trg_ProductOutOfStockNotification
+GO
+
+CREATE OR ALTER TRIGGER trg_ProductOutOfStockNotification
+ON Products
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'OUT_OF_STOCK',
+        N'Sản phẩm đã hết hàng',
+        CONCAT(N'Sản phẩm "', i.Title, N'" hiện đã hết hàng.'),
+        'PRODUCT',
+        i.ProductID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.ProductID = i.ProductID
+    WHERE d.Quantity > 0 AND i.Quantity <= 0
+        AND NOT EXISTS (
+            SELECT 1
+        FROM Notifications n
+        WHERE n.Type = 'OUT_OF_STOCK'
+            AND n.ReferenceID = i.ProductID
+            AND n.RecipientID = i.ShopID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+END;
+GO
+
+
+---------------------------------------------------
+-- TRIGGER 3: Voucher
+---------------------------------------------------
+CREATE OR ALTER TRIGGER trg_VoucherStatusNotification
+ON Vouchers
+AFTER INSERT, UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ---------------------------------------------------
+    -- 1) Voucher vào hoạt động
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'VOUCHER_ACTIVE',
+        N'Voucher đã được kích hoạt',
+        CONCAT(N'Voucher "', i.Code, N'" đã được kích hoạt và sẵn sàng sử dụng.'),
+        'VOUCHER',
+        i.VoucherID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        LEFT JOIN deleted d ON d.VoucherID = i.VoucherID
+    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+        AND i.Status = 'ACTIVE'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Notifications n
+            WHERE n.RecipientType = 'SELLER'
+              AND n.RecipientID = i.ShopID
+              AND n.Type = 'VOUCHER_ACTIVE'
+              AND n.ReferenceType = 'VOUCHER'
+              AND n.ReferenceID = i.VoucherID
+              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+
+    ---------------------------------------------------
+    -- 2) Voucher hết lượt / hết số lượng
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'VOUCHER_OUT_OF_STOCK',
+        N'Voucher đã hết lượt sử dụng',
+        CONCAT(N'Voucher "', i.Code, N'" đã hết lượt hoặc hết số lượng khả dụng.'),
+        'VOUCHER',
+        i.VoucherID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.VoucherID = i.VoucherID
+    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+        AND i.Status = 'OUT_OF_STOCK'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Notifications n
+            WHERE n.RecipientType = 'SELLER'
+              AND n.RecipientID = i.ShopID
+              AND n.Type = 'VOUCHER_OUT_OF_STOCK'
+              AND n.ReferenceType = 'VOUCHER'
+              AND n.ReferenceID = i.VoucherID
+              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+
+    ---------------------------------------------------
+    -- 3) Voucher hết hạn sử dụng
+    ---------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'VOUCHER_EXPIRED',
+        N'Voucher đã hết hạn',
+        CONCAT(N'Voucher "', i.Code, N'" đã hết hạn vào ngày ', FORMAT(i.EndAt, 'dd/MM/yyyy'), N'.'),
+        'VOUCHER',
+        i.VoucherID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        JOIN deleted d ON d.VoucherID = i.VoucherID
+    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+        AND i.Status = 'EXPIRED'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Notifications n
+            WHERE n.RecipientType = 'SELLER'
+              AND n.RecipientID = i.ShopID
+              AND n.Type = 'VOUCHER_EXPIRED'
+              AND n.ReferenceType = 'VOUCHER'
+              AND n.ReferenceID = i.VoucherID
+              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        );
+END;
+GO
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 INSERT INTO Roles
     (RoleCode, RoleName)

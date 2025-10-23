@@ -55,7 +55,7 @@ public class ShopServlet extends HttpServlet {
                             break;
                         case "ACTIVE":
                             json.put("status", "ACTIVE");
-                            json.put("redirect", request.getContextPath() + "/shop?action=dashboard");
+                            json.put("redirect", request.getContextPath() + "/shop/dashboard");
                             break;
                     }
                 } else {
