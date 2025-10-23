@@ -1,7 +1,26 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const provinceSelect = document.getElementById("city");
-  const wardSelect = document.getElementById("ward");
-  initProvinceWard(provinceSelect, wardSelect);
+  const addProvince = document.getElementById("city");
+  const addDistrict = document.getElementById("district");
+  const addWard = document.getElementById("ward");
+
+  const addProvinceNameInput = document.getElementById("provinceNameInput");
+  const addDistrictNameInput = document.getElementById("districtNameInput");
+  const addWardNameInput = document.getElementById("wardNameInput");
+  const addProvinceIdInput = document.getElementById("provinceIdInput");
+  const addDistrictIdInput = document.getElementById("districtIdInput");
+  const addWardCodeInput = document.getElementById("wardCodeInput");
+
+  initAddressSelects(
+    addProvince,
+    addDistrict,
+    addWard,
+    addProvinceNameInput,
+    addDistrictNameInput,
+    addWardNameInput,
+    addProvinceIdInput,
+    addDistrictIdInput,
+    addWardCodeInput
+  );
 
   // Validation cho form đăng ký shop
   const registerShopForm = document.querySelector("#register-shop-form");
@@ -104,4 +123,71 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       });
   });
+});
+
+// ========= Preview shop logo (không upload ngay) ========
+document.addEventListener("DOMContentLoaded", function () {
+  const shopLogoInput = document.getElementById("shopLogo");
+  const shopLogoPreview = document.getElementById("shopLogoPreview");
+  const shopLogoPlaceholder = document.getElementById("shopLogoPlaceholder");
+
+  if (shopLogoInput && shopLogoPreview && shopLogoPlaceholder) {
+    shopLogoInput.addEventListener("change", function () {
+      const file = shopLogoInput.files[0];
+
+      if (!file) {
+        // Reset về placeholder
+        shopLogoPlaceholder.classList.remove("d-none");
+        shopLogoPreview.classList.add("d-none");
+        shopLogoPreview.classList.remove("show");
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        if (typeof toast === "function") {
+          toast({
+            title: "Lỗi!",
+            message: "Vui lòng chọn file ảnh hợp lệ.",
+            type: "error",
+            duration: 3000,
+          });
+        } else {
+          alert("Vui lòng chọn file ảnh hợp lệ.");
+        }
+        shopLogoInput.value = "";
+        shopLogoPlaceholder.classList.remove("d-none");
+        shopLogoPreview.classList.add("d-none");
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        if (typeof toast === "function") {
+          toast({
+            title: "Lỗi!",
+            message: "Ảnh vượt quá 5MB.",
+            type: "error",
+            duration: 3000,
+          });
+        } else {
+          alert("Ảnh vượt quá 5MB.");
+        }
+        shopLogoInput.value = "";
+        shopLogoPlaceholder.classList.remove("d-none");
+        shopLogoPreview.classList.add("d-none");
+        return;
+      }
+
+      // Preview image
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        shopLogoPlaceholder.classList.add("d-none");
+        shopLogoPreview.classList.remove("d-none");
+        shopLogoPreview.classList.add("show");
+        shopLogoPreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 });

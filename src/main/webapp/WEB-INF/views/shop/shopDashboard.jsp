@@ -4,26 +4,17 @@
             <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
                 <c:set var="pageTitle" value="Aurora" />
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
+
                 <!DOCTYPE html>
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Admin Dashboard - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shopDashboard.css">
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_dashboard.css?v=1.0.1" />
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-dashboard">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                     <div id="layoutSidenav">
@@ -34,22 +25,6 @@
                                     <!-- Page Header -->
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h1 class="mt-4 dashboard-title">Tổng quan bán hàng</h1>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-3 text-muted">Xin chào, Admin</span>
-                                            <div class="dropdown">
-                                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                                    type="button" data-bs-toggle="dropdown">
-                                                    <i class="bi bi-bell"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <h6 class="dropdown-header">Thông báo</h6>
-                                                    </li>
-                                                    <li><a class="dropdown-item" href="#">Đơn hàng mới #1234</a></li>
-                                                    <li><a class="dropdown-item" href="#">Sản phẩm sắp hết hàng</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <!-- Stats Cards Row -->
@@ -193,8 +168,7 @@
                     </div>
 
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
-
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/shopDashboard.js"></script>
                 </body>
 

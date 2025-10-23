@@ -9,23 +9,12 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Quản lý sách - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/style.min.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css">
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-products">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                     <div id="layoutSidenav">
@@ -51,14 +40,6 @@
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h1 class="mt-4 product-management-title">Quản lý Sách</h1>
-                                        <nav aria-label="breadcrumb">
-                                            <ol class="breadcrumb">
-                                                <li class="breadcrumb-item"><a href="home.html">Trang chủ</a></li>
-                                                <li class="breadcrumb-item"><a href="adminDashboard.html">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item active" aria-current="page">Sách</li>
-                                            </ol>
-                                        </nav>
                                     </div>
 
                                     <!-- Filter and Add Product Section -->
@@ -81,7 +62,8 @@
                                                 <div class="card-body">
                                                     <div class="row">
                                                         <div class="col-md-4">
-                                                            <label for="categoryFilter" class="form-label">Tất cả danh
+                                                            <label for="categoryFilter" class="form-label">Tất cả
+                                                                danh
                                                                 mục</label>
                                                             <select class="form-select" id="categoryFilter">
                                                                 <option value="">Tất cả danh mục</option>
@@ -92,7 +74,8 @@
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
-                                                            <label for="statusFilter" class="form-label">Tất cả trạng
+                                                            <label for="statusFilter" class="form-label">Tất cả
+                                                                trạng
                                                                 thái</label>
                                                             <select class="form-select" id="statusFilter">
                                                                 <option value="">Tất cả trạng thái</option>
@@ -193,11 +176,16 @@
 
                                                             <!-- Giá bán -->
                                                             <td>
-                                                                <span class="fw-bold text-danger">${p.salePrice}₫</span>
+                                                                <span class="fw-bold text-danger">
+                                                                    <fmt:formatNumber value="${p.salePrice}"
+                                                                        type="number" groupingUsed="true" />₫
+                                                                </span>
+
                                                                 <c:if test="${p.salePrice lt p.originalPrice}">
                                                                     <span
                                                                         class="text-muted text-decoration-line-through me-1">
-                                                                        ${p.originalPrice}₫
+                                                                        <fmt:formatNumber value="${p.originalPrice}"
+                                                                            type="number" groupingUsed="true" />₫
                                                                     </span>
                                                                 </c:if>
                                                             </td>
@@ -209,7 +197,8 @@
                                                             <td>
                                                                 <c:choose>
                                                                     <c:when test="${p.status eq 'ACTIVE'}">
-                                                                        <span class="badge bg-success">Đang bán</span>
+                                                                        <span class="badge bg-success">Đang
+                                                                            bán</span>
                                                                     </c:when>
                                                                     <c:when test="${p.status eq 'INACTIVE'}">
                                                                         <span class="badge bg-secondary">Ngừng
@@ -220,7 +209,8 @@
                                                                             Duyệt</span>
                                                                     </c:when>
                                                                     <c:when test="${p.status eq 'OUT_OF_STOCK'}">
-                                                                        <span class="badge bg-danger">Hết hàng</span>
+                                                                        <span class="badge bg-danger">Hết
+                                                                            hàng</span>
                                                                     </c:when>
                                                                     <c:otherwise>
                                                                         <span class="badge bg-dark">Không xác
@@ -228,7 +218,6 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
-                                                            <!-- Thao tác -->
                                                             <td>
                                                                 <!-- Xem chi tiết -->
                                                                 <a href="/shop/product?action=detail&productId=${p.productId}"
@@ -236,7 +225,6 @@
                                                                     title="Xem chi tiết">
                                                                     <i class="bi bi-eye"></i>
                                                                 </a>
-                                                                <!-- Chỉnh sửa -->
                                                                 <button
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
                                                                     data-bs-toggle="modal"
@@ -244,8 +232,28 @@
                                                                     data-product-id="${p.productId}">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
-
-                                                                <!-- Xóa -->
+                                                                <c:choose>
+                                                                    <c:when test="${p.status eq 'ACTIVE'}">
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-warning me-1"
+                                                                            title="Ngừng bán" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmDeactivateModal"
+                                                                            onclick="setDeactivateModal('${p.productId}', '${fn:escapeXml(p.title)}')">
+                                                                            <i class="bi bi-slash-circle"></i>
+                                                                        </button>
+                                                                    </c:when>
+                                                                    <c:when test="${p.status eq 'PENDING'}">
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-success me-1"
+                                                                            title="Kích hoạt lại" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmActivateModal"
+                                                                            onclick="document.getElementById('activateProductId').value='${p.productId}'">
+                                                                            <i class="bi bi-check-circle"></i>
+                                                                        </button>
+                                                                    </c:otherwise>
+                                                                </c:choose>
                                                                 <button class="btn btn-sm btn-outline-danger btn-delete"
                                                                     title="Xóa" data-product-id="${p.productId}"
                                                                     data-product-title="${p.title}"
@@ -259,11 +267,6 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
-                                            <jsp:param name="page" value="${page}" />
-                                            <jsp:param name="totalPages" value="${totalPages}" />
-                                            <jsp:param name="baseUrl" value="${ctx}/shop/product" />
-                                        </jsp:include>
                                     </div>
                                 </div>
                             </main>
@@ -294,12 +297,71 @@
                                     <!-- Nút Xóa -->
                                     <form id="deleteForm" action="/shop/product?action=delete" method="post">
                                         <input type="hidden" name="productId" id="deleteProductId">
-                                        <button type="submit" class="btn btn-confirm-delete">Xóa</button>
+                                        <button type="submit" class="btn btn-confirm-delete"
+                                            data-action-text="Đang xóa...">Xóa</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Modal: Xác nhận ngừng kinh doanh -->
+                    <div class="modal fade" id="confirmDeactivateModal" tabindex="-1"
+                        aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header custom-warning">
+                                    <h5 class="modal-title" id="confirmDeactivateModalLabel">Xác nhận ngừng bán</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn ngừng bán sản phẩm <strong
+                                            id="productNameInModal"></strong> không?</p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/shop/product?action=toggleStatus" method="post">
+                                        <input type="hidden" name="productId" id="deactivateProductId">
+                                        <input type="hidden" name="newStatus" value="INACTIVE">
+                                        <button type="submit" class="btn btn-warning">Ngừng bán</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Modal: Xác nhận kích hoạt lại -->
+                    <div class="modal fade" id="confirmActivateModal" tabindex="-1"
+                        aria-labelledby="confirmActivateModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header custom-success">
+                                    <h5 class="modal-title" id="confirmActivateModalLabel">Xác nhận kích hoạt sản phẩm
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn kích hoạt lại sản phẩm này không?</p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/shop/product?action=toggleStatus" method="post">
+                                        <input type="hidden" name="productId" id="activateProductId">
+                                        <input type="hidden" name="newStatus" value="PENDING">
+                                        <button type="submit" class="btn btn-success">Kích hoạt lại</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Add Product Modal -->
                     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
                         aria-hidden="true">
@@ -590,7 +652,8 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                <label class="form-check-label" for="cat11">Phát
+                                                                    triển
                                                                     bản thân</label>
                                                             </div>
                                                             <div class="form-check">
@@ -702,10 +765,12 @@
                                             <input type="file" class="form-control" id="productImages"
                                                 name="ProductImages" multiple accept="image/*">
                                             <div class="form-text text-secondary">
-                                                Có thể đăng từ <strong>2 đến 20 ảnh</strong>. Mỗi ảnh tối đa <strong>5
+                                                Có thể đăng từ <strong>2 đến 20 ảnh</strong>. Mỗi ảnh tối đa
+                                                <strong>5
                                                     MB</strong>.
                                             </div>
-                                            <div id="imageError" class="text-danger mt-1" style="display:none;"></div>
+                                            <div id="imageError" class="text-danger mt-1" style="display:none;">
+                                            </div>
                                         </div>
 
                                         <!-- Preview -->
@@ -715,9 +780,10 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="addProductForm" class="btn btn-success">
+                                            <button type="submit" form="addProductForm" class="btn btn-success"
+                                                data-action-text="Đang lưu...">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sách
+                                                Đăng bán chờ duyệt
                                             </button>
                                         </div>
                                     </form>
@@ -739,6 +805,7 @@
                                 <div class="modal-body">
                                     <form id="updateProductForm" action="/shop/product?action=update" method="POST"
                                         enctype="multipart/form-data">
+                                        <input type="hidden" id="updateMode" name="updateMode">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
                                         <div class="row">
@@ -781,8 +848,8 @@
                                                             placeholder="140000" required>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label for="productSalePrice" class="form-label">Giá bán <span
-                                                                class="text-danger">*</span></label>
+                                                        <label for="productSalePrice" class="form-label">Giá bán
+                                                            <span class="text-danger">*</span></label>
                                                         <input type="number" step="1" min="1" class="form-control"
                                                             id="productSalePriceUpdate" name="SalePrice"
                                                             placeholder="122000" required>
@@ -792,8 +859,8 @@
                                                 </div>
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="productQuantity" class="form-label">Số lượng tồn kho <span
-                                                        class="text-danger">*</span></label>
+                                                <label for="productQuantity" class="form-label">Số lượng tồn kho
+                                                    <span class="text-danger">*</span></label>
                                                 <input type="number" step="1" min="1" class="form-control"
                                                     id="productQuantityUpdate" name="Quantity" placeholder="0" required>
                                             </div>
@@ -1020,7 +1087,8 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                <label class="form-check-label" for="cat11">Phát
+                                                                    triển
                                                                     bản thân</label>
                                                             </div>
                                                             <div class="form-check">
@@ -1144,9 +1212,11 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="updateProductForm" class="btn btn-success">
+                                            <button type="submit" form="updateProductForm" class="btn btn-success"
+                                                data-action-text="Đang cập nhật sách...">
+
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Thay đổi sách
+                                                Cập nhật sách
                                             </button>
                                         </div>
                                     </form>
@@ -1155,12 +1225,15 @@
                         </div>
                     </div>
 
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script
-                        src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/scripts.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
                     <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script>
+                        function setDeactivateModal(productId, productName) {
+                            document.getElementById('deactivateProductId').value = productId;
+                            document.getElementById('productNameInModal').textContent = productName;
+                        }
+                    </script>
                 </body>
 
                 </html>

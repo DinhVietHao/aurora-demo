@@ -186,17 +186,109 @@
             });
         </script>
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const currentPage = document.body.dataset.page;
+                const currentPath = window.location.pathname;
+                const currentSearch = window.location.search;
+
+                const navLinks = document.querySelectorAll('.sb-sidenav .nav-link');
+
+                // Remove all active
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                let foundActive = false;
+
+                // Priority 1: Match by data-page attribute (Most accurate)
+                if (currentPage) {
+                    const activeLink = document.querySelector(`.sb-sidenav .nav-link[data-page="${currentPage}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                        foundActive = true;
+                    }
+                }
+
+                // Priority 2: Match by URL (Fallback)
+                if (!foundActive) {
+                    // Sort links by specificity (longer href = more specific)
+                    const sortedLinks = Array.from(navLinks).sort((a, b) => {
+                        const hrefA = a.getAttribute('href') || '';
+                        const hrefB = b.getAttribute('href') || '';
+                        return hrefB.length - hrefA.length; // Longer first
+                    });
+
+                    for (const link of sortedLinks) {
+                        const linkHref = link.getAttribute('href');
+                        if (!linkHref) continue;
+
+                        // Split path and query
+                        const [linkPath, linkQuery] = linkHref.split('?');
+
+                        // Check exact match with query string (most specific)
+                        if (linkQuery && currentSearch) {
+                            const currentQueryParams = new URLSearchParams(currentSearch);
+                            const linkQueryParams = new URLSearchParams(linkQuery);
+
+                            let allMatch = true;
+                            for (const [key, value] of linkQueryParams) {
+                                if (currentQueryParams.get(key) !== value) {
+                                    allMatch = false;
+                                    break;
+                                }
+                            }
+
+                            if (allMatch && currentPath === linkPath) {
+                                link.classList.add('active');
+                                foundActive = true;
+                                break;
+                            }
+                        }
+
+                        // Check exact path match (without query)
+                        if (currentPath === linkPath && !linkQuery && !currentSearch) {
+                            link.classList.add('active');
+                            foundActive = true;
+                            break;
+                        }
+
+                        // Check filename match (for JSP files)
+                        if (linkPath.endsWith('.jsp')) {
+                            const currentFile = currentPath.split('/').pop();
+                            const linkFile = linkPath.split('/').pop();
+                            if (currentFile === linkFile) {
+                                link.classList.add('active');
+                                foundActive = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Priority 3: Default to Dashboard
+                if (!foundActive) {
+                    const dashboardLink = document.querySelector('.sb-sidenav .nav-link[data-page="shop-dashboard"]') ||
+                        document.querySelector('.sb-sidenav .nav-link[href*="Dashboard"]');
+                    if (dashboardLink) {
+                        dashboardLink.classList.add('active');
+                    }
+                }
+            });
+        </script>
+
         <!--Gửi mã OTP-->
-        <script src="<c:url value='/assets/js/auth/send_otp.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/send_otp.js'/>?v=1.0.2"></script>
 
         <!--Đăng ký-->
-        <script src="<c:url value='/assets/js/auth/register.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/register.js'/>?v=1.0.2"></script>
 
         <!--Đăng nhập-->
-        <script src="<c:url value='/assets/js/auth/login.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/login.js'/>?v=1.0.2"></script>
 
         <!--Quên mật khẩu-->
-        <script src="<c:url value='/assets/js/auth/forgot-password.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/forgot-password.js'/>?v=1.0.2"></script>
 
-        <!-- Address loader for provinces/wards -->
+        <!-- Link javascript of Shipping Address -->
         <script src="<c:url value='/assets/js/common/address.js'/>?v=1.0.1"></script>
+
+        <!-- Avatar Uploader -->
+        <script src="${ctx}/assets/js/common/avatar-uploader.js?v=1.0.1"></script>

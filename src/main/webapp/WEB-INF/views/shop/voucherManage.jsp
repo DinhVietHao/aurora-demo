@@ -9,22 +9,12 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Quản lý Khuyến mãi - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/voucherManagement.css?1.0.1">
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-vouchers">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                     <div id="layoutSidenav">
@@ -51,14 +41,6 @@
                                     <!-- Page Header -->
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h1 class="mt-4 promotion-title">Quản lý Khuyến mãi</h1>
-                                        <nav aria-label="breadcrumb">
-                                            <ol class="breadcrumb">
-                                                <li class="breadcrumb-item"><a href="/home">Trang chủ</a></li>
-                                                <li class="breadcrumb-item"><a href="/shop">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item active" aria-current="page">Khuyến mãi</li>
-                                            </ol>
-                                        </nav>
                                     </div>
 
                                     <!-- Statistics Cards -->
@@ -350,12 +332,11 @@
                                     </div>
                                 </div>
                             </main>
-
                             <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                         </div>
                     </div>
 
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/voucherManagement.js"></script>
                 </body>
 

@@ -274,12 +274,6 @@
   z-index: 1;
 }
 
-/* Ensure pagination is above footer */
-#layoutSidenav_content {
-  position: relative;
-  z-index: 2;
-}
-
 /* Fix pagination active state visibility */
 .pagination-container .pagination .page-item.active .page-link {
   background-color: var(--color-one) !important;

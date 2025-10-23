@@ -35,12 +35,12 @@ public class ShopInformationServlet extends HttpServlet {
                 case "update":
                     try {
                         ShopDAO shopDAO = new ShopDAO();
-                        Shop shop = shopDAO.getShopByOwnerUserId(user.getId());
+                        Shop shop = shopDAO.getShopByUserId(user.getId());
 
                         if (shop == null) {
-                        response.sendError(HttpServletResponse.SC_NOT_FOUND,
-                        "Shop not found for userId=" + user.getId());
-                        return;
+                            response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                                    "Shop not found for userId=" + user.getId());
+                            return;
                         }
                         request.setAttribute("shop", shop);
                         request.getRequestDispatcher("/WEB-INF/views/shop/shop.jsp").forward(request, response);
