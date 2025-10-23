@@ -21,7 +21,15 @@ public class Order {
     private Date cancelledAt;
     private String customerName;
 
-    private List<OrderItem> items;
+    private List<OrderShop> orderShop;
+
+    public List<OrderShop> getOrderShop() {
+        return orderShop;
+    }
+
+    public void setOrderShop(List<OrderShop> orderShop) {
+        this.orderShop = orderShop;
+    }
 
     public long getOrderId() {
         return orderId;
@@ -159,14 +167,6 @@ public class Order {
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
-    }
-
-    public List<OrderItem> getItems() {
-        return items;
-    }
-
-    public void setItems(List<OrderItem> items) {
-        this.items = items;
     }
 
 }

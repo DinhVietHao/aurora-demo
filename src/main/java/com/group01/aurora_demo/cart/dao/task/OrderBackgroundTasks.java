@@ -20,12 +20,13 @@ public class OrderBackgroundTasks {
                 e.printStackTrace();
             }
         }, 0, 1, TimeUnit.HOURS);
-        
+
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 int returned = orderDAO.autoApproveReturnRequests();
                 if (returned > 0) {
-                    System.out.println("♻️ Đã tự động chuyển " + returned + " đơn hàng RETURNED_REQUESTED sang RETURNED (3 ngày).");
+                    System.out.println("♻️ Đã tự động chuyển " + returned
+                            + " đơn hàng RETURNED_REQUESTED sang RETURNED (3 ngày).");
                 }
             } catch (Exception e) {
                 e.printStackTrace();

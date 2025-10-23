@@ -205,20 +205,25 @@ public class VoucherDAO {
     public List<Voucher> getAllVouchersByShopId(long shopId) {
         List<Voucher> list = new ArrayList<>();
         String sql = """
-                SELECT *
-                FROM Vouchers
-                WHERE IsShopVoucher = 1
-                  AND ShopID = ?
-                ORDER BY
-                  CASE
-                    WHEN Status = 'UPCOMING' THEN 1
-                    WHEN Status = 'ACTIVE' THEN 2
-                    WHEN Status = 'OUT_OF_STOCK' THEN 3
-                    WHEN Status = 'EXPIRED' THEN 4
-                    ELSE 5
-                  END,
-                  CreatedAt DESC;
-                                """;
+                    SELECT v.*,
+                           CASE
+                               WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
+                                    OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                               THEN 1 ELSE 0
+                           END AS UsedInOrders
+                    FROM Vouchers v
+                    WHERE v.IsShopVoucher = 1
+                      AND v.ShopID = ?
+                    ORDER BY
+                      CASE
+                        WHEN v.Status = 'UPCOMING' THEN 1
+                        WHEN v.Status = 'ACTIVE' THEN 2
+                        WHEN v.Status = 'OUT_OF_STOCK' THEN 3
+                        WHEN v.Status = 'EXPIRED' THEN 4
+                        ELSE 5
+                      END,
+                      v.CreatedAt DESC;
+                """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -243,6 +248,8 @@ public class VoucherDAO {
                 v.setCreatedAt(rs.getTimestamp("CreatedAt"));
                 v.setUsageCount(rs.getInt("UsageCount"));
                 v.setDescription(rs.getString("Description"));
+                v.setUsedInOrders(rs.getInt("UsedInOrders") > 0);
+
                 String status;
                 Timestamp start = v.getStartAt();
                 Timestamp end = v.getEndAt();
@@ -251,16 +258,14 @@ public class VoucherDAO {
 
                 if (now.before(start)) {
                     status = "UPCOMING";
-
                 } else if (now.after(end)) {
                     status = "EXPIRED";
-
                 } else if (usageLimit != null && usageCount != null && usageCount >= usageLimit) {
                     status = "OUT_OF_STOCK";
-
                 } else {
                     status = "ACTIVE";
                 }
+
                 v.setStatus(status);
                 list.add(v);
             }
@@ -308,14 +313,23 @@ public class VoucherDAO {
     }
 
     public Voucher getVoucherByVoucherID(long voucherID) {
-        String sql = "SELECT * FROM Vouchers WHERE VoucherID = ?";
+        String sql = """
+                SELECT v.*,
+                       CASE
+                           WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
+                                OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                           THEN 1 ELSE 0
+                       END AS UsedInOrders
+                FROM Vouchers v
+                WHERE v.VoucherID = ?
+                """;
+
         Voucher v = null;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, voucherID);
-
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
@@ -334,14 +348,14 @@ public class VoucherDAO {
                 v.setUsageCount(rs.getInt("UsageCount"));
                 v.setCreatedAt(rs.getTimestamp("CreatedAt"));
                 v.setDescription(rs.getString("Description"));
-
                 v.setStatus(rs.getString("Status"));
-
-                System.out.println(v.getCode());
+                v.setUsedInOrders(rs.getInt("UsedInOrders") == 1);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+
         return v;
     }
 
@@ -551,6 +565,38 @@ public class VoucherDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public Map<String, Object> getVoucherStats(long voucherID) throws SQLException {
+        String sql = """
+                    SELECT
+                    COUNT(DISTINCT o.UserID) AS UniqueCustomers,
+                    COUNT(*) AS TotalOrders,
+                    SUM(os.Discount) AS TotalSaved,
+                    AVG(os.Discount) AS AvgSaved
+                FROM OrderShops os
+                JOIN Orders o ON os.OrderID = o.OrderID
+                WHERE os.VoucherID = ?
+                  AND os.Status NOT IN ('CANCELLED', 'RETURNED')
+                                """;
+
+        Map<String, Object> stats = new HashMap<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, voucherID);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                stats.put("uniqueCustomers", rs.getInt("UniqueCustomers"));
+                stats.put("totalOrders", rs.getInt("TotalOrders"));
+                stats.put("totalSaved", rs.getDouble("TotalSaved"));
+                stats.put("avgSaved", rs.getDouble("AvgSaved"));
+            }
+        }
+
+        return stats;
     }
 
 }
