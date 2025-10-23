@@ -255,10 +255,9 @@
                                                                     <c:when test="${p.status eq 'ACTIVE'}">
                                                                         <button
                                                                             class="btn btn-sm btn-outline-warning me-1"
-                                                                            title="Ngừng kinh doanh"
-                                                                            data-bs-toggle="modal"
+                                                                            title="Ngừng bán" data-bs-toggle="modal"
                                                                             data-bs-target="#confirmDeactivateModal"
-                                                                            onclick="document.getElementById('deactivateProductId').value='${p.productId}'">
+                                                                            onclick="setDeactivateModal('${p.productId}', '${fn:escapeXml(p.title)}')">
                                                                             <i class="bi bi-slash-circle"></i>
                                                                         </button>
                                                                     </c:when>
@@ -329,20 +328,21 @@
                             </div>
                         </div>
                     </div>
+
                     <!-- Modal: Xác nhận ngừng kinh doanh -->
                     <div class="modal fade" id="confirmDeactivateModal" tabindex="-1"
                         aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header custom-warning">
-                                    <h5 class="modal-title" id="confirmDeactivateModalLabel">Xác nhận ngừng kinh doanh
-                                    </h5>
+                                    <h5 class="modal-title" id="confirmDeactivateModalLabel">Xác nhận ngừng bán</h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                         aria-label="Đóng"></button>
                                 </div>
 
                                 <div class="modal-body">
-                                    <p>Bạn có chắc chắn muốn ngừng kinh doanh sản phẩm này không?</p>
+                                    <p>Bạn có chắc chắn muốn ngừng bán sản phẩm <strong
+                                            id="productNameInModal"></strong> không?</p>
                                 </div>
 
                                 <div class="modal-footer">
@@ -350,12 +350,13 @@
                                     <form action="/shop/product?action=toggleStatus" method="post">
                                         <input type="hidden" name="productId" id="deactivateProductId">
                                         <input type="hidden" name="newStatus" value="INACTIVE">
-                                        <button type="submit" class="btn btn-warning">Ngừng kinh doanh</button>
+                                        <button type="submit" class="btn btn-warning">Ngừng bán</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+
 
                     <!-- Modal: Xác nhận kích hoạt lại -->
                     <div class="modal fade" id="confirmActivateModal" tabindex="-1"
@@ -806,7 +807,7 @@
                                             <button type="submit" form="addProductForm" class="btn btn-success"
                                                 data-action-text="Đang lưu...">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sách
+                                                Đăng bán chờ duyệt
                                             </button>
                                         </div>
                                     </form>
@@ -1254,7 +1255,12 @@
                     <script src="${ctx}/assets/js/shop/scripts.js"></script>
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
                     <script src="${ctx}/assets/js/shop/productManagement.js"></script>
-
+                    <script>
+                        function setDeactivateModal(productId, productName) {
+                            document.getElementById('deactivateProductId').value = productId;
+                            document.getElementById('productNameInModal').textContent = productName;
+                        }
+                    </script>
                 </body>
 
                 </html>

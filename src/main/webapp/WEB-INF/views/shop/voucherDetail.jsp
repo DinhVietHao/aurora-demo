@@ -84,6 +84,7 @@
                                                         </div>
                                                         <div class="col-md-4 text-md-end">
                                                             <div class="voucher-actions">
+                                                                <!-- Hiển thị trạng thái -->
                                                                 <c:choose>
                                                                     <c:when test="${voucher.status == 'ACTIVE'}">
                                                                         <span class="badge bg-success status-badge">Hoạt
@@ -92,6 +93,11 @@
                                                                     <c:when test="${voucher.status == 'UPCOMING'}">
                                                                         <span class="badge bg-warning status-badge">Sắp
                                                                             diễn ra</span>
+                                                                    </c:when>
+                                                                    <c:when test="${voucher.status == 'OUT_OF_STOCK'}">
+                                                                        <span
+                                                                            class="badge bg-secondary status-badge">Hết
+                                                                            Voucher</span>
                                                                     </c:when>
                                                                     <c:when test="${voucher.status == 'EXPIRED'}">
                                                                         <span class="badge bg-danger status-badge">Hết
@@ -102,18 +108,31 @@
                                                                             class="badge bg-secondary status-badge">Khác</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
-                                                                <div class="action-buttons">
-                                                                    <a href="/shop/voucher?action=update&voucherID=${voucher.voucherID}"
-                                                                        class="btn btn-warning">
-                                                                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa
-                                                                    </a>
-                                                                    <button class="btn btn-danger"
-                                                                        onclick="deleteVoucher('${voucher.code}')">
-                                                                        <i class="bi bi-trash me-2"></i>Xóa
-                                                                    </button>
+
+                                                                <!-- Nút thao tác -->
+                                                                <div class="action-buttons mt-2">
+                                                                    <!-- Nút Chỉnh sửa -->
+                                                                    <c:if
+                                                                        test="${voucher.status == 'UPCOMING' || (voucher.status == 'EXPIRED' && (voucher.usageCount < voucher.usageLimit)) || (voucher.status == 'ACTIVE' && voucher.usageCount == 0)}">
+                                                                        <a href="/shop/voucher?action=update&voucherID=${voucher.voucherID}"
+                                                                            class="btn btn-warning">
+                                                                            <i class="bi bi-pencil me-2"></i>Chỉnh sửa
+                                                                        </a>
+                                                                    </c:if>
+
+                                                                    <!-- Nút Xóa -->
+                                                                    <c:if
+                                                                        test="${(voucher.status == 'UPCOMING' || (voucher.status == 'EXPIRED' && voucher.usageCount == 0) || (voucher.status == 'ACTIVE' && voucher.usageCount == 0)) && !voucher.usedInOrders}">
+                                                                        <button class="btn btn-danger"
+                                                                            onclick="deleteVoucher('${voucher.code}')">
+                                                                            <i class="bi bi-trash me-2"></i>Xóa
+                                                                        </button>
+                                                                    </c:if>
                                                                 </div>
+
                                                             </div>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                             </div>

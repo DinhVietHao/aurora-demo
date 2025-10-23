@@ -68,7 +68,7 @@ public class ProductServlet extends HttpServlet {
         }
         if ("delete_failed".equals(error)) {
             request.setAttribute("errorMessage",
-                    "Không thể xóa sản phẩm vì đang trong Flash Sale, đang trong đơn hàng hoặc đang hoạt động.");
+                    "Không thể xóa sản phẩm vì đang trong Flash Sale, đang trong đơn hàng,đang hoạt động hoặc đang ngừng bán.");
         }
         if ("create_success".equals(message)) {
             request.setAttribute("successMessage",

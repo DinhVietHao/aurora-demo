@@ -36,19 +36,6 @@
                                         <h1 class="mt-4 dashboard-title">Tổng quan bán hàng</h1>
                                         <div class="d-flex align-items-center">
                                             <span class="me-3 text-muted">Xin chào, Admin</span>
-                                            <div class="dropdown">
-                                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
-                                                    type="button" data-bs-toggle="dropdown">
-                                                    <i class="bi bi-bell"></i>
-                                                </button>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <h6 class="dropdown-header">Thông báo</h6>
-                                                    </li>
-                                                    <li><a class="dropdown-item" href="#">Đơn hàng mới #1234</a></li>
-                                                    <li><a class="dropdown-item" href="#">Sản phẩm sắp hết hàng</a></li>
-                                                </ul>
-                                            </div>
                                         </div>
                                     </div>
 
@@ -147,45 +134,86 @@
                                             <div class="card mb-4">
                                                 <div class="card-header">
                                                     <i class="bi bi-clock-history me-1"></i>
-                                                    Hoạt động gần đây
+                                                    Thông báo gần đây
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="activity-list">
-                                                        <div class="activity-item">
-                                                            <div class="activity-icon activity-icon-success">
-                                                                <i class="bi bi-cart-plus"></i>
-                                                            </div>
-                                                            <div class="activity-content">
-                                                                <div class="activity-title">Đơn hàng mới #DH000234</div>
-                                                                <div class="activity-time">2 phút trước</div>
-                                                            </div>
-                                                        </div>
 
-                                                        <div class="activity-item">
-                                                            <div class="activity-icon activity-icon-warning">
-                                                                <i class="bi bi-exclamation-triangle"></i>
-                                                            </div>
-                                                            <div class="activity-content">
-                                                                <div class="activity-title">Sách "Đắc nhân tâm" sắp hết
-                                                                    hàng</div>
-                                                                <div class="activity-time">15 phút trước</div>
-                                                            </div>
-                                                        </div>
+                                                        <c:forEach var="n" items="${notifications}">
+                                                            <c:set var="iconClass">
+                                                                <c:choose>
+                                                                    <c:when test="${n.type == 'ORDER_NEW'}">
+                                                                        activity-icon-success</c:when>
+                                                                    <c:when test="${n.type == 'ORDER_DELIVERED'}">
+                                                                        activity-icon-primary</c:when>
+                                                                    <c:when test="${n.type == 'OUT_OF_STOCK'}">
+                                                                        activity-icon-warning</c:when>
+                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">
+                                                                        activity-icon-info</c:when>
+                                                                    <c:when test="${n.type == 'ORDER_CANCELLED'}">
+                                                                        activity-icon-danger
+                                                                    </c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_ACTIVE'}">
+                                                                        activity-icon-success</c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_OUT_OF_STOCK'}">
+                                                                        activity-icon-warning</c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_EXPIRED'}">
+                                                                        activity-icon-secondary</c:when>
+                                                                    <c:otherwise>activity-icon-secondary
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </c:set>
 
-                                                        <div class="activity-item">
-                                                            <div class="activity-icon activity-icon-danger">
-                                                                <i class="bi bi-star"></i>
-                                                            </div>
-                                                            <div class="activity-content">
-                                                                <div class="activity-title">Đánh giá "Tôi thấy hoa vàng
-                                                                    trên cỏ xanh"</div>
-                                                                <div class="activity-time">1 giờ trước</div>
-                                                            </div>
-                                                        </div>
+                                                            <c:set var="biIcon">
+                                                                <c:choose>
+                                                                    <c:when test="${n.type == 'ORDER_NEW'}">bi
+                                                                        bi-cart-plus</c:when>
+                                                                    <c:when test="${n.type == 'ORDER_DELIVERED'}">bi
+                                                                        bi-box-seam</c:when>
+                                                                    <c:when test="${n.type == 'OUT_OF_STOCK'}">bi
+                                                                        bi-exclamation-triangle</c:when>
+                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">
+                                                                        bi
+                                                                        bi-arrow-return-left</c:when>
+                                                                    <c:when test="${n.type == 'ORDER_CANCELLED'}">bi
+                                                                        bi-x-circle</c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_ACTIVE'}">bi
+                                                                        bi-ticket-perforated</c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_OUT_OF_STOCK'}">
+                                                                        bi bi-exclamation-triangle</c:when>
+                                                                    <c:when test="${n.type == 'VOUCHER_EXPIRED'}">bi
+                                                                        bi-calendar-x</c:when>
+                                                                    <c:otherwise>bi bi-bell</c:otherwise>
+                                                                </c:choose>
+                                                            </c:set>
+
+                                                            <!-- Form bao quanh thông báo -->
+                                                            <a href="${ctx}${n.link}"
+                                                                class="activity-item btn w-100 text-start border-0 bg-transparent p-0">
+                                                                <div class="activity-icon ${iconClass}">
+                                                                    <i class="${biIcon}"></i>
+                                                                </div>
+                                                                <div class="activity-content">
+                                                                    <div class="activity-title fw-semibold">${n.title}
+                                                                    </div>
+                                                                    <div class="activity-message text-muted small">
+                                                                        ${n.message}</div>
+                                                                    <div class="activity-time text-secondary small">
+                                                                        ${n.timeAgo}</div>
+                                                                </div>
+                                                            </a>
+                                                        </c:forEach>
+
+                                                        <c:if test="${empty notifications}">
+                                                            <p class="text-muted text-center">Chưa có hoạt động nào gần
+                                                                đây</p>
+                                                        </c:if>
+
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             </main>
@@ -195,7 +223,7 @@
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/shopDashboard.js"></script>
+                    <script src="${ctx}/assets/js/shop/shopDashboard.js?v=1.0.2"></script>
                 </body>
 
                 </html>
