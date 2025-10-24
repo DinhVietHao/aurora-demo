@@ -12,10 +12,13 @@ public class Product {
     private Double originalPrice;
     private Double salePrice;
     private Long soldCount;
-    private Integer stock;
-    private Boolean isBundle;
-    private Long categoryId;
+    private Integer quantity;
+    private Long publisherId;
+    private String status;
     private LocalDate publishedDate;
+    private Double weight;
+    private String rejectReason;
+    private java.sql.Timestamp createdAt;
     private String primaryImageUrl;
     private List<ProductImages> images;
     private List<Author> authors;
@@ -79,28 +82,52 @@ public class Product {
         this.soldCount = soldCount;
     }
 
-    public Integer getStock() {
-        return stock;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setStock(Integer stock) {
-        this.stock = stock;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+    
+    public Long getPublisherId() {
+        return publisherId;
     }
 
-    public Boolean getIsBundle() {
-        return isBundle;
+    public void setPublisherId(Long publisherId) {
+        this.publisherId = publisherId;
+    }
+    
+    public String getStatus() {
+        return status;
     }
 
-    public void setIsBundle(Boolean isBundle) {
-        this.isBundle = isBundle;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+    
+    public Double getWeight() {
+        return weight;
     }
 
-    public Long getCategoryId() {
-        return categoryId;
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+    
+    public String getRejectReason() {
+        return rejectReason;
     }
 
-    public void setCategoryId(Long categoryId) {
-        this.categoryId = categoryId;
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
+    }
+    
+    public java.sql.Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.sql.Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
 
     public String getPublisherString() {
@@ -163,8 +190,9 @@ public class Product {
     public String toString() {
         return "Product [productId=" + productId + ", shopId=" + shopId + ", title=" + title + ", description="
                 + description + ", originalPrice=" + originalPrice + ", salePrice=" + salePrice + ", soldCount="
-                + soldCount + ", stock=" + stock + ", isBundle=" + isBundle + ", categoryId=" + categoryId
-                + ", publishedDate=" + publishedDate + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
+                + soldCount + ", quantity=" + quantity + ", status=" + status + ", publisherId=" + publisherId
+                + ", publishedDate=" + publishedDate + ", weight=" + weight + ", rejectReason=" + rejectReason
+                + ", createdAt=" + createdAt + ", primaryImageUrl=" + primaryImageUrl + ", images=" + images
                 + ", authors=" + authors + ", publisher=" + publisher + ", bookDetail=" + bookDetail + "]";
     }
 
