@@ -37,12 +37,12 @@
                         <div class="d-flex align-items-center mt-4">
                             <span class="me-3 text-muted d-none d-md-inline">Xin chào, Admin</span>
                             <div class="dropdown">
-                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <!-- <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-bell"></i>
                                     <c:if test="${pendingOrders > 0}">
                                         <span class="badge bg-danger rounded-pill">${pendingOrders}</span>
                                     </c:if>
-                                </button>
+                                </button> -->
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><h6 class="dropdown-header">Thông báo</h6></li>
                                     <c:if test="${pendingOrders > 0}">

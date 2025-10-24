@@ -17,11 +17,11 @@
     <div id="layoutSidenav_content">
         <main>
             <div class="container-fluid px-4">
-                <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mt-4 dashboard-title">Quản lý người dùng</h1>
+                <div class="d-flex align-items-center">
                     <button id="sidebarToggle" class="btn btn-outline-secondary btn-sm me-3" type="button">
                         <i class="bi bi-list"></i>
                     </button>
-                    <h1 class="mt-4 dashboard-title">Quản lý người dùng</h1>
                 </div>
 
                 <div class="card mt-4">

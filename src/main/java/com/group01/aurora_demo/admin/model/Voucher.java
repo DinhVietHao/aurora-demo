@@ -198,7 +198,7 @@ public class Voucher {
     }
 
     public String getFormattedValue() {
-        if ("percentage".equalsIgnoreCase(discountType)) {
+        if ("PERCENT".equalsIgnoreCase(discountType)) {
             return value + "%";
         } else {
             return String.format("%,.0f VNĐ", value);
@@ -217,14 +217,19 @@ public class Voucher {
     }
     
     public String getDisplayStatus() {
-        if (isPending()) {
-            return "Chờ";
-        } else if (isExpired()) {
-            return "Hết hạn";
-        } else if (isActive()) {
+        // First check the explicit status, which overrides time-based logic when manually set
+        if ("active".equalsIgnoreCase(status)) {
             return "Hoạt động";
-        } else {
+        } else if ("expired".equalsIgnoreCase(status) || isExpired()) {
+            return "Hết hạn";
+        } else if ("inactive".equalsIgnoreCase(status)) {
             return "Ngừng hoạt động";
+        } else if (isPending()) {
+            // Check time-based status only if not explicitly set to one of the above
+            return "Chờ";
+        } else {
+            // Default case
+            return status != null ? status : "Chờ";
         }
     }
 }

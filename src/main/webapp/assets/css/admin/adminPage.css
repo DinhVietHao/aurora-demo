@@ -5348,12 +5348,15 @@ textarea.form-control-lg {
   height: 100vh;
   background-color: var(--bs-backdrop-bg);
 }
+<<<<<<< HEAD
+=======
 .modal-backdrop.fade {
   opacity: 0;
 }
 .modal-backdrop.show {
   opacity: var(--bs-backdrop-opacity);
 }
+>>>>>>> DuyHT
 
 .modal-header {
   display: flex;
