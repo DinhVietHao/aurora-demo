@@ -36,9 +36,11 @@ public class AddressServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
+
+        req.setAttribute("user", user);
         String path = req.getPathInfo();
         if (path == null || path.equals("/")) {
             List<Address> addresses = this.addressDAO.getAddressesByUserId(user.getId());
@@ -51,8 +53,12 @@ public class AddressServlet extends HttpServlet {
                 json.put("addressId", address.getAddressId());
                 json.put("recipientName", address.getRecipientName());
                 json.put("phone", address.getPhone());
-                json.put("city", address.getCity());
+                json.put("province", address.getCity());
+                json.put("provinceId", address.getProvinceId());
+                json.put("district", address.getDistrict());
+                json.put("districtId", address.getDistrictId());
                 json.put("ward", address.getWard());
+                json.put("wardCode", address.getWardCode());
                 json.put("description", address.getDescription());
                 json.put("defaultAddress", address.getUserAddress().isDefaultAddress());
                 out.print(json.toString());
@@ -75,21 +81,38 @@ public class AddressServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+            resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
+
+        req.setAttribute("user", user);
         System.out.println("Check path " + path);
         switch (path) {
             case "/update":
-                System.out.println(">>>>>>>>>>>>>>>>>>>>>. Check update");
                 try {
                     long addressIdUpdate = Long.parseLong(req.getParameter("addressId"));
+                    String from = req.getParameter("from");
+                    if (!addressDAO.canModifyAddress(user.getId(), addressIdUpdate)) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg",
+                                "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
+                        if (from.equalsIgnoreCase("checkout")) {
+                            resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
+                        } else {
+                            resp.sendRedirect(req.getContextPath() + "/address");
+                        }
 
+                        return;
+                    }
                     String recipientName = req.getParameter("fullName");
                     String phone = req.getParameter("phone");
-                    String city = req.getParameter("city");
-                    String ward = req.getParameter("ward");
+                    String city = req.getParameter("cityName");
+                    String district = req.getParameter("districtName");
+                    String ward = req.getParameter("wardName");
                     String description = req.getParameter("description");
+                    int provinceId = Integer.parseInt(req.getParameter("provinceId"));
+                    int districtId = Integer.parseInt(req.getParameter("districtId"));
+                    String wardCode = req.getParameter("wardCode");
                     boolean isDefault = req.getParameter("isDefault") != null;
 
                     Address address = new Address();
@@ -97,34 +120,54 @@ public class AddressServlet extends HttpServlet {
                     address.setRecipientName(recipientName);
                     address.setPhone(phone);
                     address.setCity(city);
+                    address.setProvinceId(provinceId);
+                    address.setDistrict(district);
+                    address.setDistrictId(districtId);
                     address.setWard(ward);
+                    address.setWardCode(wardCode);
                     address.setDescription(description);
                     this.addressDAO.updateAddress(user.getId(), address, isDefault);
 
+                    session.setAttribute("toastType", "success");
+                    session.setAttribute("toastMsg", "Cập nhật địa chỉ thành công.");
+
+                    if (from.equalsIgnoreCase("checkout")) {
+                        resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/address");
+                    }
                 } catch (Exception e) {
-                    System.out.println(">>>>>>>>>>>>>>>>>>>>>>>Check lỗi");
+                    e.printStackTrace();
                     System.out.println(e.getMessage());
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Có lỗi xảy ra khi cập nhật địa chỉ.");
+                    resp.sendRedirect(req.getContextPath() + "/address");
                 }
-                resp.sendRedirect(req.getContextPath() + "/address");
+
                 break;
             case "/add":
                 String recipientName = req.getParameter("fullName");
                 String phone = req.getParameter("phone");
-                String city = req.getParameter("city");
-                String ward = req.getParameter("ward");
+                String city = req.getParameter("cityName");
+                String district = req.getParameter("districtName");
+                String ward = req.getParameter("wardName");
                 String description = req.getParameter("description");
+                int provinceId = Integer.parseInt(req.getParameter("provinceId"));
+                int districtId = Integer.parseInt(req.getParameter("districtId"));
+                String wardCode = req.getParameter("wardCode");
                 boolean isDefault = req.getParameter("isDefault") != null;
 
                 Address address = new Address();
                 address.setRecipientName(recipientName);
                 address.setPhone(phone);
                 address.setCity(city);
+                address.setProvinceId(provinceId);
+                address.setDistrict(district);
+                address.setDistrictId(districtId);
                 address.setWard(ward);
+                address.setWardCode(wardCode);
                 address.setDescription(description);
                 this.addressDAO.addAddress(user.getId(), address, isDefault);
-<<<<<<< HEAD
-                resp.sendRedirect(req.getContextPath() + "/address");
-=======
 
                 String from = req.getParameter("from");
                 if (from.equalsIgnoreCase("checkout")) {
@@ -132,14 +175,20 @@ public class AddressServlet extends HttpServlet {
                 } else {
                     resp.sendRedirect(req.getContextPath() + "/address");
                 }
-
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 break;
             case "/delete":
                 try {
                     Long addressIdDelete = Long.parseLong(req.getParameter("addressId"));
-                    this.addressDAO.deleteAddress(user.getId(), addressIdDelete);
-                    json.put("success", true);
+
+                    if (!addressDAO.canModifyAddress(user.getId(), addressIdDelete)) {
+                        json.put("success", false);
+                        json.put("type", "warning");
+                        json.put("title", "Không thể xóa");
+                        json.put("message", "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
+                    } else {
+                        addressDAO.deleteAddress(user.getId(), addressIdDelete);
+                        json.put("success", true);
+                    }
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     json.put("success", false);

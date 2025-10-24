@@ -9,29 +9,18 @@
                 </div>
                 <div class="modal-body">
                     <form class="shipping-address" id="form-update-address" method="POST" action="/address/update">
-                        <input type="hidden" name="addressId" value="" />
-<<<<<<< HEAD
-                        <div class="row mb-3">
-                            <div class="col-md-6 form-group">
-                                <label for="fullName" class="form-label">Họ tên</label>
-                                <input type="text" class="form-control update-fullname" id="fullName"
-=======
+                        <input type="hidden" id="updateAddressId" name="addressId" value="" />
                         <input type="hidden" name="from" value="address">
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
                                 <label for="fullName" class="form-label">Họ tên</label>
                                 <input type="text" class="form-control update-fullname" id="updateFullname"
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                     placeholder="Nhập họ tên" name="fullName" value="">
                                 <span class="form-message"></span>
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="phone" class="form-label">Điện thoại di động</label>
-<<<<<<< HEAD
-                                <input type="text" class="form-control update-phone" id="phone"
-=======
                                 <input type="text" class="form-control update-phone" id="updatePhone"
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                     placeholder="Nhập số điện thoại" name="phone" value="">
                                 <span class="form-message"></span>
                             </div>
@@ -39,30 +28,38 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
-                                <label for="province" class="form-label">Tỉnh/Thành phố</label>
-                                <select class="form-select" name="city" id="updateProvince">
-                                    <option value="" class="update-city"></option>
+                                <label for="updateProvince" class="form-label">Tỉnh/Thành phố</label>
+                                <select class="form-select " id="updateProvince" name="city">
+                                    <option value="" class="update-city">Chọn Tỉnh/Thành phố</option>
                                 </select>
-                                <span class="form-message"></span>
+                                <span class=" form-message"></span>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label for="ward" class="form-label">Phường/Xã</label>
-                                <select class="form-select " name="ward" id="updateWard">
-                                    <option value="" class="update-ward"></option>
+                                <label for="updateDistrict" class="form-label">Quận/Huyện</label>
+                                <select id="updateDistrict" class="form-select" name="district">
+                                    <option value="">-- Chọn Quận/Huyện --</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <label for="updateWard" class="form-label">Phường/Xã</label>
+                                <select class="form-select" id="updateWard" name="ward">
+                                    <option value="">Chọn Phường/Xã</option>
                                 </select>
                                 <span class="form-message"></span>
                             </div>
+                            <input type="hidden" id="updateProvinceNameInput" name="cityName">
+                            <input type="hidden" id="updateDistrictNameInput" name="districtName">
+                            <input type="hidden" id="updateWardNameInput" name="wardName">
+
+                            <input type="hidden" id="updateProvinceIdInput" name="provinceId">
+                            <input type="hidden" id="updateDistrictIdInput" name="districtId">
+                            <input type="hidden" id="updateWardCodeInput" name="wardCode">
                         </div>
 
                         <div class="mb-3 form-group">
                             <label for="address" class="form-label">Địa chỉ</label>
-<<<<<<< HEAD
-                            <textarea class="form-control update-description" id="address"
-                                placeholder="Ví dụ: 52, đường Trần Hưng Đạo" name="description"></textarea>
-=======
                             <textarea class="form-control update-description" id="updateAddress"
                                 placeholder="Ví dụ: 52, đường Trần Hưng Đạo" name="description" value=""></textarea>
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                             <span class="form-message"></span>
                         </div>
                         <div class="form-check mb-3">
@@ -76,11 +73,7 @@
                         <div class="modal-footer">
                             <button type="reset" class="button-five" data-bs-dismiss="modal">Trở
                                 lại</button>
-<<<<<<< HEAD
-                            <button type="submit" class="button-four">Hoàn thành</button>
-=======
                             <button class="button-four form-submit">Hoàn thành</button>
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                         </div>
                     </form>
                 </div>

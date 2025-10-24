@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize promotion details functionality
   initializePromotionDetails();
   initializeSidebar();
-  loadVoucherDetails();
+  setupVoucherHistoryTable("voucherHistoryTable", "showAllHistoryBtn", 3);
 });
 
 // Initialize main promotion details functionality
@@ -46,152 +46,6 @@ function initializeSidebar() {
       layoutSidenav.classList.add("sb-sidenav-toggled");
     }
   }
-}
-
-// Load voucher details from URL parameter
-function loadVoucherDetails() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const voucherCode = urlParams.get("code");
-
-  if (voucherCode) {
-    // Simulate loading voucher data
-    loadVoucherData(voucherCode);
-  } else {
-    // Default data if no code provided
-    loadVoucherData("NEWUSER50");
-  }
-}
-
-// Load voucher data (simulated)
-function loadVoucherData(code) {
-  console.log("Loading voucher data for:", code);
-
-  // Simulate API call with sample data
-  const voucherData = {
-    NEWUSER50: {
-      code: "NEWUSER50",
-      name: "Voucher cho người dùng mới",
-      description:
-        "Giảm giá đặc biệt dành cho khách hàng mới đăng ký tài khoản",
-      discountType: "percentage",
-      discountValue: 50,
-      maxDiscount: 200000,
-      minOrderValue: 200000,
-      usageLimit: 1000,
-      usedCount: 240,
-      startDate: "2024-01-01T00:00",
-      endDate: "2024-01-31T23:59",
-      status: "active",
-      totalSavings: 12500000,
-      avgSavingsPerOrder: 52083,
-      uniqueCustomers: 187,
-    },
-    SAVE100K: {
-      code: "SAVE100K",
-      name: "Giảm giá cố định",
-      description: "Voucher giảm giá cố định cho đơn hàng từ 500.000 VNĐ",
-      discountType: "fixed",
-      discountValue: 100000,
-      maxDiscount: null,
-      minOrderValue: 500000,
-      usageLimit: 500,
-      usedCount: 67,
-      startDate: "2024-02-15T00:00",
-      endDate: "2024-02-15T23:59",
-      status: "active",
-      totalSavings: 6700000,
-      avgSavingsPerOrder: 100000,
-      uniqueCustomers: 65,
-    },
-  };
-
-  const data = voucherData[code] || voucherData["NEWUSER50"];
-  populateVoucherDetails(data);
-}
-
-// Populate voucher details on the page
-function populateVoucherDetails(data) {
-  // Basic information
-  document.getElementById("voucherCode").textContent = data.code;
-  document.getElementById("voucherName").textContent = data.name;
-  document.getElementById("voucherDescription").textContent = data.description;
-
-  // Status
-  const statusElement = document.getElementById("voucherStatus");
-  statusElement.textContent = getStatusText(data.status);
-  statusElement.className = `badge status-badge ${getStatusClass(data.status)}`;
-
-  // Discount type
-  const discountTypeElement = document.getElementById("discountType");
-  if (data.discountType === "percentage") {
-    discountTypeElement.textContent = "Phần trăm (%)";
-    discountTypeElement.className = "badge bg-info";
-  } else {
-    discountTypeElement.textContent = "Số tiền cố định (VNĐ)";
-    discountTypeElement.className = "badge bg-warning";
-  }
-
-  // Discount value
-  const discountValueElement = document.getElementById("discountValue");
-  if (data.discountType === "percentage") {
-    discountValueElement.textContent = `${data.discountValue}%`;
-  } else {
-    discountValueElement.textContent = `${data.discountValue.toLocaleString()} VNĐ`;
-  }
-
-  // Max discount
-  const maxDiscountElement = document.getElementById("maxDiscount");
-  if (data.maxDiscount) {
-    maxDiscountElement.textContent = `${data.maxDiscount.toLocaleString()} VNĐ`;
-  } else {
-    maxDiscountElement.textContent = "Không giới hạn";
-  }
-
-  // Min order value
-  document.getElementById(
-    "minOrderValue"
-  ).textContent = `${data.minOrderValue.toLocaleString()} VNĐ`;
-
-  // Dates
-  document.getElementById("startDate").textContent = formatDateTime(
-    data.startDate
-  );
-  document.getElementById("endDate").textContent = formatDateTime(data.endDate);
-
-  // Usage information
-  document.getElementById(
-    "usageLimit"
-  ).textContent = `${data.usageLimit.toLocaleString()} lượt`;
-  document.getElementById(
-    "usedCount"
-  ).textContent = `${data.usedCount.toLocaleString()} lượt`;
-
-  // Usage progress
-  const usagePercentage = Math.round((data.usedCount / data.usageLimit) * 100);
-  const progressBar = document.getElementById("usageProgress");
-  progressBar.style.width = `${usagePercentage}%`;
-  progressBar.textContent = `${usagePercentage}%`;
-
-  // Update progress bar text
-  const progressText = progressBar.parentElement.nextElementSibling;
-  progressText.textContent = `${data.usedCount.toLocaleString()} / ${data.usageLimit.toLocaleString()} lượt sử dụng`;
-
-  // Statistics
-  document.querySelector(
-    ".stat-item:nth-child(1) .stat-value"
-  ).textContent = `${data.totalSavings.toLocaleString()} VNĐ`;
-  document.querySelector(
-    ".stat-item:nth-child(2) .stat-value"
-  ).textContent = `${data.avgSavingsPerOrder.toLocaleString()} VNĐ`;
-  document.querySelector(
-    ".stat-item:nth-child(3) .stat-value"
-  ).textContent = `${usagePercentage}%`;
-  document.querySelector(
-    ".stat-item:nth-child(4) .stat-value"
-  ).textContent = `${data.uniqueCustomers} người`;
-
-  // Update preview card
-  updatePreviewCard(data);
 }
 
 // Update preview card
@@ -328,8 +182,7 @@ function editVoucher() {
 }
 
 // Delete voucher
-function deleteVoucher() {
-  const voucherCode = document.getElementById("voucherCode").textContent;
+function deleteVoucher(voucherCode) {
   console.log("Deleting voucher:", voucherCode);
 
   // Show confirmation modal
@@ -339,45 +192,58 @@ function deleteVoucher() {
 // Show delete confirmation modal
 function showDeleteConfirmation(voucherCode) {
   const modalHTML = `
-        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteConfirmModalLabel">Xác nhận xóa voucher</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center">
-                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
-                            <h5 class="mt-3">Bạn có chắc chắn muốn xóa voucher này?</h5>
-                            <p class="text-muted">Mã voucher: <strong>${voucherCode}</strong></p>
-                            <p class="text-danger">Hành động này không thể hoàn tác!</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete('${voucherCode}')">Xóa voucher</button>
-                    </div>
-                </div>
-            </div>
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Xác nhận xóa voucher</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">Bạn có chắc chắn muốn xóa voucher này?</h5>
+            <p class="text-muted">Mã voucher: <strong>${voucherCode}</strong></p>
+            <p class="text-danger">Hành động này không thể hoàn tác!</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <!-- Form POST để xóa -->
+            <form id="deleteVoucherForm" action="/shop/voucher?action=delete" method="post">
+              <input type="hidden" name="voucherCode" value="${voucherCode}">
+              <button type="submit" id="deleteVoucherBtn" class="btn btn-danger">
+                Xóa voucher
+              </button>
+            </form>
+          </div>
         </div>
-    `;
+      </div>
+    </div>
+  `;
 
-  // Add modal to page
+  // Xóa modal cũ nếu có (tránh nhân bản)
+  const existingModal = document.getElementById("deleteConfirmModal");
+  if (existingModal) existingModal.remove();
+
+  // Thêm modal mới vào body
   document.body.insertAdjacentHTML("beforeend", modalHTML);
 
-  // Show modal
+  // Hiển thị modal
   const modal = new bootstrap.Modal(
     document.getElementById("deleteConfirmModal")
   );
   modal.show();
 
-  // Remove modal from DOM when hidden
-  document
-    .getElementById("deleteConfirmModal")
-    .addEventListener("hidden.bs.modal", function () {
-      this.remove();
-    });
+  // Ngăn người dùng bấm nhiều lần nút Xóa
+  const form = document.getElementById("deleteVoucherForm");
+  const btn = document.getElementById("deleteVoucherBtn");
+
+  form.addEventListener("submit", function (e) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Đang xóa...
+    `;
+  });
 }
 
 // Confirm delete voucher
@@ -457,11 +323,48 @@ function showToast(message, type = "success") {
     this.remove();
   });
 }
+// Setup voucher history table (ẩn bớt dòng, xem tất cả / thu gọn)
+function setupVoucherHistoryTable(tableId, buttonId, maxVisible = 3) {
+  const table = document.getElementById(tableId);
+  const btn = document.getElementById(buttonId);
+  if (!table || !btn) return;
+
+  const rows = table.querySelectorAll("tbody tr");
+
+  // Bỏ qua nếu không có hàng hoặc chỉ có hàng "Chưa có lịch sử"
+  if (
+    !rows.length ||
+    (rows.length === 1 && rows[0].querySelector("td[colspan]"))
+  ) {
+    btn.style.display = "none";
+    return;
+  }
+
+  if (rows.length > maxVisible) {
+    rows.forEach((row, i) => {
+      if (i >= maxVisible) row.style.display = "none";
+    });
+
+    btn.addEventListener("click", () => {
+      const isHidden = Array.from(rows).some((r) => r.style.display === "none");
+      if (isHidden) {
+        rows.forEach((r) => (r.style.display = ""));
+        btn.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Thu gọn';
+      } else {
+        rows.forEach((r, i) => {
+          if (i >= maxVisible) r.style.display = "none";
+        });
+        btn.innerHTML = '<i class="bi bi-eye me-2"></i>Xem tất cả';
+      }
+    });
+  } else {
+    btn.style.display = "none";
+  }
+}
 
 // Export functions for external use
 window.PromotionDetails = {
   copyVoucherCode,
   editVoucher,
   deleteVoucher,
-  loadVoucherData,
 };

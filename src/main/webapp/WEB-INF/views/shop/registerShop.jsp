@@ -67,28 +67,48 @@
                                 <i class="bi bi-shop"></i> Thông tin shop
                             </div>
                             <div class="card-body row g-3">
-                                <div class="col-md-12">
+                                <div class="col-md-8">
                                     <div class="form-group">
                                         <label for="shopName" class="form-label">Tên shop *</label>
                                         <input type="text" id="shopName" name="shopName" class="form-control"
                                             placeholder="Nhập tên shop" required minlength="3" maxlength="150">
                                         <span class="form-message"></span>
                                     </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group">
+
+                                    <div class="form-group mt-3">
                                         <label for="shopDesc" class="form-label">Mô tả shop</label>
-                                        <textarea id="shopDesc" name="shopDesc" class="form-control"
-                                            maxlength="255"></textarea>
+                                        <textarea id="shopDesc" name="shopDesc" class="form-control" rows="4"
+                                            placeholder="Mô tả ngắn gọn về shop của bạn..." maxlength="255"></textarea>
                                         <span class="form-message"></span>
+                                        <small class="text-muted">Tối đa 255 ký tự</small>
                                     </div>
-                                </div>
-                                <div class="col-md-12">
-                                    <div class="form-group">
+
+                                    <div class="form-group mt-3">
                                         <label for="shopLogo" class="form-label">Logo shop</label>
                                         <input type="file" id="shopLogo" name="shopLogo" class="form-control"
                                             accept="image/*">
                                         <span class="form-message"></span>
+                                        <small class="text-muted d-block mt-1">
+                                            <i class="bi bi-info-circle"></i>
+                                            Kích thước tối đa: 5MB. Định dạng: JPG, PNG, WEBP
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <label class="form-label d-block mb-3">Preview Logo</label>
+                                        <div class="shop-logo-preview-container">
+                                            <div id="shopLogoPlaceholder" class="shop-logo-placeholder">
+                                                <i class="bi bi-shop"></i>
+                                                <small class="d-block mt-2">Chưa có logo</small>
+                                            </div>
+                                            <img id="shopLogoPreview" src="" alt="Shop logo preview"
+                                                class="shop-logo-preview d-none">
+                                        </div>
+                                        <small class="text-muted d-block mt-2">
+                                            Logo sẽ hiển thị sau khi chọn file
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -100,20 +120,29 @@
                                 <i class="bi bi-geo-alt"></i> Địa chỉ lấy hàng
                             </div>
                             <div class="card-body row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="city" class="form-label">Tỉnh/Thành phố *</label>
                                         <select id="city" name="city" class="form-select" required>
-                                            <option value="">Chọn tỉnh/thành phố</option>
+                                            <option value="">Chọn Tỉnh/Thành phố</option>
                                         </select>
                                         <span class="form-message"></span>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="district" class="form-label">Quận/Huyện *</label>
+                                        <select id="district" name="district" class="form-select" disabled required>
+                                            <option value="">Chọn Quận/Huyện</option>
+                                        </select>
+                                        <span class="form-message"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="ward" class="form-label">Phường/Xã *</label>
-                                        <select id="ward" name="ward" class="form-select" required>
-                                            <option value="">Chọn phường/xã</option>
+                                        <select id="ward" name="ward" class="form-select" disabled required>
+                                            <option value="">Chọn Phường/Xã</option>
                                         </select>
                                         <span class="form-message"></span>
                                     </div>
@@ -126,6 +155,13 @@
                                         <span class="form-message"></span>
                                     </div>
                                 </div>
+                                <input type="hidden" id="provinceNameInput" name="cityName">
+                                <input type="hidden" id="districtNameInput" name="districtName">
+                                <input type="hidden" id="wardNameInput" name="wardName">
+
+                                <input type="hidden" id="provinceIdInput" name="provinceId">
+                                <input type="hidden" id="districtIdInput" name="districtId">
+                                <input type="hidden" id="wardCodeInput" name="wardCode">
                             </div>
                         </div>
 

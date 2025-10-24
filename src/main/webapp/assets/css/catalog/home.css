@@ -1,12 +1,16 @@
-/* Header*/
+.modal-backdrop {
+  z-index: 9 !important; 
+}
+
 .modal-backdrop {
   z-index: 9 !important;
 }
 
+/* Header*/
 .header {
   position: sticky;
   top: 0;
-  z-index: 99;
+  z-index: 1050;
   background-color: #fff;
   border-bottom: 1px solid #dee2e6;
 }
@@ -537,7 +541,8 @@
 /*END featured-bookcase */
 /* footer */
 .footer {
-  background-color: var(--color-one);
+    position: relative;
+    background-color: var(--color-one);
 }
 
 .banner-advertisemet img {

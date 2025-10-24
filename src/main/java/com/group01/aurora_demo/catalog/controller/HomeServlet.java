@@ -2,7 +2,10 @@ package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
+
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
@@ -13,43 +16,44 @@ import java.util.List;
 public class HomeServlet extends HttpServlet {
 
     private ProductDAO productDAO = new ProductDAO();
-<<<<<<< HEAD
-=======
+    private UserDAO userDAO = new UserDAO();
     private static final int LIMIT = 12;
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-<<<<<<< HEAD
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
-
-        String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
-
-        switch (action) {
-            case "home":
-                List<Product> suggestedProducts;
-                if (user != null) {
-                    suggestedProducts = productDAO.getSuggestedProductsForCustomer(user.getId());
-                    if (suggestedProducts.isEmpty())
-                        suggestedProducts = productDAO.getSuggestedProductsForGuest();
-                } else {
-                    suggestedProducts = productDAO.getSuggestedProductsForGuest();
-                }
-                request.setAttribute("suggestedProducts", suggestedProducts);
-                request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
-                break;
-            case "bookstore":
-                request.setCharacterEncoding("UTF-8");
-
-                // Detect nếu có sản phẩm bán được
-=======
         setFilterAttributes(request);
         request.setCharacterEncoding("UTF-8");
 
+        String savedEmail = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("remember_account".equals(c.getName())) {
+                    savedEmail = c.getValue();
+                    break;
+                }
+            }
+        }
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
+
+        if (user == null && savedEmail != null && !savedEmail.isEmpty()) {
+            user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
+            if (user != null) {
+                session.setAttribute("AUTH_USER", user);
+                session.setMaxInactiveInterval(60 * 60 * 2);
+
+                try {
+                    CartItemDAO cartItemDAO = new CartItemDAO();
+                    int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
+                    session.setAttribute("cartCount", cartCount);
+                } catch (Exception e) {
+                    session.setAttribute("cartCount", 0);
+                }
+            }
+        }
 
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
 
@@ -71,41 +75,12 @@ public class HomeServlet extends HttpServlet {
             case "bookstore":
                 request.setCharacterEncoding("UTF-8");
 
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 int soldProducts = productDAO.countProductsWithSold();
                 String defaultSort = soldProducts > 0 ? "best" : "newest";
                 String sort = request.getParameter("sort");
                 if (sort == null || sort.isEmpty())
                     sort = defaultSort;
 
-<<<<<<< HEAD
-                int limit = 12;
-                int page = 1;
-                String pageParam = request.getParameter("page");
-                if (pageParam != null) {
-                    try {
-                        page = Integer.parseInt(pageParam);
-                    } catch (Exception e) {
-                        page = 1;
-                    }
-                }
-                int offset = (page - 1) * limit;
-
-                List<Product> products = productDAO.getAllProducts(offset, limit, sort);
-                int totalProducts = productDAO.countAllProducts();
-                int totalPages = (int) Math.ceil((double) totalProducts / limit);
-
-                request.setAttribute("products", products);
-                request.setAttribute("page", page);
-                request.setAttribute("totalPages", totalPages);
-                request.setAttribute("title", "Nhà sách");
-
-                request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
-                break;
-            case "detail":
-                String idRaw = request.getParameter("id");
-                ProductDAO productDAO = new ProductDAO();
-=======
                 int page = getPage(request);
                 int offset = (page - 1) * LIMIT;
 
@@ -128,21 +103,17 @@ public class HomeServlet extends HttpServlet {
 
             case "detail":
                 String idRaw = request.getParameter("id");
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 try {
                     long id = Long.parseLong(idRaw);
                     Product product = productDAO.getProductById(id);
+                    int reviewCount = productDAO.countReviewsByProductId(id);
                     request.setAttribute("title", product.getTitle());
                     request.setAttribute("product", product);
+                    request.setAttribute("reviewCount", reviewCount);
                     request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request,
                             response);
                 } catch (NumberFormatException e) {
                     System.out.println(e.getMessage());
-<<<<<<< HEAD
-                }
-                break;
-            default:
-=======
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID");
                 }
                 break;
@@ -157,7 +128,6 @@ public class HomeServlet extends HttpServlet {
 
             default:
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 break;
         }
     }

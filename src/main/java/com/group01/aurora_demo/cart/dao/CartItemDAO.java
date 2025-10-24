@@ -186,27 +186,6 @@ public class CartItemDAO {
     }
 
     /**
-     * Lấy giá cuối cùng của sản phẩm dựa vào ProductID (Price - Discount).
-     * 
-     * @param productId id sản phẩm
-     * @return giá sau khi giảm
-     */
-    public double getUnitPriceByProductId(long productId) {
-        String sql = "SELECT SalePrice FROM Products WHERE ProductID = ?";
-        try (Connection cn = DataSourceProvider.get().getConnection();) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, productId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getDouble("SalePrice");
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return 0.0;
-    }
-
-    /**
      * Lấy danh sách CartItems của một user.
      * Join nhiều bảng để lấy thêm thông tin sản phẩm, hình ảnh, tác giả.
      * 
@@ -221,12 +200,12 @@ public class CartItemDAO {
                      ci.UserID,
                      ci.ProductID,
                      ci.Quantity,
-                     ci.UnitPrice,
                      ci.Subtotal,
                      ci.IsChecked,
-                     p.Title ,
+                     p.Title,
                      p.OriginalPrice,
                      p.SalePrice,
+                     p.status,
                 	 s.ShopID,
                      s.Name AS ShopName,
                      img.Url AS ImageUrl
@@ -246,7 +225,6 @@ public class CartItemDAO {
                 cartItem.setCartItemId(rs.getLong("CartItemID"));
                 cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
-                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
                 cartItem.setSubtotal(rs.getDouble("Subtotal"));
                 cartItem.setIsChecked(rs.getBoolean("IsChecked"));
 
@@ -256,6 +234,7 @@ public class CartItemDAO {
                 product.setTitle(rs.getString("Title"));
                 product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                 product.setSalePrice(rs.getDouble("SalePrice"));
+                product.setStatus(rs.getString("status"));
 
                 Shop shop = new Shop();
                 shop.setShopId(rs.getLong("ShopID"));
@@ -266,9 +245,6 @@ public class CartItemDAO {
                 ProductImage productImages = new ProductImage();
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
-
-                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
-                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);
@@ -287,7 +263,6 @@ public class CartItemDAO {
                      ci.UserID,
                      ci.ProductID,
                      ci.Quantity,
-                     ci.UnitPrice,
                      ci.Subtotal,
                      ci.IsChecked,
                      p.Title ,
@@ -302,7 +277,9 @@ public class CartItemDAO {
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
-                WHERE ci.UserID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND ci.IsChecked = 1
+                AND p.Status = 'ACTIVE'
+                ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -313,7 +290,6 @@ public class CartItemDAO {
                 cartItem.setCartItemId(rs.getLong("CartItemID"));
                 cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
-                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
                 cartItem.setSubtotal(rs.getDouble("Subtotal"));
                 cartItem.setIsChecked(rs.getBoolean("IsChecked"));
 
@@ -337,9 +313,6 @@ public class CartItemDAO {
                 ProductImage productImages = new ProductImage();
                 productImages.setUrl(rs.getString("ImageUrl"));
                 product.setImages(List.of(productImages));
-
-                List<Author> authors = authorDAO.getAuthorsByProductId(rs.getLong("ProductID"));
-                product.setAuthors(authors);
 
                 cartItem.setProduct(product);
                 cartItems.add(cartItem);
@@ -372,7 +345,9 @@ public class CartItemDAO {
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1 ORDER BY ci.CreatedAt DESC
+                WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1
+                AND p.Status = 'ACTIVE'
+                ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -440,6 +415,17 @@ public class CartItemDAO {
             System.out.println(e.getMessage());
         }
         return 0;
+    }
+
+    public boolean deleteCheckout(Connection conn, long userId) {
+        String sql = "DELETE FROM CartItems WHERE UserID = ? AND isChecked = 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public static void main(String[] args) {

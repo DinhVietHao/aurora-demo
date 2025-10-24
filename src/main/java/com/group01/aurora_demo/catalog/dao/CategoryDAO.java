@@ -36,11 +36,7 @@ public class CategoryDAO {
 
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
-<<<<<<< HEAD
         String sql = "SELECT CategoryID, Name FROM Category ORDER BY Name ASC";
-=======
-        String sql = "SELECT CategoryID, Name, VATCode FROM Category ORDER BY Name ASC";
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
@@ -48,10 +44,6 @@ public class CategoryDAO {
                 Category c = new Category();
                 c.setCategoryId(rs.getLong("CategoryID"));
                 c.setName(rs.getString("Name"));
-<<<<<<< HEAD
-=======
-                c.setVatCode(rs.getString("VATCode"));
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 list.add(c);
             }
         } catch (Exception e) {
@@ -60,250 +52,50 @@ public class CategoryDAO {
         return list;
     }
 
-<<<<<<< HEAD
-=======
-    /**
-     * Get category by ID
-     */
-    public Category getCategoryById(long categoryId) {
-        String sql = "SELECT CategoryID, Name, VATCode FROM Category WHERE CategoryID = ?";
-        Category category = null;
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setLong(1, categoryId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    category = new Category();
-                    category.setCategoryId(rs.getLong("CategoryID"));
-                    category.setName(rs.getString("Name"));
-                    category.setVatCode(rs.getString("VATCode"));
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return category;
-    }
-
-    /**
-     * Add new category
-     */
-    public boolean addCategory(Category category) {
-        String sql = "INSERT INTO Category (Name, VATCode) VALUES (?, ?)";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, category.getName());
-            ps.setString(2, category.getVatCode());
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    public void deleteCategoriesByProductId(long productId) throws SQLException {
+        String sql = "DELETE FROM ProductCategory WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.executeUpdate();
         }
     }
 
-    /**
-     * Update category
-     */
-    public boolean updateCategory(Category category) {
-        String sql = "UPDATE Category SET Name = ?, VATCode = ? WHERE CategoryID = ?";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, category.getName());
-            ps.setString(2, category.getVatCode());
-            ps.setLong(3, category.getCategoryId());
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+    public void addCategoryToProduct(long productId, long categoryId) throws SQLException {
+        String sql = "INSERT INTO ProductCategory (ProductID, CategoryID) VALUES (?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, categoryId);
+            ps.executeUpdate();
         }
     }
 
-    /**
-     * Delete category
-     */
-    public boolean deleteCategory(long categoryId) {
-        String sql = "DELETE FROM Category WHERE CategoryID = ?";
+    public List<Category> getCategoriesByShopId(long shopId) throws SQLException {
+        String sql = """
+                    SELECT DISTINCT c.CategoryID, c.Name
+                    FROM Category c
+                    INNER JOIN ProductCategory pc ON c.CategoryID = pc.CategoryID
+                    INNER JOIN Products p ON pc.ProductID = p.ProductID
+                    WHERE p.ShopID = ? AND p.Status IN ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK', 'PENDING')
+                    ORDER BY c.Name
+                """;
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        List<Category> categories = new ArrayList<>();
 
-            ps.setLong(1, categoryId);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Category category = new Category();
+                category.setCategoryId(rs.getLong("CategoryID"));
+                category.setName(rs.getString("Name"));
+                categories.add(category);
+            }
         }
+
+        return categories;
     }
-
-    /**
-     * Check if category is in use by any product
-     */
-    public boolean isCategoryInUse(long categoryId) {
-        String sql = "SELECT COUNT(*) FROM ProductCategory WHERE CategoryID = ?";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setLong(1, categoryId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * Check if category name exists (for uniqueness validation)
-     */
-    public boolean categoryNameExists(String name) {
-        String sql = "SELECT COUNT(*) FROM Category WHERE Name = ?";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, name);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * Check if category name exists excluding a specific category ID (for update validation)
-     */
-    public boolean categoryNameExistsExcludingId(String name, long excludeCategoryId) {
-        String sql = "SELECT COUNT(*) FROM Category WHERE Name = ? AND CategoryID != ?";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, name);
-            ps.setLong(2, excludeCategoryId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    /**
-     * Get categories with pagination and filtering
-     */
-    public List<Category> getCategoriesWithPagination(String searchTerm, String vatCodeFilter,
-                                                       int offset, int limit) {
-        List<Category> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder(
-            "SELECT CategoryID, Name, VATCode FROM Category WHERE 1=1"
-        );
-
-        // Add search filter
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            sql.append(" AND Name LIKE ?");
-        }
-
-        // Add VAT code filter
-        if (vatCodeFilter != null && !vatCodeFilter.trim().isEmpty()) {
-            sql.append(" AND VATCode = ?");
-        }
-
-        sql.append(" ORDER BY Name ASC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            int paramIndex = 1;
-
-            // Set search parameter
-            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-                ps.setString(paramIndex++, "%" + searchTerm.trim() + "%");
-            }
-
-            // Set VAT code filter parameter
-            if (vatCodeFilter != null && !vatCodeFilter.trim().isEmpty()) {
-                ps.setString(paramIndex++, vatCodeFilter.trim());
-            }
-
-            // Set pagination parameters
-            ps.setInt(paramIndex++, offset);
-            ps.setInt(paramIndex, limit);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Category c = new Category();
-                    c.setCategoryId(rs.getLong("CategoryID"));
-                    c.setName(rs.getString("Name"));
-                    c.setVatCode(rs.getString("VATCode"));
-                    list.add(c);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    /**
-     * Get total count of categories with filtering
-     */
-    public int getCategoryCount(String searchTerm, String vatCodeFilter) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM Category WHERE 1=1");
-
-        // Add search filter
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            sql.append(" AND Name LIKE ?");
-        }
-
-        // Add VAT code filter
-        if (vatCodeFilter != null && !vatCodeFilter.trim().isEmpty()) {
-            sql.append(" AND VATCode = ?");
-        }
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            int paramIndex = 1;
-
-            // Set search parameter
-            if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-                ps.setString(paramIndex++, "%" + searchTerm.trim() + "%");
-            }
-
-            // Set VAT code filter parameter
-            if (vatCodeFilter != null && !vatCodeFilter.trim().isEmpty()) {
-                ps.setString(paramIndex, vatCodeFilter.trim());
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
 }

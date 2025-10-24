@@ -1,0 +1,110 @@
+.comment {
+    background-color: #fff;
+    border-radius: 10px;
+}
+
+.comment .comment-title {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.comment .comment-header {
+    background-color: var(--color-one);
+    padding: 20px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.comment .comment-average {
+    font-size: 50px;
+    font-weight: 600;
+    color: #fff;
+}
+
+
+.comment .comment-filter .button-outline {
+    background-color: #fff;
+    padding: 3px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--color-font);
+    font-size: 16px;
+    border-color: var(--color-one);
+    margin-left: 5px;
+}
+
+.comment .comment-filter .button-outline:hover {
+    background-color: var(--color-three);
+    color: #fff;
+
+}
+
+.comment .comment-filter .active {
+    color: #fff;
+    background-color: var(--color-three);
+}
+
+.comment .comment-body {
+    margin: 10px 50px;
+    padding: 10px 0;
+    border-bottom: 2px solid var(--color-background);
+}
+
+.comment .comment-body .comment-body__desc {
+    color: var(--color-one);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.comment .comment-body .comment-image {
+    padding-right: 0;
+
+}
+
+.comment .comment-body .comment-image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.comment .comment-body .comment-review img {
+    width: 72px;
+    height: 72px;
+}
+
+.comment #reviewCarousel .carousel-item img {
+    max-height: 500px;
+    object-fit: contain;
+    margin: 0 auto;
+    display: block;
+}
+
+.comment .comment-image-real {
+    margin-top: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.comment .comment-image-real img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+    margin: 5px;
+    padding: 5px;
+
+}
+
+.comment .comment-image-real img:hover {
+    transform: scale(1.05);
+    border-color: var(--color-one);
+
+}
+
+.comment .comment-image-real img.active {
+    border-color: var(--color-one);
+}

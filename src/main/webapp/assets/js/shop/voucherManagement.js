@@ -24,17 +24,6 @@ function initializePromotionManagement() {
       this.style.transform = "translateY(-5px)";
     });
   });
-
-  // Initialize table row hover effects
-  const tableRows = document.querySelectorAll(".voucher-table tbody tr");
-  tableRows.forEach((row) => {
-    row.addEventListener("click", function () {
-      const voucherCode = this.querySelector(
-        ".voucher-code strong"
-      ).textContent;
-      viewVoucher(voucherCode);
-    });
-  });
 }
 
 // Initialize sidebar functionality
@@ -119,45 +108,58 @@ function deleteVoucher(voucherCode) {
 // Show delete confirmation modal
 function showDeleteConfirmation(voucherCode) {
   const modalHTML = `
-        <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteConfirmModalLabel">Xác nhận xóa voucher</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center">
-                            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
-                            <h5 class="mt-3">Bạn có chắc chắn muốn xóa voucher này?</h5>
-                            <p class="text-muted">Mã voucher: <strong>${voucherCode}</strong></p>
-                            <p class="text-danger">Hành động này không thể hoàn tác!</p>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete('${voucherCode}')">Xóa voucher</button>
-                    </div>
-                </div>
-            </div>
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Xác nhận xóa voucher</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+            <h5 class="mt-3">Bạn có chắc chắn muốn xóa voucher này?</h5>
+            <p class="text-muted">Mã voucher: <strong>${voucherCode}</strong></p>
+            <p class="text-danger">Hành động này không thể hoàn tác!</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+            <!-- Form POST để xóa -->
+            <form id="deleteVoucherForm" action="/shop/voucher?action=delete" method="post">
+              <input type="hidden" name="voucherCode" value="${voucherCode}">
+              <button type="submit" id="deleteVoucherBtn" class="btn btn-danger">
+                Xóa voucher
+              </button>
+            </form>
+          </div>
         </div>
-    `;
+      </div>
+    </div>
+  `;
 
-  // Add modal to page
+  // Xóa modal cũ nếu có (tránh nhân bản)
+  const existingModal = document.getElementById("deleteConfirmModal");
+  if (existingModal) existingModal.remove();
+
+  // Thêm modal mới vào body
   document.body.insertAdjacentHTML("beforeend", modalHTML);
 
-  // Show modal
+  // Hiển thị modal
   const modal = new bootstrap.Modal(
     document.getElementById("deleteConfirmModal")
   );
   modal.show();
 
-  // Remove modal from DOM when hidden
-  document
-    .getElementById("deleteConfirmModal")
-    .addEventListener("hidden.bs.modal", function () {
-      this.remove();
-    });
+  // Ngăn người dùng bấm nhiều lần nút Xóa
+  const form = document.getElementById("deleteVoucherForm");
+  const btn = document.getElementById("deleteVoucherBtn");
+
+  form.addEventListener("submit", function (e) {
+    btn.disabled = true;
+    btn.innerHTML = `
+      <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      Đang xóa...
+    `;
+  });
 }
 
 // Confirm delete voucher
@@ -265,6 +267,10 @@ function filterByStatus() {
         break;
       case "expired":
         shouldShow = statusText.includes("hết");
+        break;
+      case "out_of_stock":
+        shouldShow =
+          statusText.includes("voucher") || statusText.includes("hết voucher");
         break;
       default:
         shouldShow = true;

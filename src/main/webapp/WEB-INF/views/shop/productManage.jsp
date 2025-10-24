@@ -9,23 +9,12 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Quản lý Sản phẩm - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/style.min.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css">
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-products">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                     <div id="layoutSidenav">
@@ -50,15 +39,7 @@
                                 </c:if>
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h1 class="mt-4 product-management-title">Quản lý Sản phẩm</h1>
-                                        <nav aria-label="breadcrumb">
-                                            <ol class="breadcrumb">
-                                                <li class="breadcrumb-item"><a href="home.html">Trang chủ</a></li>
-                                                <li class="breadcrumb-item"><a href="adminDashboard.html">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item active" aria-current="page">Sản phẩm</li>
-                                            </ol>
-                                        </nav>
+                                        <h1 class="mt-4 product-management-title">Quản lý Sách</h1>
                                     </div>
 
                                     <!-- Filter and Add Product Section -->
@@ -67,7 +48,7 @@
                                             <button type="button" class="btn btn-success float-end"
                                                 data-bs-toggle="modal" data-bs-target="#addProductModal">
                                                 <i class="bi bi-plus-circle me-1"></i>
-                                                Thêm sản phẩm
+                                                Thêm sách
                                             </button>
                                             <br /><br />
                                             <div class="card mb-4">
@@ -75,7 +56,7 @@
                                                     class="card-header d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <i class="bi bi-funnel me-1"></i>
-                                                        Bộ lọc sản phẩm
+                                                        Bộ lọc sách
                                                     </div>
                                                 </div>
                                                 <div class="card-body">
@@ -83,22 +64,25 @@
                                                         <div class="col-md-4">
                                                             <label for="categoryFilter" class="form-label">Tất cả danh
                                                                 mục</label>
-                                                            <select class="form-select" id="categoryFilter">
-                                                                <option value="">Tất cả danh mục</option>
-                                                                <option value="van-hoc">Văn học</option>
-                                                                <option value="khoa-hoc">Khoa học</option>
-                                                                <option value="thieu-nhi">Thiếu nhi</option>
-                                                                <option value="ky-thuat">Kỹ thuật</option>
+                                                            <select class="form-select" id="categoryFilter"
+                                                                name="categoryFilter">
+                                                                <option value="all">Tất cả danh mục</option>
+                                                                <c:forEach var="category" items="${listCategoryShop}">
+                                                                    <option value="${category.categoryId}">
+                                                                        ${category.name}</option>
+                                                                </c:forEach>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
-                                                            <label for="statusFilter" class="form-label">Tất cả trạng
+                                                            <label for="statusFilter" class="form-label">Tất cả
+                                                                trạng
                                                                 thái</label>
                                                             <select class="form-select" id="statusFilter">
-                                                                <option value="">Tất cả trạng thái</option>
-                                                                <option value="active">Đang bán</option>
-                                                                <option value="inactive">Ngừng bán</option>
-                                                                <option value="out-of-stock">Hết hàng</option>
+                                                                <option value="all">Tất cả trạng thái</option>
+                                                                <option value="PENDING">Chờ duyệt</option>
+                                                                <option value="ACTIVE">Đang bán</option>
+                                                                <option value="INACTIVE">Ngừng bán</option>
+                                                                <option value="OUT_OF_STOCK">Hết hàng</option>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
@@ -129,7 +113,7 @@
                                             <table id="datatablesSimple" class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>Sản phẩm</th>
+                                                        <th>Sách </th>
                                                         <th>Thể loại</th>
                                                         <th>Giá bán</th>
                                                         <th>Số lượng</th>
@@ -142,7 +126,7 @@
                                                         <tr>
                                                             <td colspan="6">
                                                                 <div class="alert alert-warning mb-0">
-                                                                    Chưa có sản phẩm để hiển thị.
+                                                                    Chưa có sách để hiển thị.
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -177,7 +161,11 @@
                                                             </td>
 
                                                             <!-- Cột Thể loại -->
-                                                            <td>
+                                                            <td data-categories="
+                                                            <c:forEach var='c' items='${p.categories}' varStatus='i'>
+                                                                    ${c.name}<c:if test='${!i.last}'>,</c:if>
+                                                            </c:forEach>
+                                                                ">
                                                                 <c:choose>
                                                                     <c:when test="${fn:length(p.categories) == 1}">
                                                                         ${p.categories[0].name}
@@ -191,13 +179,19 @@
                                                                 </c:choose>
                                                             </td>
 
+
                                                             <!-- Giá bán -->
                                                             <td>
-                                                                <span class="fw-bold text-danger">${p.salePrice}₫</span>
+                                                                <span class="fw-bold text-danger">
+                                                                    <fmt:formatNumber value="${p.salePrice}"
+                                                                        type="number" groupingUsed="true" />₫
+                                                                </span>
+
                                                                 <c:if test="${p.salePrice lt p.originalPrice}">
                                                                     <span
                                                                         class="text-muted text-decoration-line-through me-1">
-                                                                        ${p.originalPrice}₫
+                                                                        <fmt:formatNumber value="${p.originalPrice}"
+                                                                            type="number" groupingUsed="true" />₫
                                                                     </span>
                                                                 </c:if>
                                                             </td>
@@ -209,7 +203,8 @@
                                                             <td>
                                                                 <c:choose>
                                                                     <c:when test="${p.status eq 'ACTIVE'}">
-                                                                        <span class="badge bg-success">Đang bán</span>
+                                                                        <span class="badge bg-success">Đang
+                                                                            bán</span>
                                                                     </c:when>
                                                                     <c:when test="${p.status eq 'INACTIVE'}">
                                                                         <span class="badge bg-secondary">Ngừng
@@ -219,58 +214,52 @@
                                                                         <span class="badge bg-info text-dark">Chờ
                                                                             Duyệt</span>
                                                                     </c:when>
+                                                                    <c:when test="${p.status eq 'OUT_OF_STOCK'}">
+                                                                        <span class="badge bg-danger">Hết
+                                                                            hàng</span>
+                                                                    </c:when>
                                                                     <c:otherwise>
                                                                         <span class="badge bg-dark">Không xác
                                                                             định</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
-                                                            <!-- Thao tác -->
                                                             <td>
                                                                 <!-- Xem chi tiết -->
-                                                                <button class="btn btn-sm btn-outline-info me-1"
-                                                                    title="Xem chi tiết" data-bs-toggle="modal"
-                                                                    data-bs-target="#viewProductModal"
-                                                                    data-product-id="${p.productId}">
+                                                                <a href="/shop/product?action=detail&productId=${p.productId}"
+                                                                    class="btn btn-sm btn-outline-info me-1"
+                                                                    title="Xem chi tiết">
                                                                     <i class="bi bi-eye"></i>
-                                                                </button>
-
-                                                                <!-- Chỉnh sửa -->
+                                                                </a>
                                                                 <button
                                                                     class="btn btn-sm btn-outline-primary me-1 btn-update"
                                                                     data-bs-toggle="modal"
                                                                     data-bs-target="#updateProductModal"
-                                                                    data-product-id="${p.productId}"
-                                                                    data-product-title="${p.title}"
-                                                                    data-product-description="${p.description}"
-                                                                    data-product-originalprice="${p.originalPrice}"
-                                                                    data-product-saleprice="${p.salePrice}"
-                                                                    data-product-quantity="${p.quantity}"
-                                                                    data-product-weight="${p.weight}"
-                                                                    data-product-publisherid="${p.publisherId}"
-                                                                    data-product-publisheddate="${p.publishedDate}"
-                                                                    data-product-translator="${p.bookDetail.translator}"
-                                                                    data-product-version="${p.bookDetail.version}"
-                                                                    data-product-covertype="${p.bookDetail.coverType}"
-                                                                    data-product-pages="${p.bookDetail.pages}"
-                                                                    data-product-size="${p.bookDetail.size}"
-                                                                    data-product-languagecode="${p.bookDetail.languageCode}"
-                                                                    data-product-isbn="${p.bookDetail.isbn}"
-                                                                    data-product-authors="<c:forEach var='a'
-                                                                        items='${p.authors}' varStatus='st'>${a.authorName}
-                                                                        <c:if test='${!st.last}'>|</c:if>
-                                                                    </c:forEach>" data-product-categories="<c:forEach var='c'
-                                                                        items='${p.categories}' varStatus='st'>
-                                                                        ${c.categoryId}<c:if test='${!st.last}'>,</c:if>
-                                                                    </c:forEach>" data-product-images="<c:forEach var='img'
-                                                                        items='${p.imageUrls}' varStatus='st'>
-                                                                        ${img}*${img == p.primaryImageUrl ? '1':'0'}
-                                                                        <c:if test='${!st.last}'>|</c:if>
-                                                                    </c:forEach>">
+                                                                    data-product-id="${p.productId}">
                                                                     <i class="bi bi-pencil"></i>
                                                                 </button>
-
-                                                                <!-- Xóa -->
+                                                                <c:choose>
+                                                                    <c:when test="${p.status eq 'ACTIVE'}">
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-warning me-1"
+                                                                            title="Ngừng bán" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmDeactivateModal"
+                                                                            onclick="setDeactivateModal('${p.productId}', '${fn:escapeXml(p.title)}')">
+                                                                            <i class="bi bi-slash-circle"></i>
+                                                                        </button>
+                                                                    </c:when>
+                                                                    <c:when test="${p.status eq 'PENDING'}">
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-success me-1"
+                                                                            title="Kích hoạt lại" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmActivateModal"
+                                                                            onclick="document.getElementById('activateProductId').value='${p.productId}'">
+                                                                            <i class="bi bi-check-circle"></i>
+                                                                        </button>
+                                                                    </c:otherwise>
+                                                                </c:choose>
                                                                 <button class="btn btn-sm btn-outline-danger btn-delete"
                                                                     title="Xóa" data-product-id="${p.productId}"
                                                                     data-product-title="${p.title}"
@@ -284,11 +273,6 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
-                                            <jsp:param name="page" value="${page}" />
-                                            <jsp:param name="totalPages" value="${totalPages}" />
-                                            <jsp:param name="baseUrl" value="${ctx}/shop/product" />
-                                        </jsp:include>
                                     </div>
                                 </div>
                             </main>
@@ -303,13 +287,13 @@
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header custom-delete">
-                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Xác nhận xóa sản phẩm</h5>
+                                    <h5 class="modal-title" id="confirmDeleteModalLabel">Xác nhận xóa sách</h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                                         aria-label="Đóng"></button>
                                 </div>
 
                                 <div class="modal-body">
-                                    <p id="deleteMessage">Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+                                    <p id="deleteMessage">Bạn có chắc chắn muốn xóa sách này không?</p>
                                 </div>
 
                                 <div class="modal-footer">
@@ -319,19 +303,78 @@
                                     <!-- Nút Xóa -->
                                     <form id="deleteForm" action="/shop/product?action=delete" method="post">
                                         <input type="hidden" name="productId" id="deleteProductId">
-                                        <button type="submit" class="btn btn-confirm-delete">Xóa</button>
+                                        <button type="submit" class="btn btn-confirm-delete"
+                                            data-action-text="Đang xóa...">Xóa</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Modal: Xác nhận ngừng kinh doanh -->
+                    <div class="modal fade" id="confirmDeactivateModal" tabindex="-1"
+                        aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header custom-warning">
+                                    <h5 class="modal-title" id="confirmDeactivateModalLabel">Xác nhận ngừng bán</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn ngừng bán sản phẩm <strong
+                                            id="productNameInModal"></strong> không?</p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/shop/product?action=toggleStatus" method="post">
+                                        <input type="hidden" name="productId" id="deactivateProductId">
+                                        <input type="hidden" name="newStatus" value="INACTIVE">
+                                        <button type="submit" class="btn btn-warning">Ngừng bán</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!-- Modal: Xác nhận kích hoạt lại -->
+                    <div class="modal fade" id="confirmActivateModal" tabindex="-1"
+                        aria-labelledby="confirmActivateModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header custom-success">
+                                    <h5 class="modal-title" id="confirmActivateModalLabel">Xác nhận kích hoạt sản phẩm
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn kích hoạt lại sản phẩm này không?</p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/shop/product?action=toggleStatus" method="post">
+                                        <input type="hidden" name="productId" id="activateProductId">
+                                        <input type="hidden" name="newStatus" value="PENDING">
+                                        <button type="submit" class="btn btn-success">Kích hoạt lại</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Add Product Modal -->
                     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
                         aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="addProductModalLabel">Thêm sản phẩm mới</h5>
+                                    <h5 class="modal-title" id="addProductModalLabel">Thêm sách mới</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
@@ -619,7 +662,8 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                <label class="form-check-label" for="cat11">Phát
+                                                                    triển
                                                                     bản thân</label>
                                                             </div>
                                                             <div class="form-check">
@@ -714,7 +758,7 @@
                                                 </div>
 
                                                 <div class="form-text">
-                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sách.
                                                 </div>
                                             </div>
                                         </div>
@@ -722,7 +766,7 @@
 
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Hình ảnh sản phẩm</h6>
+                                                <h6 class="text-muted mb-3">Hình ảnh sách</h6>
                                             </div>
                                         </div>
 
@@ -731,10 +775,12 @@
                                             <input type="file" class="form-control" id="productImages"
                                                 name="ProductImages" multiple accept="image/*">
                                             <div class="form-text text-secondary">
-                                                Có thể đăng từ <strong>2 đến 20 ảnh</strong>. Mỗi ảnh tối đa <strong>5
+                                                Có thể đăng từ <strong>2 đến 20 ảnh</strong>. Mỗi ảnh tối đa
+                                                <strong>5
                                                     MB</strong>.
                                             </div>
-                                            <div id="imageError" class="text-danger mt-1" style="display:none;"></div>
+                                            <div id="imageError" class="text-danger mt-1" style="display:none;">
+                                            </div>
                                         </div>
 
                                         <!-- Preview -->
@@ -744,9 +790,10 @@
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="addProductForm" class="btn btn-success">
+                                            <button type="submit" form="addProductForm" class="btn btn-success"
+                                                data-action-text="Đang lưu...">
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sản phẩm
+                                                Đăng bán chờ duyệt
                                             </button>
                                         </div>
                                     </form>
@@ -761,14 +808,16 @@
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="updateProductModalLabel">Update sản phẩm mới</h5>
+                                    <h5 class="modal-title" id="updateProductModalLabel">Update sách mới</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="updateProductForm" action="/products/create?action=create" method="POST"
+                                    <form id="updateProductForm" action="/shop/product?action=update" method="POST"
                                         enctype="multipart/form-data">
-                                        <!-- Thông tin cơ bản -->
+                                        <input type="hidden" id="updateMode" name="updateMode">
+                                        <input type="hidden" id="productIdUpdate" name="ProductID">
+                                        <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Thông tin cơ bản</h6>
@@ -794,36 +843,42 @@
                                         <!-- Giá và tồn kho -->
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Giá và tồn kho</h6>
+                                                <h6 class="text-muted mb-3">Giá và số lượng</h6>
                                             </div>
                                         </div>
 
                                         <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <label for="productOriginalPrice" class="form-label">Giá gốc <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control"
-                                                    id="productOriginalPriceUpdate" name="OriginalPrice"
-                                                    placeholder="140000" required>
+                                            <div class="col-md-6">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <label for="productOriginalPrice" class="form-label">Giá gốc
+                                                            <span class="text-danger">*</span></label>
+                                                        <input type="number" step="1" min="1" class="form-control"
+                                                            id="productOriginalPriceUpdate" name="OriginalPrice"
+                                                            placeholder="140000" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="productSalePrice" class="form-label">Giá bán
+                                                            <span class="text-danger">*</span></label>
+                                                        <input type="number" step="1" min="1" class="form-control"
+                                                            id="productSalePriceUpdate" name="SalePrice"
+                                                            placeholder="122000" required>
+                                                    </div>
+                                                    <div id="priceErrorUpdate" class="mt-2"
+                                                        style="display: none; color: red;"></div>
+                                                </div>
                                             </div>
                                             <div class="col-md-3">
-                                                <label for="productSalePrice" class="form-label">Giá bán <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control"
-                                                    id="productSalePriceUpdate" name="SalePrice" placeholder="122000"
-                                                    required>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label for="productQuantity" class="form-label">Số lượng tồn kho <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="productQuantityUpdate"
-                                                    name="Quantity" placeholder="0" required>
+                                                <label for="productQuantity" class="form-label">Số lượng tồn kho
+                                                    <span class="text-danger">*</span></label>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="productQuantityUpdate" name="Quantity" placeholder="0" required>
                                             </div>
                                             <div class="col-md-3">
                                                 <label for="weight" class="form-label">Khối lượng (gram) <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" step="0.01" class="form-control" id="weightUpdate"
-                                                    name="Weight" placeholder="500" required>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="weightUpdate" name="Weight" placeholder="500" required>
                                             </div>
                                         </div>
 
@@ -836,19 +891,39 @@
 
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label for="publisherId" class="form-label">Nhà xuất bản
-                                                    (PublisherID)</label>
-                                                <select class="form-select" id="publisherIdUpdate" name="PublisherID">
-                                                    <option value="">Chọn NXB</option>
-                                                    <!-- render danh sách Publisher từ DB -->
-                                                    <option value="1">NXB Trẻ</option>
-                                                    <option value="2">NXB Giáo dục</option>
-                                                </select>
+                                                <label for="publisherName" class="form-label">Nhà xuất bản</label>
+                                                <input list="publisherList" class="form-control"
+                                                    id="publisherNameUpdate" name="PublisherName"
+                                                    placeholder="Nhập tên nhà xuất bản..." required>
                                             </div>
+                                            <datalist id="publisherListUpdate">
+                                                <option value="Nhà xuất bản Giáo dục Việt Nam">
+                                                <option value="Nhà xuất bản Trẻ">
+                                                <option value="Nhà xuất bản Kim Đồng">
+                                                <option value="Nhà xuất bản Tổng hợp Thành phố Hồ Chí Minh">
+                                                <option value="Nhà Xuất Bản TP.HCM">
+                                                <option value="Nhà xuất bản Hội Nhà văn">
+                                                <option value="Nhà xuất bản Chính trị Quốc gia Sự thật">
+                                                <option value="Nhà xuất bản Phụ nữ Việt Nam">
+                                                <option value="Nhà xuất bản Lao Động">
+                                                <option value="Nhà xuất bản Hồng Đức">
+                                                <option value="Nhà xuất bản Dân Trí">
+                                                <option value="Nhà xuất bản Tư pháp">
+                                                <option value="Nhà xuất bản Khoa học Xã hội">
+                                                <option value="Nhà xuất bản Khoa học và Kỹ thuật">
+                                                <option value="Nhà xuất bản Y học">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Hà Nội">
+                                                <option value="Nhà xuất bản Đại học Quốc gia Thành phố Hồ Chí Minh">
+                                                <option value="Nhà xuất bản Xây dựng">
+                                                <option value="Nhà xuất bản Thông tin & Truyền thông">
+                                                <option value="Nhà xuất bản Tri thức">
+                                                <option value="Nhà xuất bản Hà Nội">
+                                            </datalist>
                                             <div class="col-md-6">
-                                                <label for="publishedDate" class="form-label">Ngày phát hành</label>
+                                                <label for="publishedDateUpdate" class="form-label">Ngày phát
+                                                    hành</label>
                                                 <input type="date" class="form-control" id="publishedDateUpdate"
-                                                    name="PublishedDate">
+                                                    name="PublishedDate" required>
                                             </div>
                                         </div>
 
@@ -886,8 +961,8 @@
                                             <div class="col-md-6">
                                                 <label for="pages" class="form-label">Số trang <span
                                                         class="text-danger">*</span></label>
-                                                <input type="number" class="form-control" id="pagesUpdate" name="Pages"
-                                                    placeholder="250" required>
+                                                <input type="number" step="1" min="1" class="form-control"
+                                                    id="pagesUpdate" name="Pages" placeholder="250" required>
                                             </div>
                                         </div>
 
@@ -933,7 +1008,7 @@
                                                 <!-- Vùng chứa các ô nhập tác giả -->
                                                 <div id="authors-containerUpdate">
                                                     <div class="input-group mb-2">
-                                                        <input type="text" class="form-control" name="authorsUpdate"
+                                                        <input type="text" class="form-control" name="authors"
                                                             placeholder="Tên tác giả" required>
                                                         <button type="button" class="btn btn-outline-danger"
                                                             onclick="removeAuthor(this)">🗑</button>
@@ -1026,7 +1101,8 @@
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
                                                                     name="CategoryIDs" value="11" id="cat11">
-                                                                <label class="form-check-label" for="cat11">Phát triển
+                                                                <label class="form-check-label" for="cat11">Phát
+                                                                    triển
                                                                     bản thân</label>
                                                             </div>
                                                             <div class="form-check">
@@ -1121,7 +1197,7 @@
                                                 </div>
 
                                                 <div class="form-text">
-                                                    Chọn một hoặc nhiều thể loại phù hợp với sản phẩm.
+                                                    Chọn một hoặc nhiều thể loại phù hợp với sách.
                                                 </div>
                                             </div>
                                         </div>
@@ -1129,28 +1205,32 @@
                                         <!-- Hình ảnh sản phẩm -->
                                         <div class="row">
                                             <div class="col-12">
-                                                <h6 class="text-muted mb-3">Hình ảnh sản phẩm</h6>
+                                                <h6 class="text-muted mb-3">Hình ảnh sách</h6>
                                             </div>
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="productImages" class="form-label">Chọn hình ảnh</label>
-                                            <input type="file" class="form-control" id="productImagesUpdate"
-                                                name="ProductImagesUpdate" multiple accept="image/*">
-                                            <div class="form-text">Chọn tối đa 5 hình ảnh. Kích thước tối đa mỗi file:
-                                                2MB</div>
-                                            <div id="imageErrorUpdate" class="text-danger mt-1" style="display:none;">
-                                            </div>
+                                            <label class="form-label fw-semibold">Chọn hình ảnh</label>
+                                            <input type="file" id="productImagesUpdate" name="productImagesUpdate"
+                                                class="form-control mb-2" accept="image/*" multiple />
+                                            <small class="text-muted d-block mb-2">
+                                                Có thể đăng từ <b>2 đến 20</b> ảnh. Mỗi ảnh tối đa <b>5 MB</b>.
+                                            </small>
+                                            <div id="imageErrorMessageUpdate" class="text-danger small mb-2"></div>
+                                            <div id="imagePreviewUpdate" class="row mb-3"></div>
+                                            <input type="hidden" name="removedImageIds" id="removedImageIds">
+                                            <input type="hidden" name="primaryImageUpdate" id="primaryImageUpdate">
                                         </div>
-                                        <div id="imagePreviewUpdate" class="row mb-3"></div>
 
                                         <!-- Nút submit -->
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Hủy</button>
-                                            <button type="submit" form="updateProductForm" class="btn btn-success">
+                                            <button type="submit" form="updateProductForm" class="btn btn-success"
+                                                data-action-text="Đang cập nhật sách...">
+
                                                 <i class="bi bi-check-circle me-1"></i>
-                                                Lưu sản phẩm
+                                                Cập nhật sách
                                             </button>
                                         </div>
                                     </form>
@@ -1159,12 +1239,16 @@
                         </div>
                     </div>
 
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script
-                        src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/scripts.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.1"></script>
+                    <script>
+                        function setDeactivateModal(productId, productName) {
+                            document.getElementById('deactivateProductId').value = productId;
+                            document.getElementById('productNameInModal').textContent = productName;
+                        }
+                    </script>
                 </body>
 
                 </html>

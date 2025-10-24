@@ -3,6 +3,9 @@ package com.group01.aurora_demo.auth.dao;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.mindrot.jbcrypt.BCrypt;
+
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
@@ -25,13 +28,7 @@ public class UserDAO {
                     Timestamp ts = rs.getTimestamp("CreatedAt");
                     u.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
                     u.setStatus(rs.getString("Status"));
-                    
-                    try {
-                        u.setAvatarUrl(rs.getString("AvatarUrl"));
-                    } catch (SQLException e) {
-                        // AvatarUrl might be null
-                    }
-                    
+                    u.setAvatarUrl(rs.getString("AvatarUrl"));
                     return u;
                 }
             }
@@ -47,10 +44,8 @@ public class UserDAO {
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, provider);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
                 User u = new User();
                 u.setUserID(rs.getLong("UserID"));
                 u.setEmail(rs.getString("Email"));
@@ -59,19 +54,8 @@ public class UserDAO {
                 Timestamp ts = rs.getTimestamp("CreatedAt");
                 u.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
                 u.setAuthProvider(rs.getString("AuthProvider"));
-                
-                try {
-                    u.setStatus(rs.getString("Status"));
-                } catch (SQLException e) {
-                    // Status might be null
-                    u.setStatus("active");
-                }
-                
-                try {
-                    u.setAvatarUrl(rs.getString("AvatarUrl"));
-                } catch (SQLException e) {
-                    // AvatarUrl might be null
-                }
+                u.setStatus(rs.getString("Status"));
+                u.setAvatarUrl(rs.getString("AvatarUrl"));
                 return u;
             }
         } catch (Exception e) {
@@ -81,7 +65,7 @@ public class UserDAO {
     }
 
     public boolean createAccount(User user) {
-        String sql = "INSERT INTO dbo.Users (Email, FullName, Password, AuthProvider) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO dbo.Users (Email, FullName, Password, AuthProvider, Status) VALUES (?, ?, ?, ?, 'ACTIVE')";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, user.getEmail());
@@ -101,7 +85,7 @@ public class UserDAO {
     public List<User> getAllUsers(int page, int pageSize) {
         List<User> users = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        
+
         String sql = "SELECT u.UserID, u.Email, u.FullName, "
                 + "u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, "
                 + "STUFF((SELECT ', ' + r.RoleName "
@@ -112,12 +96,12 @@ public class UserDAO {
                 + "FROM dbo.Users u "
                 + "ORDER BY u.UserID "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
-                
+
         try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, offset);
             ps.setInt(2, pageSize);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     users.add(extractUserFromResultSet(rs));
@@ -126,18 +110,18 @@ public class UserDAO {
         } catch (SQLException e) {
             System.err.println("Error getting all users: " + e.getMessage());
         }
-        
+
         return users;
     }
-    
+
     /**
      * Count total number of users
      */
     public int countUsers() {
         String sql = "SELECT COUNT(*) FROM dbo.Users";
         try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -146,14 +130,14 @@ public class UserDAO {
         }
         return 0;
     }
-    
+
     /**
      * Search users with filters and pagination
      */
     public List<User> searchUsers(String keyword, String status, String role, int page, int pageSize) {
         List<User> users = new ArrayList<>();
         int offset = (page - 1) * pageSize;
-        
+
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("SELECT u.UserID, u.Email, u.FullName, ")
                 .append("u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, ")
@@ -163,65 +147,65 @@ public class UserDAO {
                 .append("WHERE ur.UserID = u.UserID ")
                 .append("FOR XML PATH('')), 1, 2, '') as Roles ")
                 .append("FROM dbo.Users u ");
-                
+
         // Join with roles table if role filter is specified
         if (!role.isEmpty()) {
             sqlBuilder.append("JOIN dbo.UserRoles ur ON u.UserID = ur.UserID ")
-                     .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
+                    .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
         }
-        
+
         // Add WHERE clause for filtering
         boolean hasWhere = false;
-        
+
         // Keyword search (name or email)
         if (!keyword.isEmpty()) {
             sqlBuilder.append("WHERE (u.FullName LIKE ? OR u.Email LIKE ?) ");
             hasWhere = true;
         }
-        
+
         // Status filter
         if (!status.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
             sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) = LOWER(?) ");
             hasWhere = true;
         }
-        
+
         // Role filter
         if (!role.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
             sqlBuilder.append("r.RoleCode = ? ");
         }
-        
+
         // Add order by and pagination
         sqlBuilder.append("ORDER BY u.UserID ")
-                 .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-                
+                .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
         try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-            
+                PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+
             int paramIndex = 1;
-            
+
             // Set keyword parameters
             if (!keyword.isEmpty()) {
                 ps.setString(paramIndex++, "%" + keyword + "%");
                 ps.setString(paramIndex++, "%" + keyword + "%");
             }
-            
+
             // Set status parameter
             if (!status.isEmpty()) {
                 System.out.println("Filtering by status: '" + status + "'");
                 ps.setString(paramIndex++, status);
             }
-            
+
             // Set role parameter
             if (!role.isEmpty()) {
                 ps.setString(paramIndex++, role);
             }
-            
+
             // Set pagination parameters
             ps.setInt(paramIndex++, offset);
             ps.setInt(paramIndex, pageSize);
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     User user = extractUserFromResultSet(rs);
@@ -232,66 +216,66 @@ public class UserDAO {
         } catch (SQLException e) {
             System.err.println("Error searching users: " + e.getMessage());
         }
-        
+
         return users;
     }
-    
+
     /**
      * Count users that match search criteria
      */
     public int countSearchResults(String keyword, String status, String role) {
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append("SELECT COUNT(*) FROM dbo.Users u ");
-        
+
         // Join with roles table if role filter is specified
         if (!role.isEmpty()) {
             sqlBuilder.append("JOIN dbo.UserRoles ur ON u.UserID = ur.UserID ")
-                     .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
+                    .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
         }
-        
+
         // Add WHERE clause for filtering
         boolean hasWhere = false;
-        
+
         // Keyword search (name or email)
         if (!keyword.isEmpty()) {
             sqlBuilder.append("WHERE (u.FullName LIKE ? OR u.Email LIKE ?) ");
             hasWhere = true;
         }
-        
+
         // Status filter
         if (!status.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
             sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) = LOWER(?) ");
             hasWhere = true;
         }
-        
+
         // Role filter
         if (!role.isEmpty()) {
             sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
             sqlBuilder.append("r.RoleCode = ? ");
         }
-                
+
         try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
-            
+                PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+
             int paramIndex = 1;
-            
+
             // Set keyword parameters
             if (!keyword.isEmpty()) {
                 ps.setString(paramIndex++, "%" + keyword + "%");
                 ps.setString(paramIndex++, "%" + keyword + "%");
             }
-            
+
             // Set status parameter
             if (!status.isEmpty()) {
                 ps.setString(paramIndex++, status);
             }
-            
+
             // Set role parameter
             if (!role.isEmpty()) {
                 ps.setString(paramIndex++, role);
             }
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1);
@@ -300,22 +284,22 @@ public class UserDAO {
         } catch (SQLException e) {
             System.err.println("Error counting search results: " + e.getMessage());
         }
-        
+
         return 0;
     }
-    
+
     /**
      * Toggle user account status between active and locked
      */
     public boolean toggleUserStatus(long userId) {
         // First check current status
         String checkSql = "SELECT LOWER(LTRIM(RTRIM(COALESCE(Status, 'active')))) AS Status FROM dbo.Users WHERE UserID = ?";
-        
+
         try (Connection conn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = conn.prepareStatement(checkSql)) {
+                PreparedStatement ps = conn.prepareStatement(checkSql)) {
             ps.setLong(1, userId);
             String currentStatus;
-            
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
                     System.err.println("User not found with ID: " + userId);
@@ -324,7 +308,7 @@ public class UserDAO {
                 currentStatus = rs.getString("Status");
                 System.out.println("Current status before toggle: '" + currentStatus + "'");
             }
-            
+
             // Toggle status - ensure we're using the exact string values
             String newStatus;
             if ("active".equals(currentStatus)) {
@@ -332,9 +316,9 @@ public class UserDAO {
             } else {
                 newStatus = "active";
             }
-            
+
             System.out.println("Setting new status to: '" + newStatus + "'");
-            
+
             // Update status
             String updateSql = "UPDATE dbo.Users SET Status = ? WHERE UserID = ?";
             try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
@@ -351,17 +335,17 @@ public class UserDAO {
         }
     }
 
-    public boolean updateLocalPasswordByUserId(long userId, String newHash) {
-        final String sql = "UPDATE dbo.Users SET Password=? WHERE UserID=? AND AuthProvider='LOCAL'";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, newHash);
-            ps.setLong(2, userId);
+    public boolean updatePasswordByEmail(String email, String resetPassword) {
+        final String sql = "UPDATE Users SET Password=? WHERE Email=? AND AuthProvider='LOCAL'";
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setString(1, resetPassword);
+            ps.setString(2, email);
             return ps.executeUpdate() > 0;
         } catch (java.sql.SQLException e) {
             System.out.println(e.getMessage());
-            return false;
         }
+        return false;
     }
 
     public boolean updateAvatarCustomer(long userID, String avatarUrl) {
@@ -381,11 +365,10 @@ public class UserDAO {
             return false;
         }
     }
-<<<<<<< HEAD
-=======
-    
+
     /**
-     * Helper method to extract User data from ResultSet without accessing non-existent columns
+     * Helper method to extract User data from ResultSet without accessing
+     * non-existent columns
      */
     private User extractUserFromResultSet(ResultSet rs) throws SQLException {
         User user = new User();
@@ -394,24 +377,76 @@ public class UserDAO {
         user.setFullName(rs.getString("FullName"));
         user.setAuthProvider(rs.getString("AuthProvider"));
         user.setStatus(rs.getString("Status"));
-        
+
         // Roles may be null for some queries
         try {
             user.setRoles(rs.getString("Roles"));
         } catch (SQLException e) {
             // Roles might not be in the result set
         }
-        
+
         try {
             user.setAvatarUrl(rs.getString("AvatarUrl"));
         } catch (SQLException e) {
             // AvatarUrl might be null
         }
-        
+
         Timestamp ts = rs.getTimestamp("CreatedAt");
         user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
-        
+
         return user;
     }
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
+
+    public User getHashPasswordById(long userId) {
+        String sql = "SELECT Password FROM Users WHERE UserID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setPassword(rs.getString("Password"));
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean checkPassword(Long userId, String plainPassword) {
+        User user = getHashPasswordById(userId);
+        if (user == null)
+            return false;
+        return BCrypt.checkpw(plainPassword, user.getPassword());
+    }
+
+    public boolean updatePassword(Long userId, String newPassword) {
+        String hash = BCrypt.hashpw(newPassword, BCrypt.gensalt(10));
+        String sql = "UPDATE Users SET Password = ? WHERE UserID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, hash);
+            ps.setLong(2, userId);
+            int rowsUpdated = ps.executeUpdate();
+            return rowsUpdated > 0;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean updateEmail(Long userId, String newEmail) {
+        String sql = "UPDATE Users SET Email = ? WHERE UserID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, newEmail);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("[ERROR] UserDAO#updateEmail: " + e.getMessage());
+        }
+        return false;
+    }
 }

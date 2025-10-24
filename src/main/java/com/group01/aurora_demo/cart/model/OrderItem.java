@@ -1,14 +1,19 @@
 package com.group01.aurora_demo.cart.model;
 
+import com.group01.aurora_demo.catalog.model.Product;
+
 public class OrderItem {
     private long orderItemId;
     private long orderShopId;
     private long productId;
     private Long flashSaleItemId;
     private int quantity;
-    private double unitPrice;
+    private Double originalPrice;
+    private Double salePrice;
     private double subtotal;
     private double vatRate;
+
+    private Product product;
 
     public long getOrderItemId() {
         return orderItemId;
@@ -50,14 +55,6 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public double getUnitPrice() {
-        return unitPrice;
-    }
-
-    public void setUnitPrice(double unitPrice) {
-        this.unitPrice = unitPrice;
-    }
-
     public double getVatRate() {
         return vatRate;
     }
@@ -72,6 +69,30 @@ public class OrderItem {
 
     public void setSubtotal(double subtotal) {
         this.subtotal = subtotal;
+    }
+
+    public Double getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Double originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public Double getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(Double salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
     }
 
 }

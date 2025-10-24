@@ -60,36 +60,27 @@
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
                                                             type="checkbox" ${cartItem.isChecked ? "checked" : "" }
                                                             hidden>
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
-                                                            target="_blank">
-<<<<<<< HEAD
-                                                            <img src="${ctx}/assets/images/catalog/thumbnails/${cartItem.product.images[0].url}"
-=======
+                                                        <a target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                                 class="img-fluid" alt="${cartItem.product.title}">
                                                         </a>
                                                     </div>
 
                                                     <div class="col-4">
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
-                                                            target="_blank">
+                                                        <a target="_blank">
                                                             <h6 class="cart-book-title">
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
-                                                        <p class="author">
-                                                            <c:out value="${cartItem.product.bookDetail.author}" />
-                                                        </p>
                                                     </div>
 
                                                     <div class="col-2 text-center">
                                                         <span class="price unit-price">
-                                                            <fmt:formatNumber value="${cartItem.unitPrice}"
+                                                            <fmt:formatNumber value="${cartItem.product.salePrice}"
                                                                 type="currency" />
                                                         </span><br>
                                                         <c:if
-                                                            test="${cartItem.product.originalPrice != cartItem.unitPrice}">
+                                                            test="${cartItem.product.originalPrice != cartItem.product.salePrice}">
                                                             <span class="text-muted text-decoration-line-through">
                                                                 <fmt:formatNumber
                                                                     value="${cartItem.product.originalPrice}"
@@ -142,12 +133,12 @@
                                                         </div>
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
-                                                                <div class="col-8">
+                                                                <div class="col-7">
                                                                     <input type="text"
                                                                         class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
-                                                                <div class="col-4">
+                                                                <div class="col-5">
                                                                     <button
                                                                         class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
@@ -239,38 +230,6 @@
                                             </div>
                                         </div>
                                     </c:forEach>
-                                    <div class="row cart-footer">
-                                        <div class="col-12">
-                                            <h6 class="cart-footer-title">Chọn hình thức thanh toán</h6>
-                                        </div>
-
-                                        <div class="row align-items-center mb-3">
-                                            <div class="col-1">
-                                                <input type="radio" name="payment" id="cash">
-                                            </div>
-                                            <div class="col-1">
-                                                <img src="./assets/images/payment/cash.png" alt="Cash" width="32">
-                                            </div>
-                                            <div class="col">
-                                                <label for="cash" class="mb-0">Thanh toán tiền mặt</label>
-                                            </div>
-                                        </div>
-
-                                        <div class="row align-items-center">
-                                            <div class="col-1">
-                                                <input type="radio" name="payment" id="vnpay">
-                                            </div>
-                                            <div class="col-1">
-                                                <img src="./assets/images/payment/vnpay.png" alt="VNPAY" width="32">
-                                            </div>
-                                            <div class="col">
-                                                <label for="vnpay" class="mb-0">
-                                                    VNPAY <br>
-                                                    <small class="text-muted">Quét Mã QR từ ứng dụng ngân hàng</small>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- RIGHT: địa chỉ + tổng tiền -->
@@ -296,7 +255,14 @@
                                                 <div class="col">
                                                     <span class="badge bg-success">Nhà</span>
                                                     <span> ${address.description},
-                                                        ${address.ward}, ${address.city}</span>
+                                                        ${address.ward}, ${address.district}, ${address.city}</span>
+                                                </div>
+                                            </div>
+                                            <div class="row mt-3">
+                                                <div class="col">
+                                                    <div class="alert alert-warning p-2 mb-0">
+                                                        <strong>Lưu ý:</strong> Sử dụng địa chỉ nhận hàng trước sáp nhập
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -331,7 +297,7 @@
                                             <span class="total-product-price">188.000đ</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span>Phí vận chuyển</span>
+                                            <span>Tổng tiền phí vận chuyển</span>
                                             <span class="shipping-fee">
                                                 <fmt:formatNumber value="${shippingFee}" /> đ
                                             </span>
@@ -341,16 +307,17 @@
                                             <span class="cart-pay-success discount">0đ</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span class="cart-pay-success">Tổng tiền phí vận chuyển
+                                            <span class="cart-pay-success">Giảm giá phí vận chuyển
                                             </span>
                                             <span class="cart-pay-success ship-discount">0đ</span>
                                         </div>
                                         <hr>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span class="cart-pay-danger">Tổng tiền thanh toán</span>
+                                            <span class="cart-pay-danger">Tổng thanh toán
+                                            </span>
                                             <span class="cart-pay-danger total-payment">142.000đ</span>
                                         </div>
-                                        <button class="button-three" id="btnPay">Đặt hàng</button>
+                                        <button class="button-three" id="btnPlaceOrder">Đặt hàng</button>
                                     </div>
                                 </div>
                             </div>
@@ -368,11 +335,11 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="row mb-3 align-items-center">
-                                                <div class="col-8">
+                                                <div class="col-7">
                                                     <input type="text" class="form-control"
                                                         placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
-                                                <div class="col-4">
+                                                <div class="col-5">
                                                     <button class="button-four w-100" id="applySystemVoucher">Áp
                                                         dụng</button>
                                                 </div>
@@ -553,21 +520,15 @@
                                                                 </c:if>
                                                             </div>
                                                             <p class="mb-1">Địa chỉ: ${address.description},
-                                                                ${address.ward}, ${address.city}
+                                                                ${address.ward}, ${address.district}, ${address.city}
                                                             </p>
                                                             <p class="mb-1">Việt Nam</p>
                                                             <p class="mb-3">Điện thoại: ${address.phone}</p>
-<<<<<<< HEAD
-                                                            <button type="button" class="button-four mb-3"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#shippingAddressModal">Cập nhật</button>
-=======
                                                             <button type="button"
                                                                 class="button-four mb-3 update-address"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#updateAddressModal"
                                                                 data-addressid="${address.addressId}">Cập nhật</button>
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                         </div>
                                                     </label>
                                                 </c:forEach>
@@ -598,10 +559,7 @@
                             <div class="modal-body">
                                 <form class="shipping-address" id="form-create-address" action="/address/add"
                                     method="post">
-<<<<<<< HEAD
-=======
                                     <input type="hidden" name="from" value="checkout">
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                     <div class="row mb-3">
                                         <div class="col-md-6 form-group">
                                             <label for="fullName" class="form-label">Họ tên</label>
@@ -626,12 +584,25 @@
                                             <span class="form-message"></span>
                                         </div>
                                         <div class="col-md-6 form-group">
+                                            <label for="addDistrict" class="form-label">Quận/Huyện</label>
+                                            <select id="addDistrict" class="form-select" disabled name="district">
+                                                <option value="">-- Chọn Quận/Huyện --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12 form-group">
                                             <label for="ward" class="form-label">Phường/Xã</label>
-                                            <select class="form-select" id="addWard" name="ward">
+                                            <select class="form-select" id="addWard" name="ward" disabled>
                                                 <option value="">Chọn Phường/Xã</option>
                                             </select>
                                             <span class="form-message"></span>
                                         </div>
+                                        <input type="hidden" id="provinceNameInput" name="cityName">
+                                        <input type="hidden" id="districtNameInput" name="districtName">
+                                        <input type="hidden" id="wardNameInput" name="wardName">
+
+                                        <input type="hidden" id="provinceIdInput" name="provinceId">
+                                        <input type="hidden" id="districtIdInput" name="districtId">
+                                        <input type="hidden" id="wardCodeInput" name="wardCode">
                                     </div>
 
                                     <div class="mb-3 form-group">
@@ -660,8 +631,6 @@
                 </div>
                 <!--End Modal Add Address -->
 
-<<<<<<< HEAD
-=======
                 <!--Modal Update Address -->
                 <div class="modal fade  " id="updateAddressModal" tabindex="-1"
                     aria-labelledby="updateAddressModalLabel" aria-hidden="true">
@@ -675,7 +644,7 @@
                             <div class="modal-body">
                                 <form class="shipping-address" id="form-update-address" method="POST"
                                     action="/address/update">
-                                    <input type="hidden" name="addressId" value="" />
+                                    <input type="hidden" id="updateAddressId" name="addressId" value="" />
                                     <input type="hidden" name="from" value="checkout">
                                     <div class="row mb-3">
                                         <div class="col-md-6 form-group">
@@ -694,19 +663,32 @@
 
                                     <div class="row mb-3">
                                         <div class="col-md-6 form-group">
-                                            <label for="province" class="form-label">Tỉnh/Thành phố</label>
-                                            <select class="form-select" name="city" id="updateProvince">
-                                                <option value="" class="update-city"></option>
+                                            <label for="updateProvince" class="form-label">Tỉnh/Thành phố</label>
+                                            <select class="form-select " id="updateProvince" name="city">
+                                                <option value="" class="update-city">Chọn Tỉnh/Thành phố</option>
                                             </select>
-                                            <span class="form-message"></span>
+                                            <span class=" form-message"></span>
                                         </div>
                                         <div class="col-md-6 form-group">
-                                            <label for="ward" class="form-label">Phường/Xã</label>
-                                            <select class="form-select " name="ward" id="updateWard">
-                                                <option value="" class="update-ward"></option>
+                                            <label for="updateDistrict" class="form-label">Quận/Huyện</label>
+                                            <select id="updateDistrict" class="form-select" name="district">
+                                                <option value="">-- Chọn Quận/Huyện --</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12 form-group">
+                                            <label for="updateWard" class="form-label">Phường/Xã</label>
+                                            <select class="form-select" id="updateWard" name="ward">
+                                                <option value="">Chọn Phường/Xã</option>
                                             </select>
                                             <span class="form-message"></span>
                                         </div>
+                                        <input type="hidden" id="updateProvinceNameInput" name="cityName">
+                                        <input type="hidden" id="updateDistrictNameInput" name="districtName">
+                                        <input type="hidden" id="updateWardNameInput" name="wardName">
+
+                                        <input type="hidden" id="updateProvinceIdInput" name="provinceId">
+                                        <input type="hidden" id="updateDistrictIdInput" name="districtId">
+                                        <input type="hidden" id="updateWardCodeInput" name="wardCode">
                                     </div>
 
                                     <div class="mb-3 form-group">
@@ -736,20 +718,6 @@
                 </div>
                 <!--End Modal Update Address -->
 
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
-                <!-- Modal Error Payment -->
-                <div class="modal fade" id="paymentErrorModal" tabindex="-1" aria-labelledby="paymentErrorLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content text-center p-3">
-                            <div class="modal-body">
-                                <p class="mb-3">Vui lòng chọn hình thức thanh toán</p>
-                                <button type="button" class="button-four" data-bs-dismiss="modal">Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--End Modal Error Payment -->
 
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
@@ -758,56 +726,105 @@
                 <!-- JS riêng trang Cart -->
                 <script src="<c:url value='/assets/js/customer/checkout/checkout.js'/>"></script>
 
-<<<<<<< HEAD
-=======
                 <!-- Link javascript of Shipping Address -->
-                <script src="./assets/js/customer/address/address.js?v=1.0.1"></script>
+                <script src="./assets/js/common/address.js?v=1.0.1"></script>
 
 
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
-                <c:if test="${!isAddress}">
+                <c:if test="${empty addresses}">
                     <script>
                         const addAddressModalEl = document.getElementById("addAddressModal");
                         if (addAddressModalEl) {
                             const modal = new bootstrap.Modal(addAddressModalEl);
                             modal.show();
                         }
-<<<<<<< HEAD
-=======
-
-                        Validator({
-                            form: '#form-create-address',
-                            formGroupSelector: '.form-group',
-                            errorSelector: '.form-message',
-                            rules: [
-                                Validator.isRequired('#fullName', 'Vui lòng nhập họ tên'),
-                                Validator.isRequired('#phone', 'Vui lòng nhập số điện thoại'),
-                                Validator.isRequired('#addProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
-                                Validator.isRequired('#addWard', 'Vui lòng chọn Phường/Xã'),
-                                Validator.isRequired('#address', 'Vui lòng nhập đại chỉ'),
-                            ],
-                        })
-                        const addProvinceSelect = document.getElementById("addProvince");
-                        const addWardSelect = document.getElementById("addWard");
-
-                        initProvinceWard(addProvinceSelect, addWardSelect);
-
-
-                        Validator({
-                            form: '#form-update-address',
-                            formGroupSelector: '.form-group',
-                            errorSelector: '.form-message',
-                            rules: [
-                                Validator.isRequired('#updateFullname', 'Vui lòng nhập tên đầy đủ'),
-                                Validator.isRequired('#updatePhone', 'Vui lòng nhập số điện thoại'),
-                                Validator.isRequired('#updateProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
-                                Validator.isRequired('#updateWard', 'Vui lòng chọn Phường/Xã'),
-                                Validator.isRequired('#updateAddress', 'Vui lòng nhập đại chỉ')
-                            ]
-                        })
-
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                     </script>
+                </c:if>
+                <script>
+                    Validator({
+                        form: '#form-create-address',
+                        formGroupSelector: '.form-group',
+                        errorSelector: '.form-message',
+                        rules: [
+                            Validator.isRequired('#fullName', 'Vui lòng nhập họ tên'),
+                            Validator.isRequired('#phone', 'Vui lòng nhập số điện thoại'),
+                            Validator.isRequired('#addProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
+                            Validator.isRequired('#addWard', 'Vui lòng chọn Phường/Xã'),
+                            Validator.isRequired('#address', 'Vui lòng nhập đại chỉ'),
+                        ],
+                    })
+
+                    const addProvince = document.getElementById("addProvince");
+                    const addDistrict = document.getElementById("addDistrict");
+                    const addWard = document.getElementById("addWard");
+
+                    const addProvinceNameInput = document.getElementById("provinceNameInput");
+                    const addDistrictNameInput = document.getElementById("districtNameInput");
+                    const addWardNameInput = document.getElementById("wardNameInput");
+                    const addProvinceIdInput = document.getElementById("provinceIdInput");
+                    const addDistrictIdInput = document.getElementById("districtIdInput");
+                    const addWardCodeInput = document.getElementById("wardCodeInput");
+
+                    initAddressSelects(addProvince,
+                        addDistrict,
+                        addWard,
+                        addProvinceNameInput,
+                        addDistrictNameInput,
+                        addWardNameInput,
+                        addProvinceIdInput,
+                        addDistrictIdInput,
+                        addWardCodeInput
+                    );
+                </script>
+
+                <script>
+                    Validator({
+                        form: '#form-update-address',
+                        formGroupSelector: '.form-group',
+                        errorSelector: '.form-message',
+                        rules: [
+                            Validator.isRequired('#updateFullname', 'Vui lòng nhập tên đầy đủ'),
+                            Validator.isRequired('#updatePhone', 'Vui lòng nhập số điện thoại'),
+                            Validator.isRequired('#updateProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
+                            Validator.isRequired('#updateWard', 'Vui lòng chọn Phường/Xã'),
+                            Validator.isRequired('#updateAddress', 'Vui lòng nhập đại chỉ')
+                        ]
+                    })
+                    const provinceSelect = document.getElementById("updateProvince");
+                    const districtSelect = document.getElementById("updateDistrict");
+                    const wardSelect = document.getElementById("updateWard");
+
+                    const provinceNameInput = document.getElementById("updateProvinceNameInput");
+                    const districtNameInput = document.getElementById("updateDistrictNameInput");
+                    const wardNameInput = document.getElementById("updateWardNameInput");
+                    const provinceIdInput = document.getElementById("updateProvinceIdInput");
+                    const districtIdInput = document.getElementById("updateDistrictIdInput");
+                    const wardCodeInput = document.getElementById("updateWardCodeInput");
+                    initAddressSelects(
+                        provinceSelect,
+                        districtSelect,
+                        wardSelect,
+                        provinceNameInput,
+                        districtNameInput,
+                        wardNameInput,
+                        provinceIdInput,
+                        districtIdInput,
+                        wardCodeInput
+                    );
+                </script>
+                <!-- Link javascript of Shipping Address -->
+                <script src="./assets/js/customer/address/address.js"></script>
+
+                <c:if test="${not empty sessionScope.toastMsg}">
+                    <script>
+                        toast({
+                            title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Không thể cập nhật'}",
+                            message: "${sessionScope.toastMsg}",
+                            type: "${sessionScope.toastType}",
+                            duration: 3000
+                        });
+                    </script>
+                    <c:remove var="toastMsg" scope="session" />
+                    <c:remove var="toastType" scope="session" />
                 </c:if>
             </body>
 

@@ -46,7 +46,7 @@
 .book-detail-header .discount {
     color: var(--color-font);
     margin: 0px 10px;
-    background-color: #e5e7eb;
+    background-color: #E5E7EB;
     border-radius: 10px;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .book-information-body .book-information-box {
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid #E0E0E0;
 }
 
 /*end book-information */
@@ -88,9 +88,6 @@
 
 .book-description-body {
     position: relative;
-    max-height: 250px; 
-    overflow: hidden;
-    transition: max-height 0.3s ease;
 }
 
 .gradient {
@@ -99,13 +96,8 @@
     left: 0px;
     width: 100%;
     height: 150px;
-    background-image: linear-gradient(
-        rgba(255, 255, 255, 0),
-        rgb(255, 255, 255)
-    );
+    background-image: linear-gradient(rgba(255, 255, 255, 0), rgb(255, 255, 255));
 }
-
-
 
 /* end book-description */
 
@@ -143,5 +135,94 @@
     font-weight: 600;
     margin-bottom: 5px;
 }
-
 /* end .book-introduction */
+
+/* View Shop */
+.view-shop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 25px 50px;
+  border-radius: 15px;
+  color: var(--color-one);
+}
+
+.view-shop .view-shop__box{
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+}
+
+.view-shop .view-shop__avatar {
+  position: relative;
+}
+
+.view-shop .view-shop__avatar-img {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.view-shop .favorite-badge {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-three);
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: none;
+  font-weight: 500;
+}
+
+.view-shop .view-shop__info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.view-shop .view-shop__stats {
+  display: flex;
+  gap: 10px 25px;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+}
+
+.view-shop .view-shop__stats li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.95;
+}
+
+.view-shop .view-shop__stats i {
+  color: #ffd700;
+  font-size: 16px;
+}
+.view-shop .view-shop__header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.view-shop .view-shop__name {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-one);
+}
+
+.view-shop  .view-shop__header .button-outline {
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+/* End View SHop */
