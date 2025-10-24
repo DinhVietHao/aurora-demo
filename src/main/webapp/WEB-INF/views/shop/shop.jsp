@@ -177,6 +177,9 @@
                                                         </div>
                                                     </div>
 
+                                                    <input type="file" id="shopLogoInput" accept="image/*"
+                                                        style="display: none;" />
+
                                                     <button type="button" class="btn btn-outline-primary btn-sm"
                                                         id="uploadLogoBtn">
                                                         <i class="bi bi-upload me-1"></i>
@@ -235,26 +238,41 @@
                         );
 
                         document.addEventListener("DOMContentLoaded", function () {
-                            const sidebar = document.getElementById("layoutSidenav_nav");
-                            const sidebarToggle = document.getElementById("sidebarToggle");
+                            const uploadBtn = document.getElementById("uploadLogoBtn");
+                            const fileInput = document.getElementById("shopLogoInput");
 
-                            if (sidebarToggle) {
-                                sidebarToggle.addEventListener("click", function () {
-                                    sidebar.classList.toggle("show");
+                            if (uploadBtn && fileInput) {
+                                uploadBtn.addEventListener("click", function () {
+                                    fileInput.click();
                                 });
                             }
 
-                            document.addEventListener("click", function (e) {
-                                const isClickInside = sidebar.contains(e.target) ||
-                                    (sidebarToggle && sidebarToggle.contains(e.target));
+                            const shopAvatarUploader = new AvatarUploader({
+                                inputId: "shopLogoInput",
+                                previewId: "shopLogoPreview",
+                                uploadUrl: "${ctx}/shop",
+                                fileParamName: "shopLogo",
+                                action: "uploadAvatar",
+                                onSuccess: function (data) {
+                                    toast({
+                                        title: "Thành công!",
+                                        message: data.message,
+                                        type: "success",
+                                        duration: 3000,
+                                    });
 
-                                if (!isClickInside && sidebar.classList.contains("show")) {
-                                    sidebar.classList.remove("show");
-                                }
-                            });
-
-                            sidebar.addEventListener("click", function (e) {
-                                e.stopPropagation();
+                                    if (data.avatarUrl) {
+                                        document.getElementById("shopLogoPreview").src = data.avatarUrl;
+                                    }
+                                },
+                                onError: function (message) {
+                                    toast({
+                                        title: "Lỗi!",
+                                        message: message,
+                                        type: "error",
+                                        duration: 3000,
+                                    });
+                                },
                             });
                         });
                     </script>

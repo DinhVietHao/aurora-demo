@@ -161,21 +161,14 @@ public class ProfileServlet extends HttpServlet {
         try {
             Part filePart = request.getPart("avatarCustomer");
             String uploadDir = request.getServletContext().getRealPath("/assets/images/avatars");
-
-            // Sử dụng AvatarService chung
             String newFilename = AvatarService.uploadAvatar(filePart, uploadDir, "customer");
-
-            // Lấy avatar cũ để xóa
             String oldAvatar = user.getAvatarUrl();
 
-            // Cập nhật database
             if (userDAO.updateAvatarCustomer(user.getId(), newFilename)) {
-                // Xóa avatar cũ
                 if (oldAvatar != null && !oldAvatar.isEmpty()) {
                     AvatarService.deleteOldAvatar(uploadDir, oldAvatar);
                 }
 
-                // Cập nhật session
                 user.setAvatarUrl(newFilename);
                 session.setAttribute("AUTH_USER", user);
                 session.setMaxInactiveInterval(60 * 60 * 2);
@@ -184,7 +177,6 @@ public class ProfileServlet extends HttpServlet {
                 json.put("message", "Cập nhật avatar thành công.");
                 json.put("avatarUrl", request.getContextPath() + "/assets/images/avatars/" + newFilename);
             } else {
-                // Xóa file vừa upload nếu lưu DB thất bại
                 AvatarService.deleteOldAvatar(uploadDir, newFilename);
                 json.put("success", false);
                 json.put("message", "Không thể cập nhật avatar. Vui lòng thử lại.");

@@ -133,16 +133,11 @@ public class ShopDAO {
 
     public boolean updateAvatarShop(long shopId, String avatarUrl) {
         String sql = "UPDATE Shops SET AvatarUrl = ? WHERE ShopID = ?";
-
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
-
             ps.setString(1, avatarUrl);
             ps.setLong(2, shopId);
-
-            int rows = ps.executeUpdate();
-            return rows > 0;
-
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
