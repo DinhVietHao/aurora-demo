@@ -17,6 +17,7 @@ import com.group01.aurora_demo.auth.dao.UserDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.annotation.MultipartConfig;
 import com.group01.aurora_demo.catalog.dao.ImageDAO;
+import com.group01.aurora_demo.common.service.AvatarService;
 import com.group01.aurora_demo.common.service.EmailService;
 
 @WebServlet("/profile")
@@ -159,48 +160,45 @@ public class ProfileServlet extends HttpServlet {
             PrintWriter out, JSONObject json, User user) throws IOException, ServletException {
         try {
             Part filePart = request.getPart("avatarCustomer");
-            if (filePart == null || filePart.getSize() == 0) {
-                json.put("success", false);
-                json.put("message", "Ảnh không tồn tại hoặc chưa chọn ảnh.");
-                out.print(json.toString());
-                return;
-            }
-            if (filePart.getSize() > 5 * 1024 * 1024) {
-                json.put("success", false);
-                json.put("message", "Ảnh vượt quá dung lượng cho phép (5MB).");
-                out.print(json.toString());
-                return;
-            }
-
-            String contentType = filePart.getContentType();
-            if (contentType == null || !contentType.startsWith("image/")) {
-                json.put("success", false);
-                json.put("message", "Tệp tải lên không phải hình ảnh hợp lệ.");
-                out.print(json.toString());
-                return;
-            }
             String uploadDir = request.getServletContext().getRealPath("/assets/images/avatars");
-            File uploadDirFile = new File(uploadDir);
-            if (!uploadDirFile.exists()) {
-                uploadDirFile.mkdirs();
-            }
-            ImageDAO imageDAO = new ImageDAO();
-            String fileName = imageDAO.uploadAvatar(filePart, uploadDir);
 
-            if (userDAO.updateAvatarCustomer(user.getId(), fileName)) {
-                user.setAvatarUrl(fileName);
+            // Sử dụng AvatarService chung
+            String newFilename = AvatarService.uploadAvatar(filePart, uploadDir, "customer");
+
+            // Lấy avatar cũ để xóa
+            String oldAvatar = user.getAvatarUrl();
+
+            // Cập nhật database
+            if (userDAO.updateAvatarCustomer(user.getId(), newFilename)) {
+                // Xóa avatar cũ
+                if (oldAvatar != null && !oldAvatar.isEmpty()) {
+                    AvatarService.deleteOldAvatar(uploadDir, oldAvatar);
+                }
+
+                // Cập nhật session
+                user.setAvatarUrl(newFilename);
                 session.setAttribute("AUTH_USER", user);
                 session.setMaxInactiveInterval(60 * 60 * 2);
 
                 json.put("success", true);
-                json.put("message", "Upload avatar thành công.");
+                json.put("message", "Cập nhật avatar thành công.");
+                json.put("avatarUrl", request.getContextPath() + "/assets/images/avatars/" + newFilename);
             } else {
+                // Xóa file vừa upload nếu lưu DB thất bại
+                AvatarService.deleteOldAvatar(uploadDir, newFilename);
                 json.put("success", false);
-                json.put("message", "Upload avatar thất bại.");
+                json.put("message", "Không thể cập nhật avatar. Vui lòng thử lại.");
             }
             out.print(json.toString());
+        } catch (IllegalArgumentException e) {
+            json.put("success", false);
+            json.put("message", e.getMessage());
+            out.print(json.toString());
         } catch (Exception e) {
-            System.out.println("[ERROR] ProfileServlet#handleUploadAvatar: " + e.getMessage());
+            System.err.println("[ERROR] ProfileServlet#handleUploadAvatar: " + e.getMessage());
+            json.put("success", false);
+            json.put("message", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            out.print(json.toString());
         }
     }
 

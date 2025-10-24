@@ -12,6 +12,7 @@
         <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
 
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
+        <link rel="stylesheet" href="${ctx}/assets/css/catalog/comment.css" />
 
       </head>
 
@@ -203,30 +204,230 @@
             </div>
           </div>
 
+          <div class="row mt-4">
+            <div class="view-shop">
+              <div class="view-shop__box">
+                <div class="view-shop__avatar">
+                  <c:choose>
+                    <c:when test="${not empty product.shop.logoUrl}">
+                      <img src="${ctx}/assets/images/shops/${product.shop.logoUrl}" class="view-shop__avatar-img"
+                        alt="Shop logo">
+                    </c:when>
+                    <c:otherwise>
+                      <img src="${ctx}/assets/images/shops/default-shop.png" class="view-shop__avatar-img"
+                        alt="Shop logo">
+                    </c:otherwise>
+                  </c:choose>
+                  <button class="favorite-badge">SHOP</button>
+                </div>
+                <div class="view-shop__info">
+                  <div class="view-shop__header">
+                    <strong class="view-shop__name">
+                      <c:out value="${product.shop.shopName}" />
+                    </strong>
+                    <a href="${ctx}/shop/view?id=${product.shop.shopId}" class="button-outline">Xem shop</a>
+                  </div>
+                  <ul class="view-shop__stats">
+                    <li>
+                      <i class="bi bi-box"></i>
+                      <b>
+                        <c:out value="${product.shop.productCount}" />
+                      </b> Sản phẩm
+                    </li>
+                    <li>
+                      <i class="bi bi-star-fill"></i>
+                      <b>
+                        <fmt:formatNumber value="${product.shop.avgRating}" maxFractionDigits="1" />
+                      </b>
+                      (
+                      <fmt:formatNumber value="${product.shop.reviewCount}" /> đánh giá)
+                    </li>
+                    <li>
+                      <i class="bi bi-calendar-event"></i>
+                      <b>
+                        <fmt:formatDate value="${product.shop.joinedDate}" pattern="dd.MM.yyyy" />
+                      </b> Tham gia
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) -->
           <div class="row mt-4">
-            <div class="col-12">
-              <div class="book-review">
-                <div class="book-review-header">Đánh giá sản phẩm</div>
-                <div class="book-review-body">
-                  <div class="row align-items-center ">
-                    <div class="col-md-2">
-                      <h2>0/5</h2>
-                      <i class="bi bi-star"></i><i class="bi bi-star"></i><i class="bi bi-star"></i>
-                      <i class="bi bi-star"></i><i class="bi bi-star"></i>
-                      <p>(0 đánh giá)</p>
-                    </div>
-                    <div class="col-md-4"><%-- thanh phân bố sao: TODO bind dữ liệu --%></div>
-                    <div class="col-md-6 text-center">
-                      <p class="text-muted m-0">Chỉ có thành viên mới có thể viết nhận xét.</p>
-                      <p class="text-muted">
-                        Vui lòng <a href="${ctx}/auth/login">đăng nhập</a> /
-                        <a href="${ctx}/auth/register">đăng ký</a>.
-                      </p>
-                    </div>
+            <div class="col-12 comment">
+              <div class="row comment-header">
+                <h5 class="comment-title">ĐÁNH GIÁ SẢN PHẨM</h5>
+                <div class="col-md-3 px-5">
+                  <h2 class="comment-average">
+                    <fmt:formatNumber value="${product.avgRating}" maxFractionDigits="1" />
+                    <small class="fs-6">trên 5</small>
+                  </h2>
+                  <div class="text-warning">
+                    <c:forEach begin="1" end="5" var="k">
+                      <c:choose>
+                        <c:when test="${k <= product.avgRating}">
+                          <i class="bi bi-star-fill"></i>
+                        </c:when>
+                        <c:when test="${k - product.avgRating <= 0.5}">
+                          <i class="bi bi-star-half"></i>
+                        </c:when>
+                        <c:otherwise>
+                          <i class="bi bi-star"></i>
+                        </c:otherwise>
+                      </c:choose>
+                    </c:forEach>
+                  </div>
+                </div>
+                <div class="col-md-9">
+                  <div class="comment-filter">
+                    <button class="button-outline active" data-rating="all">Tất Cả</button>
+                    <button class="button-outline" data-rating="5">5 Sao</button>
+                    <button class="button-outline" data-rating="4">4 Sao</button>
+                    <button class="button-outline" data-rating="3">3 Sao</button>
+                    <button class="button-outline" data-rating="2">2 Sao</button>
+                    <button class="button-outline" data-rating="1">1 Sao</button>
+                    <button class="button-outline" data-filter="comment">Có Bình Luận</button>
+                    <button class="button-outline" data-filter="image">Có Hình Ảnh</button>
                   </div>
                 </div>
               </div>
+
+              <!-- Danh sách review -->
+              <c:choose>
+                <c:when test="${not empty reviews}">
+                  <c:forEach var="review" items="${reviews}">
+                    <div class="row comment-body">
+                      <div class="col-auto comment-image">
+                        <c:choose>
+                          <c:when test="${not empty review.user.avatarUrl}">
+                            <img src="${ctx}/assets/images/avatars/${review.user.avatarUrl}" alt="avatar">
+                          </c:when>
+                          <c:otherwise>
+                            <img src="${ctx}/assets/images/common/avatar.png" alt="avatar">
+                          </c:otherwise>
+                        </c:choose>
+                      </div>
+                      <div class="col">
+                        <div class="d-flex justify-content-between">
+                          <h6 class="mb-0 fw-bold">
+                            <c:out value="${review.user.fullName}" />
+                          </h6>
+                          <div class="dropdown">
+                            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
+                              aria-expanded="false">
+                              <i class="fa fa-ellipsis-h"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                              <li>
+                                <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                  data-bs-target="#reportModal">Báo cáo</a>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                        <small class="text-muted">
+                          <fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+                        </small>
+
+                        <!-- Rating -->
+                        <div class="text-warning my-1">
+                          <c:forEach begin="1" end="${review.rating}">
+                            <i class="bi bi-star-fill small"></i>
+                          </c:forEach>
+                          <c:forEach begin="${review.rating + 1}" end="5">
+                            <i class="bi bi-star small"></i>
+                          </c:forEach>
+                        </div>
+
+                        <p class="mb-1">
+                          <c:out value="${review.comment}" />
+                        </p>
+
+                        <!-- Hình ảnh review (nếu có) -->
+                        <c:if test="${not empty review.images}">
+                          <div class="d-flex gap-2 comment-review">
+                            <c:forEach var="img" items="${review.images}" varStatus="status">
+                              <img src="${ctx}/assets/images/reviews/${img.url}" class="" alt="ảnh review"
+                                data-bs-toggle="modal" data-bs-target="#reviewModal${review.reviewId}"
+                                data-bs-slide-to="${status.index}">
+                            </c:forEach>
+                          </div>
+                        </c:if>
+                      </div>
+                    </div>
+
+                    <!-- Modal xem ảnh review -->
+                    <c:if test="${not empty review.images}">
+                      <div class="modal fade" id="reviewModal${review.reviewId}" tabindex="-1"
+                        aria-labelledby="reviewModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                          <div class="modal-content">
+                            <div class="modal-body">
+                              <div class="d-flex justify-content-end">
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                  aria-label="Close"></button>
+                              </div>
+                              <div id="reviewCarousel${review.reviewId}" class="carousel slide">
+                                <div class="carousel-inner">
+                                  <c:forEach var="img" items="${review.images}" varStatus="status">
+                                    <div class="carousel-item ${status.first ? 'active' : ''}">
+                                      <img src="${ctx}/assets/images/reviews/${img.url}" class="d-block w-100"
+                                        alt="ảnh review">
+                                    </div>
+                                  </c:forEach>
+                                </div>
+                                <button class="carousel-control-prev" type="button"
+                                  data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="prev">
+                                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button"
+                                  data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="next">
+                                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </c:if>
+                  </c:forEach>
+
+                  <!-- Pagination -->
+                  <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                      <c:if test="${currentPage > 1}">
+                        <li class="page-item">
+                          <a class="page-link" href="?page=${currentPage - 1}">‹</a>
+                        </li>
+                      </c:if>
+
+                      <c:forEach begin="1" end="${totalPages}" var="i">
+                        <li class="page-item ${i == currentPage ? 'active' : ''}">
+                          <a class="page-link" href="?page=${i}">${i}</a>
+                        </li>
+                      </c:forEach>
+
+                      <c:if test="${currentPage < totalPages}">
+                        <li class="page-item">
+                          <a class="page-link" href="?page=${currentPage + 1}">›</a>
+                        </li>
+                      </c:if>
+                    </ul>
+                  </nav>
+                </c:when>
+                <c:otherwise>
+                  <div class="text-center py-5">
+                    <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
+                    <c:if test="${not empty sessionScope.AUTH_USER}">
+                      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                        Viết đánh giá đầu tiên
+                      </button>
+                    </c:if>
+                  </div>
+                </c:otherwise>
+              </c:choose>
             </div>
           </div>
 
@@ -245,6 +446,7 @@
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js"></script>
+        <script src="${ctx}/assets/js/catalog/comment.js"></script>
       </body>
 
       </html>
