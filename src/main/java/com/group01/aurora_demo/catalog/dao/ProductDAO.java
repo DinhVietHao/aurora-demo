@@ -842,7 +842,7 @@ public class ProductDAO {
 
     // ----- Phạm Thanh Lượng -----
 
-    public List<Product> getProductsByShopId(long shopId, int offset, int limit)
+    public List<Product> getProductsByShopId(long shopId)
             throws SQLException {
         List<Product> list = new ArrayList<>();
 
@@ -858,15 +858,12 @@ public class ProductDAO {
                 LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
                 WHERE p.ShopID = ?
                 ORDER BY p.CreatedAt DESC
-                OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, shopId);
-            ps.setInt(2, offset);
-            ps.setInt(3, limit);
             CategoryDAO cateDAO = new CategoryDAO();
             AuthorDAO authorDAO = new AuthorDAO();
             ImageDAO imageDAO = new ImageDAO();

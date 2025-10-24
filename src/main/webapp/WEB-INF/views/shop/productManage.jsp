@@ -62,15 +62,15 @@
                                                 <div class="card-body">
                                                     <div class="row">
                                                         <div class="col-md-4">
-                                                            <label for="categoryFilter" class="form-label">Tất cả
-                                                                danh
+                                                            <label for="categoryFilter" class="form-label">Tất cả danh
                                                                 mục</label>
-                                                            <select class="form-select" id="categoryFilter">
-                                                                <option value="">Tất cả danh mục</option>
-                                                                <option value="van-hoc">Văn học</option>
-                                                                <option value="khoa-hoc">Khoa học</option>
-                                                                <option value="thieu-nhi">Thiếu nhi</option>
-                                                                <option value="ky-thuat">Kỹ thuật</option>
+                                                            <select class="form-select" id="categoryFilter"
+                                                                name="categoryFilter">
+                                                                <option value="all">Tất cả danh mục</option>
+                                                                <c:forEach var="category" items="${listCategoryShop}">
+                                                                    <option value="${category.categoryId}">
+                                                                        ${category.name}</option>
+                                                                </c:forEach>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
@@ -78,10 +78,11 @@
                                                                 trạng
                                                                 thái</label>
                                                             <select class="form-select" id="statusFilter">
-                                                                <option value="">Tất cả trạng thái</option>
-                                                                <option value="active">Đang bán</option>
-                                                                <option value="inactive">Ngừng bán</option>
-                                                                <option value="out-of-stock">Hết hàng</option>
+                                                                <option value="all">Tất cả trạng thái</option>
+                                                                <option value="PENDING">Chờ duyệt</option>
+                                                                <option value="ACTIVE">Đang bán</option>
+                                                                <option value="INACTIVE">Ngừng bán</option>
+                                                                <option value="OUT_OF_STOCK">Hết hàng</option>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
@@ -160,7 +161,11 @@
                                                             </td>
 
                                                             <!-- Cột Thể loại -->
-                                                            <td>
+                                                            <td data-categories="
+                                                            <c:forEach var='c' items='${p.categories}' varStatus='i'>
+                                                                    ${c.name}<c:if test='${!i.last}'>,</c:if>
+                                                            </c:forEach>
+                                                                ">
                                                                 <c:choose>
                                                                     <c:when test="${fn:length(p.categories) == 1}">
                                                                         ${p.categories[0].name}
@@ -173,6 +178,7 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
+
 
                                                             <!-- Giá bán -->
                                                             <td>
@@ -1228,6 +1234,7 @@
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
                     <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.1"></script>
                     <script>
                         function setDeactivateModal(productId, productName) {
                             document.getElementById('deactivateProductId').value = productId;
