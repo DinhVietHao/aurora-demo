@@ -82,61 +82,6 @@ function calculateShipDiscount(total) {
   return 0;
 }
 
-// ====================== GET ALL DISCOUNTS ======================
-// function getAllDiscounts(total) {
-//   let systemDiscount = calculateDiscount(total);
-//   let shipDiscount = calculateShipDiscount(total);
-
-//   let allShopDiscount = 0;
-//   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
-//   allShop.forEach((shopElement) => {
-//     const shopId = shopElement.getAttribute("data-shop-id");
-//     const selectedShopDiscount = document.querySelector(
-//       `input[name="voucherShopDiscount_${shopId}"]:checked`
-//     );
-
-//     if (selectedShopDiscount && shopId) {
-//       const shopTotal = calculateShopTotal(shopId);
-//       const shopDiscount = calculateShopDiscount(shopTotal, shopId);
-//       allShopDiscount += shopDiscount;
-//       const shopVoucher = document.querySelector(
-//         `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
-//       );
-//       if (shopVoucher) {
-//         shopVoucher.innerText =
-//           shopDiscount > 0
-//             ? `Đã giảm ${formatCurrency(shopDiscount)}`
-//             : "Chưa áp dụng";
-//       }
-//     }
-//   });
-
-//   return { systemDiscount, shipDiscount, allShopDiscount };
-// }
-// ====================== UPDATE SUMMARY ======================
-// function updateCartSummary() {
-//   let total = calculateTotalProduct();
-//   let { systemDiscount, shipDiscount, allShopDiscount } =
-//     getAllDiscounts(total);
-
-//   discountElement.innerText =
-//     "-" + formatCurrency(systemDiscount + allShopDiscount);
-//   shipElement.innerText = "-" + formatCurrency(shipDiscount);
-
-//   // Shipping Fee
-//   let shippingFee = parseInt(shippingFeePayment.textContent.replace(/\D/g, ""));
-
-//   totalProductPrice.textContent = formatCurrency(total);
-//   let sum = Math.max(
-//     total + shippingFee - systemDiscount - allShopDiscount - shipDiscount,
-//     0
-//   );
-//   totalPayment.textContent = formatCurrency(sum);
-
-//   // refresh lại voucher của tất cả shop mỗi lần update
-//   refreshShopVoucher();
-// }
-
 // ====================== VOUCHER HANDLER ======================
 const confirmVoucher = document.getElementById("confirmVoucher");
 
@@ -273,21 +218,13 @@ shopVoucherModal.forEach((btn) => {
 confirmShopVoucher.forEach((btn) => {
   btn.addEventListener("click", () => {
     const shopId = btn.getAttribute("data-shop-id");
-    const selectedVoucher = document.querySelector(
-      `input[name="voucherShopDiscount_${shopId}"]:checked`
-    );
-    console.log("Check selectedVoucher ", selectedVoucher);
-
-    if (selectedVoucher) {
-      const code = selectedVoucher.dataset.value;
-      localStorage.setItem(`shopVoucher_${shopId}`, code);
-    }
-
     const selectedShopDiscount = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
 
     if (selectedShopDiscount) {
+      const code = selectedShopDiscount.dataset.value;
+      localStorage.setItem(`shopVoucher_${shopId}`, code);
       const shopVoucher = document.querySelector(
         `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
       );
@@ -383,23 +320,6 @@ function refreshShopVoucher() {
   });
   toggleSystemVoucherAvailability();
 }
-
-// Check payment method selection when clicking "Pay" button, if not selected then report error, if VNPAY is selected then open VNPAY modal.
-// const PayBtn = document.getElementById("btnPay");
-// PayBtn.addEventListener("click", () => {
-//   const selected = document.querySelector('input[name="payment"]:checked');
-//   const errorPayment = document.getElementById("paymentErrorModal");
-//   const vnPayModalElement = document.getElementById("vnpayModal");
-//   if (!selected) {
-//     const errorPaymentModal = new bootstrap.Modal(errorPayment);
-//     errorPaymentModal.show();
-//   } else {
-//     if (selected.id === "vnpay") {
-//       const vnPayModalModal = new bootstrap.Modal(vnPayModalElement);
-//       vnPayModalModal.show();
-//     }
-//   }
-// });
 // ====================== SYNC SERVER ======================
 
 function syncWithServer() {
@@ -452,20 +372,33 @@ function syncWithServer() {
 const applyVoucherShops = document.querySelectorAll(".applyVoucherShop");
 applyVoucherShops.forEach((btn) => {
   btn.addEventListener("click", () => {
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
     const modal = btn.closest(".cart-shop-voucher");
     const shopId = modal.dataset.shopId;
-    const code = modal.querySelector(".voucherShopInput").value.trim();
+    const code = modal
+      .querySelector(".voucherShopInput")
+      .value.trim()
+      .toUpperCase();
     const msg = modal.querySelector(".voucherShopMessage");
+
+    msg.textContent = "";
+    msg.classList.remove("text-danger", "text-success", "text-warning");
     if (!code) {
+      msg.classList.add("text-warning");
       msg.textContent = "Vui lòng nhập mã giảm giá.";
+      btn.disabled = false;
+      btn.innerHTML = originalText;
       return;
     }
-
     const selectedShopRadio = document.querySelector(
       `input[name="voucherShopDiscount_${shopId}"]:checked`
     );
     if (selectedShopRadio && selectedShopRadio.value === code) {
-      msg.classList.remove("text-success");
       msg.classList.add("text-warning");
       msg.textContent = "Mã này đã áp dụng rồi.";
       return;
@@ -487,24 +420,56 @@ applyVoucherShops.forEach((btn) => {
           }
         } else {
           localStorage.removeItem(`shopVoucher_${shopId}`);
-          msg.classList.remove("text-success");
           msg.classList.add("text-danger");
           msg.textContent = data.message || "Mã không hợp lệ.";
+          btn.innerHTML = originalText;
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Fetch voucher error:", error);
+        msg.classList.add("text-danger");
         msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+      })
+      .finally(() => {
+        btn.disabled = false;
       });
   });
 });
+document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    const input = modalEl.querySelector(".voucherShopInput");
+    const msg = modalEl.querySelector(".voucherShopMessage");
 
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "voucherShopMessage";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+});
 // ====================== SYSTEM VOUCHER HANDLER ======================
 const applySystemVoucher = document.getElementById("applySystemVoucher");
 applySystemVoucher.addEventListener("click", () => {
-  const code = document.getElementById("voucherSystemInput").value.trim();
+  applySystemVoucher.disabled = true;
+  const originalText = applySystemVoucher.innerHTML;
+  applySystemVoucher.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
+  const code = document
+    .getElementById("voucherSystemInput")
+    .value.toUpperCase();
   const msg = document.getElementById("voucherSystemMessage");
+
+  msg.textContent = "";
+  msg.classList.remove("text-danger", "text-success", "text-warning");
   if (!code) {
     msg.textContent = "Vui lòng nhập mã giảm giá.";
+    msg.classList.add("text-warning");
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
     return;
   }
 
@@ -519,9 +484,10 @@ applySystemVoucher.addEventListener("click", () => {
     (selectedDiscount && selectedDiscount.value === code) ||
     (selectedShip && selectedShip.value === code)
   ) {
-    msg.classList.remove("text-success");
     msg.classList.add("text-warning");
     msg.textContent = "Mã này đã áp dụng rồi.";
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
     return;
   }
 
@@ -547,15 +513,37 @@ applySystemVoucher.addEventListener("click", () => {
         }
         loadSystemVouchers();
       } else {
-        msg.classList.remove("text-success");
+        localStorage.removeItem("systemVoucherShip");
+        localStorage.removeItem("systemVoucherDiscount");
         msg.classList.add("text-danger");
         msg.textContent = data.message || "Mã không hợp lệ.";
+        applySystemVoucher.innerHTML = originalText;
       }
     })
     .catch(() => {
+      msg.classList.add("text-danger");
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+    })
+    .finally(() => {
+      applySystemVoucher.disabled = false;
     });
 });
+
+const voucherModalEl = document.getElementById("voucherModal");
+if (voucherModalEl) {
+  voucherModalEl.addEventListener("hidden.bs.modal", () => {
+    const msg = document.getElementById("voucherSystemMessage");
+    const input = document.getElementById("voucherSystemInput");
+
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+}
 // ====================== KHÔI PHỤC VOUCHER SAU KHI RELOAD ======================
 function loadSavedVouchers() {
   document.querySelectorAll(".voucher-input-shop").forEach((input) => {
@@ -641,6 +629,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 const btnPlaceOrder = document.getElementById("btnPlaceOrder");
 btnPlaceOrder.addEventListener("click", () => {
+  btnPlaceOrder.disabled = true;
+  const originalText = btnPlaceOrder.innerHTML;
+  btnPlaceOrder.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Đang xử lý...
+  `;
   const params = new URLSearchParams();
   const addressId =
     document.querySelector(`[name='addressId']:checked`)?.value || "";
@@ -678,13 +672,35 @@ btnPlaceOrder.addEventListener("click", () => {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        alert(data.message);
-        window.location.href = "/home";
+        // toast({
+        //   title: data.title,
+        //   message: data.message,
+        //   type: data.type,
+        //   duration: 3000,
+        // });
+        // setTimeout(() => {
+        //   window.location.href = "/home";
+        // }, 800);
+        window.location.href = data.url;
       } else {
-        alert(data.message);
+        toast({
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          duration: 3000,
+        });
       }
     })
     .catch(() => {
-      console.log("Lỗi Khi đặt hàng");
+      toast({
+        title: "Lỗi hệ thống",
+        message: "Không thể kết nối đến máy chủ. Vui lòng thử lại.",
+        type: "error",
+        duration: 3000,
+      });
+    })
+    .finally(() => {
+      btnPlaceOrder.disabled = false;
+      btnPlaceOrder.innerHTML = originalText;
     });
 });

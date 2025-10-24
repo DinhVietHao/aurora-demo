@@ -2,7 +2,10 @@ package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
+
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
@@ -13,6 +16,7 @@ import java.util.List;
 public class HomeServlet extends HttpServlet {
 
     private ProductDAO productDAO = new ProductDAO();
+    private UserDAO userDAO = new UserDAO();
     private static final int LIMIT = 12;
 
     @Override
@@ -21,8 +25,35 @@ public class HomeServlet extends HttpServlet {
         setFilterAttributes(request);
         request.setCharacterEncoding("UTF-8");
 
+        String savedEmail = null;
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("remember_account".equals(c.getName())) {
+                    savedEmail = c.getValue();
+                    break;
+                }
+            }
+        }
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("AUTH_USER");
+
+        if (user == null && savedEmail != null && !savedEmail.isEmpty()) {
+            user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
+            if (user != null) {
+                session.setAttribute("AUTH_USER", user);
+                session.setMaxInactiveInterval(60 * 60 * 2);
+
+                try {
+                    CartItemDAO cartItemDAO = new CartItemDAO();
+                    int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
+                    session.setAttribute("cartCount", cartCount);
+                } catch (Exception e) {
+                    session.setAttribute("cartCount", 0);
+                }
+            }
+        }
 
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
 

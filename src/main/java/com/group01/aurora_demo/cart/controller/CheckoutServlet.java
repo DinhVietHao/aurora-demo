@@ -78,8 +78,6 @@ public class CheckoutServlet extends HttpServlet {
             }).toList();
 
             List<Address> addressList = this.addressDAO.getAddressesByUserId(user.getId());
-            boolean isAddress = addressDAO.hasAddress(user.getId());
-
             Address selectedAddress = this.addressDAO.getDefaultAddress(user.getId());
             String addressId = req.getParameter("addressId");
             if (addressId != null && !addressId.isEmpty()) {
@@ -89,34 +87,13 @@ public class CheckoutServlet extends HttpServlet {
                     System.out.println(e.getMessage());
                 }
             }
-
-            // long totalShippingFee = 0;
-            // if (selectedAddress != null) {
-            // for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
-            // var items = entry.getValue();
-            // var shop = items.get(0).getProduct().getShop();
-            // double shopWeight = items.stream()
-            // .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
-            // .sum();
-            // double fee = shippingCalculator.calculateShippingFee(
-            // shop.getPickupAddress().getCity(),
-            // selectedAddress.getCity(),
-            // shopWeight);
-
-            // totalShippingFee += fee;
-            // }
-            // }
             req.setAttribute("shopCarts", shopCarts);
             req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
             req.setAttribute("addresses", addressList);
-            req.setAttribute("isAddress", isAddress);
             req.setAttribute("address", selectedAddress);
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
-            // req.setAttribute("shippingFee", totalShippingFee);
-
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout/checkout.jsp").forward(req, resp);
         }
-
     }
 
     @Override

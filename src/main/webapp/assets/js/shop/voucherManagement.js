@@ -268,6 +268,10 @@ function filterByStatus() {
       case "expired":
         shouldShow = statusText.includes("hết");
         break;
+      case "out_of_stock":
+        shouldShow =
+          statusText.includes("voucher") || statusText.includes("hết voucher");
+        break;
       default:
         shouldShow = true;
     }

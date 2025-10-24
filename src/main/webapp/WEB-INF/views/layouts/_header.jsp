@@ -60,8 +60,8 @@
                                                 <hr class="dropdown-divider">
                                             </li>
                                             <li>
-                                                <form id="logoutForm" action="<c:url value='/auth/logout'/>"
-                                                    method="post" class="px-3 py-1">
+                                                <form id="logoutForm" action="/auth" method="POST" class="px-3 py-1">
+                                                    <input hidden name="action" value="logout">
                                                     <button type="submit" class="dropdown-item text-danger">
                                                         <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
                                                     </button>
@@ -82,6 +82,8 @@
                     </div>
                 </div>
             </div>
+            <!-- Toast notification Add To Cart -->
+            <div id="notify-toast"></div>
 
             <!-- Include modal dùng chung -->
             <jsp:include page="/WEB-INF/views/auth/_modals.jsp" />

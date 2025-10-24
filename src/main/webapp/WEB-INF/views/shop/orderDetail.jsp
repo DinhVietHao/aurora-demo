@@ -2,6 +2,7 @@
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
         <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
             <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+                <fmt:setLocale value="vi_VN" />
                 <c:set var="pageTitle" value="Aurora" />
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
                 <!DOCTYPE html>
@@ -20,7 +21,7 @@
                     <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
                     <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
                     <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.10">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/orderDetails.css?v=1.0.1">
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -31,292 +32,351 @@
                         <div id="layoutSidenav_content">
                             <main>
                                 <div class="container-fluid px-4">
-                                    <!-- Page Header -->
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h1 class="mt-4 order-details-title">Chi tiết Đơn hàng</h1>
+                                    <!-- Header -->
+                                    <div class="d-flex justify-content-between align-items-center mt-4">
+                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.orderShopId}</h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
-                                                <li class="breadcrumb-item"><a href="/home">Trang chủ</a></li>
-                                                <li class="breadcrumb-item"><a href="/shop/dashboard">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item"><a href="/">Đơn hàng</a>
+                                                <li class="breadcrumb-item"><a
+                                                        href="${ctx}/shop/dashboard">Dashboard</a></li>
+                                                <li class="breadcrumb-item"><a href="${ctx}/shop/orders">Đơn hàng</a>
                                                 </li>
                                                 <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
                                             </ol>
                                         </nav>
                                     </div>
 
-                                    <!-- Order Header Info -->
-                                    <div class="row mt-4">
-                                        <div class="col-12">
-                                            <div class="card order-header-card">
-                                                <div class="card-body">
-                                                    <div class="row">
-                                                        <div class="col-md-8">
-                                                            <div class="order-info">
-                                                                <h4 class="order-code">Đơn hàng #250912440CPRXU</h4>
-                                                                <div class="order-meta">
-                                                                    <span class="badge bg-warning order-status">Đã giao
-                                                                        cho ĐVVC</span>
-                                                                    <span class="order-date">Đặt hàng: 12/09/2024
-                                                                        14:30</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4 text-md-end">
-                                                            <div class="order-actions">
-                                                                <button class="btn btn-outline-primary btn-sm me-2">
-                                                                    <i class="bi bi-printer"></i> In đơn hàng
-                                                                </button>
-                                                                <button class="btn btn-primary btn-sm">
-                                                                    <i class="bi bi-pencil"></i> Cập nhật trạng thái
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                    <!-- Thông tin đơn hàng -->
+                                    <div class="card mt-4 order-header-card">
+                                        <div class="card-body d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h5>Mã đơn hàng: #${orderShop.orderShopId}</h5>
+                                                <c:choose>
+                                                    <c:when test="${orderShop.status == 'PENDING'}">
+                                                        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'SHIPPING'}">
+                                                        <span class="badge bg-primary">Đang giao hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'WAITING_SHIP'}">
+                                                        <span class="badge bg-info text-dark">Chờ giao hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'CONFIRM'}">
+                                                        <span class="badge bg-secondary">Chờ xác nhận của khách
+                                                            hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'COMPLETED'}">
+                                                        <span class="badge bg-success">Hoàn thành</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED_REJECTED'}">
+                                                        <span class="badge bg-danger">Trả hàng thất bại</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED'}">
+                                                        <span class="badge bg-success">Đã xác nhận trả hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'RETURNED_REQUESTED'}">
+                                                        <span class="badge bg-warning">Yêu cầu trả hàng</span>
+                                                    </c:when>
+                                                    <c:when test="${orderShop.status == 'CANCELLED'}">
+                                                        <span class="badge bg-danger">Đã hủy</span>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span class="badge bg-secondary">Không xác định</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                                <span class="text-muted ms-2">
+                                                    Ngày tạo:
+                                                    <fmt:formatDate value="${orderShop.createdAt}"
+                                                        pattern="dd/MM/yyyy HH:mm" />
+                                                </span>
+
+                                                <c:if
+                                                    test="${orderShop.status == 'CANCELLED' && not empty orderShop.cancelReason}">
+                                                    <div class="mt-2 text-danger fw-semibold">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        Lý do hủy: ${orderShop.cancelReason}
                                                     </div>
-                                                </div>
+                                                </c:if>
+                                                <c:if
+                                                    test="${(orderShop.status == 'RETURNED' || orderShop.status == 'RETURNED_REJECTED' || orderShop.status == 'RETURNED_REQUESTED') && not empty orderShop.returnReason}">
+                                                    <div class="mt-2 text-danger fw-semibold">
+                                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                                        Lý do hoàn tiền: ${orderShop.returnReason}
+                                                    </div>
+                                                </c:if>
+                                            </div>
+                                            <div>
+
+                                                <c:choose>
+                                                    <c:when test="${orderShop.status == 'PENDING'}">
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus" value="SHIPPING" />
+                                                            <button type="button"
+                                                                class="btn btn-warning btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Bạn có chắc rằng đơn hàng này đã được đóng gói và sẵn sàng giao cho đơn vị vận chuyển?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-truck"></i> Chuyển trạng thái giao
+                                                                hàng
+                                                            </button>
+                                                        </form>
+                                                    </c:when>
+
+
+                                                    <c:when test="${orderShop.status == 'SHIPPING'}">
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus"
+                                                                value="WAITING_SHIP" />
+                                                            <button type="button"
+                                                                class="btn btn-primary btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Bạn có chắc rằng đơn hàng đã tới được địa phận của khách hàng và chuẩn bị giao hàng?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-box-seam"></i> Chuyển trạng thái
+                                                                đợi giao hàng
+                                                            </button>
+                                                        </form>
+                                                    </c:when>
+
+
+                                                    <c:when test="${orderShop.status == 'WAITING_SHIP'}">
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus" value="CONFIRM" />
+                                                            <button type="button"
+                                                                class="btn btn-success btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Đơn hàng đã đến tay người nhận chuyển sang xác nhận của khách hàng?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-check2-circle"></i> Đơn hàng đã đến tay
+                                                                người nhận
+                                                            </button>
+                                                        </form>
+                                                    </c:when>
+
+                                                    <c:when test="${orderShop.status == 'RETURNED_REQUESTED'}">
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus"
+                                                                value="RETURNED_REJECTED" />
+                                                            <button type="button"
+                                                                class="btn btn-danger btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Bạn có chắc chắn muốn từ chối yêu cầu trả hàng của khách không?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-x-circle"></i> Từ chối trả hàng
+                                                            </button>
+                                                        </form>
+                                                        <form action="${ctx}/shop/orders?action=update-status"
+                                                            method="post" class="d-inline status-form">
+                                                            <input type="hidden" name="orderShopId"
+                                                                value="${orderShop.orderShopId}" />
+                                                            <input type="hidden" name="newStatus" value="RETURNED" />
+                                                            <button type="button"
+                                                                class="btn btn-warning btn-sm btn-show-modal"
+                                                                data-bs-toggle="modal" data-bs-target="#confirmModal"
+                                                                data-message="Xác nhận đồng ý cho khách trả hàng?"
+                                                                data-form="status-form">
+                                                                <i class="bi bi-arrow-counterclockwise"></i> Xác nhận
+                                                                trả hàng
+                                                            </button>
+                                                        </form>
+                                                    </c:when>
+
+                                                    <c:when test="${orderShop.status == 'CONFIRM'}">
+                                                        <button class="btn btn-warning btn-sm" disabled>
+                                                            <i class="bi bi-lock"></i> Đang đợi khách hàng xác nhận
+                                                        </button>
+                                                    </c:when>
+
+                                                    <c:when test="${orderShop.status == 'CANCELLED'}">
+                                                        <button class="btn btn-secondary btn-sm" disabled>
+                                                            <i class="bi bi-lock"></i> Đơn hàng đã hủy
+                                                        </button>
+                                                    </c:when>
+
+                                                    <c:otherwise>
+                                                        <button class="btn btn-success btn-sm" disabled>
+                                                            <i class="bi bi-lock"></i> Đơn hàng đã hoàn
+                                                            tất
+                                                        </button>
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Order Details Content -->
+                                    <!-- Thông tin khách hàng + Tóm tắt thanh toán -->
                                     <div class="row mt-4">
-                                        <!-- Customer Information -->
+                                        <!-- Customer Info -->
                                         <div class="col-md-6">
                                             <div class="card h-100">
                                                 <div class="card-header">
-                                                    <h5 class="card-title mb-0">
-                                                        <i class="bi bi-person-circle me-2"></i>Thông tin khách hàng
+                                                    <h5><i class="bi bi-person-circle me-2"></i>Thông tin khách hàng
                                                     </h5>
                                                 </div>
                                                 <div class="card-body">
-                                                    <div class="customer-info">
-                                                        <div class="info-row">
-                                                            <strong>Tên khách hàng:</strong>
-                                                            <span>Gemini2019</span>
+                                                    <p><strong>Tên:</strong> ${orderShop.user.fullName}</p>
+                                                    <p><strong>Email:</strong> ${orderShop.user.email}</p>
+                                                    <p><strong>Điện thoại:</strong> ${orderShop.user.phone}</p>
+                                                    <p><strong>Địa chỉ:</strong> ${orderShop.shippingAddress}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Payment Summary -->
+                                        <div class="col-md-6">
+                                            <div class="card h-100">
+                                                <div class="card-header">
+                                                    <h5><i class="bi bi-receipt me-2"></i>Tóm tắt thanh toán</h5>
+                                                </div>
+                                                <div class="card-body">
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Tạm tính:</strong>
+                                                        <span>
+                                                            <fmt:formatNumber value="${orderShop.orderTotal}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Phí vận chuyển:</strong>
+                                                        <span>
+                                                            <fmt:formatNumber value="${orderShop.shippingFee}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Phí voucher:</strong>
+                                                        <span>
+                                                            -
+                                                            <fmt:formatNumber value="${orderShop.discount}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+
+                                                    <hr>
+
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>Tổng cộng:</strong>
+                                                        <span class="text-primary fw-bold">
+                                                            <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                                pattern="#,##0" /> VND
+                                                        </span>
+                                                    </div>
+                                                    <hr>
+
+                                                    <div class="payment-method">
+                                                        <strong>Phương thức thanh toán:</strong>
+                                                        <div class="mt-2">
+                                                            <span class="badge bg-success">
+                                                                <i class="bi bi-credit-card me-1"></i>Thanh toán online
+                                                            </span>
                                                         </div>
-                                                        <div class="info-row">
-                                                            <strong>Email:</strong>
-                                                            <span>gemini2019@email.com</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Số điện thoại:</strong>
-                                                            <span>0123 456 789</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Địa chỉ giao hàng:</strong>
-                                                            <span>123 Đường ABC, Phường XYZ, Quận 1, TP.HCM</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Ghi chú:</strong>
-                                                            <span class="text-muted">Giao hàng trong giờ hành
-                                                                chính</span>
-                                                        </div>
+                                                        <small class="text-muted">Đã thanh toán</small>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- Shipping Information -->
-                                        <div class="col-md-6">
-                                            <div class="card h-100">
-                                                <div class="card-header">
-                                                    <h5 class="card-title mb-0">
-                                                        <i class="bi bi-truck me-2"></i>Thông tin vận chuyển
-                                                    </h5>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="shipping-info">
-                                                        <div class="info-row">
-                                                            <strong>Đơn vị vận chuyển:</strong>
-                                                            <span>SPX Express</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Mã vận đơn:</strong>
-                                                            <span class="tracking-code">SP1A3B2C3D4E5F6</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Loại giao hàng:</strong>
-                                                            <span>Nhanh</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Phí vận chuyển:</strong>
-                                                            <span>25.000 VNĐ</span>
-                                                        </div>
-                                                        <div class="info-row">
-                                                            <strong>Trạng thái:</strong>
-                                                            <span class="badge bg-warning">Đang giao hàng</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
 
-                                    <!-- Order Items -->
-                                    <div class="row mt-4">
-                                        <div class="col-12">
-                                            <div class="card">
-                                                <div class="card-header">
-                                                    <h5 class="card-title mb-0">
-                                                        <i class="bi bi-box-seam me-2"></i>Sản phẩm đã đặt
-                                                    </h5>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="table-responsive">
-                                                        <table class="table table-hover">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Sản phẩm</th>
-                                                                    <th>Đơn giá</th>
-                                                                    <th>Số lượng</th>
-                                                                    <th>Thành tiền</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td>
-                                                                        <div class="d-flex align-items-center">
-                                                                            <img src="./assets/images/book-placeholder.jpg"
-                                                                                alt="Book" class="product-image me-3">
-                                                                            <div>
-                                                                                <h6 class="product-name mb-1">Cây Thúc
-                                                                                    Thần Kỳ, Cây Cầm Đồng Trong Tín
-                                                                                    Điều, và Thú Handmade: Nghệ Thuật
-                                                                                    Thủ Công Việt Tân Hành</h6>
-                                                                                <small class="text-muted">SKU:
-                                                                                    BK001234</small>
-                                                                            </div>
+                                    <!-- Danh sách sản phẩm -->
+                                    <div class="card mt-4">
+                                        <div class="card-header">
+                                            <h5><i class="bi bi-box-seam me-2"></i>Sản phẩm trong đơn hàng</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover align-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Sản phẩm</th>
+                                                            <th>Đơn giá</th>
+                                                            <th>Số lượng</th>
+                                                            <th>Thành tiền</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <c:forEach var="item" items="${orderShop.items}">
+                                                            <tr>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <img src="http://localhost:8080/assets/images/catalog/products/${item.product.primaryImageUrl}"
+                                                                            alt="Ảnh sản phẩm"
+                                                                            class="product-image me-3"
+                                                                            style="width: 100px; height: 100px; object-fit: cover;">
+                                                                        <div>
+                                                                            <strong>${item.product.title}</strong>
                                                                         </div>
-                                                                    </td>
-                                                                    <td>
-                                                                        <span class="price">618.400 VNĐ</span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <span class="quantity">1</span>
-                                                                    </td>
-                                                                    <td>
-                                                                        <span class="total-price">618.400 VNĐ</span>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Order Summary -->
-                                    <div class="row mt-4">
-                                        <div class="col-md-8">
-                                            <!-- Order Timeline -->
-                                            <div class="card">
-                                                <div class="card-header">
-                                                    <h5 class="card-title mb-0">
-                                                        <i class="bi bi-clock-history me-2"></i>Lịch sử đơn hàng
-                                                    </h5>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="timeline">
-                                                        <div class="timeline-item completed">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Đơn hàng đã được đặt</h6>
-                                                                <p class="text-muted mb-0">12/09/2024 14:30</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="timeline-item completed">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Đơn hàng đã được xác nhận</h6>
-                                                                <p class="text-muted mb-0">12/09/2024 15:15</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="timeline-item completed">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Đang chuẩn bị hàng</h6>
-                                                                <p class="text-muted mb-0">13/09/2024 09:00</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="timeline-item active">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Đã giao cho đơn vị vận chuyển</h6>
-                                                                <p class="text-muted mb-0">13/09/2024 16:30</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="timeline-item">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Đang giao hàng</h6>
-                                                                <p class="text-muted mb-0">Dự kiến: 14/09/2024</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="timeline-item">
-                                                            <div class="timeline-marker"></div>
-                                                            <div class="timeline-content">
-                                                                <h6>Giao hàng thành công</h6>
-                                                                <p class="text-muted mb-0">Dự kiến: 15/09/2024</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <!-- Payment Summary -->
-                                            <div class="card">
-                                                <div class="card-header">
-                                                    <h5 class="card-title mb-0">
-                                                        <i class="bi bi-receipt me-2"></i>Tóm tắt thanh toán
-                                                    </h5>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="payment-summary">
-                                                        <div class="summary-row">
-                                                            <span>Tạm tính:</span>
-                                                            <span>618.400 VNĐ</span>
-                                                        </div>
-                                                        <div class="summary-row">
-                                                            <span>Phí vận chuyển:</span>
-                                                            <span>25.000 VNĐ</span>
-                                                        </div>
-                                                        <div class="summary-row">
-                                                            <span>Giảm giá:</span>
-                                                            <span class="text-success">-0 VNĐ</span>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="summary-row total">
-                                                            <strong>Tổng cộng:</strong>
-                                                            <strong class="text-primary">643.400 VNĐ</strong>
-                                                        </div>
-                                                        <hr>
-                                                        <div class="payment-method">
-                                                            <strong>Phương thức thanh toán:</strong>
-                                                            <div class="mt-2">
-                                                                <span class="badge bg-success">
-                                                                    <i class="bi bi-credit-card me-1"></i>Thanh toán
-                                                                    online
-                                                                </span>
-                                                            </div>
-                                                            <small class="text-muted">Đã thanh toán</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <fmt:formatNumber value="${item.salePrice}"
+                                                                        type="currency" currencySymbol="₫" />
+                                                                </td>
+                                                                <td>${item.quantity}</td>
+                                                                <td>
+                                                                    <fmt:formatNumber value="${item.subtotal}"
+                                                                        type="currency" currencySymbol="₫" />
+                                                                </td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                    </tbody>
+                                                </table>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </main>
+
+                            <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
+
+                            <!-- 🔹 Modal xác nhận -->
+                            <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header confirm-header">
+                                            <h5 class="modal-title" id="confirmModalLabel">
+                                                <i class="bi bi-question-circle"></i> Xác nhận hành động
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Đóng"></button>
+                                        </div>
+                                        <b>
+                                            <div class="modal-body fs-6 text-muted" id="confirmMessage">
+                                            </div>
+                                        </b>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-secondary"
+                                                data-bs-dismiss="modal">
+                                                <i class="bi bi-x-circle"></i> Hủy
+                                            </button>
+                                            <button type="button" class="btn btn-primary" id="confirmSubmit">
+                                                <i class="bi bi-check2-circle"></i> Xác nhận
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                     </div>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/orderDetails.js?v=1.0.2"></script>
+                    <script src="${ctx}/assets/js/shop/orderDetails.js?v=1.0.1"></script>
                 </body>
 
                 </html>

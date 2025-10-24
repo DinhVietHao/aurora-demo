@@ -1,252 +1,308 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // ——— Cache các phần tử UI cần dùng ———
-    const sendOtpBtn = document.getElementById("send-otp");
-    const timerLabel = document.getElementById("otp-timer");
-    const registerModalEl = document.getElementById("registerModal");
-    const emailInput = document.getElementById("register-email");
-    const otpInput = document.getElementById("register-otp");
+/**
+ * OTP Manager - Module tổng quát để quản lý gửi và verify OTP
+ * Verify OTP bằng cách so sánh client-side với OTP nhận từ server
+ */
+function createOtpManager(config = {}) {
+  const {
+    sendOtpBtn,
+    timerLabel,
+    otpInput,
+    emailInput,
+    modalElement,
+    defaultPurpose,
+  } = config;
 
-    // ——— Trạng thái đếm ngược & xác thực OTP ———
-    let timeLeft;
-    let countdown;
-    let otpExpired = false;
-    let verifyDebounce;
-    let verifyController = null;
+  // ——— State quản lý OTP ———
+  let timeLeft = 0;
+  let countdown = null;
+  let otpExpired = false;
+  let verifyDebounce = null;
+  let correctOtp = null; // Lưu OTP đúng từ server
 
-    // Khoá/Mở nút "Gửi OTP" + chỉnh style cho rõ trạng thái
-    function setBtnDisabled(disabled) {
-        sendOtpBtn.disabled = disabled;
-        sendOtpBtn.style.opacity = disabled ? "0.5" : "1";
-        sendOtpBtn.style.pointerEvents = disabled ? "none" : "";
-        sendOtpBtn.style.cursor = disabled ? "not-allowed" : "";
+  /**
+   * Tìm element hiển thị message của input
+   */
+  function getMessageElementOf(inputElement) {
+    if (!inputElement) return null;
+    const container =
+      inputElement.closest(".form-group") || inputElement.parentElement;
+    return container?.querySelector(".form-message") || null;
+  }
+
+  /**
+   * Hiển thị message cho input với trạng thái
+   */
+  function showMessageForInput(inputElement, message, status) {
+    const msgElement = getMessageElementOf(inputElement);
+    if (msgElement) {
+      msgElement.textContent = message;
+      switch (status) {
+        case "success":
+          msgElement.style.color = "green";
+          break;
+        case "failure":
+          msgElement.style.color = "red";
+          break;
+        default:
+          msgElement.style.color = "";
+      }
     }
+  }
 
-    // Đánh dấu OTP hết hạn, dừng timer và cập nhật UI
-    function setTimerExpired() {
-        clearInterval(countdown);
-        timeLeft = 0;
-        otpExpired = true;
+  /**
+   * Validate email (có thể custom hoặc dùng default)
+   */
+  function isValidEmail(email) {
+    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
+  }
 
-        timerLabel.textContent = "Hết hạn";
-        timerLabel.style.color = "red";
-        setBtnDisabled(false);
+  /**
+   * Mask email để hiển thị (giữ 1-2 ký tự đầu local-part)
+   */
+  function maskEmail(email) {
+    if (!email || !email.includes("@")) return "*******";
+    const [local, domain] = email.split("@");
+    const head = local.length <= 2 ? local.slice(0, 1) : local.slice(0, 2);
+    return head + "*****@" + domain;
+  }
+
+  /**
+   * Enable/Disable nút "Gửi OTP"
+   */
+  function setBtnDisabled(disabled) {
+    if (!sendOtpBtn) return;
+    sendOtpBtn.disabled = disabled;
+    sendOtpBtn.style.opacity = disabled ? "0.5" : "1";
+    sendOtpBtn.style.pointerEvents = disabled ? "none" : "";
+    sendOtpBtn.style.cursor = disabled ? "not-allowed" : "";
+  }
+
+  /**
+   * Render mm:ss lên timer label
+   */
+  function updateDisplay(seconds) {
+    if (!timerLabel) return;
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    timerLabel.textContent = `${min}:${sec < 10 ? "0" + sec : sec}`;
+  }
+
+  /**
+   * Đánh dấu OTP hết hạn
+   */
+  function setTimerExpired() {
+    clearInterval(countdown);
+    timeLeft = 0;
+    otpExpired = true;
+    correctOtp = null; // Xoá OTP khi hết hạn
+
+    if (timerLabel) {
+      timerLabel.textContent = "Hết hạn";
+      timerLabel.style.color = "red";
     }
+    setBtnDisabled(false);
 
-    // Kiểm tra định dạng email cơ bản
-    function isValidEmail(email) {
-        return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email);
-    }
-
-    // Tìm phần tử hiển thị thông báo đi kèm 1 input (theo .form-group > .form-message)
-    function getMessageElementOf(inputElement) {
-        if (!inputElement) return null;
-        const container =
-            inputElement.closest(".form-group") || inputElement.parentElement;
-        return container?.querySelector(".form-message") || null;
-    }
-
-    // Hiển thị thông báo cho 1 input, kèm trạng thái success/failure để đổi màu
-    function showMessageForInput(inputElement, message, outcomes) {
-        const msgElement = getMessageElementOf(inputElement);
-        if (msgElement) {
-            msgElement.textContent = message;
-            switch (outcomes) {
-                case "success":
-                    msgElement.style.color = "green";
-                    break;
-                case "failure":
-                    msgElement.style.color = "red";
-                    break;
-                default:
-                    msgElement.style.color = "";
-            }
-        }
-    }
-
-    // Render mm:ss lên nhãn đếm ngược
-    function updateDisplay(seconds) {
-        let min = Math.floor(seconds / 60);
-        let sec = seconds % 60;
-        timerLabel.textContent = `${min}:${sec < 10 ? "0" + sec : sec}`;
-    }
-
-    // Bắt đầu đếm ngược cho OTP: khoá nút, cập nhật mỗi giây, hết hạn thì báo
-    function startCountdown(duration) {
-        timeLeft = duration;
-
-        clearInterval(countdown);
-        otpExpired = false;
-
-        timerLabel.style.color = "";
-        updateDisplay(timeLeft);
-        setBtnDisabled(true);
-
-        countdown = setInterval(() => {
-            timeLeft--;
-            updateDisplay(timeLeft);
-
-            if (timeLeft <= 0) {
-                setTimerExpired();
-                showMessageForInput(
-                    otpInput,
-                    "Mã OTP đã hết hạn, vui lòng bấm Gửi OTP để nhận mã mới.",
-                    "failure"
-                );
-                return;
-            }
-        }, 1000);
-    }
-
-    // Xoá timer + reset UI liên quan OTP
-    function resetCountdown() {
-        clearInterval(countdown);
-        timerLabel.textContent = "";
-        setBtnDisabled(false);
-        showMessageForInput(otpInput, "", "");
-        if (emailInput) showMessageForInput(emailInput, "", "");
-    }
-
-    // Verify OTP ngay khi người dùng nhập đủ 6 số (và chưa hết hạn)
-    async function verifyOtpNow() {
-        console.log(otpExpired);
-        const otp = (otpInput?.value || "").trim();
-        const email = (emailInput?.value || "").trim();
-        if (!/^\d{6}$/.test(otp) || otpExpired) return; // chỉ kiểm khi đủ 6 số
-        try {
-            // Huỷ request verify trước đó (nếu còn) để tránh race-condition
-            if (verifyController) verifyController.abort();
-            verifyController = new AbortController();
-
-            const res = await fetch("/auth/verify-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ otp, email }),
-                signal: verifyController.signal,
-            });
-            const data = await res.json().catch(() => null);
-
-            // Server trả về { ok: true, valid: boolean } → hiện thông báo tương ứng
-            if (data.valid === true) {
-                showMessageForInput(otpInput, "Mã OTP chính xác ✅", "success");
-            } else {
-                showMessageForInput(
-                    otpInput,
-                    `Mã OTP không đúng. ${
-                        timeLeft ? "Còn " + timeLeft + "s" : ""
-                    }`,
-                    "failure"
-                );
-            }
-        } catch (err) {
-            // Abort thì bỏ qua; lỗi mạng thì báo người dùng
-            if (err?.name === "AbortError") return;
-            showMessageForInput(
-                otpInput,
-                "Không thể kết nối máy chủ để xác thực OTP.",
-                "failure"
-            );
-        } finally {
-            verifyController = null;
-        }
-    }
-
-    // Debounce 200ms khi gõ OTP để tránh spam API verify
     if (otpInput) {
-        otpInput.addEventListener("input", () => {
-            if (verifyDebounce) clearTimeout(verifyDebounce);
-            verifyDebounce = setTimeout(verifyOtpNow, 200);
-        });
+      showMessageForInput(
+        otpInput,
+        "Mã OTP đã hết hạn, vui lòng bấm Gửi OTP để nhận mã mới.",
+        "failure"
+      );
+    }
+  }
+
+  /**
+   * Bắt đầu đếm ngược OTP
+   */
+  function startCountdown(duration) {
+    timeLeft = duration;
+    clearInterval(countdown);
+    otpExpired = false;
+
+    timerLabel.style.color = "";
+    updateDisplay(timeLeft);
+    setBtnDisabled(true);
+
+    countdown = setInterval(() => {
+      timeLeft--;
+      updateDisplay(timeLeft);
+
+      if (timeLeft <= 0) {
+        setTimerExpired();
+      }
+    }, 1000);
+  }
+
+  /**
+   * Reset countdown và UI
+   */
+  function resetCountdown() {
+    clearInterval(countdown);
+    timeLeft = 0;
+    otpExpired = false;
+    correctOtp = null;
+
+    if (timerLabel) {
+      timerLabel.textContent = "";
     }
 
-    // Click "Gửi OTP": validate email → gọi /auth/send-otp → nếu OK thì bắt đầu đếm ngược
-    sendOtpBtn.addEventListener("click", async function () {
-        const email = (emailInput?.value || "").trim();
+    setBtnDisabled(false);
+    if (otpInput) showMessageForInput(otpInput, "", "");
+    if (emailInput) showMessageForInput(emailInput, "", "");
+  }
 
-        // Validate email cơ bản + focus vào input khi lỗi
-        if (!email) {
-            showMessageForInput(emailInput, "Vui lòng nhập email.", "failure");
-            emailInput?.focus();
-            return;
+  /**
+   * Verify OTP client-side (so sánh với correctOtp)
+   */
+  function verifyOtpNow() {
+    const userOtp = (otpInput?.value || "").trim();
+
+    // Chỉ verify khi nhập đủ 6 số và chưa hết hạn
+    if (!/^\d{6}$/.test(userOtp) || otpExpired || !correctOtp) {
+      return;
+    }
+
+    // So sánh OTP người dùng nhập với OTP từ server
+    if (userOtp === correctOtp) {
+      showMessageForInput(otpInput, "Mã OTP chính xác ✅", "success");
+    } else {
+      showMessageForInput(
+        otpInput,
+        `Mã OTP không đúng. ${timeLeft ? "Còn " + timeLeft + "s" : ""}`,
+        "failure"
+      );
+    }
+  }
+
+  /**
+   * Gửi OTP qua email
+   * @param {string} purpose - "register" hoặc "forgot-password"
+   */
+  async function sendOtp() {
+    const email = (emailInput?.value || "").trim();
+
+    // Validate email
+    if (!email) {
+      showMessageForInput(emailInput, "Vui lòng nhập email.", "failure");
+      return false;
+    }
+
+    if (!isValidEmail(email)) {
+      showMessageForInput(emailInput, "Email không hợp lệ.", "failure");
+      return false;
+    }
+
+    // Clear OTP input và message cũ
+    if (otpInput) otpInput.value = "";
+    showMessageForInput(otpInput, "", "");
+    showMessageForInput(emailInput, "", "");
+    correctOtp = null; // Reset OTP cũ
+
+    // Khoá nút trong lúc gửi
+    if (!sendOtpBtn) return false;
+    const oldText = sendOtpBtn.textContent;
+    sendOtpBtn.textContent = "Đang gửi...";
+    setBtnDisabled(true);
+
+    const formData = new FormData();
+    formData.append("action", "send-otp");
+    formData.append("email", email);
+    formData.append("purpose", defaultPurpose);
+
+    try {
+      const res = await fetch("/auth", {
+        method: "POST",
+        body: formData,
+      });
+
+      let data = await res.json();
+
+      sendOtpBtn.textContent = oldText;
+
+      // Thất bại
+      if (!data.success) {
+        setBtnDisabled(false);
+        let msg = data.message;
+        if (msg.includes("Email") || msg.includes("không hợp lệ")) {
+          showMessageForInput(emailInput, data.message, "failure");
+        } else {
+          showMessageForInput(otpInput, data.message, "failure");
         }
-        if (!isValidEmail(email)) {
-            showMessageForInput(emailInput, "Email không hợp lệ.", "failure");
-            emailInput?.focus();
-            return;
-        }
+        return false;
+      }
 
-        // Clear trạng thái OTP cũ trên UI
-        otpInput && (otpInput.value = "");
-        showMessageForInput(otpInput, "", "");
-        showMessageForInput(emailInput, "", "");
+      // Thành công → lưu OTP từ server và bắt đầu đếm ngược
+      correctOtp = data.otp; // Lưu OTP để verify
+      const expiresIn = Number.parseInt(data.expiresIn);
+      startCountdown(expiresIn);
+      showMessageForInput(otpInput, data.message, "success");
+      return true;
+    } catch (e) {
+      sendOtpBtn.textContent = oldText;
+      setBtnDisabled(false);
+      showMessageForInput(
+        otpInput,
+        "Không thể kết nối máy chủ. Vui lòng thử lại.",
+        "failure"
+      );
+      return false;
+    }
+  }
 
-        // Trong lúc gửi, khoá nút để tránh click liên tục
-        const oldText = sendOtpBtn.textContent;
-        sendOtpBtn.textContent = "Đang gửi...";
-        setBtnDisabled(true);
+  /**
+   * Check OTP đã valid chưa (dựa vào message)
+   */
+  function isOtpValid() {
+    const msgEl = getMessageElementOf(otpInput);
+    return msgEl && msgEl.textContent.trim() === "Mã OTP chính xác ✅";
+  }
 
-        try {
-            console.log("Hello DinhVietHao");
-            // Gọi servlet gửi OTP (AJAX, JSON)
-            const res = await fetch("/auth/send-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
-            });
+  /**
+   * Invalidate OTP hiện tại
+   */
+  function invalidateOtp() {
+    if (verifyDebounce) clearTimeout(verifyDebounce);
+    resetCountdown();
+    if (otpInput) otpInput.value = "";
+    showMessageForInput(otpInput, "", "");
+    correctOtp = null;
+  }
 
-            let data = null;
-            try {
-                data = await res.json();
-            } catch (_) {}
+  // ——— Setup event listeners ———
 
-            sendOtpBtn.textContent = oldText;
-
-            // Thất bại: mở khoá nút + hiển thị lý do (nếu server trả message)
-            if (!res.ok || !data || data.ok !== true) {
-                const msg =
-                    data && data.message
-                        ? data.message
-                        : "Gửi OTP thất bại. Vui lòng thử lại.";
-                setBtnDisabled(false);
-                showMessageForInput(otpInput, msg, "failure");
-                return;
-            }
-
-            // Thành công → dùng expiresIn từ server để đếm ngược
-            const expires = data.expiresIn;
-            startCountdown(expires);
-            showMessageForInput(
-                otpInput,
-                "Đã gửi mã OTP. Vui lòng kiểm tra email.",
-                "success"
-            );
-        } catch (e) {
-            // Lỗi mạng: khôi phục nút và báo lỗi chung
-            sendOtpBtn.textContent = oldText;
-            setBtnDisabled(false);
-            showMessageForInput(
-                otpInput,
-                "Không thể kết nối máy chủ. Vui lòng thử lại.",
-                "failure"
-            );
-        }
+  // Debounce verify khi gõ OTP
+  if (otpInput) {
+    otpInput.addEventListener("input", () => {
+      if (verifyDebounce) clearTimeout(verifyDebounce);
+      verifyDebounce = setTimeout(verifyOtpNow, 200);
     });
+  }
 
-    // Khi đóng modal: dọn trạng thái local và gọi server để vô hiệu OTP hiện tại
-    if (registerModalEl) {
-        registerModalEl.addEventListener("hidden.bs.modal", async () => {
-            // Huỷ verify đang chờ (debounce/abort)
-            if (verifyDebounce) clearTimeout(verifyDebounce);
-            if (verifyController) {
-                verifyController.abort();
-                verifyController = null;
-            }
+  // Click "Gửi OTP"
+  if (sendOtpBtn) {
+    sendOtpBtn.addEventListener("click", sendOtp);
+  }
 
-            resetCountdown();
-            otpInput && (otpInput.value = "");
-            showMessageForInput(otpInput, "", "");
-            try {
-                await fetch("/auth/invalidate-otp", { method: "POST" });
-            } catch (_) {}
-        });
-    }
-});
+  // Khi đóng modal → invalidate OTP
+  if (modalElement) {
+    modalElement.addEventListener("hidden.bs.modal", invalidateOtp);
+  }
+
+  // ——— Public API ———
+  return {
+    sendOtp,
+    maskEmail,
+    isOtpValid,
+    verifyOtpNow,
+    isValidEmail,
+    invalidateOtp,
+    resetCountdown,
+    showMessageForInput,
+    getMessageElementOf,
+    getTimeLeft: () => timeLeft,
+    isExpired: () => otpExpired,
+  };
+}
+
+// Attach ra global để các file khác sử dụng
+window.createOtpManager = createOtpManager;

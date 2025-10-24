@@ -52,4 +52,50 @@ public class CategoryDAO {
         return list;
     }
 
+    public void deleteCategoriesByProductId(long productId) throws SQLException {
+        String sql = "DELETE FROM ProductCategory WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void addCategoryToProduct(long productId, long categoryId) throws SQLException {
+        String sql = "INSERT INTO ProductCategory (ProductID, CategoryID) VALUES (?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, categoryId);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<Category> getCategoriesByShopId(long shopId) throws SQLException {
+        String sql = """
+                    SELECT DISTINCT c.CategoryID, c.Name
+                    FROM Category c
+                    INNER JOIN ProductCategory pc ON c.CategoryID = pc.CategoryID
+                    INNER JOIN Products p ON pc.ProductID = p.ProductID
+                    WHERE p.ShopID = ? AND p.Status IN ('ACTIVE', 'INACTIVE', 'OUT_OF_STOCK', 'PENDING')
+                    ORDER BY c.Name
+                """;
+
+        List<Category> categories = new ArrayList<>();
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Category category = new Category();
+                category.setCategoryId(rs.getLong("CategoryID"));
+                category.setName(rs.getString("Name"));
+                categories.add(category);
+            }
+        }
+
+        return categories;
+    }
 }
