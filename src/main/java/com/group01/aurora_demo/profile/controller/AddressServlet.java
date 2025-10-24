@@ -91,7 +91,19 @@ public class AddressServlet extends HttpServlet {
             case "/update":
                 try {
                     long addressIdUpdate = Long.parseLong(req.getParameter("addressId"));
+                    String from = req.getParameter("from");
+                    if (!addressDAO.canModifyAddress(user.getId(), addressIdUpdate)) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg",
+                                "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
+                        if (from.equalsIgnoreCase("checkout")) {
+                            resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
+                        } else {
+                            resp.sendRedirect(req.getContextPath() + "/address");
+                        }
 
+                        return;
+                    }
                     String recipientName = req.getParameter("fullName");
                     String phone = req.getParameter("phone");
                     String city = req.getParameter("cityName");
@@ -116,7 +128,9 @@ public class AddressServlet extends HttpServlet {
                     address.setDescription(description);
                     this.addressDAO.updateAddress(user.getId(), address, isDefault);
 
-                    String from = req.getParameter("from");
+                    session.setAttribute("toastType", "success");
+                    session.setAttribute("toastMsg", "Cập nhật địa chỉ thành công.");
+
                     if (from.equalsIgnoreCase("checkout")) {
                         resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
                     } else {
@@ -125,6 +139,9 @@ public class AddressServlet extends HttpServlet {
                 } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println(e.getMessage());
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Có lỗi xảy ra khi cập nhật địa chỉ.");
+                    resp.sendRedirect(req.getContextPath() + "/address");
                 }
 
                 break;
@@ -162,8 +179,16 @@ public class AddressServlet extends HttpServlet {
             case "/delete":
                 try {
                     Long addressIdDelete = Long.parseLong(req.getParameter("addressId"));
-                    this.addressDAO.deleteAddress(user.getId(), addressIdDelete);
-                    json.put("success", true);
+
+                    if (!addressDAO.canModifyAddress(user.getId(), addressIdDelete)) {
+                        json.put("success", false);
+                        json.put("type", "warning");
+                        json.put("title", "Không thể xóa");
+                        json.put("message", "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
+                    } else {
+                        addressDAO.deleteAddress(user.getId(), addressIdDelete);
+                        json.put("success", true);
+                    }
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     json.put("success", false);

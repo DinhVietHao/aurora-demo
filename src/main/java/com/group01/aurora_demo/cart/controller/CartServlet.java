@@ -86,6 +86,7 @@ public class CartServlet extends HttpServlet {
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
             json.put("success", false);
+            json.put("user", true);
             json.put("title", "Cảnh báo!");
             json.put("type", "warning");
             json.put("message", "Vui lòng đăng nhập trước khi mua hàng.");

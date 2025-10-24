@@ -307,7 +307,7 @@
                                             <span class="cart-pay-success discount">0đ</span>
                                         </div>
                                         <div class="d-flex justify-content-between mb-2">
-                                            <span class="cart-pay-success">Tổng cộng Voucher giảm giá
+                                            <span class="cart-pay-success">Giảm giá phí vận chuyển
                                             </span>
                                             <span class="cart-pay-success ship-discount">0đ</span>
                                         </div>
@@ -813,6 +813,19 @@
                 </script>
                 <!-- Link javascript of Shipping Address -->
                 <script src="./assets/js/customer/address/address.js"></script>
+
+                <c:if test="${not empty sessionScope.toastMsg}">
+                    <script>
+                        toast({
+                            title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Không thể cập nhật'}",
+                            message: "${sessionScope.toastMsg}",
+                            type: "${sessionScope.toastType}",
+                            duration: 3000
+                        });
+                    </script>
+                    <c:remove var="toastMsg" scope="session" />
+                    <c:remove var="toastType" scope="session" />
+                </c:if>
             </body>
 
             </html>

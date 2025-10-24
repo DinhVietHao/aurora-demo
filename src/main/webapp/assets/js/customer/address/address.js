@@ -38,7 +38,12 @@ if (confirmDeleteAddress) {
         `;
           }
         } else {
-          alert("Xóa thất bại: " + data.message);
+          toast({
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            duration: 3000,
+          });
         }
       })
       .catch((err) => {

@@ -75,80 +75,44 @@ public class OrderDAO {
         return -1;
     }
 
-    public List<OrderDTO> getOrdersByStatus(long userId, String status) {
-        List<OrderDTO> orders = new ArrayList<>();
-        StringBuilder sql = new StringBuilder("""
-                   SELECT
-                    os.OrderID,
-                    os.OrderShopID,
-                    s.Name AS ShopName,
-                    o.FinalAmount,
-                    os.Status AS ShopStatus,
-                    os.UpdateAt,
-                    p.ProductID,
-                    p.Title AS ProductName,
-                    img.Url AS ImageUrl,
-                    oi.Quantity,
-                    oi.OriginalPrice,
-                    oi.SalePrice
-                FROM Orders o
-                JOIN OrderShops os ON o.OrderID = os.OrderID
-                JOIN Shops s ON os.ShopID = s.ShopID
-                JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
-                JOIN Products p ON oi.ProductID = p.ProductID
-                JOIN ProductImages img ON p.ProductID = img.ProductID
-                WHERE o.UserID = ?
-                AND img.IsPrimary = 1
-                """);
-        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-            if (status.equalsIgnoreCase("waiting_ship")) {
-                sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
-            } else if (status.equalsIgnoreCase("returned")) {
-                sql.append(
-                        " AND (os.Status = 'RETURN_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURN_REJECTED') ");
-            } else {
-                sql.append(" AND os.Status = ? ");
-            }
-        }
-        sql.append(" ORDER BY os.UpdateAt DESC");
-        try (Connection cn = DataSourceProvider.get().getConnection();) {
-            PreparedStatement ps = cn.prepareStatement(sql.toString());
+    public List<Order> getOrdersByUserId(long userId) throws SQLException {
+        List<Order> orders = new ArrayList<>();
+
+        String sql = """
+                    SELECT
+                        o.OrderID,
+                        u.FullName,
+                        o.TotalAmount,
+                        o.DiscountAmount,
+                        o.TotalShippingFee,
+                        o.ShippingDiscount,
+                        o.FinalAmount,
+                        o.CreatedAt
+                    FROM Orders o
+                    JOIN Users u ON o.UserID = u.UserID
+                    WHERE o.UserID = ?
+                    ORDER BY o.CreatedAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, userId);
-            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
-                if (!status.equalsIgnoreCase("waiting_ship") && !status.equalsIgnoreCase("returned")) {
-                    ps.setString(2, status.toUpperCase());
-                }
-            }
             ResultSet rs = ps.executeQuery();
+
             while (rs.next()) {
-                OrderDTO order = new OrderDTO();
+                Order order = new Order();
                 order.setOrderId(rs.getLong("OrderID"));
-                order.setOrderShopId(rs.getLong("OrderShopID"));
-                order.setShopName(rs.getString("ShopName"));
+                order.setCustomerName(rs.getString("FullName"));
+                order.setTotalAmount(rs.getDouble("TotalAmount"));
+                order.setDiscountAmount(rs.getDouble("DiscountAmount"));
+                order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
+                order.setShippingDiscount(rs.getDouble("ShippingDiscount"));
                 order.setFinalAmount(rs.getDouble("FinalAmount"));
-                order.setShopStatus(rs.getString("ShopStatus"));
-                order.setUpdateAt(rs.getTimestamp("UpdateAt"));
-                order.setProductId(rs.getLong("ProductID"));
-                order.setProductName(rs.getString("ProductName"));
-                order.setImageUrl(rs.getString("ImageUrl"));
-                order.setQuantity(rs.getInt("Quantity"));
-                order.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                order.setSalePrice(rs.getDouble("SalePrice"));
-
-                List<Category> categories = categoryDAO.getCategoriesByProductId(rs.getLong("ProductID"));
-                order.setCategories(categories);
-
-                boolean canReturn = "COMPLETED".equalsIgnoreCase(order.getShopStatus())
-                        && ChronoUnit.DAYS.between(
-                                order.getUpdateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                                LocalDate.now()) < 7;
-                order.setCanReturn(canReturn);
-
+                order.setCreatedAt(rs.getDate("CreatedAt"));
                 orders.add(order);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
         }
+
         return orders;
     }
 

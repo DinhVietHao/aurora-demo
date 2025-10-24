@@ -445,7 +445,7 @@
         <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
         <!-- JS riêng của trang -->
-        <script src="${ctx}/assets/js/catalog/book_detail.js"></script>
+        <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.1"></script>
         <script src="${ctx}/assets/js/catalog/comment.js"></script>
       </body>
 

@@ -28,6 +28,7 @@ import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
+import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
@@ -53,6 +54,7 @@ public class OrderServlet extends HttpServlet {
     private CartItemDAO cartItemDAO;
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
+    private VoucherValidator voucherValidator;
 
     public OrderServlet() {
         this.orderService = new OrderService();
@@ -64,6 +66,7 @@ public class OrderServlet extends HttpServlet {
         this.cartItemDAO = new CartItemDAO();
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
+        this.voucherValidator = new VoucherValidator();
     }
 
     @Override
@@ -82,13 +85,60 @@ public class OrderServlet extends HttpServlet {
 
         if (path == null || path.equals("/")) {
             try {
-                String status = req.getParameter("status");
-                List<OrderDTO> orders = this.orderDAO.getOrdersByStatus(user.getId(), status);
-                Map<Long, List<OrderDTO>> grouped = orders.stream()
-                        .collect(Collectors.groupingBy(order -> order.getOrderId(),
+                List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
+                req.setAttribute("orders", orders);
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (path.equals("/order-shop")) {
+            try {
+                long orderId = Long.parseLong(req.getParameter("orderId"));
+
+                List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
+                if (orderShops == null || orderShops.isEmpty()) {
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                    return;
+                }
+
+                OrderDTO first = orderShops.get(0);
+
+                double totalOrderAmount = first.getTotalAmount();
+                double totalShippingFee = first.getTotalShippingFee();
+
+                double SystemDiscount = 0;
+                Voucher voucher = voucherDAO.getVoucherByVoucherID(first.getSystemVoucherId());
+                if (voucher != null) {
+                    SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                }
+
+                Map<Long, Double> shopSubtotalMap = orderShops.stream()
+                        .collect(Collectors.groupingBy(
+                                orderShop -> orderShop.getOrderShopId(),
+                                Collectors.summingDouble(orderShop -> orderShop.getSubtotal())));
+
+                for (OrderDTO orderShop : orderShops) {
+                    double totalShopSubtotal = shopSubtotalMap.get(orderShop.getOrderShopId());
+                    double SystemShipDiscount = orderShop.getSystemShippingDiscount();
+                    double shopShippingFee = orderShop.getShopShippingFee();
+                    double shopDiscount = orderShop.getShopDiscount();
+
+                    double proportionDiscount = totalOrderAmount > 0 ? totalShopSubtotal / totalOrderAmount : 1.0;
+                    double proportionShip = totalShippingFee > 0 ? shopShippingFee / totalShippingFee : 1.0;
+
+                    double SystemVoucherDiscount = SystemDiscount * proportionDiscount;
+                    double SystemVoucherShip = SystemShipDiscount * proportionShip;
+
+                    double finalAmount = totalShopSubtotal + shopShippingFee
+                            - SystemVoucherDiscount - SystemVoucherShip - shopDiscount;
+                    orderShop.setShopFinalAmount(Math.max(finalAmount, 0));
+                }
+
+                Map<Long, List<OrderDTO>> grouped = orderShops.stream()
+                        .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
                                 LinkedHashMap::new,
                                 Collectors.toList()));
-                req.setAttribute("orders", grouped);
+                req.setAttribute("orderShops", grouped);
 
                 String filePathCancel = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
                 List<Map<String, String>> cancelReasons = loadCancelReasons(filePathCancel);
@@ -98,7 +148,56 @@ public class OrderServlet extends HttpServlet {
                 List<Map<String, String>> returnReasons = loadCancelReasons(filePathReturn);
                 req.setAttribute("returnReasons", returnReasons);
 
-                req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order-shop.jsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (path.equals("/order-shop/order-detail")) {
+            try {
+                long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+
+                List<OrderDTO> orderItems = this.orderItemDAO.getOrderItemsByOrderShopId(orderShopId);
+                if (orderItems == null || orderItems.isEmpty()) {
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                    return;
+                }
+
+                OrderDTO firstItem = orderItems.get(0);
+
+                double totalOrderAmount = firstItem.getTotalAmount();
+                double SystemDiscount = 0;
+                Voucher voucher = voucherDAO.getVoucherByVoucherID(firstItem.getSystemVoucherId());
+                if (voucher != null) {
+                    SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                }
+
+                double SystemShipDiscount = firstItem.getSystemShippingDiscount();
+                double totalShippingFee = firstItem.getTotalShippingFee();
+                double shopShippingFee = firstItem.getShopShippingFee();
+                double shopDiscount = firstItem.getShopDiscount();
+
+                double totalShopSubtotal = orderItems.stream()
+                        .mapToDouble(orderItem -> orderItem.getSubtotal())
+                        .sum();
+
+                double proportionDiscount = totalOrderAmount > 0 ? totalShopSubtotal / totalOrderAmount : 1.0;
+                double proportionShip = totalShippingFee > 0 ? shopShippingFee / totalShippingFee : 1.0;
+
+                double SystemVoucherDiscount = SystemDiscount * proportionDiscount;
+                double SystemVoucherShip = SystemShipDiscount * proportionShip;
+
+                double finalAmount = totalShopSubtotal + shopShippingFee
+                        - SystemVoucherDiscount - SystemVoucherShip - shopDiscount;
+
+                req.setAttribute("orderItems", orderItems);
+                req.setAttribute("totalShopSubtotal", totalShopSubtotal);
+                req.setAttribute("shopShippingFee", shopShippingFee);
+                req.setAttribute("SystemVoucherShip", SystemVoucherShip);
+                req.setAttribute("shopDiscount", shopDiscount);
+                req.setAttribute("SystemVoucherDiscount", SystemVoucherDiscount);
+                req.setAttribute("finalAmount", finalAmount);
+
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order-detail.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
             }
