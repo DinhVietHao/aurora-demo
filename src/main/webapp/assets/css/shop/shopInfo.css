@@ -350,7 +350,7 @@ textarea.form-control {
 }
 
 .text-danger {
-    color: var(--color-three) !important;
+  color: var(--color-three) !important;
 }
 
 .form-message {
@@ -451,8 +451,12 @@ textarea.form-control {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Alerts & Notifications */

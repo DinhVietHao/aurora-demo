@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.group01.aurora_demo.auth.model.User;
 
-public class OrderShop {
+public class OrderShop  {
     private long orderShopId;
     private long orderId;
     private long shopId;

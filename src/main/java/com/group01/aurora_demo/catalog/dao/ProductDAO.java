@@ -1120,23 +1120,29 @@ public class ProductDAO {
 
     public Product getProductById(long productId) {
         Product product = null;
+
         String sql = """
-                 SELECT p.ProductID, p.ShopID, p.Title, p.Description,
-                    p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
-                    p.Status, p.PublishedDate, p.Weight, p.CreatedAt,
-                    pub.Name AS PublisherName,
-                    b.Translator, b.Version, b.CoverType, b.Pages, b.LanguageCode, l.LanguageName, b.[Size], b.ISBN
-                FROM Products p
-                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
-                LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
-                WHERE p.ProductID = ?
+                    SELECT
+                        p.ProductID, p.ShopID, p.Title, p.Description,
+                        p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
+                        p.Status, p.PublishedDate, p.Weight,
+                        p.RejectReason, p.CreatedAt,
+                        p.PublisherID, pub.Name AS PublisherName,
+                        b.Translator, b.Version, b.CoverType, b.Pages,
+                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN
+                    FROM Products p
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
+                    LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
+                    WHERE p.ProductID = ?
                 """;
 
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, productId);
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
                 product = new Product();
                 product.setProductId(rs.getLong("ProductID"));
@@ -1148,79 +1154,103 @@ public class ProductDAO {
                 product.setSoldCount(rs.getLong("SoldCount"));
                 product.setQuantity(rs.getInt("Quantity"));
                 product.setStatus(rs.getString("Status"));
-                product.setWeight(rs.getDouble("Weight"));
                 product.setPublishedDate(rs.getDate("PublishedDate"));
+                product.setWeight(rs.getDouble("Weight"));
+                product.setRejectReason(rs.getString("RejectReason"));
                 product.setCreatedAt(rs.getDate("CreatedAt"));
+                product.setPublisherId(rs.getLong("PublisherID"));
 
-                BookDetail bookDetail = new BookDetail();
-                bookDetail.setProductId(product.getProductId());
-                bookDetail.setTranslator(rs.getString("Translator"));
-                bookDetail.setVersion(rs.getString("Version"));
-                bookDetail.setCoverType(rs.getString("CoverType"));
-                bookDetail.setPages(rs.getInt("Pages"));
-                bookDetail.setLanguageCode(rs.getString("LanguageCode"));
-                bookDetail.setSize(rs.getString("Size"));
-                bookDetail.setIsbn(rs.getString("ISBN"));
-                // Set language if needed
+                // --- Publisher (N:1)
+                if (rs.getString("PublisherName") != null) {
+                    Publisher pub = new Publisher();
+                    pub.setPublisherId(rs.getLong("PublisherID"));
+                    pub.setName(rs.getString("PublisherName"));
+                    product.setPublisher(pub);
+                }
+
+                // --- BookDetail (1:1)
+                BookDetail bd = new BookDetail();
+                bd.setProductId(productId);
+                bd.setTranslator(rs.getString("Translator"));
+                bd.setVersion(rs.getString("Version"));
+                bd.setCoverType(rs.getString("CoverType"));
+
+                int pages = rs.getInt("Pages");
+                bd.setPages(rs.wasNull() ? null : pages);
+
+                bd.setLanguageCode(rs.getString("LanguageCode"));
+                bd.setSize(rs.getString("Size"));
+                bd.setIsbn(rs.getString("ISBN"));
+
+                // --- Language object
                 if (rs.getString("LanguageCode") != null) {
                     Language lang = new Language();
                     lang.setLanguageCode(rs.getString("LanguageCode"));
                     lang.setLanguageName(rs.getString("LanguageName"));
-                    bookDetail.setLanguage(lang);
+                    bd.setLanguage(lang);
                 }
-                product.setBookDetail(bookDetail);
 
-                Publisher pub = new Publisher();
-                pub.setName(rs.getString("PublisherName"));
-                product.setPublisher(pub);
+                product.setBookDetail(bd);
             }
-        } catch (Exception e) {
-            System.out.println(
-                    "Error in ProductDAO.getProductById main query (tables Products, Publishers, BookDetails, Languages): "
-                            + e.getMessage());
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error in getProductById main query: " + e.getMessage());
         }
 
-        if (product != null) {
-            // Set authors list
+        if (product == null)
+            return null;
+
+        // --- Load Authors ---
+        try {
             AuthorDAO authorDAO = new AuthorDAO();
-            try {
-                product.setAuthors(authorDAO.getAuthorsByProductId(productId));
-            } catch (SQLException e) {
-                System.out.println("Error in ProductDAO.getProductById setting authors (tables BookAuthors, Authors): "
-                        + e.getMessage());
-            }
-
-            // Set categories list
-            CategoryDAO cateDAO = new CategoryDAO();
-            try {
-                product.setCategories(cateDAO.getCategoriesByProductId(productId));
-            } catch (SQLException e) {
-                System.out.println(
-                        "Error in ProductDAO.getProductById setting categories (tables ProductCategory, Category): "
-                                + e.getMessage());
-            }
-
-            // Images
-            List<ProductImage> images = new ArrayList<>();
-            String imgSql = "SELECT ImageID, Url, IsPrimary FROM ProductImages WHERE ProductID = ? ORDER BY IsPrimary DESC";
-            try (Connection cn = DataSourceProvider.get().getConnection()) {
-                PreparedStatement ps = cn.prepareStatement(imgSql);
-                ps.setLong(1, productId);
-                ResultSet rs = ps.executeQuery();
-                while (rs.next()) {
-                    ProductImage productImages = new ProductImage();
-                    productImages.setImageId(rs.getLong("ImageID"));
-                    productImages.setProductId(productId);
-                    productImages.setUrl(rs.getString("Url"));
-                    productImages.setIsPrimary(rs.getBoolean("IsPrimary"));
-                    images.add(productImages);
-                }
-            } catch (Exception e) {
-                System.out.println(
-                        "Error in ProductDAO.getProductById setting images (table ProductImages): " + e.getMessage());
-            }
-            product.setImages(images);
+            product.setAuthors(authorDAO.getAuthorsByProductId(productId));
+        } catch (SQLException e) {
+            System.err.println("⚠ Error loading authors: " + e.getMessage());
         }
+
+        // --- Load Categories ---
+        try {
+            CategoryDAO cateDAO = new CategoryDAO();
+            product.setCategories(cateDAO.getCategoriesByProductId(productId));
+        } catch (SQLException e) {
+            System.err.println("⚠ Error loading categories: " + e.getMessage());
+        }
+
+        // --- Load Images ---
+        List<ProductImage> images = new ArrayList<>();
+        String imgSql = """
+                    SELECT ImageID, Url, IsPrimary
+                    FROM ProductImages
+                    WHERE ProductID = ?
+                    ORDER BY IsPrimary DESC, ImageID ASC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(imgSql)) {
+
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ProductImage img = new ProductImage();
+                img.setImageId(rs.getLong("ImageID"));
+                img.setProductId(productId);
+                img.setUrl(rs.getString("Url"));
+                img.setIsPrimary(rs.getBoolean("IsPrimary"));
+                images.add(img);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("⚠ Error loading product images: " + e.getMessage());
+        }
+
+        product.setImages(images);
+        product.setPrimaryImageUrl(images.stream()
+                .filter(ProductImage::getIsPrimary)
+                .map(ProductImage::getUrl)
+                .findFirst()
+                .orElse(images.isEmpty() ? null : images.get(0).getUrl()));
+
+        // --- Compute extra fields ---
         return product;
     }
 
@@ -1301,64 +1331,46 @@ public class ProductDAO {
                 WHERE ProductID = ?
                 """;
 
-        String upsertBookDetailSql = """
-                MERGE INTO BookDetails AS target
-                USING (VALUES (?, ?, ?, ?, ?, ?, ?, ?)) AS source (
-                    ProductID, Translator, Version, CoverType, Pages, LanguageCode, Size, ISBN
-                )
-                ON target.ProductID = source.ProductID
-                WHEN MATCHED THEN
-                    UPDATE SET
-                        Translator = source.Translator,
-                        Version = source.Version,
-                        CoverType = source.CoverType,
-                        Pages = source.Pages,
-                        LanguageCode = source.LanguageCode,
-                        Size = source.Size,
-                        ISBN = source.ISBN
-                WHEN NOT MATCHED THEN
-                    INSERT (ProductID, Translator, Version, CoverType, Pages, LanguageCode, Size, ISBN)
-                    VALUES (source.ProductID, source.Translator, source.Version, source.CoverType,
-                           source.Pages, source.LanguageCode, source.Size, source.ISBN);
+        String updateBookDetailSql = """
+                UPDATE BookDetails
+                SET
+                    Translator = ?,
+                    Version = ?,
+                    CoverType = ?,
+                    Pages = ?,
+                    LanguageCode = ?,
+                    Size = ?,
+                    ISBN = ?
+                WHERE ProductID = ?
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             cn.setAutoCommit(false);
-            try (PreparedStatement psProd = cn.prepareStatement(updateProductSql)) {
-
+            try (
+                    PreparedStatement psProd = cn.prepareStatement(updateProductSql);
+                    PreparedStatement psBD = cn.prepareStatement(updateBookDetailSql)) {
                 // --- Cập nhật bảng Products ---
                 psProd.setString(1, product.getTitle());
                 psProd.setString(2, product.getDescription());
                 psProd.setDouble(3, product.getOriginalPrice());
                 psProd.setDouble(4, product.getSalePrice());
                 psProd.setInt(5, product.getQuantity());
-
-                if (product.getPublisherId() != null)
-                    psProd.setLong(6, product.getPublisherId());
-                else
-                    psProd.setNull(6, Types.BIGINT);
-
-                if (product.getPublishedDate() != null)
-                    psProd.setDate(7, java.sql.Date.valueOf(product.getPublishedDate().toString()));
-                else
-                    psProd.setNull(7, Types.DATE);
-
+                psProd.setLong(6, product.getPublisherId());
+                psProd.setDate(7, product.getPublishedDate());
                 psProd.setDouble(8, product.getWeight());
                 psProd.setLong(9, product.getProductId());
 
                 int updatedRows = psProd.executeUpdate();
-
-                // --- Cập nhật hoặc thêm BookDetails ---
                 BookDetail bd = product.getBookDetail();
-                try (PreparedStatement psBD = cn.prepareStatement(upsertBookDetailSql)) {
-                    psBD.setLong(1, product.getProductId());
-                    psBD.setString(2, bd.getTranslator());
-                    psBD.setString(3, bd.getVersion());
-                    psBD.setString(4, bd.getCoverType());
-                    psBD.setInt(5, bd.getPages());
-                    psBD.setString(6, bd.getLanguageCode());
-                    psBD.setString(7, bd.getSize());
-                    psBD.setString(8, bd.getIsbn());
+                if (bd != null) {
+                    psBD.setString(1, bd.getTranslator());
+                    psBD.setString(2, bd.getVersion());
+                    psBD.setString(3, bd.getCoverType());
+                    psBD.setObject(4, bd.getPages());
+                    psBD.setString(5, bd.getLanguageCode());
+                    psBD.setString(6, bd.getSize());
+                    psBD.setString(7, bd.getIsbn());
+                    psBD.setLong(8, product.getProductId());
                     psBD.executeUpdate();
                 }
 
@@ -1371,6 +1383,37 @@ public class ProductDAO {
             } finally {
                 cn.setAutoCommit(true);
             }
+        }
+    }
+
+    public boolean existsProductInActiveOrders(long productId) throws SQLException {
+        String sql = """
+                    SELECT COUNT(*)
+                    FROM OrderItems oi
+                    JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
+                    WHERE oi.ProductID = ?
+                      AND os.[Status] IN ('PENDING', 'SHIPPING', 'WAITING_SHIP', 'CONFIRM', 'PENDING_PAYMENT', 'RETURNED_REQUESTED')
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    public boolean updateProductStatus(long productId, String newStatus) throws SQLException {
+        String sql = "UPDATE Products SET Status = ? WHERE ProductID = ?";
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setString(1, newStatus);
+            ps.setLong(2, productId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 

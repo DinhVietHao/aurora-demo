@@ -7,12 +7,18 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import java.io.PrintWriter;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.json.JSONObject;
 
 @MultipartConfig
@@ -20,6 +26,7 @@ import org.json.JSONObject;
 public class ShopServlet extends HttpServlet {
 
     private ShopDAO shopDAO = new ShopDAO();
+    private NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -44,7 +51,12 @@ public class ShopServlet extends HttpServlet {
             } else if (action.equalsIgnoreCase("register")) {
                 request.getRequestDispatcher("/WEB-INF/views/shop/registerShop.jsp").forward(request, response);
             } else if (action.equalsIgnoreCase("dashboard")) {
-                // ... Lấy dữ liệu chuyển sang dashboard thống kê
+                long shopId = shopDAO.getShopIdByUserId(user.getId());
+                List<Notification> notifications = notificationDAO.getNotificationsForShop(shopId);
+                for (Notification n : notifications) {
+                    n.setTimeAgo(formatTimeAgo(n.getCreatedAt()));
+                }
+                request.setAttribute("notifications", notifications);
                 request.getRequestDispatcher("/WEB-INF/views/shop/shopDashboard.jsp").forward(request, response);
             } else if (action.equalsIgnoreCase("shopProfile")) {
                 shop = shopDAO.getShopByUserId(user.getId());
@@ -252,4 +264,22 @@ public class ShopServlet extends HttpServlet {
         }
     }
 
+    private String formatTimeAgo(Timestamp createdAt) {
+        if (createdAt == null)
+            return "";
+
+        LocalDateTime created = createdAt.toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = ChronoUnit.MINUTES.between(created, now);
+
+        if (minutes < 1)
+            return "vừa xong";
+        if (minutes < 60)
+            return minutes + " phút trước";
+        if (minutes < 1440)
+            return (minutes / 60) + " giờ trước";
+        if (minutes < 10080)
+            return (minutes / 1440) + " ngày trước";
+        return (minutes / 10080) + " tuần trước";
+    }
 }

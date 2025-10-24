@@ -21,7 +21,9 @@ import org.json.JSONObject;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
+import com.group01.aurora_demo.shop.dao.VoucherUsageHistoryDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
+import com.group01.aurora_demo.shop.model.VoucherUsageHistory;
 
 @WebServlet("/shop/voucher")
 public class VoucherServlet extends HttpServlet {
@@ -79,7 +81,7 @@ public class VoucherServlet extends HttpServlet {
         try {
             VoucherDAO voucherDAO = new VoucherDAO();
             ShopDAO shopDAO = new ShopDAO();
-
+            VoucherUsageHistoryDAO voucherUsageHistoryDAO = new VoucherUsageHistoryDAO();
             switch (action) {
                 case "view":
                     long shopId = shopDAO.getShopIdByUserId(user.getId());
@@ -94,6 +96,8 @@ public class VoucherServlet extends HttpServlet {
                     try {
                         long voucherId = Long.parseLong(request.getParameter("voucherID"));
                         Voucher voucher = voucherDAO.getVoucherByVoucherID(voucherId);
+                        List<VoucherUsageHistory> history = voucherUsageHistoryDAO.getVoucherUsageHistory(voucherId);
+                        Map<String, Object> statstic = voucherDAO.getVoucherStats(voucherId);
 
                         if (voucher == null) {
                             request.setAttribute("errorMessage", "Không tìm thấy voucher.");
@@ -101,7 +105,8 @@ public class VoucherServlet extends HttpServlet {
                                     .forward(request, response);
                             return;
                         }
-
+                        request.setAttribute("history", history);
+                        request.setAttribute("stats", statstic);
                         request.setAttribute("voucher", voucher);
                         request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp")
                                 .forward(request, response);

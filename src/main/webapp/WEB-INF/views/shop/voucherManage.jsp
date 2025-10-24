@@ -303,7 +303,7 @@
                                                                                     <i class="bi bi-eye"></i>
                                                                                 </a>
                                                                                 <c:if
-                                                                                    test="${v.status == 'UPCOMING' || (v.status == 'EXPIRED' && v.usageCount == 0) || (v.status == 'ACTIVE' && v.usageCount == 0)}">
+                                                                                    test="${v.status == 'UPCOMING' || (v.status == 'EXPIRED' && (v.usageCount < v.usageLimit)) || (v.status == 'ACTIVE' && v.usageCount == 0)}">
                                                                                     <a href="${ctx}/shop/voucher?action=update&voucherID=${v.voucherID}"
                                                                                         class="btn btn-sm btn-outline-warning"
                                                                                         title="Chỉnh sửa">
@@ -311,7 +311,7 @@
                                                                                     </a>
                                                                                 </c:if>
                                                                                 <c:if
-                                                                                    test="${v.status == 'UPCOMING' || (v.status == 'EXPIRED' && v.usageCount == 0) || (v.status == 'ACTIVE' && v.usageCount == 0)}">
+                                                                                    test="${(v.status == 'UPCOMING' || (v.status == 'EXPIRED' && v.usageCount == 0) || (v.status == 'ACTIVE' && v.usageCount == 0)) && !v.usedInOrders}">
                                                                                     <button
                                                                                         class="btn btn-sm btn-outline-danger"
                                                                                         onclick="deleteVoucher('${v.code}')"
@@ -319,6 +319,7 @@
                                                                                         <i class="bi bi-trash"></i>
                                                                                     </button>
                                                                                 </c:if>
+
                                                                             </div>
                                                                         </td>
                                                                     </tr>

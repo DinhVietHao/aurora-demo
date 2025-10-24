@@ -17,6 +17,7 @@ public class Voucher {
     private String description;
     private String discountType;
     private Timestamp createdAt;
+    private boolean usedInOrders;
     private Double minOrderAmount;
     private boolean isShopVoucher;
 
@@ -146,5 +147,13 @@ public class Voucher {
 
     public void setShopVoucher(boolean isShopVoucher) {
         this.isShopVoucher = isShopVoucher;
+    }
+
+    public boolean isUsedInOrders() {
+        return usedInOrders;
+    }
+
+    public void setUsedInOrders(boolean usedInOrders) {
+        this.usedInOrders = usedInOrders;
     }
 }
