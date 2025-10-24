@@ -122,7 +122,7 @@
               </div>
             </div>
 
-            <!-- Thông tin chi tiết sách -->
+            <!-- Thông tin chính -->
             <div class="col-md-7">
               <div class="book-detail-header">
                 <h6 class="author">Tác giả:
@@ -172,7 +172,7 @@
                 </div>
               </div>
 
-              <!-- THÔNG TIN CHI TIẾT (BookDetails) -->
+              <!-- Thông tin chi tiết sách -->
               <div class="book-information my-3">
                 <div class="book-information-header">Thông tin chi tiết</div>
 
@@ -252,7 +252,7 @@
                 </div>
               </div>
 
-              <!-- MÔ TẢ -->
+              <!-- Thông tin mô tả -->
               <div class="mt-4">
                 <div class="book-description">
                   <div class="book-description-header">Mô tả sản phẩm</div>
@@ -273,7 +273,7 @@
             </div>
           </div>
 
-          <!-- ĐÁNH GIÁ TỔNG QUAN (placeholder, sau sẽ bind từ DB) -->
+          <!-- Đánh giá -->
           <div class="row mt-4">
             <div class="col-12 comment">
               <div class="row comment-header">
@@ -328,6 +328,7 @@
                           </c:otherwise>
                         </c:choose>
                       </div>
+
                       <div class="col">
                         <div class="d-flex justify-content-between">
                           <h6 class="mb-0 fw-bold">
@@ -413,24 +414,27 @@
                     </c:if>
                   </c:forEach>
 
-                  <!-- Pagination -->
+                  <!-- Pagination for reviews -->
                   <nav class="mt-4">
                     <ul class="pagination justify-content-center">
                       <c:if test="${currentPage > 1}">
                         <li class="page-item">
-                          <a class="page-link" href="?page=${currentPage - 1}">‹</a>
+                          <a class="page-link"
+                            href="?action=detail&id=${product.productId}&reviewPage=${currentPage - 1}#reviews">‹</a>
                         </li>
                       </c:if>
 
                       <c:forEach begin="1" end="${totalPages}" var="i">
                         <li class="page-item ${i == currentPage ? 'active' : ''}">
-                          <a class="page-link" href="?page=${i}">${i}</a>
+                          <a class="page-link"
+                            href="?action=detail&id=${product.productId}&reviewPage=${i}#reviews">${i}</a>
                         </li>
                       </c:forEach>
 
                       <c:if test="${currentPage < totalPages}">
                         <li class="page-item">
-                          <a class="page-link" href="?page=${currentPage + 1}">›</a>
+                          <a class="page-link"
+                            href="?action=detail&id=${product.productId}&reviewPage=${currentPage + 1}#reviews">›</a>
                         </li>
                       </c:if>
                     </ul>
