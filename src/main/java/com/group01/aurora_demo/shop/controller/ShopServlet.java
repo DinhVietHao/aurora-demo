@@ -1,25 +1,25 @@
 package com.group01.aurora_demo.shop.controller;
 
 import com.group01.aurora_demo.common.service.AvatarService;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
 import com.group01.aurora_demo.profile.model.Address;
 import jakarta.servlet.annotation.MultipartConfig;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.catalog.dao.NotificationDAO;
-import com.group01.aurora_demo.catalog.model.Notification;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
+import java.time.temporal.ChronoUnit;
 import jakarta.servlet.http.Part;
+import java.time.LocalDateTime;
+import org.json.JSONObject;
 import java.io.PrintWriter;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import org.json.JSONObject;
 
 @MultipartConfig
 @WebServlet("/shop")
@@ -146,17 +146,12 @@ public class ShopServlet extends HttpServlet {
 
             Part filePart = request.getPart("shopLogo");
             String uploadDir = request.getServletContext().getRealPath("/assets/images/shops");
-
-            // Sử dụng AvatarService chung
             String newFilename = AvatarService.uploadAvatar(filePart, uploadDir, "shop");
 
-            // Lấy avatar cũ
-            Shop shop = shopDAO.getShopByUserId(shopID);
+            Shop shop = shopDAO.getShopByUserId(user.getUserID());
             String oldAvatar = shop != null ? shop.getAvatarUrl() : null;
 
-            // Cập nhật database
             if (shopDAO.updateAvatarShop(shopID, newFilename)) {
-                // Xóa avatar cũ
                 if (oldAvatar != null && !oldAvatar.isEmpty()) {
                     AvatarService.deleteOldAvatar(uploadDir, oldAvatar);
                 }
@@ -165,7 +160,6 @@ public class ShopServlet extends HttpServlet {
                 json.put("message", "Cập nhật logo shop thành công.");
                 json.put("avatarUrl", request.getContextPath() + "/assets/images/shops/" + newFilename);
             } else {
-                // Xóa file vừa upload nếu lưu DB thất bại
                 AvatarService.deleteOldAvatar(uploadDir, newFilename);
                 json.put("success", false);
                 json.put("message", "Không thể cập nhật logo. Vui lòng thử lại.");
