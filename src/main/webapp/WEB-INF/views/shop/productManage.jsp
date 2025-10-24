@@ -9,23 +9,12 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Quản lý sách - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/style.min.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v-1.0.1">
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-products">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                     <div id="layoutSidenav">
@@ -51,14 +40,6 @@
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h1 class="mt-4 product-management-title">Quản lý Sách</h1>
-                                        <nav aria-label="breadcrumb">
-                                            <ol class="breadcrumb">
-                                                <li class="breadcrumb-item"><a href="home.html">Trang chủ</a></li>
-                                                <li class="breadcrumb-item"><a href="adminDashboard.html">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item active" aria-current="page">Sách</li>
-                                            </ol>
-                                        </nav>
                                     </div>
 
                                     <!-- Filter and Add Product Section -->
@@ -81,15 +62,15 @@
                                                 <div class="card-body">
                                                     <div class="row">
                                                         <div class="col-md-4">
-                                                            <label for="categoryFilter" class="form-label">Tất cả
-                                                                danh
+                                                            <label for="categoryFilter" class="form-label">Tất cả danh
                                                                 mục</label>
-                                                            <select class="form-select" id="categoryFilter">
-                                                                <option value="">Tất cả danh mục</option>
-                                                                <option value="van-hoc">Văn học</option>
-                                                                <option value="khoa-hoc">Khoa học</option>
-                                                                <option value="thieu-nhi">Thiếu nhi</option>
-                                                                <option value="ky-thuat">Kỹ thuật</option>
+                                                            <select class="form-select" id="categoryFilter"
+                                                                name="categoryFilter">
+                                                                <option value="all">Tất cả danh mục</option>
+                                                                <c:forEach var="category" items="${listCategoryShop}">
+                                                                    <option value="${category.categoryId}">
+                                                                        ${category.name}</option>
+                                                                </c:forEach>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
@@ -97,10 +78,11 @@
                                                                 trạng
                                                                 thái</label>
                                                             <select class="form-select" id="statusFilter">
-                                                                <option value="">Tất cả trạng thái</option>
-                                                                <option value="active">Đang bán</option>
-                                                                <option value="inactive">Ngừng bán</option>
-                                                                <option value="out-of-stock">Hết hàng</option>
+                                                                <option value="all">Tất cả trạng thái</option>
+                                                                <option value="PENDING">Chờ duyệt</option>
+                                                                <option value="ACTIVE">Đang bán</option>
+                                                                <option value="INACTIVE">Ngừng bán</option>
+                                                                <option value="OUT_OF_STOCK">Hết hàng</option>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
@@ -179,7 +161,11 @@
                                                             </td>
 
                                                             <!-- Cột Thể loại -->
-                                                            <td>
+                                                            <td data-categories="
+                                                            <c:forEach var='c' items='${p.categories}' varStatus='i'>
+                                                                    ${c.name}<c:if test='${!i.last}'>,</c:if>
+                                                            </c:forEach>
+                                                                ">
                                                                 <c:choose>
                                                                     <c:when test="${fn:length(p.categories) == 1}">
                                                                         ${p.categories[0].name}
@@ -192,6 +178,7 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </td>
+
 
                                                             <!-- Giá bán -->
                                                             <td>
@@ -286,11 +273,6 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
-                                            <jsp:param name="page" value="${page}" />
-                                            <jsp:param name="totalPages" value="${totalPages}" />
-                                            <jsp:param name="baseUrl" value="${ctx}/shop/product" />
-                                        </jsp:include>
                                     </div>
                                 </div>
                             </main>
@@ -1249,12 +1231,10 @@
                         </div>
                     </div>
 
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script
-                        src="https://cdn.jsdelivr.net/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/scripts.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
                     <script src="${ctx}/assets/js/shop/productManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.1"></script>
                     <script>
                         function setDeactivateModal(productId, productName) {
                             document.getElementById('deactivateProductId').value = productId;

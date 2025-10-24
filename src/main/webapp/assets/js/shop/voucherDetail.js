@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Initialize promotion details functionality
   initializePromotionDetails();
   initializeSidebar();
-  loadVoucherDetails();
+  setupVoucherHistoryTable("voucherHistoryTable", "showAllHistoryBtn", 3);
 });
 
 // Initialize main promotion details functionality
@@ -45,20 +45,6 @@ function initializeSidebar() {
     if (localStorage.getItem("sb|sidebar-toggle") === "true") {
       layoutSidenav.classList.add("sb-sidenav-toggled");
     }
-  }
-}
-
-// Load voucher details from URL parameter
-function loadVoucherDetails() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const voucherCode = urlParams.get("code");
-
-  if (voucherCode) {
-    // Simulate loading voucher data
-    loadVoucherData(voucherCode);
-  } else {
-    // Default data if no code provided
-    loadVoucherData("NEWUSER50");
   }
 }
 
@@ -337,11 +323,48 @@ function showToast(message, type = "success") {
     this.remove();
   });
 }
+// Setup voucher history table (ẩn bớt dòng, xem tất cả / thu gọn)
+function setupVoucherHistoryTable(tableId, buttonId, maxVisible = 3) {
+  const table = document.getElementById(tableId);
+  const btn = document.getElementById(buttonId);
+  if (!table || !btn) return;
+
+  const rows = table.querySelectorAll("tbody tr");
+
+  // Bỏ qua nếu không có hàng hoặc chỉ có hàng "Chưa có lịch sử"
+  if (
+    !rows.length ||
+    (rows.length === 1 && rows[0].querySelector("td[colspan]"))
+  ) {
+    btn.style.display = "none";
+    return;
+  }
+
+  if (rows.length > maxVisible) {
+    rows.forEach((row, i) => {
+      if (i >= maxVisible) row.style.display = "none";
+    });
+
+    btn.addEventListener("click", () => {
+      const isHidden = Array.from(rows).some((r) => r.style.display === "none");
+      if (isHidden) {
+        rows.forEach((r) => (r.style.display = ""));
+        btn.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Thu gọn';
+      } else {
+        rows.forEach((r, i) => {
+          if (i >= maxVisible) r.style.display = "none";
+        });
+        btn.innerHTML = '<i class="bi bi-eye me-2"></i>Xem tất cả';
+      }
+    });
+  } else {
+    btn.style.display = "none";
+  }
+}
 
 // Export functions for external use
 window.PromotionDetails = {
   copyVoucherCode,
   editVoucher,
   deleteVoucher,
-  loadVoucherData,
 };

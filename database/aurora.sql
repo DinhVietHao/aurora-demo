@@ -16,9 +16,6 @@ CREATE TABLE Users
     AuthProvider NVARCHAR(20) NOT NULL
 );
 
-SELECT *
-FROM Users;
-
 CREATE TABLE UserRoles
 (
     UserID BIGINT NOT NULL,
@@ -694,13 +691,13 @@ BEGIN
         AND i.Status = 'ACTIVE'
         AND NOT EXISTS (
             SELECT 1
-            FROM Notifications n
-            WHERE n.RecipientType = 'SELLER'
-              AND n.RecipientID = i.ShopID
-              AND n.Type = 'VOUCHER_ACTIVE'
-              AND n.ReferenceType = 'VOUCHER'
-              AND n.ReferenceID = i.VoucherID
-              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'VOUCHER_ACTIVE'
+            AND n.ReferenceType = 'VOUCHER'
+            AND n.ReferenceID = i.VoucherID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
         );
 
     ---------------------------------------------------
@@ -723,13 +720,13 @@ BEGIN
         AND i.Status = 'OUT_OF_STOCK'
         AND NOT EXISTS (
             SELECT 1
-            FROM Notifications n
-            WHERE n.RecipientType = 'SELLER'
-              AND n.RecipientID = i.ShopID
-              AND n.Type = 'VOUCHER_OUT_OF_STOCK'
-              AND n.ReferenceType = 'VOUCHER'
-              AND n.ReferenceID = i.VoucherID
-              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'VOUCHER_OUT_OF_STOCK'
+            AND n.ReferenceType = 'VOUCHER'
+            AND n.ReferenceID = i.VoucherID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
         );
 
     ---------------------------------------------------
@@ -752,13 +749,13 @@ BEGIN
         AND i.Status = 'EXPIRED'
         AND NOT EXISTS (
             SELECT 1
-            FROM Notifications n
-            WHERE n.RecipientType = 'SELLER'
-              AND n.RecipientID = i.ShopID
-              AND n.Type = 'VOUCHER_EXPIRED'
-              AND n.ReferenceType = 'VOUCHER'
-              AND n.ReferenceID = i.VoucherID
-              AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
+        FROM Notifications n
+        WHERE n.RecipientType = 'SELLER'
+            AND n.RecipientID = i.ShopID
+            AND n.Type = 'VOUCHER_EXPIRED'
+            AND n.ReferenceType = 'VOUCHER'
+            AND n.ReferenceID = i.VoucherID
+            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
         );
 END;
 GO

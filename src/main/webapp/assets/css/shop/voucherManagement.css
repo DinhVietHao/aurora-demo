@@ -276,36 +276,8 @@
   border-color: #dc3545;
 }
 
-/* Layout Fix */
-#layoutSidenav {
-  display: flex;
-  min-height: 100vh;
-}
-
-#layoutSidenav_nav {
-  flex-shrink: 0;
-}
-
-#layoutSidenav_content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-#layoutSidenav_content main {
-  flex: 1;
-  padding-bottom: 30px;
-}
-
 .container-fluid {
   padding-bottom: 20px;
-}
-
-#layoutSidenav_content .footer {
-  margin-top: auto;
-  flex-shrink: 0;
 }
 
 /* Responsive Design */
@@ -358,18 +330,6 @@
 
   .stats-card .card-body {
     padding: 20px;
-  }
-
-  #layoutSidenav_content {
-    min-height: 100vh;
-  }
-
-  #layoutSidenav_content main {
-    padding-bottom: 20px;
-  }
-
-  #layoutSidenav_content .footer {
-    margin-top: 20px;
   }
 }
 

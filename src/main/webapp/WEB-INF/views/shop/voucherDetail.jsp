@@ -261,7 +261,8 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="table-responsive">
-                                                        <table class="table table-hover align-middle">
+                                                        <table id="voucherHistoryTable"
+                                                            class="table table-hover align-middle">
                                                             <thead>
                                                                 <tr>
                                                                     <th>Đơn hàng</th>
@@ -275,17 +276,16 @@
                                                             <tbody>
                                                                 <c:forEach var="h" items="${history}">
                                                                     <tr>
-                                                                        <td>
-                                                                            <a href="orderDetails.jsp?id=${h.orderId}">
-                                                                                #${h.orderId}
-                                                                            </a>
+                                                                        <td><a
+                                                                                href="orderDetails.jsp?id=${h.orderId}">#${h.orderId}</a>
                                                                         </td>
                                                                         <td>${h.customerName}</td>
                                                                         <td>
                                                                             <fmt:formatNumber value="${h.orderValue}"
                                                                                 type="number" groupingUsed="true" /> VNĐ
                                                                         </td>
-                                                                        <td class="text-success">-
+                                                                        <td class="text-success">
+                                                                            -
                                                                             <fmt:formatNumber value="${h.discountValue}"
                                                                                 type="number" groupingUsed="true" /> VNĐ
                                                                         </td>
@@ -349,7 +349,8 @@
                                                     </div>
 
                                                     <div class="text-center">
-                                                        <button class="btn btn-outline-primary btn-sm">
+                                                        <button id="showAllHistoryBtn"
+                                                            class="btn btn-outline-primary btn-sm">
                                                             <i class="bi bi-eye me-2"></i>Xem tất cả
                                                         </button>
                                                     </div>
@@ -467,7 +468,7 @@
                     </div>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/voucherDetail.js"></script>
+                    <script src="${ctx}/assets/js/shop/voucherDetail.js?v=1.0.1"></script>
                 </body>
 
                 </html>

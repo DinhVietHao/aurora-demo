@@ -6,25 +6,6 @@ import com.group01.aurora_demo.shop.model.Shop;
 import java.sql.*;
 
 public class ShopDAO {
-    public Shop getShopByUserId(long userId) {
-        String sql = "SELECT * FROM Shops WHERE OwnerUserID = ?";
-        try (Connection conn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setLong(1, userId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                Shop shop = new Shop();
-                shop.setShopId(rs.getLong("ShopID"));
-                shop.setName(rs.getString("Name"));
-                shop.setStatus(rs.getString("Status"));
-                // Map các trường khác...
-                return shop;
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
-    }
 
     public boolean isShopNameExists(String name) {
         String sql = "SELECT COUNT(*) FROM Shops WHERE Name = ?";
@@ -40,8 +21,9 @@ public class ShopDAO {
     }
 
     public boolean createShop(Shop shop, Address address) {
-        String addressSql = "INSERT INTO Addresses (RecipientName, Phone, City, Ward, Description, CreatedAt) " +
-                "VALUES (?, ?, ?, ?, ?, SYSUTCDATETIME())";
+        String addressSql = "INSERT INTO Addresses (RecipientName, Phone, City, ProvinceID, District, DistrictID, Ward, WardCode, Description, CreatedAt) "
+                +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())";
 
         String shopSql = "INSERT INTO Shops " +
                 "(Name, Description, RatingAvg, [Status], OwnerUserID, CreatedAt, PickupAddressID, InvoiceEmail, AvatarUrl) "
@@ -53,8 +35,12 @@ public class ShopDAO {
             addrStmt.setString(1, address.getRecipientName());
             addrStmt.setString(2, address.getPhone());
             addrStmt.setString(3, address.getCity());
-            addrStmt.setString(4, address.getWard());
-            addrStmt.setString(5, address.getDescription());
+            addrStmt.setInt(4, address.getProvinceId());
+            addrStmt.setString(5, address.getDistrict());
+            addrStmt.setInt(6, address.getDistrictId());
+            addrStmt.setString(7, address.getWard());
+            addrStmt.setString(8, address.getWardCode());
+            addrStmt.setString(9, address.getDescription());
 
             int addrInserted = addrStmt.executeUpdate();
             if (addrInserted == 0) {
@@ -83,12 +69,13 @@ public class ShopDAO {
         return false;
     }
 
-    public Shop getShopByOwnerUserId(Long ownerUserId) throws SQLException {
+    public Shop getShopByUserId(Long ownerUserId) throws SQLException {
         String sql = """
                 SELECT
-                s.ShopID, s.Name, s.Description, s.RatingAvg, s.Status,
+                s.ShopID, s.Name, s.Description AS ShopDescription, s.RatingAvg, s.Status,
                 s.OwnerUserID, s.InvoiceEmail, s.AvatarUrl, s.PickupAddressID,
-                a.AddressID, a.RecipientName, a.Phone, a.City, a.District, a.Ward
+                a.AddressID, a.RecipientName, a.Phone, a.City, a.ProvinceID,
+                a.District, a.DistrictID, a.Ward, a.WardCode, a.Description AS AddressDescription
                 FROM Shops s
                 JOIN Addresses a ON s.PickupAddressID = a.AddressID
                 WHERE s.OwnerUserID = ?
@@ -102,7 +89,7 @@ public class ShopDAO {
                     Shop shop = new Shop();
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setName(rs.getString("Name"));
-                    shop.setDescription(rs.getString("Description"));
+                    shop.setDescription(rs.getString("ShopDescription"));
                     shop.setRatingAvg(rs.getDouble("RatingAvg"));
                     shop.setStatus(rs.getString("Status"));
                     shop.setOwnerUserId(rs.getLong("OwnerUserID"));
@@ -114,9 +101,15 @@ public class ShopDAO {
                     addr.setAddressId(rs.getLong("AddressID"));
                     addr.setRecipientName(rs.getString("RecipientName"));
                     addr.setPhone(rs.getString("Phone"));
-                    addr.setDescription(rs.getString("Description"));
                     addr.setCity(rs.getString("City"));
+                    addr.setProvinceId(rs.getInt("ProvinceID"));
+                    addr.setDistrict(rs.getString("District"));
+                    addr.setDistrictId(rs.getInt("DistrictID"));
                     addr.setWard(rs.getString("Ward"));
+                    addr.setWardCode(rs.getString("WardCode"));
+                    addr.setDescription(rs.getString("AddressDescription"));
+
+                    shop.setPickupAddress(addr);
                     return shop;
                 }
             }

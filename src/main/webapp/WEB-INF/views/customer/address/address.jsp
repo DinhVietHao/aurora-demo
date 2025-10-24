@@ -175,13 +175,6 @@
                 <jsp:include page="/WEB-INF/views/customer/address/partials/_address_delete_modal.jsp" />
                 <!--End Modal Delete Cart -->
 
-                <!-- Link javascript of Shipping Address -->
-                <script src="./assets/js/common/address.js"></script>
-
-
-                <!-- Link javascript of Validator -->
-                <script src="./assets/js/common/validator.js"></script>
-
                 <!-- Check Input create address user  -->
                 <script>
                     Validator({
