@@ -122,7 +122,18 @@ public class AddressServlet extends HttpServlet {
                 address.setWard(ward);
                 address.setDescription(description);
                 this.addressDAO.addAddress(user.getId(), address, isDefault);
+<<<<<<< HEAD
                 resp.sendRedirect(req.getContextPath() + "/address");
+=======
+
+                String from = req.getParameter("from");
+                if (from.equalsIgnoreCase("checkout")) {
+                    resp.sendRedirect(req.getContextPath() + "/checkout");
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/address");
+                }
+
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                 break;
             case "/delete":
                 try {

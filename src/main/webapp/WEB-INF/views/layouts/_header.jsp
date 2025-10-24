@@ -6,7 +6,11 @@
             <div class="container">
                 <div class="row header-content">
                     <div class="col-3 col-md-2">
+<<<<<<< HEAD
                         <a href="${ctx}/" class="header-logo">
+=======
+                        <a href="${ctx}/home" class="header-logo">
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                             <img src="${ctx}/assets/images/branding/logo-header.png" alt="Logo"
                                 style="height:60px; width:auto;">
                         </a>
@@ -14,9 +18,18 @@
 
                     <div class="col-6 col-md-5">
                         <div class="header-search">
+<<<<<<< HEAD
                             <span class="icon"><i class="bi bi-search"></i></span>
                             <input type="text" class="form-control rounded-pill" placeholder="Hôm nay bạn mua gì ...">
                             <button class="btn btn-light btn-sm rounded-pill">Tìm kiếm</button>
+=======
+                            <form method="GET" action="${ctx}/home">
+                                <input type="hidden" name="action" value="search" />
+                                <input type="text" class="form-control rounded-pill" name="keyword"
+                                    placeholder="Hôm nay bạn mua gì ..." value="${param.keyword}" />
+                                <button type="submit" class="btn btn-light btn-sm rounded-pill">Tìm kiếm</button>
+                            </form>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                         </div>
                     </div>
 
@@ -83,4 +96,8 @@
             <!-- Include modal dùng chung -->
             <jsp:include page="/WEB-INF/views/auth/_modals.jsp" />
 
+<<<<<<< HEAD
         </header>
+=======
+        </header>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470

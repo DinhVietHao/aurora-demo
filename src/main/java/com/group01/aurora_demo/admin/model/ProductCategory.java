@@ -3,7 +3,7 @@ package com.group01.aurora_demo.admin.model;
 public class ProductCategory {
     private long categoryId;
     private String name;
-    private Long parentId;
+    private String vatCode;
 
     public long getCategoryId() {
         return categoryId;
@@ -21,17 +21,17 @@ public class ProductCategory {
         this.name = name;
     }
 
-    public Long getParentId() {
-        return parentId;
+    public String getVatCode() {
+        return vatCode;
     }
 
-    public void setParentId(Long parentId) {
-        this.parentId = parentId;
+    public void setVatCode(String vatCode) {
+        this.vatCode = vatCode;
     }
 
     @Override
     public String toString() {
-        return "ProductCategory [categoryId=" + categoryId + ", name=" + name + ", parentId=" + parentId + "]";
+        return "ProductCategory [categoryId=" + categoryId + ", name=" + name + ", vatCode=" + vatCode + "]";
     }
 
     

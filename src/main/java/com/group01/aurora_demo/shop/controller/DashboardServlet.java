@@ -8,7 +8,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+<<<<<<< HEAD
 @WebServlet("/dashboard")
+=======
+@WebServlet("/shop/dashboard")
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
 public class DashboardServlet extends HttpServlet {
 
     @Override

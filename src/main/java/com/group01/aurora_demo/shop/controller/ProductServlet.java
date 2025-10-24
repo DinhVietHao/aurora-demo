@@ -137,7 +137,11 @@ public class ProductServlet extends HttpServlet {
                     int pages = Integer.parseInt(request.getParameter("Pages"));
                     String size = request.getParameter("Size");
                     String languageCode = request.getParameter("LanguageCode");
+<<<<<<< HEAD
                     String isbn = request.getParameter("ISBN");
+=======
+                    String isbn = request.getParameter("isbn");
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
 
                     String[] authorNames = request.getParameterValues("authors");
                     String[] categoryIdParams = request.getParameterValues("CategoryIDs");

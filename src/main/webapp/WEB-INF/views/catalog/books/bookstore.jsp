@@ -30,6 +30,7 @@
                                     <h4 class="book-content-title">
                                         <c:out value="${empty title ? 'Tất cả sản phẩm' : title}" />
                                     </h4>
+<<<<<<< HEAD
                                     <div class="book-content-arrange">
                                         <label class="form-label m-0">Sắp xếp</label>
                                         <select class="form-select" id="sortSelect">
@@ -43,13 +44,36 @@
                                                 cao đến thấp</option>
                                         </select>
                                     </div>
+=======
+                                    <c:if test="${showSort}">
+                                        <div class="book-content-arrange">
+                                            <label class="form-label m-0">Sắp xếp</label>
+                                            <select class="form-select" id="sortSelect">
+                                                <option value="pop" ${param.sort=='pop' ? 'selected' : '' }>Phổ biến
+                                                </option>
+                                                <option value="best" ${param.sort=='best' ? 'selected' : '' }>Bán chạy
+                                                </option>
+                                                <option value="priceAsc" ${param.sort=='priceAsc' ? 'selected' : '' }>
+                                                    Giá
+                                                    thấp đến cao</option>
+                                                <option value="priceDesc" ${param.sort=='priceDesc' ? 'selected' : '' }>
+                                                    Giá
+                                                    cao đến thấp</option>
+                                            </select>
+                                        </div>
+                                    </c:if>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                 </div>
 
                                 <!-- GRID SẢN PHẨM -->
                                 <div class="row g-3 product">
                                     <c:choose>
                                         <c:when test="${empty products}">
+<<<<<<< HEAD
                                             <p>Chưa có bài đăng nào!</p>
+=======
+                                            <p>${noProductsMessage}</p>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                         </c:when>
                                         <c:otherwise>
                                             <c:forEach var="p" items="${products}">
@@ -124,12 +148,25 @@
                                     </c:choose>
                                 </div>
 
+<<<<<<< HEAD
                                 <!-- PHÂN TRANG DÙNG CHUNG -->
                                 <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
                                     <jsp:param name="page" value="${page}" />
                                     <jsp:param name="totalPages" value="${totalPages}" />
                                     <jsp:param name="baseUrl" value="${ctx}/books" />
                                 </jsp:include>
+=======
+                                <!-- PHÂN TRANG -->
+                                <c:if test="${totalPages > 1}">
+                                    <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
+                                        <jsp:param name="page" value="${page}" />
+                                        <jsp:param name="totalPages" value="${totalPages}" />
+                                        <jsp:param name="baseUrl"
+                                            value="${ctx}/home?action=${param.action}&keyword=${param.keyword}&category=${param.category}&author=${param.author}&publisher=${param.publisher}&language=${param.language}&minPrice=${param.minPrice}&maxPrice=${param.maxPrice}" />
+                                    </jsp:include>
+                                </c:if>
+
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                             </div>
                         </div>
                     </div>

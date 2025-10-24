@@ -19,6 +19,7 @@ public class Shop {
     private long pickupAddressId;
     private String invoiceEmail;
     private String avatarUrl;
+    private String rejectReason;
     
     // Additional fields for display purposes
     private String ownerName;
@@ -38,6 +39,7 @@ public class Shop {
         this.pickupAddressId = rs.getLong("PickupAddressID");
         this.invoiceEmail = rs.getString("InvoiceEmail");
         this.avatarUrl = rs.getString("AvatarUrl");
+        this.rejectReason = rs.getString("RejectReason");
         
         // Optional fields from JOIN queries
         try {
@@ -87,6 +89,9 @@ public class Shop {
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getRejectReason() { return rejectReason; }
+    public void setRejectReason(String rejectReason) { this.rejectReason = rejectReason; }
 
     public String getOwnerName() { return ownerName; }
     public void setOwnerName(String ownerName) { this.ownerName = ownerName; }

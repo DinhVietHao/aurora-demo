@@ -18,10 +18,23 @@
                     Quản lý shop
                 </a>
                 
-                <a class="nav-link" href="<c:url value='/admin/products'/>">
+                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseProducts" aria-expanded="false" aria-controls="collapseProducts">
                     <div class="sb-nav-link-icon"><i class="bi bi-box-seam"></i></div>
                     Sản phẩm
+                    <div class="sb-sidenav-collapse-arrow"><i class="bi bi-caret-down-fill"></i></div>
                 </a>
+                <div class="collapse" id="collapseProducts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link" href="<c:url value='/admin/products'/>">
+                            <div class="sb-nav-link-icon"><i class="bi bi-list"></i></div>
+                            Danh sách sản phẩm
+                        </a>
+                        <a class="nav-link" href="<c:url value='/admin/products/approval'/>">
+                            <div class="sb-nav-link-icon"><i class="bi bi-check-circle"></i></div>
+                            Duyệt sản phẩm
+                        </a>
+                    </nav>
+                </div>
                 
                 <a class="nav-link" href="<c:url value='/admin/orders'/>">
                     <div class="sb-nav-link-icon"><i class="bi bi-cart3"></i></div>

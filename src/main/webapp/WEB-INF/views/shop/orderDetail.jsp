@@ -36,10 +36,17 @@
                                         <h1 class="mt-4 order-details-title">Chi tiết Đơn hàng</h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
+<<<<<<< HEAD
                                                 <li class="breadcrumb-item"><a href="home.html">Trang chủ</a></li>
                                                 <li class="breadcrumb-item"><a href="adminDashboard.html">Dashboard</a>
                                                 </li>
                                                 <li class="breadcrumb-item"><a href="orderManagement.html">Đơn hàng</a>
+=======
+                                                <li class="breadcrumb-item"><a href="/home">Trang chủ</a></li>
+                                                <li class="breadcrumb-item"><a href="/shop/dashboard">Dashboard</a>
+                                                </li>
+                                                <li class="breadcrumb-item"><a href="/">Đơn hàng</a>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                 </li>
                                                 <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
                                             </ol>

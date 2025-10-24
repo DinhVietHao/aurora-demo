@@ -297,17 +297,29 @@
                                                                         <!-- Thao tác -->
                                                                         <td>
                                                                             <div class="action-buttons">
+<<<<<<< HEAD
                                                                                 <a href="/shop/voucher?action=detail&voucherCode=${v.code}"
+=======
+                                                                                <a href="/shop/voucher?action=detail&voucherID=${v.voucherID}"
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                                                     class="btn btn-sm btn-outline-primary"
                                                                                     title="Xem chi tiết">
                                                                                     <i class="bi bi-eye"></i>
                                                                                 </a>
+<<<<<<< HEAD
                                                                                 <button
                                                                                     class="btn btn-sm btn-outline-warning"
                                                                                     onclick="editVoucher('${v.code}')"
                                                                                     title="Chỉnh sửa">
                                                                                     <i class="bi bi-pencil"></i>
                                                                                 </button>
+=======
+                                                                                <a href="/shop/voucher?action=update&voucherID=${v.voucherID}"
+                                                                                    class="btn btn-sm btn-outline-warning"
+                                                                                    title="Chỉnh sửa">
+                                                                                    <i class="bi bi-pencil"></i>
+                                                                                </a>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                                                 <button
                                                                                     class="btn btn-sm btn-outline-danger"
                                                                                     onclick="deleteVoucher('${v.code}')"

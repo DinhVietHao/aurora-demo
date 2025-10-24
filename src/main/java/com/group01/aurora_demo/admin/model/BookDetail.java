@@ -3,12 +3,11 @@ package com.group01.aurora_demo.admin.model;
 public class BookDetail {
 
     private long productId;
-    private String author;
     private String translator;
     private String version;
     private String coverType;
     private int pages;
-    private String language;
+    private String languageCode;
     private String size;
     private String ISBN;
 
@@ -23,13 +22,6 @@ public class BookDetail {
         this.productId = productId;
     }
 
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
 
     public String getTranslator() {
         return translator;
@@ -63,12 +55,12 @@ public class BookDetail {
         this.pages = pages;
     }
 
-    public String getLanguage() {
-        return language;
+    public String getLanguageCode() {
+        return languageCode;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
     }
 
     public String getSize() {
@@ -89,8 +81,8 @@ public class BookDetail {
 
     @Override
     public String toString() {
-        return "BookDetail{" + "productId=" + productId + ", author=" + author + ", translator=" + translator
-                + ", version=" + version + ", coverType=" + coverType + ", pages=" + pages + ", language=" + language
+        return "BookDetail{" + "productId=" + productId + ", translator=" + translator
+                + ", version=" + version + ", coverType=" + coverType + ", pages=" + pages + ", languageCode=" + languageCode
                 + ", size=" + size + ", ISBN=" + ISBN + '}';
     }
 

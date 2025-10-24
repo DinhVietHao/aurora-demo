@@ -10,16 +10,28 @@
                 <div class="modal-body">
                     <form class="shipping-address" id="form-update-address" method="POST" action="/address/update">
                         <input type="hidden" name="addressId" value="" />
+<<<<<<< HEAD
                         <div class="row mb-3">
                             <div class="col-md-6 form-group">
                                 <label for="fullName" class="form-label">Họ tên</label>
                                 <input type="text" class="form-control update-fullname" id="fullName"
+=======
+                        <input type="hidden" name="from" value="address">
+                        <div class="row mb-3">
+                            <div class="col-md-6 form-group">
+                                <label for="fullName" class="form-label">Họ tên</label>
+                                <input type="text" class="form-control update-fullname" id="updateFullname"
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                     placeholder="Nhập họ tên" name="fullName" value="">
                                 <span class="form-message"></span>
                             </div>
                             <div class="col-md-6 form-group">
                                 <label for="phone" class="form-label">Điện thoại di động</label>
+<<<<<<< HEAD
                                 <input type="text" class="form-control update-phone" id="phone"
+=======
+                                <input type="text" class="form-control update-phone" id="updatePhone"
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                     placeholder="Nhập số điện thoại" name="phone" value="">
                                 <span class="form-message"></span>
                             </div>
@@ -44,8 +56,13 @@
 
                         <div class="mb-3 form-group">
                             <label for="address" class="form-label">Địa chỉ</label>
+<<<<<<< HEAD
                             <textarea class="form-control update-description" id="address"
                                 placeholder="Ví dụ: 52, đường Trần Hưng Đạo" name="description"></textarea>
+=======
+                            <textarea class="form-control update-description" id="updateAddress"
+                                placeholder="Ví dụ: 52, đường Trần Hưng Đạo" name="description" value=""></textarea>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                             <span class="form-message"></span>
                         </div>
                         <div class="form-check mb-3">
@@ -59,7 +76,11 @@
                         <div class="modal-footer">
                             <button type="reset" class="button-five" data-bs-dismiss="modal">Trở
                                 lại</button>
+<<<<<<< HEAD
                             <button type="submit" class="button-four">Hoàn thành</button>
+=======
+                            <button class="button-four form-submit">Hoàn thành</button>
+>>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                         </div>
                     </form>
                 </div>
