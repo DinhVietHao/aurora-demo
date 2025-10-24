@@ -2,6 +2,8 @@ package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.shop.dao.ShopDAO;
+import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
@@ -17,6 +19,7 @@ public class HomeServlet extends HttpServlet {
 
     private ProductDAO productDAO = new ProductDAO();
     private UserDAO userDAO = new UserDAO();
+    private ShopDAO shopDAO = new ShopDAO();
     private static final int LIMIT = 12;
 
     @Override
@@ -102,10 +105,18 @@ public class HomeServlet extends HttpServlet {
                 break;
 
             case "detail":
-                String idRaw = request.getParameter("id");
                 try {
-                    long id = Long.parseLong(idRaw);
+                    long id = Long.parseLong(request.getParameter("id"));
                     Product product = productDAO.getProductById(id);
+                    if (product != null) {
+                        Long shopId = shopDAO.getShopIdByProductId(id);
+                        if (shopId != null) {
+                            Shop shop = shopDAO.getShopByIdWithStats(shopId);
+                            System.out.println(shop.getAvatarUrl());
+                            request.setAttribute("shop", shop);
+                        }
+                    }
+
                     int reviewCount = productDAO.countReviewsByProductId(id);
                     request.setAttribute("title", product.getTitle());
                     request.setAttribute("product", product);
@@ -113,8 +124,7 @@ public class HomeServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request,
                             response);
                 } catch (NumberFormatException e) {
-                    System.out.println(e.getMessage());
-                    response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid product ID");
+                    System.out.println("Error in \"detail\" of HomeServlet: " + e.getMessage());
                 }
                 break;
 

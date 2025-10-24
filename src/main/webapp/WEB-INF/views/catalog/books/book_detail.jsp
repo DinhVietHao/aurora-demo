@@ -10,10 +10,8 @@
 
       <head>
         <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/comment.css" />
-
       </head>
 
       <body>
@@ -21,7 +19,6 @@
 
         <div class="container book-detail mt-3">
           <div class="row justify-content-evenly">
-            <!-- HÌNH ẢNH & NÚT MUA -->
             <div class="col-md-5">
               <div class="book-detail-images">
                 <div class="product-image mb-3">
@@ -51,9 +48,81 @@
                     Ngay</button>
                 </div>
               </div>
+
+              <div class="shop-info-card mt-3">
+                <div class="shop-header-section-new">
+                  <div class="shop-header-left">
+                    <!-- Avatar -->
+                    <div class="shop-avatar-wrapper">
+                      <img
+                        src="${ctx}/assets/images/shops/${empty shop.avatarUrl ? 'default-shop.png' : shop.avatarUrl}"
+                        class="shop-avatar-img" alt="${shop.name}"
+                        onerror="this.src='${ctx}/assets/images/shops/default-shop.png';">
+                    </div>
+
+                    <!-- Thông tin cửa hàng -->
+                    <div class="shop-info-section">
+                      <h5 class="shop-name">
+                        <c:out value="${shop.name}" />
+                      </h5>
+                      <c:if test="${not empty shop.description}">
+                        <p class="shop-description">
+                          <c:out value="${shop.description}" />
+                        </p>
+                      </c:if>
+                    </div>
+                  </div>
+
+                  <div class="shop-header-right">
+                    <a href="${ctx}/shop/view?id=${shop.shopId}" class="shop-view-button-compact">
+                      <i class="bi bi-shop"></i>
+                      Xem shop
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Thống kê -->
+                <div class="shop-stats-section">
+                  <!-- Số lượng sản phẩm đang bán -->
+                  <div class="shop-stat-item">
+                    <i class="bi bi-box-seam"></i>
+                    <div class="stat-content">
+                      <strong class="stat-value">
+                        <fmt:formatNumber value="${shop.productCount}" />
+                      </strong>
+                      <span class="stat-label">Sản phẩm</span>
+                    </div>
+                  </div>
+
+                  <!-- Đánh giá trung bình -->
+                  <div class="shop-stat-item">
+                    <i class="bi bi-star-fill"></i>
+                    <div class="stat-content">
+                      <strong class="stat-value">
+                        <fmt:formatNumber value="${shop.avgRating}" maxFractionDigits="1" />
+                      </strong>
+                      <span class="stat-label">
+                        (
+                        <fmt:formatNumber value="${shop.reviewCount}" /> đánh giá)
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Thời gian tham gia -->
+                  <div class="shop-stat-item">
+                    <i class="bi bi-calendar-event"></i>
+                    <div class="stat-content">
+                      <strong class="stat-value">
+                        <fmt:formatDate value="${shop.createdAt}" pattern="dd/MM/yyyy" />
+                      </strong>
+                      <span class="stat-label">Tham gia</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- THÔNG TIN CHÍNH -->
+            <!-- Thông tin chi tiết sách -->
             <div class="col-md-7">
               <div class="book-detail-header">
                 <h6 class="author">Tác giả:
@@ -199,56 +268,6 @@
                   <a class="d-block mt-2 text-primary text-center cursor-pointer" id="more">
                     Xem thêm
                   </a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mt-4">
-            <div class="view-shop">
-              <div class="view-shop__box">
-                <div class="view-shop__avatar">
-                  <c:choose>
-                    <c:when test="${not empty product.shop.logoUrl}">
-                      <img src="${ctx}/assets/images/shops/${product.shop.logoUrl}" class="view-shop__avatar-img"
-                        alt="Shop logo">
-                    </c:when>
-                    <c:otherwise>
-                      <img src="${ctx}/assets/images/shops/default-shop.png" class="view-shop__avatar-img"
-                        alt="Shop logo">
-                    </c:otherwise>
-                  </c:choose>
-                  <button class="favorite-badge">SHOP</button>
-                </div>
-                <div class="view-shop__info">
-                  <div class="view-shop__header">
-                    <strong class="view-shop__name">
-                      <c:out value="${product.shop.shopName}" />
-                    </strong>
-                    <a href="${ctx}/shop/view?id=${product.shop.shopId}" class="button-outline">Xem shop</a>
-                  </div>
-                  <ul class="view-shop__stats">
-                    <li>
-                      <i class="bi bi-box"></i>
-                      <b>
-                        <c:out value="${product.shop.productCount}" />
-                      </b> Sản phẩm
-                    </li>
-                    <li>
-                      <i class="bi bi-star-fill"></i>
-                      <b>
-                        <fmt:formatNumber value="${product.shop.avgRating}" maxFractionDigits="1" />
-                      </b>
-                      (
-                      <fmt:formatNumber value="${product.shop.reviewCount}" /> đánh giá)
-                    </li>
-                    <li>
-                      <i class="bi bi-calendar-event"></i>
-                      <b>
-                        <fmt:formatDate value="${product.shop.joinedDate}" pattern="dd.MM.yyyy" />
-                      </b> Tham gia
-                    </li>
-                  </ul>
                 </div>
               </div>
             </div>
@@ -438,7 +457,6 @@
               <jsp:param name="carouselId" value="bookIntroduction" />
             </jsp:include>
           </div>
-
         </div>
 
         <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
