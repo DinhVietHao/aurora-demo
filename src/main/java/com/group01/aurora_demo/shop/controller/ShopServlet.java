@@ -1,704 +1,362 @@
 package com.group01.aurora_demo.shop.controller;
 
-import java.sql.Date;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.shop.dao.ShopDAO;
-import com.group01.aurora_demo.catalog.dao.AuthorDAO;
-import com.group01.aurora_demo.catalog.dao.BookDetailDAO;
-import com.group01.aurora_demo.catalog.dao.CategoryDAO;
-import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
-import com.group01.aurora_demo.catalog.dao.ImageDAO;
-import com.group01.aurora_demo.catalog.model.Author;
-import com.group01.aurora_demo.catalog.model.Product;
-import com.group01.aurora_demo.catalog.model.ProductImage;
-import com.group01.aurora_demo.catalog.model.Category;
-import com.group01.aurora_demo.catalog.dao.ProductDAO;
-import com.group01.aurora_demo.catalog.model.BookDetail;
-import com.group01.aurora_demo.catalog.dao.PublisherDAO;
-
+import com.group01.aurora_demo.common.service.AvatarService;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
+import com.group01.aurora_demo.profile.model.Address;
 import jakarta.servlet.annotation.MultipartConfig;
+import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
+import java.time.temporal.ChronoUnit;
+import jakarta.servlet.http.Part;
+import java.time.LocalDateTime;
+import org.json.JSONObject;
+import java.io.PrintWriter;
+import java.sql.Timestamp;
+import java.util.List;
 
-@WebServlet("/shop/product")
-@MultipartConfig(fileSizeThreshold = 1024 * 1024, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 20)
-public class ProductServlet extends HttpServlet {
+@MultipartConfig
+@WebServlet("/shop")
+public class ShopServlet extends HttpServlet {
+
+    private ShopDAO shopDAO = new ShopDAO();
+    private NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
-        if (user == null) {
-            response.sendRedirect("/home");
-            return;
-        }
-
-        String action = request.getParameter("action");
-        if (action == null)
-            action = "view";
-
-        String message = request.getParameter("message");
-        String error = request.getParameter("error");
-
-        if ("delete_success".equals(message)) {
-            request.setAttribute("successMessage", "Đã xóa sản phẩm thành công!");
-        }
-        if ("delete_failed".equals(error)) {
-            request.setAttribute("errorMessage",
-                    "Không thể xóa sản phẩm vì đang trong Flash Sale, đang trong đơn hàng,đang hoạt động hoặc đang ngừng bán.");
-        }
-        if ("create_success".equals(message)) {
-            request.setAttribute("successMessage",
-                    "Đã thêm sản phẩm thành công.");
-        }
-        if ("load_failed".equals(error)) {
-            request.setAttribute("errorMessage",
-                    "Load xem chi tiết bị lỗi gián đoạn");
-        }
-        if ("update_success".equals(message)) {
-            request.setAttribute("successMessage",
-                    "Thay đổi sản phẩm thành công.");
-        }
-        if ("change_status_success".equals(message)) {
-            request.setAttribute("successMessage",
-                    "Chuyển trạng thái ngừng kinh doanh sản phẩm thành công.");
-        }
-        if ("change_status_failed".equals(error)) {
-            request.setAttribute("errorMessage",
-                    "Chuyển trạng thái ngừng kinh doanh sản phẩm thất bại.");
-        }
-        if ("change_status_error".equals(error)) {
-            request.setAttribute("errorMessage",
-                    "Không thể chuyển trạng thái ngừng bán, vì sản phẩm đang nằm trong flash sale hoặc đang trong đơn hàng");
-        }
-        ShopDAO shopDAO = new ShopDAO();
-        ProductDAO productDAO = new ProductDAO();
-        FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
-        CategoryDAO categoryDAO = new CategoryDAO();
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         try {
-            switch (action) {
-                case "view":
-                    long shopId = shopDAO.getShopIdByUserId(user.getId());
+            response.setContentType("application/json;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            JSONObject json = new JSONObject();
 
-                    List<Product> listProduct = productDAO.getProductsByShopId(shopId);
-                    List<Category> listCategoryShop = categoryDAO.getCategoriesByShopId(shopId);
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("AUTH_USER");
+            if (user == null) {
+                json.put("status", "NOT_LOGGED_IN");
+                json.put("message", "Vui lòng đăng nhập.");
+                out.print(json.toString());
+                return;
+            }
 
-                    request.setAttribute("listCategoryShop", listCategoryShop);
-                    request.setAttribute("listProduct", listProduct);
-                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
-                    break;
-                case "getProduct":
-                    try {
-                        long productId = Long.parseLong(request.getParameter("id"));
-                        Product product = productDAO.getProductById(productId);
-
-                        if (product == null) {
-                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            response.getWriter().write("{\"error\": \"Sản phẩm không tồn tại\"}");
-                            return;
-                        }
-                        String updateMode = "NONE";
-                        boolean isInOrder = productDAO.existsProductInActiveOrders(productId);
-                        boolean isInFlashSale = flashSaleDAO.isProductInCurrentFlashSale(productId,
-                                LocalDateTime.now());
-
-                        if ("PENDING".equalsIgnoreCase(product.getStatus())
-                                || "INACTIVE".equalsIgnoreCase(product.getStatus())) {
-                            updateMode = "FULL";
-                        } else if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
-                            if (!isInFlashSale) {
-                                updateMode = "PARTIAL";
-                            } else {
-                                updateMode = "NONE";
-                            }
-                        }
-                        Map<String, Object> responseData = new HashMap<>();
-                        responseData.put("product", product);
-                        responseData.put("updateMode", updateMode);
-                        Gson gson = new GsonBuilder()
-                                .registerTypeAdapter(LocalDateTime.class, new TypeAdapter<LocalDateTime>() {
-                                    private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-
-                                    @Override
-                                    public void write(JsonWriter out, LocalDateTime value) throws IOException {
-                                        out.value(value != null ? value.format(formatter) : null);
-                                    }
-
-                                    @Override
-                                    public LocalDateTime read(JsonReader in) throws IOException {
-                                        return LocalDateTime.parse(in.nextString(), formatter);
-                                    }
-                                })
-                                .create();
-
-                        String json = gson.toJson(responseData);
-
-                        response.setContentType("application/json");
-                        response.setCharacterEncoding("UTF-8");
-                        response.getWriter().write(json);
-                    } catch (Exception e) {
-                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                        response.getWriter().write("{\"error\": \"Lỗi server\"}");
-                    }
-                    break;
-                case "detail":
-                    try {
-                        long productId = Long.parseLong(request.getParameter("productId"));
-                        Product product = productDAO.getProductById(productId);
-                        if (product == null) {
-                            request.setAttribute("errorMessage", "Không tìm thấy sản phẩm có ID: " + productId);
-                            request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp")
-                                    .forward(request, response);
-                            return;
-                        }
-                        request.setAttribute("product", product);
-                        request.getRequestDispatcher("/WEB-INF/views/shop/productDetail.jsp")
-                                .forward(request, response);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        request.setAttribute("errorMessage", "Load xem chi tiết bị lỗi " + e.getMessage());
-                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                response);
-                    }
-                    break;
-                default:
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
-                    break;
+            Shop shop = null;
+            String action = request.getParameter("action");
+            if (action.equalsIgnoreCase("check-status")) {
+                handleCheckStatusShop(request, response, json, out, user);
+            } else if (action.equalsIgnoreCase("register")) {
+                request.getRequestDispatcher("/WEB-INF/views/shop/registerShop.jsp").forward(request, response);
+            } else if (action.equalsIgnoreCase("dashboard")) {
+                long shopId = shopDAO.getShopIdByUserId(user.getId());
+                List<Notification> notifications = notificationDAO.getNotificationsForShop(shopId);
+                for (Notification n : notifications) {
+                    n.setTimeAgo(formatTimeAgo(n.getCreatedAt()));
+                }
+                request.setAttribute("notifications", notifications);
+                request.getRequestDispatcher("/WEB-INF/views/shop/shopDashboard.jsp").forward(request, response);
+            } else if (action.equalsIgnoreCase("shopProfile")) {
+                shop = shopDAO.getShopByUserId(user.getId());
+                request.setAttribute("shop", shop);
+                request.getRequestDispatcher("/WEB-INF/views/shop/shop.jsp").forward(request, response);
+            } else {
+                json.put("status", "ERROR");
+                json.put("message", "Action không hợp lệ.");
+                out.print(json.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            response.setContentType("application/json;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            JSONObject json = new JSONObject();
 
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("AUTH_USER");
+            if (user == null) {
+                json.put("success", false);
+                json.put("message", "Phiên đăng nhập đã hết hạn.");
+                out.print(json.toString());
+                return;
+            }
 
-        if (user == null) {
-            response.sendRedirect("/home");
-            return;
+            String action = request.getParameter("action");
+            switch (action) {
+                case "register":
+                    handleRegisterShop(request, response, json, out, user);
+                    break;
+
+                case "uploadAvatar":
+                    handleUploadShopAvatar(request, response, out, json, user);
+                    break;
+                case "updateProfile":
+                    handleUpdateShopProfile(request, response, json, out, user);
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+    }
 
-        String action = request.getParameter("action");
-        ShopDAO shopDAO = new ShopDAO();
-        ProductDAO productDAO = new ProductDAO();
-        ImageDAO imageDAO = new ImageDAO();
-        AuthorDAO authorDAO = new AuthorDAO();
-        CategoryDAO categoryDAO = new CategoryDAO();
-        BookDetailDAO bookDetailDAO = new BookDetailDAO();
-        FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
-        switch (action) {
-            case "create":
+    private void handleCheckStatusShop(HttpServletRequest request, HttpServletResponse response, JSONObject json,
+            PrintWriter out, User user) {
+        try {
+            Shop shop = shopDAO.getShopByUserId(user.getId());
+            if (shop != null) {
+                switch (shop.getStatus()) {
+                    case "PENDING":
+                        json.put("status", "PENDING");
+                        json.put("message", "Đang duyệt… sắp bán được rồi ✨");
+                        break;
+                    case "REJECTED":
+                        json.put("status", "REJECTED");
+                        json.put("message", "Shop bị từ chối ❌ - Lý do: " + shop.getRejectReason());
+                        break;
+                    case "ACTIVE":
+                        json.put("status", "ACTIVE");
+                        json.put("redirect", request.getContextPath() + "/shop?action=dashboard");
+                        break;
+                }
+            } else {
+                json.put("status", "NONE");
+                json.put("message", "Chia sẻ đam mê sách, tạo thu nhập dễ dàng. Hãy mở shop sách online của bạn!");
+                json.put("redirect", request.getContextPath() + "/shop?action=register");
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"handleCheckStatusShop\" function: " + e.getMessage());
+            json.put("message", "Error in \"handleCheckStatusShop\" function: " + e.getMessage());
+            json.put("success", false);
+        } finally {
+            out.print(json.toString());
+        }
+    }
 
-                try {
+    @SuppressWarnings("unused")
+    private void handleUploadShopAvatar(HttpServletRequest request, HttpServletResponse response,
+            PrintWriter out, JSONObject json, User user) throws Exception {
+        try {
+            Long shopID = shopDAO.getShopIdByUserId(user.getId());
+            if (shopID == null) {
+                json.put("success", false);
+                json.put("message", "Không tìm thấy shop.");
+                out.print(json.toString());
+                return;
+            }
 
-                    long shopId = shopDAO.getShopIdByUserId(user.getId());
-                    String title = request.getParameter("Title");
-                    String description = request.getParameter("Description");
-                    double originalPrice = Double.parseDouble(request.getParameter("OriginalPrice"));
-                    double salePrice = Double.parseDouble(request.getParameter("SalePrice"));
-                    int quantity = Integer.parseInt(request.getParameter("Quantity"));
-                    double weight = Double.parseDouble(request.getParameter("Weight"));
-                    String translator = request.getParameter("Translator");
-                    String version = request.getParameter("Version");
-                    String coverType = request.getParameter("CoverType");
-                    int pages = Integer.parseInt(request.getParameter("Pages"));
-                    String size = request.getParameter("Size");
-                    String languageCode = request.getParameter("LanguageCode");
-                    String isbn = request.getParameter("ISBN");
+            Part filePart = request.getPart("shopLogo");
+            String uploadDir = request.getServletContext().getRealPath("/assets/images/shops");
+            String newFilename = AvatarService.uploadAvatar(filePart, uploadDir, "shop");
 
-                    String[] authorNames = request.getParameterValues("authors");
-                    String[] categoryIdParams = request.getParameterValues("CategoryIDs");
+            Shop shop = shopDAO.getShopByUserId(user.getUserID());
+            String oldAvatar = shop != null ? shop.getAvatarUrl() : null;
 
-                    String publisherName = request.getParameter("PublisherName");
-                    String publishedDateStr = request.getParameter("PublishedDate");
-                    Date publishedDate = (publishedDateStr != null && !publishedDateStr.isEmpty())
-                            ? Date.valueOf(publishedDateStr)
-                            : null;
-
-                    if (salePrice > originalPrice) {
-                        throw new ServletException("Giá bán phải nhỏ hơn hoặc bằng giá gốc.");
-                    }
-
-                    PublisherDAO publisherDAO = new PublisherDAO();
-                    Long publisherId = null;
-                    if (publisherName != null && !publisherName.isBlank()) {
-                        publisherId = publisherDAO.findOrCreatePublisher(publisherName.trim());
-                    }
-
-                    // ===== Xử lý upload ảnh =====
-                    List<String> imagePaths = imageDAO.handleImageUpload(request);
-
-                    // ===== Tạo Product =====
-                    Product product = new Product();
-                    product.setShopId(shopId);
-                    product.setTitle(title);
-                    product.setDescription(description);
-                    product.setOriginalPrice(originalPrice);
-                    product.setSalePrice(salePrice);
-                    product.setQuantity(quantity);
-                    product.setWeight(weight);
-                    product.setPublisherId(publisherId);
-                    product.setPublishedDate(publishedDate);
-                    product.setImageUrls(imagePaths);
-                    product.setPrimaryImageUrl(imagePaths.get(0));
-
-                    // ===== Tạo BookDetail =====
-                    BookDetail bookDetail = new BookDetail();
-                    bookDetail.setTranslator(translator);
-                    bookDetail.setVersion(version);
-                    bookDetail.setCoverType(coverType);
-                    bookDetail.setPages(pages);
-                    bookDetail.setSize(size);
-                    bookDetail.setLanguageCode(languageCode);
-                    bookDetail.setIsbn(isbn);
-                    product.setBookDetail(bookDetail);
-
-                    // ===== Tác giả =====
-                    List<Author> authors = new ArrayList<>();
-                    if (authorNames != null) {
-                        for (String raw : authorNames) {
-                            if (raw == null)
-                                continue;
-                            String name = raw.trim();
-                            if (name.isEmpty())
-                                continue;
-                            Long id = productDAO.findAuthorIdByName(name);
-                            if (id == null) {
-                                id = productDAO.insertAuthor(name);
-                            }
-                            Author a = new Author();
-                            a.setAuthorId(id);
-                            a.setAuthorName(name);
-                            authors.add(a);
-                        }
-                    }
-                    product.setAuthors(authors);
-
-                    // ===== Thể loại =====
-                    List<Category> categoryList = new ArrayList<>();
-                    if (categoryIdParams != null) {
-                        for (String cid : categoryIdParams) {
-                            if (cid != null && !cid.isBlank()) {
-                                Category c = new Category();
-                                c.setCategoryId(Long.parseLong(cid));
-                                categoryList.add(c);
-                            }
-                        }
-                    }
-                    product.setCategories(categoryList);
-                    if (productDAO.insertProduct(product) != 0) {
-                        response.sendRedirect(
-                                request.getContextPath() + "/shop/product?action=view&message=create_success");
-                    } else {
-                        request.setAttribute("errorMessage", "Không thể thêm sản phẩm?");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                response);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("errorMessage", "Không thể thêm sản phẩm: " + e.getMessage());
-                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+            if (shopDAO.updateAvatarShop(shopID, newFilename)) {
+                if (oldAvatar != null && !oldAvatar.isEmpty()) {
+                    AvatarService.deleteOldAvatar(uploadDir, oldAvatar);
                 }
 
-                break;
-            case "delete":
+                json.put("success", true);
+                json.put("message", "Cập nhật logo shop thành công.");
+                json.put("avatarUrl", request.getContextPath() + "/assets/images/shops/" + newFilename);
+            } else {
+                AvatarService.deleteOldAvatar(uploadDir, newFilename);
+                json.put("success", false);
+                json.put("message", "Không thể cập nhật logo. Vui lòng thử lại.");
+            }
+            out.print(json.toString());
+        } catch (IllegalArgumentException e) {
+            json.put("success", false);
+            json.put("message", e.getMessage());
+            out.print(json.toString());
+        } catch (Exception e) {
+            System.err.println("[ERROR] ShopServlet#handleUploadShopAvatar: " + e.getMessage());
+            json.put("success", false);
+            json.put("message", "Đã xảy ra lỗi. Vui lòng thử lại.");
+            out.print(json.toString());
+        }
+    }
+
+    private void handleRegisterShop(HttpServletRequest request, HttpServletResponse response, JSONObject json,
+            PrintWriter out, User user) {
+        try {
+            String avatarUrl = null;
+            Part shopLogoPart = request.getPart("shopLogo");
+            if (shopLogoPart != null && shopLogoPart.getSize() > 0) {
                 try {
-                    long productId = Long.parseLong(request.getParameter("productId"));
-
-                    boolean success = productDAO.deleteProduct(productId);
-
-                    if (success) {
-                        response.sendRedirect(
-                                request.getContextPath() + "/shop/product?action=view&message=delete_success");
-                    } else {
-                        response.sendRedirect(
-                                request.getContextPath() + "/shop/product?action=view&error=delete_failed");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình xóa sản phẩm.");
-                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                    String uploadDir = request.getServletContext().getRealPath("/assets/images/shops");
+                    avatarUrl = AvatarService.uploadAvatar(shopLogoPart, uploadDir, "shop");
+                } catch (IllegalArgumentException e) {
+                    json.put("success", false);
+                    json.put("message", "Lỗi upload logo: " + e.getMessage());
+                    out.print(json.toString());
+                    return;
                 }
-                break;
-            case "toggleStatus":
-                try {
-                    long productId = Long.parseLong(request.getParameter("productId"));
-                    String newStatus = request.getParameter("newStatus");
-                    if (newStatus.equalsIgnoreCase("INACTIVE")) {
-                        boolean isInOrder = productDAO.existsProductInActiveOrders(productId);
-                        boolean isInFlashSale = flashSaleDAO.isProductInCurrentFlashSale(productId,
-                                LocalDateTime.now());
-                        if (!isInFlashSale && !isInOrder) {
-                            boolean updateStatus = productDAO.updateProductStatus(productId, newStatus);
-                            if (updateStatus) {
-                                response.sendRedirect(
-                                        request.getContextPath()
-                                                + "/shop/product?action=view&message=change_status_success");
-                            } else {
-                                response.sendRedirect(
-                                        request.getContextPath()
-                                                + "/shop/product?action=view&error=change_status_failed");
-                            }
-                        } else {
-                            response.sendRedirect(
-                                    request.getContextPath()
-                                            + "/shop/product?action=view&error=change_status_error");
-                        }
-                    } else if ("PENDING".equalsIgnoreCase(newStatus)) {
-                        boolean updateStatus = productDAO.updateProductStatus(productId, newStatus);
-                        if (updateStatus) {
-                            response.sendRedirect(
-                                    request.getContextPath()
-                                            + "/shop/product?action=view&message=change_status_success");
-                        } else {
-                            response.sendRedirect(
-                                    request.getContextPath()
-                                            + "/shop/product?action=view&error=change_status_failed");
-                        }
-                    }
+            }
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("errorMessage", "Đã xảy ra lỗi trong quá trình chuyển trạng thái sản phẩm.");
-                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+            String city = request.getParameter("cityName");
+            String district = request.getParameter("districtName");
+            String ward = request.getParameter("wardName");
+
+            int provinceId = Integer.parseInt(request.getParameter("provinceId"));
+            int districtId = Integer.parseInt(request.getParameter("districtId"));
+            String wardCode = request.getParameter("wardCode");
+
+            String phone = request.getParameter("phone");
+            String shopName = request.getParameter("shopName");
+            String shopDesc = request.getParameter("shopDesc");
+            String invoiceEmail = request.getParameter("email");
+            String recipientName = request.getParameter("fullname");
+            String addressLine = request.getParameter("addressLine");
+
+            if (shopDAO.isShopNameExists(shopName)) {
+                // Xóa ảnh đã upload nếu tên shop trùng
+                if (avatarUrl != null) {
+                    String uploadDir = request.getServletContext().getRealPath("/assets/images/shops");
+                    AvatarService.deleteOldAvatar(uploadDir, avatarUrl);
                 }
-                break;
-            case "update":
-                try {
-                    long productId = Long.parseLong(request.getParameter("productId"));
+                json.put("success", false);
+                json.put("message", "Tên shop đã tồn tại.");
+                out.print(json.toString());
+                return;
+            }
 
-                    String updateMode = request.getParameter("updateMode");
-                    if (updateMode == null || updateMode.isBlank()) {
-                        updateMode = "FULL";
-                    }
-                    Product product = productDAO.getProductById(productId);
-                    if ("FULL".equals(updateMode)) {
-                        String title = request.getParameter("Title");
-                        String description = request.getParameter("Description");
-                        double originalPrice = Double.parseDouble(request.getParameter("OriginalPrice"));
-                        double salePrice = Double.parseDouble(request.getParameter("SalePrice"));
-                        int quantity = Integer.parseInt(request.getParameter("Quantity"));
-                        double weight = Double.parseDouble(request.getParameter("Weight"));
-                        String publisherName = request.getParameter("PublisherName");
-                        String publishedDateStr = request.getParameter("PublishedDate");
-                        Date publishedDate = (publishedDateStr != null && !publishedDateStr.isEmpty())
-                                ? Date.valueOf(publishedDateStr)
-                                : null;
+            Address pickupAddress = new Address();
+            pickupAddress.setCity(city);
+            pickupAddress.setDistrict(district);
+            pickupAddress.setWard(ward);
 
-                        String translator = request.getParameter("Translator");
-                        String version = request.getParameter("Version");
-                        String coverType = request.getParameter("CoverType");
-                        int pages = Integer.parseInt(request.getParameter("Pages"));
-                        String size = request.getParameter("Size");
-                        String languageCode = request.getParameter("LanguageCode");
-                        String isbn = request.getParameter("ISBN");
+            pickupAddress.setProvinceId(provinceId);
+            pickupAddress.setDistrictId(districtId);
+            pickupAddress.setWardCode(wardCode);
 
-                        String[] authorNames = request.getParameterValues("authorsUpdate");
-                        String[] categoryIds = request.getParameterValues("CategoryIDs");
+            pickupAddress.setPhone(phone);
+            pickupAddress.setDescription(addressLine);
+            pickupAddress.setRecipientName(recipientName);
 
-                        // --- 2️⃣ Lấy đối tượng product hiện tại
+            Shop shop = new Shop();
+            shop.setName(shopName);
+            shop.setAvatarUrl(avatarUrl);
+            shop.setDescription(shopDesc);
+            shop.setStatus("PENDING");
+            shop.setOwnerUserId(user.getId());
+            shop.setInvoiceEmail(invoiceEmail);
 
-                        if (product == null) {
-                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            request.setAttribute("errorMessage", "Không tìm thấy sản phẩm để cập nhật.");
-                            request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                    response);
-                            return;
-                        }
+            if (shopDAO.createShop(shop, pickupAddress)) {
+                json.put("success", true);
+                json.put("message", "Đăng ký shop thành công! Chờ phê duyệt.");
+            } else {
+                json.put("success", false);
+                json.put("message", "Đăng ký thất bại.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"handleRegisterShop\" function: " + e.getMessage());
+            json.put("message", "Error in \"handleRegisterShop\" function: " + e.getMessage());
+            json.put("success", false);
+        } finally {
+            out.print(json.toString());
+        }
+    }
 
-                        PublisherDAO publisherDAO = new PublisherDAO();
-                        Long publisherId = null;
-                        if (publisherName != null && !publisherName.isBlank()) {
-                            publisherId = publisherDAO.findOrCreatePublisher(publisherName.trim());
-                        }
+    private String formatTimeAgo(Timestamp createdAt) {
+        if (createdAt == null)
+            return "";
 
-                        product.setTitle(title);
-                        product.setDescription(description);
-                        product.setOriginalPrice(originalPrice);
-                        product.setSalePrice(salePrice);
-                        product.setQuantity(quantity);
-                        product.setWeight(weight);
-                        product.setPublisherId(publisherId);
-                        product.setPublishedDate(publishedDate);
+        LocalDateTime created = createdAt.toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = ChronoUnit.MINUTES.between(created, now);
 
-                        BookDetail bookDetail = new BookDetail();
-                        bookDetail.setProductId(productId);
-                        bookDetail.setTranslator(translator);
-                        bookDetail.setVersion(version);
-                        bookDetail.setCoverType(coverType);
-                        bookDetail.setPages(pages);
-                        bookDetail.setSize(size);
-                        bookDetail.setLanguageCode(languageCode);
-                        bookDetail.setIsbn(isbn);
-                        product.setBookDetail(bookDetail);
+        if (minutes < 1)
+            return "vừa xong";
+        if (minutes < 60)
+            return minutes + " phút trước";
+        if (minutes < 1440)
+            return (minutes / 60) + " giờ trước";
+        if (minutes < 10080)
+            return (minutes / 1440) + " ngày trước";
+        return (minutes / 10080) + " tuần trước";
+    }
 
-                        authorDAO.deleteAuthorsByProductId(productId);
-                        if (authorNames != null) {
-                            for (String raw : authorNames) {
-                                if (raw != null && !raw.trim().isEmpty()) {
-                                    String name = raw.trim();
-                                    Long id = productDAO.findAuthorIdByName(name);
-                                    if (id == null)
-                                        id = productDAO.insertAuthor(name);
-                                    authorDAO.addAuthorToProduct(productId, id);
-                                }
-                            }
-                        }
+    private void handleUpdateShopProfile(HttpServletRequest request, HttpServletResponse response, JSONObject json,
+            PrintWriter out, User user) {
+        boolean flag = true;
+        String message = "";
+        try {
+            Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
+            if (shopId == null || shopId == -1) {
+                flag = false;
+                message = "Không tìm thấy shop.";
+            }
 
-                        categoryDAO.deleteCategoriesByProductId(productId);
-                        if (categoryIds != null) {
-                            for (String cid : categoryIds) {
-                                if (cid != null && !cid.isBlank()) {
-                                    categoryDAO.addCategoryToProduct(productId, Long.parseLong(cid));
-                                }
-                            }
-                        }
-                    } else if ("PARTIAL".equals(updateMode)) {
-                        String description = request.getParameter("Description");
-                        double originalPrice = Double.parseDouble(request.getParameter("OriginalPrice"));
-                        double salePrice = Double.parseDouble(request.getParameter("SalePrice"));
-                        int quantity = Integer.parseInt(request.getParameter("Quantity"));
-                        String version = request.getParameter("Version");
-                        if (product == null) {
-                            request.setAttribute("errorMessage", "Không tìm thấy sản phẩm để cập nhật.");
-                            request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                    response);
-                            return;
-                        }
-                        product.setDescription(description);
-                        product.setOriginalPrice(originalPrice);
-                        product.setSalePrice(salePrice);
-                        product.setQuantity(quantity);
+            if (flag) {
+                String shopName = request.getParameter("shopName");
+                String shopPhone = request.getParameter("shopPhone");
+                String shopEmail = request.getParameter("shopEmail");
+                String shopDescription = request.getParameter("shopDescription");
 
-                        BookDetail bookDetail = bookDetailDAO.getBookDetailByProductId(productId);
-                        bookDetail.setVersion(version);
+                String cityName = request.getParameter("cityName");
+                String districtName = request.getParameter("districtName");
+                String wardName = request.getParameter("wardName");
 
-                        product.setBookDetail(bookDetail);
-                    } else {
-                        request.setAttribute("errorMessage",
-                                "Không thể xóa sản phẩm vì đang trong Flash Sale, đang trong đơn hàng hoặc đang hoạt động.");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                response);
-                        return;
-                    }
-                    // --- 6️⃣ Xử lý ảnh:
+                int provinceId = Integer.parseInt(request.getParameter("provinceId"));
+                int districtId = Integer.parseInt(request.getParameter("districtId"));
+                String wardCode = request.getParameter("wardCode");
+                String addressLine = request.getParameter("addressLine");
 
-                    // Load existing images (to map ids -> urls)
-                    List<ProductImage> existingImages = imageDAO.getImagesByProductId(productId);
-                    // Map id->url for existing
-                    Map<String, String> existingIdToUrl = existingImages.stream()
-                            .collect(Collectors.toMap(i -> String.valueOf(i.getImageId()), ProductImage::getUrl));
-
-                    // Collect submitted existing image ids from form (hidden inputs created by JS)
-                    String[] existingIdsFromForm = request.getParameterValues("existingImageIds");
-                    Set<String> keptExistingIds = new HashSet<>();
-                    if (existingIdsFromForm != null) {
-                        keptExistingIds.addAll(Arrays.asList(existingIdsFromForm));
-                    }
-
-                    // 6.2: Upload new images (accept both ProductImages and productImagesUpdate
-                    // names)
-                    List<String> newUploadedUrls = imageDAO.handleImageUpload(request);
-
-                    // Insert new images (non-primary for now) and collect their urls
-                    List<String> insertedNewUrls = new ArrayList<>();
-                    for (String newUrl : newUploadedUrls) {
-                        imageDAO.insertImage(productId, newUrl, false);
-                        insertedNewUrls.add(newUrl);
-                    }
-
-                    // 6.3: Removed images param may contain ids (from JS removedImageIds hidden) or
-                    // urls separated by comma
-                    String removedImagesParam = request.getParameter("removedImageIds");
-                    if (removedImagesParam == null || removedImagesParam.isBlank()) {
-                        // older naming fallback
-                        removedImagesParam = request.getParameter("RemovedImages");
-                    }
-                    if (removedImagesParam != null && !removedImagesParam.isBlank()) {
-                        String[] removedArray = removedImagesParam.split(",");
-                        for (String token : removedArray) {
-                            token = token.trim();
-                            if (token.isEmpty())
-                                continue;
-                            // try parse as id
-                            try {
-                                long imgId = Long.parseLong(token);
-                                // delete by id (new method)
-                                imageDAO.deleteImageById(imgId);
-                            } catch (NumberFormatException nfe) {
-                                // not an id, try delete by url
-                                imageDAO.deleteImageByUrl(token);
-                            }
-                        }
-                    }
-
-                    // 6.4: Any existing images not present in keptExistingIds should be deleted
-                    for (ProductImage pi : existingImages) {
-                        String sid = String.valueOf(pi.getImageId());
-                        if (!keptExistingIds.contains(sid)) {
-                            // if it wasn't explicitly kept, delete it
-                            imageDAO.deleteImageById(pi.getImageId());
-                        }
-                    }
-
-                    // 6.5: Handle primary image setting with proper order
-                    // First reset all primary flags
-                    imageDAO.resetAllPrimaryImages(productId);
-
-                    // Track if primary has been set
-                    boolean primarySet = false;
-
-                    // 1. Check primaryImageUpdate first (highest priority - from explicit "Set as
-                    // primary" action)
-                    String primaryImageUpdate = request.getParameter("primaryImageUpdate");
-                    if (primaryImageUpdate != null && !primaryImageUpdate.isEmpty()) {
-                        if (primaryImageUpdate.startsWith("new:")) {
-                            // Format: new:index:1
-                            String[] parts = primaryImageUpdate.split(":");
-                            if (parts.length == 3) {
-                                try {
-                                    int newPrimaryIndex = Integer.parseInt(parts[1]);
-                                    if (newPrimaryIndex >= 0 && newPrimaryIndex < newUploadedUrls.size()) {
-                                        String newPrimaryUrl = newUploadedUrls.get(newPrimaryIndex);
-                                        imageDAO.updatePrimaryImage(productId, newPrimaryUrl);
-                                        product.setPrimaryImageUrl(newPrimaryUrl);
-                                        primarySet = true;
-                                    }
-                                } catch (NumberFormatException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } else {
-                            // Format: imageId:1
-                            String[] parts = primaryImageUpdate.split(":");
-                            if (parts.length == 2) {
-                                try {
-                                    long imageId = Long.parseLong(parts[0]);
-                                    // Get URL from the existing image map
-                                    String url = existingIdToUrl.get(String.valueOf(imageId));
-                                    if (url != null) {
-                                        imageDAO.updatePrimaryImage(productId, url);
-                                        product.setPrimaryImageUrl(url);
-                                        primarySet = true;
-                                    }
-                                } catch (NumberFormatException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-
-                    // 2. If no primary set yet, check newPrimaryIndex for newly uploaded images
-                    if (!primarySet) {
-                        String newPrimaryIndexStr = request.getParameter("newPrimaryIndex");
-                        if (newPrimaryIndexStr != null && !newPrimaryIndexStr.isEmpty()) {
-                            try {
-                                int newIdx = Integer.parseInt(newPrimaryIndexStr);
-                                if (newIdx >= 0 && newIdx < insertedNewUrls.size()) {
-                                    String newUrl = insertedNewUrls.get(newIdx);
-                                    imageDAO.updatePrimaryImage(productId, newUrl);
-                                    product.setPrimaryImageUrl(newUrl);
-                                    primarySet = true;
-                                }
-                            } catch (NumberFormatException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    // 3. If still no primary, check legacy PrimaryImage parameter
-                    if (!primarySet) {
-                        String primaryExisting = request.getParameter("PrimaryImage");
-                        if (primaryExisting != null && !primaryExisting.isEmpty()) {
-                            try {
-                                long pid = Long.parseLong(primaryExisting);
-                                String url = existingIdToUrl.get(String.valueOf(pid));
-                                if (url != null) {
-                                    imageDAO.updatePrimaryImage(productId, url);
-                                    product.setPrimaryImageUrl(url);
-                                    primarySet = true;
-                                }
-                            } catch (NumberFormatException nfe) {
-                                // If not a number, treat as URL
-                                imageDAO.updatePrimaryImage(productId, primaryExisting);
-                                product.setPrimaryImageUrl(primaryExisting);
-                                primarySet = true;
-                            }
-                        }
-                    }
-
-                    // 4. Final fallback: if no primary set and there are images, use first
-                    // available
-                    if (!primarySet) {
-                        // First check kept existing images
-                        if (!keptExistingIds.isEmpty()) {
-                            String firstExistingId = keptExistingIds.iterator().next();
-                            String url = existingIdToUrl.get(firstExistingId);
-                            if (url != null) {
-                                imageDAO.updatePrimaryImage(productId, url);
-                                product.setPrimaryImageUrl(url);
-                                primarySet = true;
-                            }
-                        }
-                        // If still no primary, check new uploads
-                        if (!primarySet && !insertedNewUrls.isEmpty()) {
-                            String firstNewUrl = insertedNewUrls.get(0);
-                            imageDAO.updatePrimaryImage(productId, firstNewUrl);
-                            product.setPrimaryImageUrl(firstNewUrl);
-                        }
-                    }
-                    // --- 7️⃣ Cập nhật thông tin sản phẩm
-                    boolean updated = productDAO.updateProduct(product);
-
-                    if (updated) {
-                        response.sendRedirect(
-                                request.getContextPath() + "/shop/product?action=view&message=update_success");
-                    } else {
-                        request.setAttribute("errorMessage", "Không thể cập nhật sản phẩm.");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request,
-                                response);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("errorMessage", "Lỗi khi cập nhật sản phẩm: " + e.getMessage());
-                    request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
+                if (shopName == null || shopName.trim().isEmpty()) {
+                    flag = false;
+                    message = "Tên shop không được để trống.";
                 }
-                break;
-            default:
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "Unknown action: " + action);
-                break;
+
+                Shop currentShop = shopDAO.getShopByUserId(user.getId());
+                if (flag && !currentShop.getName().equals(shopName) && shopDAO.isShopNameExists(shopName)) {
+                    flag = false;
+                    message = "Tên shop đã tồn tại.";
+                }
+
+                if (flag) {
+                    Shop shop = new Shop();
+                    shop.setShopId(shopId);
+                    shop.setName(shopName);
+                    shop.setDescription(shopDescription);
+                    shop.setInvoiceEmail(shopEmail);
+
+                    Address address = new Address();
+                    address.setAddressId(currentShop.getPickupAddressId());
+                    address.setPhone(shopPhone);
+                    address.setCity(cityName);
+                    address.setDistrict(districtName);
+                    address.setWard(wardName);
+                    address.setProvinceId(provinceId);
+                    address.setDistrictId(districtId);
+                    address.setWardCode(wardCode);
+                    address.setDescription(addressLine);
+                    address.setRecipientName(currentShop.getPickupAddress().getRecipientName());
+
+                    if (shopDAO.updateShopProfile(shop, address)) {
+                        flag = true;
+                        message = "Cập nhật thông tin shop thành công!";
+                    } else {
+                        flag = false;
+                        message = "Không thể cập nhật thông tin. Vui lòng thử lại.";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"handleUpdateShopProfile\" function: " + e.getMessage());
+            flag = false;
+            message = "Error in \"handleUpdateShopProfile\" function: " + e.getMessage();
+        } finally {
+            json.put("success", flag);
+            json.put("message", message);
+            out.print(json.toString());
         }
     }
 }
