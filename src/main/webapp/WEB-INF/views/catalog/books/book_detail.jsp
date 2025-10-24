@@ -280,7 +280,7 @@
                 <h5 class="comment-title">ĐÁNH GIÁ SẢN PHẨM</h5>
                 <div class="col-md-3 px-5">
                   <h2 class="comment-average">
-                    <fmt:formatNumber value="${product.avgRating}" maxFractionDigits="1" />
+                    <fmt:formatNumber value="${product.avgRating}" minFractionDigits="1" maxFractionDigits="1" />
                     <small class="fs-6">trên 5</small>
                   </h2>
                   <div class="text-warning">
@@ -415,30 +415,42 @@
                   </c:forEach>
 
                   <!-- Pagination for reviews -->
-                  <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                      <c:if test="${currentPage > 1}">
-                        <li class="page-item">
-                          <a class="page-link"
-                            href="?action=detail&id=${product.productId}&reviewPage=${currentPage - 1}#reviews">‹</a>
-                        </li>
-                      </c:if>
+                  <c:if test="${totalReviews > 10}">
+                    <nav class="mt-4">
+                      <ul class="pagination justify-content-center">
+                        <!-- Previous button -->
+                        <c:if test="${currentPage > 1}">
+                          <li class="page-item">
+                            <a class="page-link"
+                              href="?action=detail&id=${product.productId}&reviewPage=${currentPage - 1}#reviews"
+                              aria-label="Previous">
+                              ‹
+                            </a>
+                          </li>
+                        </c:if>
 
-                      <c:forEach begin="1" end="${totalPages}" var="i">
-                        <li class="page-item ${i == currentPage ? 'active' : ''}">
-                          <a class="page-link"
-                            href="?action=detail&id=${product.productId}&reviewPage=${i}#reviews">${i}</a>
-                        </li>
-                      </c:forEach>
+                        <!-- Page numbers -->
+                        <c:forEach begin="1" end="${totalPages}" var="i">
+                          <li class="page-item ${i == currentPage ? 'active' : ''}">
+                            <a class="page-link" href="?action=detail&id=${product.productId}&reviewPage=${i}#reviews">
+                              ${i}
+                            </a>
+                          </li>
+                        </c:forEach>
 
-                      <c:if test="${currentPage < totalPages}">
-                        <li class="page-item">
-                          <a class="page-link"
-                            href="?action=detail&id=${product.productId}&reviewPage=${currentPage + 1}#reviews">›</a>
-                        </li>
-                      </c:if>
-                    </ul>
-                  </nav>
+                        <!-- Next button -->
+                        <c:if test="${currentPage < totalPages}">
+                          <li class="page-item">
+                            <a class="page-link"
+                              href="?action=detail&id=${product.productId}&reviewPage=${currentPage + 1}#reviews"
+                              aria-label="Next">
+                              ›
+                            </a>
+                          </li>
+                        </c:if>
+                      </ul>
+                    </nav>
+                  </c:if>
                 </c:when>
                 <c:otherwise>
                   <div class="text-center py-5">

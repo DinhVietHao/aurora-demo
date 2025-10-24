@@ -143,6 +143,7 @@ public class ShopManagementServlet extends HttpServlet {
         String description = param(req, "description");
         String status = param(req, "status");
         String invoiceEmail = param(req, "invoiceEmail");
+        String rejectReason = param(req, "rejectReason");
         
         // Validate required fields
         StringBuilder errors = new StringBuilder();
@@ -169,6 +170,7 @@ public class ShopManagementServlet extends HttpServlet {
             shop.setDescription(description);
             shop.setStatus(status);
             shop.setInvoiceEmail(invoiceEmail);
+            shop.setRejectReason(rejectReason);
             
             try {
                 // Get original data for fields not in form
@@ -193,7 +195,7 @@ public class ShopManagementServlet extends HttpServlet {
         }
 
         // Update basic information
-        dao.update(id, name, description, status, invoiceEmail);
+        dao.update(id, name, description, status, invoiceEmail, rejectReason);
 
         // Handle avatar upload if present
         Part avatarPart = req.getPart("avatar");

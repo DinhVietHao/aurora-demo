@@ -57,6 +57,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label">Kết thúc</label>
                                     <input type="datetime-local" name="endAt" class="form-control" required value="<c:out value='${endAtLocal}'/>">
+                                    <small class="form-text text-muted mt-1">Ngày kết thúc phải sau ngày bắt đầu</small>
                                 </div>
                             </div>
                             <div class="mt-4">

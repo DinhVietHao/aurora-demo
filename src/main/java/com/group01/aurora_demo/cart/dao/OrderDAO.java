@@ -6,9 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -19,10 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
-import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
@@ -372,7 +367,6 @@ public class OrderDAO {
                         User customer = new User();
                         customer.setFullName(rs.getString("CustomerName"));
                         customer.setEmail(rs.getString("CustomerEmail"));
-                        customer.setPhone(rs.getString("CustomerPhone"));
                         orderShop.setUser(customer);
 
                         String address = Stream.of(

@@ -18,14 +18,18 @@ public class Voucher {
     private Integer perUserLimit;
     private String status;
     private int usageCount;
+    private boolean isShopVoucher;
+    private Long shopId;
     private String description;
+    private java.sql.Timestamp createdAt;
 
     public Voucher() {
     }
 
     public Voucher(long voucherId, String code, String discountType, BigDecimal value, BigDecimal maxAmount,
                   BigDecimal minOrderAmount, LocalDateTime startAt, LocalDateTime endAt, Integer usageLimit,
-                  Integer perUserLimit, String status, int usageCount) {
+                  Integer perUserLimit, String status, int usageCount, boolean isShopVoucher, Long shopId,
+                  String description, java.sql.Timestamp createdAt) {
         this.voucherId = voucherId;
         this.code = code;
         this.discountType = discountType;
@@ -38,6 +42,10 @@ public class Voucher {
         this.perUserLimit = perUserLimit;
         this.status = status;
         this.usageCount = usageCount;
+        this.isShopVoucher = isShopVoucher;
+        this.shopId = shopId;
+        this.description = description;
+        this.createdAt = createdAt;
     }
 
     public long getVoucherId() {
@@ -142,6 +150,30 @@ public class Voucher {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public boolean isShopVoucher() {
+        return isShopVoucher;
+    }
+    
+    public void setShopVoucher(boolean isShopVoucher) {
+        this.isShopVoucher = isShopVoucher;
+    }
+    
+    public Long getShopId() {
+        return shopId;
+    }
+    
+    public void setShopId(Long shopId) {
+        this.shopId = shopId;
+    }
+    
+    public java.sql.Timestamp getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(java.sql.Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
     
     public boolean isActive() {

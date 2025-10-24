@@ -2,6 +2,7 @@ package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.dao.ReviewDAO;
+import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.Review;
 import com.group01.aurora_demo.catalog.model.ReviewImage;
@@ -134,7 +135,7 @@ public class HomeServlet extends HttpServlet {
                             }
                         }
 
-                        int reviewsPerPage = 5;
+                        int reviewsPerPage = 10;
                         int reviewOffset = (reviewPage - 1) * reviewsPerPage;
 
                         ReviewDAO reviewDAO = new ReviewDAO();
@@ -150,8 +151,19 @@ public class HomeServlet extends HttpServlet {
 
                             request.setAttribute("reviews", reviews);
                             request.setAttribute("currentPage", reviewPage);
+                            request.setAttribute("totalReviews", totalReviews);
                             request.setAttribute("totalPages", totalReviewPages);
                         }
+
+                        List<Long> categoryIds = new ArrayList<>();
+                        if (product.getCategories() != null && !product.getCategories().isEmpty()) {
+                            for (Category cat : product.getCategories()) {
+                                categoryIds.add(cat.getCategoryId());
+                            }
+                        }
+
+                        List<Product> relatedProducts = productDAO.getRelatedProducts(id, categoryIds, 36);
+                        request.setAttribute("suggestions", relatedProducts);
                     }
 
                     int reviewCount = productDAO.countReviewsByProductId(id);
@@ -275,13 +287,21 @@ public class HomeServlet extends HttpServlet {
 
         User u1 = new User();
         u1.setFullName("Nguyễn Văn A");
-        u1.setAvatarUrl("avatar1.jpg");
+        u1.setAvatarUrl(null);
         r1.setUser(u1);
 
         List<ReviewImage> imgs1 = new ArrayList<>();
         ReviewImage img1 = new ReviewImage();
-        img1.setUrl("review-1-img1.jpg");
+        img1.setUrl("review-example-1.jpg");
         imgs1.add(img1);
+
+        ReviewImage img2 = new ReviewImage();
+        img2.setUrl("review-example-2.jpg");
+        imgs1.add(img2);
+
+        ReviewImage img3 = new ReviewImage();
+        img3.setUrl("review-example-3.jpg");
+        imgs1.add(img3);
         r1.setImages(imgs1);
 
         mockReviews.add(r1);
@@ -310,7 +330,7 @@ public class HomeServlet extends HttpServlet {
 
         User u3 = new User();
         u3.setFullName("Lê Văn C");
-        u3.setAvatarUrl("avatar3.jpg");
+        u3.setAvatarUrl(null);
         r3.setUser(u3);
         r3.setImages(new ArrayList<>());
 
