@@ -1,24 +1,23 @@
 package com.group01.aurora_demo.catalog.controller;
 
+import com.group01.aurora_demo.catalog.model.ReviewImage;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
-import com.group01.aurora_demo.catalog.dao.ReviewDAO;
 import com.group01.aurora_demo.catalog.model.Category;
+import com.group01.aurora_demo.catalog.dao.ReviewDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.Review;
-import com.group01.aurora_demo.catalog.model.ReviewImage;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.model.Shop;
-import com.group01.aurora_demo.auth.dao.UserDAO;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.dao.CartItemDAO;
-
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
+import java.time.LocalDateTime;
 import jakarta.servlet.http.*;
+import java.util.ArrayList;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/home")
@@ -66,7 +65,6 @@ public class HomeServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
-
         switch (action) {
             case "home":
                 List<Product> suggestedProducts = (user != null)
@@ -115,21 +113,50 @@ public class HomeServlet extends HttpServlet {
                 try {
                     long id = Long.parseLong(request.getParameter("id"));
                     Product product = productDAO.getProductById(id);
+
                     if (product != null) {
                         // Load shop info
                         Long shopId = shopDAO.getShopIdByProductId(id);
                         if (shopId != null) {
                             Shop shop = shopDAO.getShopByIdWithStats(shopId);
-                            System.out.println(shop.getAvatarUrl());
                             request.setAttribute("shop", shop);
                         }
 
-                        // Load reviews với pagination
+                        // Parse filter parameters
+                        String ratingParam = request.getParameter("rating");
+                        String filterParam = request.getParameter("filter");
+
+                        Integer filterRating = null;
+                        Boolean hasComment = null;
+                        Boolean hasImage = null;
+
+                        // Parse rating filter (1-5 or "all")
+                        if (ratingParam != null && !ratingParam.equals("all")) {
+                            try {
+                                filterRating = Integer.parseInt(ratingParam);
+                                if (filterRating < 1 || filterRating > 5) {
+                                    filterRating = null;
+                                }
+                            } catch (NumberFormatException e) {
+                                filterRating = null;
+                            }
+                        }
+
+                        // Parse other filters
+                        if ("comment".equals(filterParam)) {
+                            hasComment = true;
+                        } else if ("image".equals(filterParam)) {
+                            hasImage = true;
+                        }
+
+                        // Load reviews with filter and pagination
                         int reviewPage = 1;
                         String reviewPageParam = request.getParameter("reviewPage");
                         if (reviewPageParam != null) {
                             try {
                                 reviewPage = Integer.parseInt(reviewPageParam);
+                                if (reviewPage < 1)
+                                    reviewPage = 1;
                             } catch (NumberFormatException e) {
                                 reviewPage = 1;
                             }
@@ -139,22 +166,36 @@ public class HomeServlet extends HttpServlet {
                         int reviewOffset = (reviewPage - 1) * reviewsPerPage;
 
                         ReviewDAO reviewDAO = new ReviewDAO();
-                        List<Review> reviews = reviewDAO.getReviewsByProductId(id, reviewOffset, reviewsPerPage);
-                        if (reviews.isEmpty()) {
-                            reviews = createMockReviews();
-                            request.setAttribute("reviews", reviews);
-                            request.setAttribute("currentPage", 1);
-                            request.setAttribute("totalPages", 1);
-                        } else {
-                            int totalReviews = reviewDAO.countReviewsByProductId(id);
-                            int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
 
-                            request.setAttribute("reviews", reviews);
-                            request.setAttribute("currentPage", reviewPage);
-                            request.setAttribute("totalReviews", totalReviews);
-                            request.setAttribute("totalPages", totalReviewPages);
+                        // Get filtered reviews
+                        List<Review> reviews = reviewDAO.getReviewsByProductIdWithFilter(
+                                id, reviewOffset, reviewsPerPage, filterRating, hasComment, hasImage);
+
+                        // Count total filtered reviews
+                        int totalReviews = reviewDAO.countReviewsByProductIdWithFilter(
+                                id, filterRating, hasComment, hasImage);
+
+                        int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
+
+                        // Chỉ dùng mock data khi THỰC SỰ không có reviews
+                        if (reviews.isEmpty() && filterRating == null && hasComment == null && hasImage == null) {
+                            // Chỉ dùng mock khi không filter và không có reviews thật
+                            reviews = createMockReviews();
+                            totalReviews = reviews.size();
+                            totalReviewPages = 1;
                         }
 
+                        // Set attributes
+                        request.setAttribute("reviews", reviews);
+                        request.setAttribute("currentPage", reviewPage);
+                        request.setAttribute("totalReviews", totalReviews);
+                        request.setAttribute("totalPages", totalReviewPages);
+
+                        // Keep filter state
+                        request.setAttribute("selectedRating", ratingParam != null ? ratingParam : "all");
+                        request.setAttribute("selectedFilter", filterParam != null ? filterParam : "");
+
+                        // Load related products
                         List<Long> categoryIds = new ArrayList<>();
                         if (product.getCategories() != null && !product.getCategories().isEmpty()) {
                             for (Category cat : product.getCategories()) {
@@ -162,16 +203,18 @@ public class HomeServlet extends HttpServlet {
                             }
                         }
 
-                        List<Product> relatedProducts = productDAO.getRelatedProducts(id, categoryIds, 36);
+                        List<Product> relatedProducts = productDAO.getRelatedProducts(id, categoryIds, 12);
                         request.setAttribute("suggestions", relatedProducts);
                     }
 
+                    // Total review count (không filter) - cho rating overview
                     int reviewCount = productDAO.countReviewsByProductId(id);
                     request.setAttribute("title", product.getTitle());
                     request.setAttribute("product", product);
                     request.setAttribute("reviewCount", reviewCount);
-                    request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request,
-                            response);
+                    request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp")
+                            .forward(request, response);
+
                 } catch (NumberFormatException e) {
                     System.out.println("Error in \"detail\" of HomeServlet: " + e.getMessage());
                 }
@@ -183,10 +226,6 @@ public class HomeServlet extends HttpServlet {
 
             case "filter":
                 handleFilter(request, response);
-                break;
-
-            default:
-                response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 break;
         }
     }

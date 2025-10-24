@@ -299,16 +299,41 @@
                     </c:forEach>
                   </div>
                 </div>
-                <div class="col-md-9">
+                <!-- Filter Buttons -->
+                <div class="col-md-9 d-flex align-items-center">
                   <div class="comment-filter">
-                    <button class="button-outline active" data-rating="all">Tất Cả</button>
-                    <button class="button-outline" data-rating="5">5 Sao</button>
-                    <button class="button-outline" data-rating="4">4 Sao</button>
-                    <button class="button-outline" data-rating="3">3 Sao</button>
-                    <button class="button-outline" data-rating="2">2 Sao</button>
-                    <button class="button-outline" data-rating="1">1 Sao</button>
-                    <button class="button-outline" data-filter="comment">Có Bình Luận</button>
-                    <button class="button-outline" data-filter="image">Có Hình Ảnh</button>
+                    <a href="?action=detail&id=${product.productId}#reviews"
+                      class="button-outline ${selectedRating == 'all' && empty selectedFilter ? 'active' : ''}">
+                      Tất Cả
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&rating=5#reviews"
+                      class="button-outline ${selectedRating == '5' ? 'active' : ''}">
+                      5 Sao
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&rating=4#reviews"
+                      class="button-outline ${selectedRating == '4' ? 'active' : ''}">
+                      4 Sao
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&rating=3#reviews"
+                      class="button-outline ${selectedRating == '3' ? 'active' : ''}">
+                      3 Sao
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&rating=2#reviews"
+                      class="button-outline ${selectedRating == '2' ? 'active' : ''}">
+                      2 Sao
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&rating=1#reviews"
+                      class="button-outline ${selectedRating == '1' ? 'active' : ''}">
+                      1 Sao
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&filter=comment#reviews"
+                      class="button-outline ${selectedFilter == 'comment' ? 'active' : ''}">
+                      Có Bình Luận
+                    </a>
+                    <a href="?action=detail&id=${product.productId}&filter=image#reviews"
+                      class="button-outline ${selectedFilter == 'image' ? 'active' : ''}">
+                      Có Hình Ảnh
+                    </a>
                   </div>
                 </div>
               </div>
@@ -416,36 +441,133 @@
 
                   <!-- Pagination for reviews -->
                   <c:if test="${totalReviews > 10}">
-                    <nav class="mt-4">
+                    <nav class="mt-4" aria-label="Review pagination">
                       <ul class="pagination justify-content-center">
-                        <!-- Previous button -->
+                        <!-- Previous Button -->
                         <c:if test="${currentPage > 1}">
                           <li class="page-item">
-                            <a class="page-link"
-                              href="?action=detail&id=${product.productId}&reviewPage=${currentPage - 1}#reviews"
-                              aria-label="Previous">
-                              ‹
-                            </a>
+                            <c:url var="prevUrl" value="">
+                              <c:param name="action" value="detail" />
+                              <c:param name="id" value="${product.productId}" />
+                              <c:param name="reviewPage" value="${currentPage - 1}" />
+                              <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                <c:param name="rating" value="${selectedRating}" />
+                              </c:if>
+                              <c:if test="${not empty selectedFilter}">
+                                <c:param name="filter" value="${selectedFilter}" />
+                              </c:if>
+                            </c:url>
+                            <a class="page-link" href="${prevUrl}#reviews" aria-label="Previous">‹</a>
                           </li>
                         </c:if>
 
-                        <!-- Page numbers -->
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                          <li class="page-item ${i == currentPage ? 'active' : ''}">
-                            <a class="page-link" href="?action=detail&id=${product.productId}&reviewPage=${i}#reviews">
-                              ${i}
-                            </a>
-                          </li>
-                        </c:forEach>
+                        <!-- Smart Pagination -->
+                        <c:choose>
+                          <c:when test="${totalPages <= 7}">
+                            <!-- Show all pages if ≤7 -->
+                            <c:forEach begin="1" end="${totalPages}" var="i">
+                              <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                <c:url var="pageUrl" value="">
+                                  <c:param name="action" value="detail" />
+                                  <c:param name="id" value="${product.productId}" />
+                                  <c:param name="reviewPage" value="${i}" />
+                                  <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                    <c:param name="rating" value="${selectedRating}" />
+                                  </c:if>
+                                  <c:if test="${not empty selectedFilter}">
+                                    <c:param name="filter" value="${selectedFilter}" />
+                                  </c:if>
+                                </c:url>
+                                <a class="page-link" href="${pageUrl}#reviews">${i}</a>
+                              </li>
+                            </c:forEach>
+                          </c:when>
+                          <c:otherwise>
+                            <!-- Smart pagination with ellipsis -->
 
-                        <!-- Next button -->
+                            <!-- First Page -->
+                            <li class="page-item ${currentPage == 1 ? 'active' : ''}">
+                              <c:url var="firstUrl" value="">
+                                <c:param name="action" value="detail" />
+                                <c:param name="id" value="${product.productId}" />
+                                <c:param name="reviewPage" value="1" />
+                                <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                  <c:param name="rating" value="${selectedRating}" />
+                                </c:if>
+                                <c:if test="${not empty selectedFilter}">
+                                  <c:param name="filter" value="${selectedFilter}" />
+                                </c:if>
+                              </c:url>
+                              <a class="page-link" href="${firstUrl}#reviews">1</a>
+                            </li>
+
+                            <!-- Left Ellipsis -->
+                            <c:if test="${currentPage > 3}">
+                              <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                              </li>
+                            </c:if>
+
+                            <!-- Current Page Group -->
+                            <c:forEach begin="${currentPage - 1}" end="${currentPage + 1}" var="i">
+                              <c:if test="${i > 1 && i < totalPages}">
+                                <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                  <c:url var="pageUrl" value="">
+                                    <c:param name="action" value="detail" />
+                                    <c:param name="id" value="${product.productId}" />
+                                    <c:param name="reviewPage" value="${i}" />
+                                    <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                      <c:param name="rating" value="${selectedRating}" />
+                                    </c:if>
+                                    <c:if test="${not empty selectedFilter}">
+                                      <c:param name="filter" value="${selectedFilter}" />
+                                    </c:if>
+                                  </c:url>
+                                  <a class="page-link" href="${pageUrl}#reviews">${i}</a>
+                                </li>
+                              </c:if>
+                            </c:forEach>
+
+                            <!-- Right Ellipsis -->
+                            <c:if test="${currentPage < totalPages - 2}">
+                              <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                              </li>
+                            </c:if>
+
+                            <!-- Last Page -->
+                            <li class="page-item ${currentPage == totalPages ? 'active' : ''}">
+                              <c:url var="lastUrl" value="">
+                                <c:param name="action" value="detail" />
+                                <c:param name="id" value="${product.productId}" />
+                                <c:param name="reviewPage" value="${totalPages}" />
+                                <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                  <c:param name="rating" value="${selectedRating}" />
+                                </c:if>
+                                <c:if test="${not empty selectedFilter}">
+                                  <c:param name="filter" value="${selectedFilter}" />
+                                </c:if>
+                              </c:url>
+                              <a class="page-link" href="${lastUrl}#reviews">${totalPages}</a>
+                            </li>
+                          </c:otherwise>
+                        </c:choose>
+
+                        <!-- Next Button -->
                         <c:if test="${currentPage < totalPages}">
                           <li class="page-item">
-                            <a class="page-link"
-                              href="?action=detail&id=${product.productId}&reviewPage=${currentPage + 1}#reviews"
-                              aria-label="Next">
-                              ›
-                            </a>
+                            <c:url var="nextUrl" value="">
+                              <c:param name="action" value="detail" />
+                              <c:param name="id" value="${product.productId}" />
+                              <c:param name="reviewPage" value="${currentPage + 1}" />
+                              <c:if test="${not empty selectedRating && selectedRating != 'all'}">
+                                <c:param name="rating" value="${selectedRating}" />
+                              </c:if>
+                              <c:if test="${not empty selectedFilter}">
+                                <c:param name="filter" value="${selectedFilter}" />
+                              </c:if>
+                            </c:url>
+                            <a class="page-link" href="${nextUrl}#reviews" aria-label="Next">›</a>
                           </li>
                         </c:if>
                       </ul>
