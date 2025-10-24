@@ -23,6 +23,7 @@ public class OrderShop  {
     private String voucherCode;
     private String cancelReason;
     private String returnReason;
+    private String shippingAddress;
     private List<OrderItem> items;
     private User user;
 
@@ -33,8 +34,6 @@ public class OrderShop  {
     public void setUpdateAt(Date updateAt) {
         this.updateAt = updateAt;
     }
-
-    private String shippingAddress;
 
     public String getShippingAddress() {
         return shippingAddress;

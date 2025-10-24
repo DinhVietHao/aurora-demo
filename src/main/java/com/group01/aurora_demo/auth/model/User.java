@@ -10,7 +10,7 @@ public class User {
     private String authProvider;
     private String password;
     private LocalDateTime createdAt;
-    private String status = "active"; // Default value
+    private String status = "active";
     private String phone;
     private int points;
     private String nationalID;

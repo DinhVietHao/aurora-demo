@@ -1,0 +1,56 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.flashsale-card {
+  transition: 0.2s;
+  border-radius: 12px;
+}
+
+.flashsale-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+/* Đảm bảo body chiếm toàn bộ chiều cao và bố cục theo cột */
+html,
+body {
+  height: 100%;
+}
+
+body.sb-nav-fixed {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Layout tổng */
+#layoutSidenav {
+  display: flex;
+  flex: 1;
+}
+
+/* Phần nội dung chính co giãn để đẩy footer xuống đáy */
+#layoutSidenav_content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Phần main chiếm toàn bộ không gian trống còn lại */
+#layoutSidenav_content main {
+  flex: 1;
+}
+
+/* Footer luôn nằm cuối trang */
+footer {
+  margin-top: auto;
+}
