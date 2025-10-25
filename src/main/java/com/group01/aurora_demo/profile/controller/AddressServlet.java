@@ -86,24 +86,12 @@ public class AddressServlet extends HttpServlet {
         }
 
         req.setAttribute("user", user);
-        System.out.println("Check path " + path);
         switch (path) {
             case "/update":
                 try {
                     long addressIdUpdate = Long.parseLong(req.getParameter("addressId"));
                     String from = req.getParameter("from");
-                    if (!addressDAO.canModifyAddress(user.getId(), addressIdUpdate)) {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg",
-                                "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
-                        if (from.equalsIgnoreCase("checkout")) {
-                            resp.sendRedirect(req.getContextPath() + "/checkout?addressId=" + addressIdUpdate);
-                        } else {
-                            resp.sendRedirect(req.getContextPath() + "/address");
-                        }
 
-                        return;
-                    }
                     String recipientName = req.getParameter("fullName");
                     String phone = req.getParameter("phone");
                     String city = req.getParameter("cityName");
@@ -180,15 +168,9 @@ public class AddressServlet extends HttpServlet {
                 try {
                     Long addressIdDelete = Long.parseLong(req.getParameter("addressId"));
 
-                    if (!addressDAO.canModifyAddress(user.getId(), addressIdDelete)) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Không thể xóa");
-                        json.put("message", "Địa chỉ đang được dùng trong đơn hàng chưa hoàn tất.");
-                    } else {
-                        addressDAO.deleteAddress(user.getId(), addressIdDelete);
-                        json.put("success", true);
-                    }
+                    addressDAO.deleteAddress(user.getId(), addressIdDelete);
+                    json.put("success", true);
+
                 } catch (Exception e) {
                     System.out.println(e.getMessage());
                     json.put("success", false);
