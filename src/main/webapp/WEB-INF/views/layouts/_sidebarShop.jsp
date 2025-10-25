@@ -29,6 +29,10 @@
               </div>
               Khuyến mãi
             </a>
+            <a class="nav-link" href="/shop/flashSale" data-page="shop-flashsale">
+              <div class="sb-nav-link-icon"><i class="bi bi-lightning-charge"></i></div>
+              Flash Sale
+            </a>
           </div>
         </div>
         <div class="sb-sidenav-footer">

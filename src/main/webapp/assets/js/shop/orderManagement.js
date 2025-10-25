@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   initializeOrderManagement();
   initializeSidebar();
   initializeCountdowns();
+  initializeOrderFilters();
 });
 
 // ==========================
@@ -75,7 +76,7 @@ function initializeCountdowns() {
     const createdAtMillis = parseInt(el.dataset.createdAt, 10);
     if (isNaN(createdAtMillis)) return;
 
-    const expireTime = createdAtMillis + 3 * 24 * 60 * 60 * 1000; 
+    const expireTime = createdAtMillis + 3 * 24 * 60 * 60 * 1000;
 
     function updateCountdown() {
       const now = Date.now();
@@ -100,4 +101,41 @@ function initializeCountdowns() {
     updateCountdown();
     setInterval(updateCountdown, 1000);
   });
+}
+
+// ==========================
+// Order Filtering (Search)
+// ==========================
+function initializeOrderFilters() {
+  console.log("🔹 Initializing Order Filters...");
+
+  const orderSearch = document.getElementById("orderSearch");
+  const customerSearch = document.getElementById("customerSearch");
+  const orderCards = document.querySelectorAll(".order-card-hover");
+
+  if (!orderSearch || !customerSearch || orderCards.length === 0) {
+    console.warn("⚠️ Missing filter inputs or order cards.");
+    return;
+  }
+
+  function filterOrders() {
+    const orderQuery = orderSearch.value.toLowerCase();
+    const customerQuery = customerSearch.value.toLowerCase();
+
+    orderCards.forEach((card) => {
+      const orderIdText =
+        card.querySelector(".text-primary")?.innerText.toLowerCase() || "";
+      const customerNameText =
+        card.querySelector(".fw-semibold.text-dark")?.innerText.toLowerCase() ||
+        "";
+
+      const matchOrder = orderIdText.includes(orderQuery);
+      const matchCustomer = customerNameText.includes(customerQuery);
+
+      card.style.display = matchOrder && matchCustomer ? "" : "none";
+    });
+  }
+
+  orderSearch.addEventListener("keyup", filterOrders);
+  customerSearch.addEventListener("keyup", filterOrders);
 }
