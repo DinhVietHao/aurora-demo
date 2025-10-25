@@ -78,12 +78,12 @@ public class OrderItemDAO {
                     os.OrderID,
                     os.OrderShopID,
                     s.Name AS ShopName,
-                    o.VoucherDiscountID AS SystemVoucherID,
-                    o.TotalShippingFee,
-                    o.ShippingDiscount AS SystemShippingDiscount,
-                    o.TotalAmount,
+                    os.Status AS ShopStatus,
+                    os.UpdateAt,
                     os.Discount AS ShopDiscount,
                     os.ShippingFee AS ShopShippingFee,
+                    os.SystemVoucherDiscount,
+                    os.SystemShippingDiscount,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
                     p.Title AS ProductName,
@@ -92,8 +92,7 @@ public class OrderItemDAO {
                     oi.OriginalPrice,
                     oi.SalePrice,
                     oi.Subtotal
-                FROM Orders o
-                JOIN OrderShops os ON o.OrderID = os.OrderID
+                FROM OrderShops os
                 JOIN Shops s ON os.ShopID = s.ShopID
                 JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 JOIN Products p ON oi.ProductID = p.ProductID
@@ -107,34 +106,34 @@ public class OrderItemDAO {
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, orderShopId);
-            ResultSet rs = ps.executeQuery();
 
-            while (rs.next()) {
-                OrderDTO order = new OrderDTO();
-                order.setOrderId(rs.getLong("OrderID"));
-                order.setOrderShopId(rs.getLong("OrderShopID"));
-                order.setShopName(rs.getString("ShopName"));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderDTO order = new OrderDTO();
+                    order.setOrderId(rs.getLong("OrderID"));
+                    order.setOrderShopId(rs.getLong("OrderShopID"));
+                    order.setShopName(rs.getString("ShopName"));
+                    order.setShopStatus(rs.getString("ShopStatus"));
+                    order.setUpdateAt(rs.getTimestamp("UpdateAt"));
 
-                // Tổng tiền & sản phẩm
-                order.setProductId(rs.getLong("ProductID"));
-                order.setProductName(rs.getString("ProductName"));
-                order.setImageUrl(rs.getString("ImageUrl"));
-                order.setQuantity(rs.getInt("Quantity"));
-                order.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                order.setSalePrice(rs.getDouble("SalePrice"));
-                order.setSubtotal(rs.getDouble("Subtotal"));
-                order.setTotalAmount(rs.getDouble("TotalAmount"));
+                    // --- Sản phẩm ---
+                    order.setProductId(rs.getLong("ProductID"));
+                    order.setProductName(rs.getString("ProductName"));
+                    order.setImageUrl(rs.getString("ImageUrl"));
+                    order.setQuantity(rs.getInt("Quantity"));
+                    order.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    order.setSalePrice(rs.getDouble("SalePrice"));
+                    order.setSubtotal(rs.getDouble("Subtotal"));
 
-                // Shop
-                order.setShopDiscount(rs.getDouble("ShopDiscount"));
-                order.setShopShippingFee(rs.getDouble("ShopShippingFee"));
-                order.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
+                    // --- Shop ---
+                    order.setShopDiscount(rs.getDouble("ShopDiscount"));
+                    order.setShopShippingFee(rs.getDouble("ShopShippingFee"));
+                    order.setSystemVoucherDiscount(rs.getDouble("SystemVoucherDiscount"));
+                    order.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                    order.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 
-                // Hệ thống
-                order.setSystemVoucherId(rs.getLong("SystemVoucherID"));
-                order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
-                order.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
-                orderItems.add(order);
+                    orderItems.add(order);
+                }
             }
 
         } catch (Exception e) {

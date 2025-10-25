@@ -6,6 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+<<<<<<< HEAD
+
+=======
+>>>>>>> f7337822a7c55196e576eba5c5bedfc5181176cc
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -17,19 +21,16 @@ import java.util.stream.Stream;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.model.Order;
+<<<<<<< HEAD
+=======
 import com.group01.aurora_demo.catalog.dao.CategoryDAO;
+>>>>>>> f7337822a7c55196e576eba5c5bedfc5181176cc
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class OrderDAO {
-    private CategoryDAO categoryDAO;
-
-    public OrderDAO() {
-        this.categoryDAO = new CategoryDAO();
-    }
-
     public long createOrder(Connection conn, Order order) {
         String sql = """
                     INSERT INTO Orders(UserID, AddressID, VoucherDiscountID, VoucherShipID,
@@ -459,7 +460,7 @@ public class OrderDAO {
 
     public int cancelExpiredOrders() {
         String selectSql = """
-                    SELECT os.OrderShopId, os.VoucherID
+                    SELECT os.OrderShopId, os.VoucherID, os.OrderID, os.FinalAmount
                     FROM OrderShops os
                     WHERE os.Status IN ('PENDING')
                       AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
@@ -500,6 +501,8 @@ public class OrderDAO {
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopId");
+                long orderId = rs.getLong("OrderID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
                 Long voucherId = rs.getLong("VoucherID");
                 if (rs.wasNull())
                     voucherId = null;
@@ -518,6 +521,14 @@ public class OrderDAO {
                             psRestoreVoucher.setLong(1, voucherId);
                             psRestoreVoucher.executeUpdate();
                         }
+                    }
+                    // --- HOÀN TIỀN
+                    PaymentDAO paymentDAO = new PaymentDAO();
+                    boolean refunded = paymentDAO.partialRefund(conn, orderId, shopFinalAmount);
+
+                    if (!refunded) {
+                        System.err
+                                .println("Partial refund failed for OrderID=" + orderId + ", ShopID=" + orderShopId);
                     }
 
                     cancelledCount++;
@@ -548,7 +559,7 @@ public class OrderDAO {
 
     public boolean updateOrderShopStatusByBR(long orderShopId, String newStatus) {
         String selectSql = """
-                    SELECT os.VoucherID
+                    SELECT os.VoucherID, os.OrderID, os.FinalAmount
                     FROM OrderShops os
                     WHERE os.OrderShopId = ?
                 """;
@@ -589,8 +600,12 @@ public class OrderDAO {
             ResultSet rs = psSelect.executeQuery();
 
             Long voucherId = null;
+            Long orderId = null;
+            double shopFinalAmount = 0;
             if (rs.next()) {
                 voucherId = rs.getLong("VoucherID");
+                orderId = rs.getLong("OrderID");
+                shopFinalAmount = rs.getDouble("FinalAmount");
                 if (rs.wasNull())
                     voucherId = null;
             }
@@ -614,6 +629,15 @@ public class OrderDAO {
                     psRestoreVoucher.setLong(1, voucherId);
                     psRestoreVoucher.executeUpdate();
                 }
+            }
+            // --- HOÀN TIỀN
+            PaymentDAO paymentDAO = new PaymentDAO();
+            boolean refunded = paymentDAO.partialRefund(conn, orderId, shopFinalAmount);
+
+            if (!refunded) {
+                System.err.println("Partial refund failed for OrderID=" + orderId + ", ShopID=" + orderShopId);
+                conn.rollback();
+                return false;
             }
 
             conn.commit();
@@ -723,8 +747,9 @@ public class OrderDAO {
                     FROM Orders WHERE OrderID = ?
                 """;
 
-        try (Connection conn = com.group01.aurora_demo.common.config.DataSourceProvider.get().getConnection();) {
-            PreparedStatement ps = conn.prepareStatement(sql);
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -732,8 +757,9 @@ public class OrderDAO {
                     order.setOrderId(rs.getLong("OrderID"));
                     order.setUserId(rs.getLong("UserID"));
                     order.setAddressId(rs.getLong("AddressID"));
-                    order.setVoucherDiscountId(rs.getLong("VoucherDiscountID"));
-                    order.setVoucherShipId(rs.getLong("VoucherShipID"));
+                    order.setVoucherDiscountId(
+                            rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
+                    order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
                     order.setTotalAmount(rs.getDouble("TotalAmount"));
                     order.setDiscountAmount(rs.getDouble("DiscountAmount"));
                     order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
@@ -750,5 +776,90 @@ public class OrderDAO {
         }
 
         return null;
+    }
+
+    public Order finById(Connection conn, long orderId) {
+        String sql = """
+                    SELECT
+                        OrderID,
+                        UserID,
+                        AddressID,
+                        VoucherDiscountID,
+                        VoucherShipID,
+                        TotalAmount,
+                        DiscountAmount,
+                        TotalShippingFee,
+                        ShippingDiscount,
+                        FinalAmount,
+                        OrderStatus,
+                        CreatedAt
+                    FROM Orders WHERE OrderID = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Order order = new Order();
+                    order.setOrderId(rs.getLong("OrderID"));
+                    order.setUserId(rs.getLong("UserID"));
+                    order.setAddressId(rs.getLong("AddressID"));
+                    order.setVoucherDiscountId(
+                            rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
+                    order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
+                    order.setTotalAmount(rs.getDouble("TotalAmount"));
+                    order.setDiscountAmount(rs.getDouble("DiscountAmount"));
+                    order.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
+                    order.setShippingDiscount(rs.getDouble("ShippingDiscount"));
+                    order.setFinalAmount(rs.getDouble("FinalAmount"));
+                    order.setOrderStatus(rs.getString("OrderStatus"));
+                    order.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    return order;
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public boolean update(Connection conn, Order order) throws SQLException {
+        String sql = """
+                UPDATE Orders
+                SET
+                    OrderStatus = ?,
+                    TotalAmount = ?,
+                    DiscountAmount = ?,
+                    TotalShippingFee = ?,
+                    FinalAmount = ?,
+                    VoucherDiscountID = ?,
+                    VoucherShipID = ?,
+                    CancelledAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                WHERE OrderID = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, order.getOrderStatus());
+            ps.setDouble(2, order.getTotalAmount());
+            ps.setDouble(3, order.getDiscountAmount());
+            ps.setDouble(4, order.getTotalShippingFee());
+            ps.setDouble(5, order.getFinalAmount());
+
+            if (order.getVoucherDiscountId() != null)
+                ps.setLong(6, order.getVoucherDiscountId());
+            else
+                ps.setNull(6, Types.BIGINT);
+
+            if (order.getVoucherShipId() != null)
+                ps.setLong(7, order.getVoucherShipId());
+            else
+                ps.setNull(7, Types.BIGINT);
+            ps.setLong(8, order.getOrderId());
+            return ps.executeUpdate() > 0;
+        }
     }
 }

@@ -2,17 +2,19 @@ package com.group01.aurora_demo.cart.dao.dto;
 
 public class CheckoutSummaryDTO {
     private double totalProduct;
-    private double totalDiscount;
+    private double ShopDiscount;
+    private double systemDiscount;
     private double totalShippingFee;
-    private double shippingDiscount;
+    private double systemShippingDiscount;
     private double finalAmount;
 
-    public CheckoutSummaryDTO(double totalProduct, double totalDiscount, double totalShippingFee,
-            double shippingDiscount, double finalAmount) {
+    public CheckoutSummaryDTO(double totalProduct, double shopDiscount, double systemDiscount, double totalShippingFee,
+            double systemShippingDiscount, double finalAmount) {
         this.totalProduct = totalProduct;
-        this.totalDiscount = totalDiscount;
+        ShopDiscount = shopDiscount;
+        this.systemDiscount = systemDiscount;
         this.totalShippingFee = totalShippingFee;
-        this.shippingDiscount = shippingDiscount;
+        this.systemShippingDiscount = systemShippingDiscount;
         this.finalAmount = finalAmount;
     }
 
@@ -24,12 +26,20 @@ public class CheckoutSummaryDTO {
         this.totalProduct = totalProduct;
     }
 
-    public double getTotalDiscount() {
-        return totalDiscount;
+    public double getShopDiscount() {
+        return ShopDiscount;
     }
 
-    public void setTotalDiscount(double totalDiscount) {
-        this.totalDiscount = totalDiscount;
+    public void setShopDiscount(double shopDiscount) {
+        ShopDiscount = shopDiscount;
+    }
+
+    public double getSystemDiscount() {
+        return systemDiscount;
+    }
+
+    public void setSystemDiscount(double systemDiscount) {
+        this.systemDiscount = systemDiscount;
     }
 
     public double getTotalShippingFee() {
@@ -40,12 +50,12 @@ public class CheckoutSummaryDTO {
         this.totalShippingFee = totalShippingFee;
     }
 
-    public double getShippingDiscount() {
-        return shippingDiscount;
+    public double getSystemShippingDiscount() {
+        return systemShippingDiscount;
     }
 
-    public void setShippingDiscount(double shippingDiscount) {
-        this.shippingDiscount = shippingDiscount;
+    public void setSystemShippingDiscount(double systemShippingDiscount) {
+        this.systemShippingDiscount = systemShippingDiscount;
     }
 
     public double getFinalAmount() {

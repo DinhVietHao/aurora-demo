@@ -210,6 +210,7 @@ CREATE TABLE UserVouchers
     UserVoucherID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     VoucherID BIGINT NOT NULL,
     UserID BIGINT NOT NULL,
+    Status VARCHAR(20) DEFAULT 'USED',
     CONSTRAINT FK_UserVouchers_Voucher FOREIGN KEY (VoucherID) REFERENCES Vouchers(VoucherID),
     CONSTRAINT FK_UserVouchers_User    FOREIGN KEY (UserID)    REFERENCES Users(UserID)
 );
@@ -255,12 +256,14 @@ CREATE TABLE OrderShops
     -- tổng tiền hàng của shop
     Discount DECIMAL(12,2) NOT NULL DEFAULT 0,
     -- giảm giá của shop
-    ShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
+    TotalShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
     -- phí ship riêng (nếu cần)
     FinalAmount DECIMAL(12,2) NOT NULL,
     -- backend tự tính
     [Status] NVARCHAR(20) NOT NULL,
     --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
+    SystemShippingDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    SystemVoucherDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
     UpdateAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CancelReason NVARCHAR(255) NULL,
@@ -316,6 +319,7 @@ CREATE TABLE Payments
     PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     OrderID BIGINT NOT NULL UNIQUE,
     Amount DECIMAL(12,2) NOT NULL,
+    RefundedAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
     TransactionRef NVARCHAR(100) NOT NULL,
     Status NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),

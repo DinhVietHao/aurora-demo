@@ -26,6 +26,25 @@ public class OrderShop {
     private List<OrderItem> items;
     private User user;
 
+    private double systemVoucherDiscount;
+    private double systemShippingDiscount;
+
+    public double getSystemVoucherDiscount() {
+        return systemVoucherDiscount;
+    }
+
+    public void setSystemVoucherDiscount(double systemVoucherDiscount) {
+        this.systemVoucherDiscount = systemVoucherDiscount;
+    }
+
+    public double getSystemShippingDiscount() {
+        return systemShippingDiscount;
+    }
+
+    public void setSystemShippingDiscount(double systemShippingDiscount) {
+        this.systemShippingDiscount = systemShippingDiscount;
+    }
+
     public Date getUpdateAt() {
         return updateAt;
     }
