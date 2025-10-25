@@ -141,9 +141,9 @@ public class CheckoutServlet extends HttpServlet {
 
                     json.put("success", true);
                     json.put("totalProduct", summary.getTotalProduct());
-                    json.put("totalDiscount", summary.getTotalDiscount());
+                    json.put("totalDiscount", summary.getShopDiscount() + summary.getSystemDiscount());
                     json.put("totalShippingFee", summary.getTotalShippingFee());
-                    json.put("shipDiscount", summary.getShippingDiscount());
+                    json.put("shipDiscount", summary.getSystemShippingDiscount());
                     json.put("finalAmount", summary.getFinalAmount());
 
                 } catch (Exception e) {

@@ -26,7 +26,7 @@
                                 <div class="product-image mb-3">
                                     <c:if test="${not empty product.images}">
                                         <img id="mainImage"
-                                            src="${ctx}/assets/images/catalog/products/${product.images[0].url}"
+                                            src="http://localhost:8080/assets/images/catalog/products/${product.images[0].url}"
                                             alt="Sách" class="img-fluid border main-image" />
                                     </c:if>
                                 </div>
@@ -35,7 +35,7 @@
                                     <c:forEach var="img" items="${product.images}" varStatus="s">
                                         <c:if test="${!s.first}">
                                             <div class="col-3">
-                                                <img src="${ctx}/assets/images/catalog/products/${img.url}"
+                                                <img src="http://localhost:8080/assets/images/catalog/products/${img.url}"
                                                     class="img-fluid border thumbnail" />
                                             </div>
                                         </c:if>

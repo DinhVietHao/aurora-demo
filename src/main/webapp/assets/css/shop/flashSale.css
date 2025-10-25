@@ -1,0 +1,95 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.flashsale-card {
+  transition: 0.2s;
+  border-radius: 12px;
+}
+
+.flashsale-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  border-bottom: none;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+/* Đảm bảo body chiếm toàn bộ chiều cao và bố cục theo cột */
+html,
+body {
+  height: 100%;
+}
+
+body.sb-nav-fixed {
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Phần nội dung chính co giãn để đẩy footer xuống đáy */
+#layoutSidenav_content {
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Phần main chiếm toàn bộ không gian trống còn lại */
+#layoutSidenav_content main {
+  flex: 1;
+}
+
+/* Footer luôn nằm cuối trang */
+footer {
+  margin-top: auto;
+}
+
+.flashsale-product-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  border-radius: 12px;
+}
+.flashsale-product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+}
+.flashsale-product-card.selected {
+  border-color: #198754;
+  box-shadow: 0 0 10px rgba(25, 135, 84, 0.4);
+}
+
+.modal-header {
+  background-color: #157749;
+}
+
+.product-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.product-card.selected {
+  border: 2px solid #198754;
+  box-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
+}
+
+#productDropdownMenu.show {
+  display: block;
+}
+
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
