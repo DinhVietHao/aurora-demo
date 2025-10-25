@@ -247,7 +247,7 @@
                                                     <div class="d-flex justify-content-between">
                                                         <strong>Tạm tính:</strong>
                                                         <span>
-                                                            <fmt:formatNumber value="${orderShop.orderTotal}"
+                                                            <fmt:formatNumber value="${orderShop.subtotal}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>
@@ -274,7 +274,8 @@
                                                     <div class="d-flex justify-content-between">
                                                         <strong>Tổng cộng:</strong>
                                                         <span class="text-primary fw-bold">
-                                                            <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                            <fmt:formatNumber
+                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>

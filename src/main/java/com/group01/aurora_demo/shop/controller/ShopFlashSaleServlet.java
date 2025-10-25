@@ -1,7 +1,9 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.group01.aurora_demo.auth.model.User;
@@ -46,9 +48,13 @@ public class ShopFlashSaleServlet extends HttpServlet {
                     Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
                     List<ProductDTO> products = productDAO.getActiveProductsByShop(shopId);
 
+                    Map<String, Object> responseData = new HashMap<>();
+                    responseData.put("shopId", shopId);
+                    responseData.put("products", products);
+
                     response.setContentType("application/json");
                     response.setCharacterEncoding("UTF-8");
-                    new Gson().toJson(products, response.getWriter());
+                    new Gson().toJson(responseData, response.getWriter());
                 } catch (Exception e) {
                     request.setAttribute("errorMessage", "lỗi tải list Product");
                     request.getRequestDispatcher("/WEB-INF/views/shop/flashSale.jsp").forward(request, response);
@@ -78,7 +84,7 @@ public class ShopFlashSaleServlet extends HttpServlet {
 
         ProductDAO productDAO = new ProductDAO();
         ShopDAO shopDAO = new ShopDAO();
-        
+
         switch (action) {
             case "registerFlashSale":
 

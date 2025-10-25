@@ -27,20 +27,12 @@ body {
 }
 
 body.sb-nav-fixed {
-  display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* Layout tổng */
-#layoutSidenav {
-  display: flex;
-  flex: 1;
-}
-
 /* Phần nội dung chính co giãn để đẩy footer xuống đáy */
 #layoutSidenav_content {
-  display: flex;
   flex-direction: column;
   flex: 1;
 }

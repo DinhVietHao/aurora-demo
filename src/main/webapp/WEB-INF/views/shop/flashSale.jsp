@@ -14,7 +14,7 @@
                     <title>Tham gia Flash Sale</title>
 
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/flashsale.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/flashsale.css?v=1.0.2" />
                 </head>
 
                 <body class="sb-nav-fixed">
@@ -112,14 +112,14 @@
 
 
 
-                    <!-- 🔹 Modal đăng ký Flash Sale (đã đổi ID) -->
+                    <!-- 🔹 Modal đăng ký Flash Sale -->
+
                     <div class="modal fade" id="flashsaleRegisterModal" tabindex="-1">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content shadow-lg border-0">
-                                <div class="modal-header text-white">
+                                <div class="modal-header text-white bg-success">
                                     <h5 class="modal-title">
-                                        <i class="bi bi-lightning-charge-fill me-2"></i> Đăng ký tham gia
-                                        Flash Sale
+                                        <i class="bi bi-lightning-charge-fill me-2"></i> Đăng ký tham gia Flash Sale
                                     </h5>
                                     <button type="button" class="btn-close btn-close-white"
                                         data-bs-dismiss="modal"></button>
@@ -127,70 +127,34 @@
 
                                 <div class="modal-body">
                                     <form id="flashsaleRegisterForm" action="/shop/flashSale" method="post">
+                                        <!-- Hidden inputs -->
                                         <input type="hidden" id="flashsaleProductSelect" name="productId" />
-                                        <!-- Danh sách sản phẩm -->
+                                        <input type="hidden" id="flashsaleShopId" name="shopId" />
+
+                                        <!-- Chọn sản phẩm -->
                                         <div class="mb-3 position-relative">
                                             <label class="form-label fw-bold">Chọn sản phẩm tham gia</label>
-
                                             <div class="dropdown">
                                                 <button
                                                     class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center"
                                                     type="button" id="dropdownProductBtn">
-                                                    <input type="hidden" id="selectedProductId"
-                                                        name="selectedProductId" />
                                                     <span id="selectedProductText">-- Chọn sản phẩm --</span>
                                                     <i class="bi bi-chevron-down"></i>
                                                 </button>
-                                                <input type="hidden" id="hiddenSelectInput" name="productId" />
 
                                                 <div class="dropdown-menu w-100 p-2 shadow" id="productDropdownMenu"
                                                     style="max-height: 400px; overflow-y: auto;">
-                                                    <!-- Bộ lọc -->
-                                                    <div class="d-flex gap-2 mb-2">
-                                                        <select id="filterCategory"
-                                                            class="form-select form-select-sm w-50">
-                                                            <option value="">Tất cả thể loại</option>
-                                                            <option value="thoi-trang">Thời trang</option>
-                                                            <option value="giay">Giày dép</option>
-                                                            <option value="phu-kien">Phụ kiện</option>
-                                                        </select>
+                                                    <div class="mb-2">
                                                         <input type="text" id="searchProduct"
-                                                            class="form-control form-control-sm w-50"
+                                                            class="form-control form-control-sm w-100"
                                                             placeholder="🔍 Tìm sản phẩm...">
                                                     </div>
-
                                                     <div id="productList" class="list-group small">
-                                                        <!-- Danh sách sản phẩm -->
-                                                        <button
-                                                            class="list-group-item list-group-item-action d-flex align-items-center"
-                                                            data-id="101" data-category="thoi-trang"
-                                                            data-name="Áo Thun Năng Động">
-                                                            <img src="http://localhost:8080/assets/images/catalog/products/1760193019915_khonggiadinh-1.jpg"
-                                                                class="rounded me-2" alt="">
-                                                            <div>
-                                                                <div class="fw-semibold">Áo Thun Năng Động
-                                                                </div>
-                                                                <small class="text-muted">250.000 đ</small>
-                                                            </div>
-                                                        </button>
-
-                                                        <button
-                                                            class="list-group-item list-group-item-action d-flex align-items-center"
-                                                            data-id="102" data-category="giay"
-                                                            data-name="Giày Sneaker Classic">
-                                                            <img src="http://localhost:8080/assets/images/catalog/products/1760193019915_khonggiadinh-1.jpg"
-                                                                class="rounded me-2" alt="">
-                                                            <div>
-                                                                <div class="fw-semibold">Giày Sneaker
-                                                                    Classic</div>
-                                                                <small class="text-muted">890.000 đ</small>
-                                                            </div>
-                                                        </button>
+                                                        <!-- JS sẽ render sản phẩm từ server -->
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-
 
                                         <!-- Thông tin đăng ký -->
                                         <div class="row g-3">
@@ -199,13 +163,14 @@
                                                 <input type="number" id="flashsaleQuantityInput" name="quantity"
                                                     class="form-control" />
                                             </div>
-
                                             <div class="mb-3 col-6">
                                                 <label class="form-label">Giá Flash Sale (VND)</label>
                                                 <input type="number" id="flashsalePriceInput" name="price"
                                                     class="form-control" />
                                             </div>
                                         </div>
+
+                                        <!-- Footer -->
                                         <div class="modal-footer bg-light">
                                             <button type="button" class="btn btn-outline-secondary"
                                                 data-bs-dismiss="modal">
@@ -221,6 +186,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     <!-- JS -->
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -239,7 +239,8 @@
                                                             <!-- Cột tổng tiền -->
                                                             <div class="col-md-2 text-start">
                                                                 <span class="fw-semibold text-dark">
-                                                                    <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                                    <fmt:formatNumber
+                                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
                                                                         type="number" />₫
                                                                 </span>
                                                             </div>
