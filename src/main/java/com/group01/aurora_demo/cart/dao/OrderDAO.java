@@ -319,7 +319,8 @@ public class OrderDAO {
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
                 JOIN Users u ON o.UserID = u.UserID
-                LEFT JOIN Addresses a ON o.AddressID = a.AddressID
+                LEFT JOIN Users_Addresses ua ON ua.UserID = u.UserID
+                LEFT JOIN Addresses a ON  ua.AddressID = a.AddressID
                 LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
                 LEFT JOIN Vouchers vc ON os.VoucherID = vc.VoucherID
