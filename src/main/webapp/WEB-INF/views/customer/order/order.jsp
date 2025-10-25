@@ -137,9 +137,8 @@
                                                                                 <div
                                                                                     class="fw-semibold small text-muted">
                                                                                     Địa chỉ giao hàng</div>
-                                                                                <div class="fw-medium text-dark">789 Võ
-                                                                                    Văn
-                                                                                    Tần, Quận 3, TPHCM</div>
+                                                                                <div class="fw-medium text-dark">
+                                                                                    ${order.address}</div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
