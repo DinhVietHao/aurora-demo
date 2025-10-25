@@ -228,8 +228,10 @@
                                                 <div class="card-body">
                                                     <p><strong>Tên:</strong> ${orderShop.user.fullName}</p>
                                                     <p><strong>Email:</strong> ${orderShop.user.email}</p>
-                                                    <p><strong>Điện thoại:</strong> ${orderShop.user.phone}</p>
-                                                    <p><strong>Địa chỉ:</strong> ${orderShop.shippingAddress}</p>
+                                                    <p><strong>Điện thoại:</strong> ${orderShop.address.phone}</p>
+                                                    <p><strong>Địa chỉ:</strong> ${orderShop.address.description},
+                                                        ${orderShop.address.ward},
+                                                        ${orderShop.address.district}, ${orderShop.address.city}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -245,7 +247,7 @@
                                                     <div class="d-flex justify-content-between">
                                                         <strong>Tạm tính:</strong>
                                                         <span>
-                                                            <fmt:formatNumber value="${orderShop.orderTotal}"
+                                                            <fmt:formatNumber value="${orderShop.subtotal}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>
@@ -272,7 +274,8 @@
                                                     <div class="d-flex justify-content-between">
                                                         <strong>Tổng cộng:</strong>
                                                         <span class="text-primary fw-bold">
-                                                            <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                            <fmt:formatNumber
+                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>

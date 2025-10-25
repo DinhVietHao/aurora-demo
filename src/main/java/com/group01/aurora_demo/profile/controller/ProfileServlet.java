@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.profile.controller;
 
-import java.io.File;
 import java.sql.Timestamp;
 import java.io.PrintWriter;
 import org.json.JSONObject;
@@ -16,97 +15,41 @@ import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.annotation.MultipartConfig;
-import com.group01.aurora_demo.catalog.dao.ImageDAO;
 import com.group01.aurora_demo.common.service.AvatarService;
 import com.group01.aurora_demo.common.service.EmailService;
 
-@WebServlet("/profile")
 @MultipartConfig
+@WebServlet("/profile")
 public class ProfileServlet extends HttpServlet {
 
     private UserDAO userDAO = new UserDAO();
     private EmailService emailService = new EmailService();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        User user = (User) (session != null ? session.getAttribute("AUTH_USER") : null);
-        if (user == null) {
-            request.getRequestDispatcher(request.getContextPath() + "/home").forward(request, response);
-            return;
-        }
-
-        // ===== Email change cooldown =====
-        String cookieName = "email_change_lock_" + user.getId();
-        boolean emailChangeLocked = false;
-        long remainingMs = 0;
-
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if (cookieName.equals(cookie.getName())) {
-                    try {
-                        long lockUntil = Long.parseLong(cookie.getValue());
-                        long now = System.currentTimeMillis();
-
-                        if (now < lockUntil) {
-                            emailChangeLocked = true;
-                            remainingMs = lockUntil - now;
-                        } else {
-                            // Hết hạn → Xóa cookie
-                            cookie.setMaxAge(0);
-                            cookie.setPath("/");
-                            response.addCookie(cookie);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Cookie lỗi → Xóa
-                        cookie.setMaxAge(0);
-                        cookie.setPath("/");
-                        response.addCookie(cookie);
-                    }
-                    break;
-                }
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            HttpSession session = request.getSession(false);
+            User user = (User) (session != null ? session.getAttribute("AUTH_USER") : null);
+            if (user == null) {
+                request.getRequestDispatcher(request.getContextPath() + "/home").forward(request, response);
+                return;
             }
-        }
 
-        // ===== Password change lockout =====
-        String pwdCookiePrefix = "pwd_lock_" + user.getId();
-        boolean passwordChangeLocked = false;
-        long passwordRemainingMs = 0;
-
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ((pwdCookiePrefix + "_until").equals(cookie.getName())) {
-                    try {
-                        long lockUntil = Long.parseLong(cookie.getValue());
-                        long now = System.currentTimeMillis();
-
-                        if (now < lockUntil) {
-                            passwordChangeLocked = true;
-                            passwordRemainingMs = lockUntil - now;
-                        } else {
-                            // Hết hạn → Xóa cookie lockUntil
-                            cookie.setMaxAge(0);
-                            cookie.setPath("/");
-                            response.addCookie(cookie);
-                        }
-                    } catch (NumberFormatException e) {
-                        cookie.setMaxAge(0);
-                        cookie.setPath("/");
-                        response.addCookie(cookie);
-                    }
+            String action = request.getParameter("action");
+            if (action == null)
+                action = "profile";
+            switch (action) {
+                case "notification":
+                    handleNotificationView(request, response, user);
                     break;
-                }
-            }
-        }
 
-        request.setAttribute("user", user);
-        request.setAttribute("emailChangeRemainingMs", remainingMs);
-        request.setAttribute("emailChangeLocked", emailChangeLocked);
-        request.setAttribute("passwordChangeLocked", passwordChangeLocked);
-        request.setAttribute("passwordChangeRemainingMs", passwordRemainingMs);
-        request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
+                default:
+                    handleProfileView(request, response, user);
+                    break;
+            }
+        } catch (Exception e) {
+            System.out.println("Error in ProfileServlet: " + e.getMessage());
+        }
     }
 
     @Override
@@ -153,6 +96,100 @@ public class ProfileServlet extends HttpServlet {
             System.out.println("[ERROR] ProfileServlet#doPost: " + e.getMessage());
         } finally {
             out.flush();
+        }
+    }
+
+    private void handleProfileView(HttpServletRequest request, HttpServletResponse response, User user) {
+        try {
+            // ===== Email change cooldown =====
+            String cookieName = "email_change_lock_" + user.getId();
+            boolean emailChangeLocked = false;
+            long remainingMs = 0;
+
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookieName.equals(cookie.getName())) {
+                        try {
+                            long lockUntil = Long.parseLong(cookie.getValue());
+                            long now = System.currentTimeMillis();
+
+                            if (now < lockUntil) {
+                                emailChangeLocked = true;
+                                remainingMs = lockUntil - now;
+                            } else {
+                                // Hết hạn → Xóa cookie
+                                cookie.setMaxAge(0);
+                                cookie.setPath("/");
+                                response.addCookie(cookie);
+                            }
+                        } catch (NumberFormatException e) {
+                            // Cookie lỗi → Xóa
+                            cookie.setMaxAge(0);
+                            cookie.setPath("/");
+                            response.addCookie(cookie);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // ===== Password change lockout =====
+            String pwdCookiePrefix = "pwd_lock_" + user.getId();
+            boolean passwordChangeLocked = false;
+            long passwordRemainingMs = 0;
+
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ((pwdCookiePrefix + "_until").equals(cookie.getName())) {
+                        try {
+                            long lockUntil = Long.parseLong(cookie.getValue());
+                            long now = System.currentTimeMillis();
+
+                            if (now < lockUntil) {
+                                passwordChangeLocked = true;
+                                passwordRemainingMs = lockUntil - now;
+                            } else {
+                                // Hết hạn → Xóa cookie lockUntil
+                                cookie.setMaxAge(0);
+                                cookie.setPath("/");
+                                response.addCookie(cookie);
+                            }
+                        } catch (NumberFormatException e) {
+                            cookie.setMaxAge(0);
+                            cookie.setPath("/");
+                            response.addCookie(cookie);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            request.setAttribute("user", user);
+            request.setAttribute("emailChangeRemainingMs", remainingMs);
+            request.setAttribute("emailChangeLocked", emailChangeLocked);
+            request.setAttribute("passwordChangeLocked", passwordChangeLocked);
+            request.setAttribute("passwordChangeRemainingMs", passwordRemainingMs);
+            request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error in \"handleProfileView\" function of ProfileServlet: " + e.getMessage());
+        }
+    }
+
+    private void handleNotificationView(HttpServletRequest request, HttpServletResponse response, User user) {
+        try {
+            request.setAttribute("user", user);
+
+            // Load notifications from database
+            // For now, just set empty/mock data
+            // Logic code ... PhamThanhLuong!
+            request.setAttribute("totalNotifications", 0);
+            request.setAttribute("unreadCount", 0);
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
+            request.getRequestDispatcher("/WEB-INF/views/customer/profile/notification.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.err.println("[ERROR] handleNotificationView in ProfileServlet: " + e.getMessage());
         }
     }
 

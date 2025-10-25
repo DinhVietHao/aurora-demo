@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.model.Order;
@@ -21,6 +18,7 @@ import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.profile.model.Address;
 
 public class OrderDAO {
     public long createOrder(Connection conn, Order order) {
@@ -149,7 +147,7 @@ public class OrderDAO {
         String sql = """
                 SELECT
                     os.OrderShopID, os.OrderID, os.ShopID, os.UpdateAt, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
-                    o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    o.OrderStatus AS OrderStatus, os.Subtotal, os.ShippingFee, os.Discount, u.FullName AS CustomerName,
                     oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
                     p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl
                 FROM OrderShops os
@@ -181,11 +179,12 @@ public class OrderDAO {
                         os.setFinalAmount(rs.getDouble("ShopFinalAmount"));
                         os.setCreatedAt(rs.getTimestamp("ShopCreatedAt"));
                         os.setUpdateAt(rs.getTimestamp("UpdateAt"));
-
+                        os.setDiscount(rs.getDouble("Discount"));
+                        os.setShippingFee(rs.getDouble("ShippingFee"));
                         // Gán thông tin Order trực tiếp
                         os.setCustomerName(rs.getString("CustomerName"));
                         os.setOrderStatus(rs.getString("OrderStatus"));
-                        os.setOrderTotal(rs.getDouble("OrderTotal"));
+                        os.setSubtotal(rs.getDouble("Subtotal"));
 
                         os.setItems(new ArrayList<>());
                         orderShopMap.put(orderShopId, os);
@@ -224,7 +223,7 @@ public class OrderDAO {
         String sql = """
                 SELECT
                     os.OrderShopID, os.OrderID, os.ShopID, os.UpdateAt, os.Status AS ShopStatus, os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
-                    os.Discount, o.OrderStatus AS OrderStatus, o.TotalAmount AS OrderTotal, u.FullName AS CustomerName,
+                    os.Discount, o.OrderStatus AS OrderStatus, os.Subtotal, os.ShippingFee, os.Discount, u.FullName AS CustomerName,
                     oi.OrderItemID, oi.ProductID, oi.Quantity, oi.OriginalPrice, oi.SalePrice, oi.Subtotal, oi.VatRate,
                     p.Title, p.OriginalPrice AS ProductOriginalPrice, p.SalePrice AS ProductSalePrice, pi.Url AS PrimaryImageUrl,
                     vc.Code, vc.VoucherID
@@ -264,10 +263,12 @@ public class OrderDAO {
                         os.setVoucherCode(rs.getString("Code"));
                         os.setUpdateAt(rs.getTimestamp("UpdateAt"));
                         os.setVoucherId(rs.getLong("VoucherID"));
+                        os.setDiscount(rs.getDouble("Discount"));
+                        os.setShippingFee(rs.getDouble("ShippingFee"));
 
                         os.setCustomerName(rs.getString("CustomerName"));
                         os.setOrderStatus(rs.getString("OrderStatus"));
-                        os.setOrderTotal(rs.getDouble("OrderTotal"));
+                        os.setSubtotal(rs.getDouble("Subtotal"));
 
                         os.setItems(new ArrayList<>());
                         orderShopMap.put(orderShopId, os);
@@ -307,7 +308,7 @@ public class OrderDAO {
                     os.OrderShopID, os.OrderID, os.ShopID, os.Status AS ShopStatus,
                     os.FinalAmount AS ShopFinalAmount, os.CreatedAt AS ShopCreatedAt,
                     os.ShippingFee, os.Discount, os.UpdateAt, os.CancelReason, os.ReturnReason,
-                    o.TotalAmount AS OrderTotal, o.CreatedAt AS OrderCreatedAt,
+                    os.Subtotal, o.CreatedAt AS OrderCreatedAt,
                     o.OrderStatus AS OrderStatus, o.UserID,
 
                     u.FullName AS CustomerName, u.Email AS CustomerEmail, a.Phone AS CustomerPhone,
@@ -320,7 +321,8 @@ public class OrderDAO {
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
                 JOIN Users u ON o.UserID = u.UserID
-                LEFT JOIN Addresses a ON o.AddressID = a.AddressID
+                LEFT JOIN Users_Addresses ua ON ua.UserID = u.UserID
+                LEFT JOIN Addresses a ON  ua.AddressID = a.AddressID
                 LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 LEFT JOIN Products p ON oi.ProductID = p.ProductID
                 LEFT JOIN Vouchers vc ON os.VoucherID = vc.VoucherID
@@ -356,7 +358,7 @@ public class OrderDAO {
                         orderShop.setReturnReason(rs.getString("ReturnReason"));
 
                         orderShop.setCustomerName(rs.getString("CustomerName"));
-                        orderShop.setOrderTotal(rs.getDouble("OrderTotal"));
+                        orderShop.setSubtotal(rs.getDouble("Subtotal"));
                         orderShop.setOrderStatus(rs.getString("OrderStatus"));
 
                         User customer = new User();
@@ -364,15 +366,13 @@ public class OrderDAO {
                         customer.setEmail(rs.getString("CustomerEmail"));
                         orderShop.setUser(customer);
 
-                        String address = Stream.of(
-                                rs.getString("Description"),
-                                rs.getString("Ward"),
-                                rs.getString("District"),
-                                rs.getString("City"))
-                                .filter(Objects::nonNull)
-                                .filter(s -> !s.isBlank())
-                                .collect(Collectors.joining(", "));
-                        orderShop.setShippingAddress(address);
+                        Address address = new Address();
+                        address.setDescription(rs.getString("Description"));
+                        address.setWard(rs.getString("Ward"));
+                        address.setDistrict(rs.getString("District"));
+                        address.setCity(rs.getString("City"));
+                        address.setPhone(rs.getString("CustomerPhone"));
+                        orderShop.setAddress(address);
                     }
 
                     long orderItemId = rs.getLong("OrderItemID");
