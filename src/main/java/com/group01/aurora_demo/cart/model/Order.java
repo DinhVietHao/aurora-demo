@@ -6,7 +6,7 @@ import java.util.List;
 public class Order {
     private long orderId;
     private long userId;
-    private long addressId;
+    private String address;
     private Long voucherDiscountId;
     private Long voucherShipId;
     private double totalAmount;
@@ -45,14 +45,6 @@ public class Order {
 
     public void setUserId(long userId) {
         this.userId = userId;
-    }
-
-    public long getAddressId() {
-        return addressId;
-    }
-
-    public void setAddressId(long addressId) {
-        this.addressId = addressId;
     }
 
     public Long getVoucherDiscountId() {
@@ -151,22 +143,20 @@ public class Order {
         this.totalShippingFee = totalShippingFee;
     }
 
-    @Override
-    public String toString() {
-        return "Order [orderId=" + orderId + ", userId=" + userId + ", addressId=" + addressId + ", voucherDiscountId="
-                + voucherDiscountId + ", voucherShipId=" + voucherShipId + ", totalAmount=" + totalAmount
-                + ", discountAmount=" + discountAmount + ", totalShippingFee=" + totalShippingFee
-                + ", shippingDiscount=" + shippingDiscount + ", finalAmount=" + finalAmount + ", orderStatus="
-                + orderStatus + ", createdAt=" + createdAt + ", deliveredAt=" + deliveredAt + ", cancelReason="
-                + cancelReason + ", cancelledAt=" + cancelledAt + "]";
-    }
-
     public String getCustomerName() {
         return customerName;
     }
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
 }

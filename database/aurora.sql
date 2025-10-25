@@ -219,7 +219,7 @@ CREATE TABLE Orders
 (
     OrderID BIGINT IDENTITY(1,1) PRIMARY KEY,
     UserID BIGINT NOT NULL,
-    AddressID BIGINT NOT NULL,
+    Address NVARCHAR(255) NOT NULL DEFAULT N'',
     VoucherDiscountID BIGINT NULL,
     -- voucher giảm giá hệ thống
     VoucherShipID BIGINT NULL,
@@ -240,7 +240,6 @@ CREATE TABLE Orders
     DeliveredAt DATETIME2(6) NULL,
     CancelledAt DATETIME2(6) NULL,
     CONSTRAINT FK_Orders_User FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    CONSTRAINT FK_Orders_Address FOREIGN KEY (AddressID) REFERENCES Addresses(AddressID),
     CONSTRAINT FK_Orders_VoucherDiscount FOREIGN KEY (VoucherDiscountID) REFERENCES Vouchers(VoucherID),
     CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID)
 );
