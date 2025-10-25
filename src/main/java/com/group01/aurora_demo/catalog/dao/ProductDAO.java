@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.sql.*;
 
 public class ProductDAO {
@@ -1126,7 +1127,11 @@ public class ProductDAO {
                         p.RejectReason, p.CreatedAt,
                         p.PublisherID, pub.Name AS PublisherName,
                         b.Translator, b.Version, b.CoverType, b.Pages,
-                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN
+                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN,
+                        (SELECT AVG(CAST(r.Rating AS FLOAT))
+                         FROM Reviews r
+                         INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
+                         WHERE oi.ProductID = p.ProductID) AS AvgRating
                     FROM Products p
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
                     LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
@@ -1157,7 +1162,11 @@ public class ProductDAO {
                 product.setCreatedAt(rs.getDate("CreatedAt"));
                 product.setPublisherId(rs.getLong("PublisherID"));
 
-                // --- Publisher (N:1)
+                // Set avgRating (default to 0.0 if null)
+                Double avgRating = rs.getDouble("AvgRating");
+                product.setAvgRating(rs.wasNull() ? 0.0 : avgRating);
+
+                // Publisher (N:1)
                 if (rs.getString("PublisherName") != null) {
                     Publisher pub = new Publisher();
                     pub.setPublisherId(rs.getLong("PublisherID"));
@@ -1165,7 +1174,7 @@ public class ProductDAO {
                     product.setPublisher(pub);
                 }
 
-                // --- BookDetail (1:1)
+                // BookDetail (1:1)
                 BookDetail bd = new BookDetail();
                 bd.setProductId(productId);
                 bd.setTranslator(rs.getString("Translator"));
@@ -1179,7 +1188,7 @@ public class ProductDAO {
                 bd.setSize(rs.getString("Size"));
                 bd.setIsbn(rs.getString("ISBN"));
 
-                // --- Language object
+                // Language object
                 if (rs.getString("LanguageCode") != null) {
                     Language lang = new Language();
                     lang.setLanguageCode(rs.getString("LanguageCode"));
@@ -1197,7 +1206,7 @@ public class ProductDAO {
         if (product == null)
             return null;
 
-        // --- Load Authors ---
+        // Load Authors
         try {
             AuthorDAO authorDAO = new AuthorDAO();
             product.setAuthors(authorDAO.getAuthorsByProductId(productId));
@@ -1205,7 +1214,7 @@ public class ProductDAO {
             System.err.println("⚠ Error loading authors: " + e.getMessage());
         }
 
-        // --- Load Categories ---
+        // Load Categories
         try {
             CategoryDAO cateDAO = new CategoryDAO();
             product.setCategories(cateDAO.getCategoriesByProductId(productId));
@@ -1213,7 +1222,7 @@ public class ProductDAO {
             System.err.println("⚠ Error loading categories: " + e.getMessage());
         }
 
-        // --- Load Images ---
+        // Load Images
         List<ProductImage> images = new ArrayList<>();
         String imgSql = """
                     SELECT ImageID, Url, IsPrimary
@@ -1247,7 +1256,6 @@ public class ProductDAO {
                 .findFirst()
                 .orElse(images.isEmpty() ? null : images.get(0).getUrl()));
 
-        // --- Compute extra fields ---
         return product;
     }
 
@@ -1414,4 +1422,66 @@ public class ProductDAO {
         }
     }
 
+    public List<Product> getRelatedProducts(long productId, List<Long> categoryIds, int limit) {
+        List<Product> products = new ArrayList<>();
+        String categoryIdList = categoryIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        String sql = String.format("""
+                    SELECT TOP (?)
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        p.CreatedAt,
+                        ISNULL(r.AvgRating, 0) AS AvgRating,
+                        img.Url AS PrimaryImageUrl,
+                        pub.Name AS PublisherName,
+                        CASE
+                            WHEN p.SoldCount > 0 OR ISNULL(r.AvgRating, 0) > 0 THEN 0
+                            ELSE 1
+                        END AS SortPriority
+                    FROM Products p
+                    INNER JOIN ProductCategory pc ON p.ProductID = pc.ProductID
+                    LEFT JOIN (
+                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
+                        FROM OrderItems oi
+                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                        GROUP BY oi.ProductID
+                    ) r ON r.ProductID = p.ProductID
+                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    WHERE pc.CategoryID IN (%s)
+                      AND p.ProductID <> ?
+                      AND p.Status = 'ACTIVE'
+                    GROUP BY
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        p.CreatedAt,
+                        r.AvgRating,
+                        img.Url,
+                        pub.Name
+                    ORDER BY
+                        SortPriority ASC,
+                        p.SoldCount DESC,
+                        ISNULL(r.AvgRating, 0) DESC,
+                        p.CreatedAt DESC
+                """, categoryIdList);
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setInt(1, limit);
+            ps.setLong(2, productId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in \"getRelatedProducts\" function: " + e.getMessage());
+        }
+        return products;
+    }
 }

@@ -209,4 +209,72 @@ public class ShopDAO {
             }
         }
     }
+
+    public Shop getShopByIdWithStats(Long shopId) {
+        String sql = """
+                    SELECT
+                        s.ShopID, s.Name, s.Description, s.RatingAvg, s.Status,
+                        s.OwnerUserID, s.InvoiceEmail, s.AvatarUrl, s.PickupAddressID, s.CreatedAt,
+
+                        (SELECT COUNT(*)
+                         FROM Products
+                         WHERE ShopID = s.ShopID AND Status = 'ACTIVE') AS ProductCount,
+
+                        (SELECT COUNT(DISTINCT r.ReviewID)
+                         FROM Reviews r
+                         INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
+                         INNER JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
+                         WHERE os.ShopID = s.ShopID) AS ReviewCount,
+
+                        (SELECT ISNULL(AVG(CAST(r.Rating AS FLOAT)), 0)
+                         FROM Reviews r
+                         INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
+                         INNER JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
+                         WHERE os.ShopID = s.ShopID) AS AvgRating
+
+                    FROM Shops s
+                    WHERE s.ShopID = ? AND s.Status = 'ACTIVE'
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                Shop shop = new Shop();
+                shop.setShopId(rs.getLong("ShopID"));
+                shop.setName(rs.getString("Name"));
+                shop.setDescription(rs.getString("Description"));
+                shop.setRatingAvg(rs.getDouble("RatingAvg"));
+                shop.setStatus(rs.getString("Status"));
+                shop.setOwnerUserId(rs.getLong("OwnerUserID"));
+                shop.setInvoiceEmail(rs.getString("InvoiceEmail"));
+                shop.setAvatarUrl(rs.getString("AvatarUrl"));
+                shop.setPickupAddressId(rs.getLong("PickupAddressID"));
+                shop.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                shop.setProductCount(rs.getInt("ProductCount"));
+                shop.setReviewCount(rs.getInt("ReviewCount"));
+                shop.setAvgRating(rs.getDouble("AvgRating"));
+                return shop;
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"getShopByIdWithStats\" function: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Long getShopIdByProductId(Long productId) {
+        String sql = "SELECT ShopID FROM Products WHERE ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getLong("ShopID");
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"getShopIdByProductId\" function: " + e.getMessage());
+        }
+        return null;
+    }
 }
