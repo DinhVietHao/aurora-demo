@@ -1272,6 +1272,27 @@ public class ProductDAO {
         }
     }
 
+    public boolean restoreStock(Connection conn, long productId, int quantity) {
+        String sql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        SoldCount = CASE WHEN SoldCount - ? < 0 THEN 0 ELSE SoldCount - ? END,
+                        Status = CASE WHEN Quantity + ? <= 0 THEN 'OUT_OF_STOCK' ELSE 'ACTIVE' END
+                    WHERE ProductID = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setInt(4, quantity);
+            ps.setLong(5, productId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public boolean hasEnoughQuantity(Connection conn, long productId, int quantity) {
         String sql = "SELECT Quantity FROM Products WHERE ProductID = ? AND Quantity >= ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {

@@ -45,4 +45,50 @@ public class PaymentDAO {
             return false;
         }
     }
+
+    public Payment getPaymentByOrderId(Connection conn, long orderId) {
+        String sql = "SELECT PaymentID, OrderID, Amount, RefundedAmount, TransactionRef, Status FROM Payments WHERE OrderID = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Payment payment = new Payment();
+                    payment.setPaymentId(rs.getLong("PaymentID"));
+                    payment.setOrderId(rs.getLong("OrderID"));
+                    payment.setAmount(rs.getDouble("Amount"));
+                    payment.setRefundedAmount(rs.getDouble("RefundedAmount"));
+                    payment.setTransactionRef(rs.getString("TransactionRef"));
+                    payment.setStatus(rs.getString("Status"));
+                    return payment;
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean partialRefund(Connection conn, long orderId, double refundAmount) throws SQLException {
+        Payment payment = getPaymentByOrderId(conn, orderId);
+        if (payment == null)
+            return false;
+
+        double newRefunded = payment.getRefundedAmount() + refundAmount;
+        double remaining = payment.getAmount() - newRefunded;
+
+        String status = remaining <= 0 ? "REFUNDED" : "PARTIALLY_REFUNDED";
+
+        String sql = "UPDATE Payments SET RefundedAmount = ?, Status = ? WHERE OrderID = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDouble(1, newRefunded);
+            ps.setString(2, status);
+            ps.setLong(3, orderId);
+            int updated = ps.executeUpdate();
+            return updated > 0;
+        }
+    }
 }

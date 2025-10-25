@@ -70,9 +70,9 @@ public class OrderService {
             order.setVoucherDiscountId(voucherDiscount != null ? voucherDiscount.getVoucherID() : null);
             order.setVoucherShipId(voucherShip != null ? voucherShip.getVoucherID() : null);
             order.setTotalAmount(summary.getTotalProduct());
-            order.setDiscountAmount(summary.getTotalDiscount());
+            order.setDiscountAmount(summary.getShopDiscount() + summary.getSystemDiscount());
             order.setTotalShippingFee(summary.getTotalShippingFee());
-            order.setShippingDiscount(summary.getShippingDiscount());
+            order.setShippingDiscount(summary.getSystemShippingDiscount());
             order.setFinalAmount(summary.getFinalAmount());
             order.setOrderStatus("PENDING_PAYMENT");
 
@@ -131,14 +131,38 @@ public class OrderService {
                 }
 
                 double shopShippingFee = shopShippingFees.getOrDefault(shopId, 0.0);
+                double totalProduct = order.getTotalAmount();
+                double totalShipping = order.getTotalShippingFee();
+                double systemDiscount = summary.getSystemDiscount();
+                double systemShippingDiscount = summary.getSystemShippingDiscount();
+
+                double systemVoucherDiscountAllocated = 0;
+                double systemShippingDiscountAllocated = 0;
+
+                if (systemDiscount > 0 && totalProduct > 0) {
+                    systemVoucherDiscountAllocated = (shopSubtotal / totalProduct) * systemDiscount;
+                }
+
+                if (systemShippingDiscount > 0 && totalShipping > 0) {
+                    systemShippingDiscountAllocated = (shopShippingFee / totalShipping) * systemShippingDiscount;
+                }
+
+                double finalAmount = shopSubtotal
+                        - shopDiscount
+                        - systemVoucherDiscountAllocated
+                        + shopShippingFee
+                        - systemShippingDiscountAllocated;
+
                 OrderShop orderShop = new OrderShop();
                 orderShop.setOrderId(orderId);
                 orderShop.setShopId(shopId);
                 orderShop.setVoucherId(shopVoucherId);
                 orderShop.setSubtotal(shopSubtotal);
                 orderShop.setDiscount(shopDiscount);
+                orderShop.setSystemVoucherDiscount(systemVoucherDiscountAllocated);
+                orderShop.setSystemShippingDiscount(systemShippingDiscountAllocated);
                 orderShop.setShippingFee(shopShippingFee);
-                orderShop.setFinalAmount(shopSubtotal - shopDiscount + shopShippingFee);
+                orderShop.setFinalAmount(finalAmount);
                 orderShop.setStatus("PENDING_PAYMENT");
                 long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
 
@@ -189,7 +213,7 @@ public class OrderService {
             }
 
             if (voucherDiscount != null) {
-                if (!voucherDAO.incrementUsage(conn, voucherDiscount.getVoucherID()) ||
+                if (!voucherDAO.incrementUsageCount(conn, voucherDiscount.getVoucherID()) ||
                         !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherDiscount.getVoucherID())) {
                     conn.rollback();
                     return new ServiceResponse("warning", "Mã giảm giá hết lượt",
@@ -197,7 +221,7 @@ public class OrderService {
                 }
             }
             if (voucherShip != null) {
-                if (!voucherDAO.incrementUsage(conn, voucherShip.getVoucherID()) ||
+                if (!voucherDAO.incrementUsageCount(conn, voucherShip.getVoucherID()) ||
                         !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherShip.getVoucherID())) {
                     conn.rollback();
                     return new ServiceResponse("warning", "Mã vận chuyển hết lượt",
@@ -207,7 +231,7 @@ public class OrderService {
             }
             if (shopVouchers != null && !shopVoucherCache.isEmpty()) {
                 for (Voucher shopVoucher : shopVoucherCache.values()) {
-                    if (!voucherDAO.incrementUsage(conn, shopVoucher.getVoucherID()) ||
+                    if (!voucherDAO.incrementUsageCount(conn, shopVoucher.getVoucherID()) ||
                             !userVoucherDAO.insertUserVoucher(conn, user.getId(), shopVoucher.getVoucherID())) {
                         conn.rollback();
                         return new ServiceResponse("warning", "Mã giảm giá shop hết lượt",

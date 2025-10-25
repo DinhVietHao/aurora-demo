@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,14 +27,18 @@ import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
+import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
 
@@ -55,6 +61,7 @@ public class OrderServlet extends HttpServlet {
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
     private VoucherValidator voucherValidator;
+    private UserVoucherDAO userVoucherDAO;
 
     public OrderServlet() {
         this.orderService = new OrderService();
@@ -67,6 +74,7 @@ public class OrderServlet extends HttpServlet {
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
         this.voucherValidator = new VoucherValidator();
+        this.userVoucherDAO = new UserVoucherDAO();
     }
 
     @Override
@@ -108,8 +116,12 @@ public class OrderServlet extends HttpServlet {
 
                 double SystemDiscount = 0;
                 Voucher voucher = voucherDAO.getVoucherByVoucherID(first.getSystemVoucherId());
+                String validation = null;
                 if (voucher != null) {
-                    SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                    validation = voucherValidator.validate(voucher, totalOrderAmount, null);
+                    if (validation == null) {
+                        SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                    }
                 }
 
                 Map<Long, Double> shopSubtotalMap = orderShops.stream()
@@ -167,8 +179,13 @@ public class OrderServlet extends HttpServlet {
                 double totalOrderAmount = firstItem.getTotalAmount();
                 double SystemDiscount = 0;
                 Voucher voucher = voucherDAO.getVoucherByVoucherID(firstItem.getSystemVoucherId());
+
+                String validation = null;
                 if (voucher != null) {
-                    SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                    validation = voucherValidator.validate(voucher, totalOrderAmount, null);
+                    if (validation == null) {
+                        SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
+                    }
                 }
 
                 double SystemShipDiscount = firstItem.getSystemShippingDiscount();
@@ -214,7 +231,7 @@ public class OrderServlet extends HttpServlet {
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg",
                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
-                    resp.sendRedirect(req.getContextPath() + "/order?status=pending");
+                    resp.sendRedirect(req.getContextPath() + "/order");
                 } else {
                     this.paymentDAO.updatePaymentStatus(orderId, "FAILED", transactionNo);
                     session.setAttribute("toastType", "error");
@@ -354,27 +371,90 @@ public class OrderServlet extends HttpServlet {
                 break;
             }
             case "/cancel": {
+                Connection conn = null;
                 try {
+                    // --- Bắt đầu transaction ---
+                    conn = DataSourceProvider.get().getConnection();
+                    conn.setAutoCommit(false);
+
                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
                     String cancelReason = req.getParameter("cancelReason");
 
-                    boolean success = orderShopDAO.cancelOrderShop(orderShopId, cancelReason);
-
-                    if (success) {
-                        session.setAttribute("toastType", "success");
-                        session.setAttribute("toastMsg", "Đã huỷ đơn hàng thành công.");
-                    } else {
+                    OrderShop orderShop = orderShopDAO.findById(conn, orderShopId);
+                    if (orderShop == null) {
                         session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Không thể huỷ đơn hàng. Vui lòng thử lại.");
+                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng shop.");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        return;
                     }
 
-                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+                    Order order = orderDAO.finById(conn, orderShop.getOrderId());
+                    if (order == null) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng tổng.");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        return;
+                    }
 
+                    orderShop.setStatus("CANCELLED");
+                    orderShop.setCancelReason(cancelReason);
+                    orderShopDAO.update(conn, orderShop);
+
+                    if (orderShop.getVoucherId() != null) {
+                        userVoucherDAO.cancelUserVoucher(conn, orderShop.getVoucherId(), order.getUserId());
+                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherId());
+                    }
+
+                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShop.getOrderShopId());
+                    for (OrderItem item : items) {
+                        productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                    }
+
+                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByOrderId(conn, order.getOrderId());
+                    Payment payment = paymentDAO.getPaymentByOrderId(conn, order.getOrderId());
+                    if (activeShop.isEmpty()) {
+                        order.setOrderStatus("CANCELLED");
+                        if (order.getVoucherDiscountId() != null) {
+                            userVoucherDAO.cancelUserVoucher(conn, order.getVoucherDiscountId(), order.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, order.getVoucherDiscountId());
+                        }
+                        if (order.getVoucherShipId() != null) {
+                            userVoucherDAO.cancelUserVoucher(conn, order.getVoucherShipId(),
+                                    order.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, order.getVoucherShipId());
+                        }
+                        if (payment != null) {
+                            paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
+                        }
+                        orderDAO.update(conn, order);
+                    } else {
+                        if (payment != null) {
+                            paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
+                        }
+                    }
+
+                    conn.commit();
+                    session.setAttribute("toastType", "success");
+                    session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
+                    resp.sendRedirect(req.getContextPath() + "/order/order-shop?orderId=" + order.getOrderId());
                 } catch (Exception e) {
                     e.printStackTrace();
+                    if (conn != null)
+                        try {
+                            conn.rollback();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+
                     session.setAttribute("toastType", "error");
                     session.setAttribute("toastMsg", "Có lỗi xảy ra khi huỷ đơn hàng.");
                     resp.sendRedirect(req.getContextPath() + "/order");
+                } finally {
+                    if (conn != null)
+                        try {
+                            conn.close();
+                        } catch (SQLException ignore) {
+                        }
                 }
                 break;
             }

@@ -191,14 +191,44 @@ public class VoucherDAO {
         return null;
     }
 
-    public boolean incrementUsage(Connection conn, long voucherId) {
-        String sql = "UPDATE Vouchers SET UsageCount = UsageCount + 1 WHERE VoucherID = ?  AND (UsageLimit IS NULL OR UsageCount < UsageLimit)";
+    public boolean incrementUsageCount(Connection conn, long voucherId) {
+        String sql = """
+                    UPDATE Vouchers
+                    SET UsageCount = UsageCount + 1,
+                        Status = CASE
+                                    WHEN UsageLimit IS NOT NULL AND UsageCount + 1 >= UsageLimit THEN 'OUT_OF_STOCK'
+                                    ELSE Status
+                                 END
+                    WHERE VoucherID = ?
+                      AND (UsageLimit IS NULL OR UsageCount < UsageLimit)
+                """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, voucherId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public void decreaseUsageCount(Connection conn, long voucherId) throws SQLException {
+        String sql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE
+                                        WHEN UsageCount > 0 THEN UsageCount - 1
+                                        ELSE 0
+                                     END,
+                        Status = CASE
+                                    WHEN UsageLimit IS NOT NULL
+                                         AND (CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END) < UsageLimit
+                                         THEN 'ACTIVE'
+                                    ELSE Status
+                                 END
+                    WHERE VoucherID = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, voucherId);
+            ps.executeUpdate();
         }
     }
 

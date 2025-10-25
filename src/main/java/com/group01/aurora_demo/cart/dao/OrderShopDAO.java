@@ -102,8 +102,8 @@ public class OrderShopDAO {
     public long createOrderShop(Connection conn, OrderShop orderShop) {
         String sql = """
                     INSERT INTO OrderShops(OrderID, ShopID, VoucherID, Subtotal,
-                                           Discount, ShippingFee, FinalAmount, [Status], CreatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                                           Discount, SystemVoucherDiscount, SystemShippingDiscount, ShippingFee, FinalAmount, [Status], CreatedAt)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -116,9 +116,11 @@ public class OrderShopDAO {
 
             ps.setDouble(4, orderShop.getSubtotal());
             ps.setDouble(5, orderShop.getDiscount());
-            ps.setDouble(6, orderShop.getShippingFee());
-            ps.setDouble(7, orderShop.getFinalAmount());
-            ps.setString(8, orderShop.getStatus());
+            ps.setDouble(6, orderShop.getSystemVoucherDiscount());
+            ps.setDouble(7, orderShop.getSystemShippingDiscount());
+            ps.setDouble(8, orderShop.getShippingFee());
+            ps.setDouble(9, orderShop.getFinalAmount());
+            ps.setString(10, orderShop.getStatus());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -233,4 +235,137 @@ public class OrderShopDAO {
         return count;
     }
 
+    public OrderShop findById(Connection conn, long orderShopId) throws SQLException {
+        String sql = """
+                SELECT
+                    OrderShopID,
+                    OrderID,
+                    ShopID,
+                    Status,
+                    Subtotal,
+                    ShippingFee,
+                    Discount,
+                    FinalAmount,
+                    VoucherID,
+                    CancelReason,
+                    UpdateAt
+                FROM OrderShops
+                WHERE OrderShopID = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    OrderShop shop = new OrderShop();
+                    shop.setOrderShopId(rs.getLong("OrderShopID"));
+                    shop.setOrderId(rs.getLong("OrderID"));
+                    shop.setShopId(rs.getLong("ShopID"));
+                    shop.setStatus(rs.getString("Status"));
+                    shop.setSubtotal(rs.getDouble("Subtotal"));
+                    shop.setShippingFee(rs.getDouble("ShippingFee"));
+                    shop.setDiscount(rs.getDouble("Discount"));
+                    shop.setFinalAmount(rs.getDouble("FinalAmount"));
+                    shop.setVoucherId(rs.getObject("VoucherID") != null ? rs.getLong("VoucherID") : null);
+                    shop.setCancelReason(rs.getString("CancelReason"));
+                    shop.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    return shop;
+                }
+            }
+        }
+        return null;
+    }
+
+    public List<OrderShop> getActiveShopsByOrderId(Connection conn, long orderId) throws SQLException {
+        String sql = """
+                SELECT
+                    OrderShopID, OrderID, ShopID, Subtotal, ShippingFee,
+                    Discount, FinalAmount, Status, VoucherID
+                FROM OrderShops
+                WHERE OrderID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
+                """;
+
+        List<OrderShop> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderShop s = new OrderShop();
+                    s.setOrderShopId(rs.getLong("OrderShopID"));
+                    s.setOrderId(rs.getLong("OrderID"));
+                    s.setShopId(rs.getLong("ShopID"));
+                    s.setSubtotal(rs.getDouble("Subtotal"));
+                    s.setShippingFee(rs.getDouble("ShippingFee"));
+                    s.setDiscount(rs.getDouble("Discount"));
+                    s.setFinalAmount(rs.getDouble("FinalAmount"));
+                    s.setStatus(rs.getString("Status"));
+                    s.setVoucherId(rs.getLong("VoucherID"));
+                    list.add(s);
+                }
+            }
+        }
+        return list;
+    }
+
+    public boolean update(Connection conn, OrderShop shop) throws SQLException {
+        String sql = """
+                UPDATE OrderShops
+                SET
+                    Status = ?,
+                    CancelReason = ?,
+                    FinalAmount = ?,
+                    UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
+                    Discount = ?,
+                    ShippingFee = ?,
+                    VoucherID = ?
+                WHERE OrderShopID = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, shop.getStatus());
+            ps.setString(2, shop.getCancelReason());
+            ps.setDouble(3, shop.getFinalAmount());
+            ps.setDouble(4, shop.getDiscount());
+            ps.setDouble(5, shop.getShippingFee());
+            if (shop.getVoucherId() != null) {
+                ps.setLong(6, shop.getVoucherId());
+            } else {
+                ps.setNull(6, Types.BIGINT);
+            }
+            ps.setLong(7, shop.getOrderShopId());
+
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    public List<OrderShop> getAllShopsByOrderId(Connection conn, long orderId) throws SQLException {
+        String sql = """
+                SELECT
+                    OrderShopID, OrderID, ShopID, Subtotal, ShippingFee,
+                    Discount, FinalAmount, Status, VoucherID
+                FROM OrderShops
+                WHERE OrderID = ?
+                """;
+
+        List<OrderShop> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderShop s = new OrderShop();
+                    s.setOrderShopId(rs.getLong("OrderShopID"));
+                    s.setOrderId(rs.getLong("OrderID"));
+                    s.setShopId(rs.getLong("ShopID"));
+                    s.setSubtotal(rs.getDouble("Subtotal"));
+                    s.setShippingFee(rs.getDouble("ShippingFee"));
+                    s.setDiscount(rs.getDouble("Discount"));
+                    s.setFinalAmount(rs.getDouble("FinalAmount"));
+                    s.setStatus(rs.getString("Status"));
+                    s.setVoucherId(rs.getObject("VoucherID") != null ? rs.getLong("VoucherID") : null);
+                    list.add(s);
+                }
+            }
+        }
+        return list;
+    }
 }

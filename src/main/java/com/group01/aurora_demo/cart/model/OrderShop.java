@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.group01.aurora_demo.auth.model.User;
 
-public class OrderShop  {
+public class OrderShop {
     private long orderShopId;
     private long orderId;
     private long shopId;
@@ -25,6 +25,25 @@ public class OrderShop  {
     private String returnReason;
     private List<OrderItem> items;
     private User user;
+
+    private double systemVoucherDiscount;
+    private double systemShippingDiscount;
+
+    public double getSystemVoucherDiscount() {
+        return systemVoucherDiscount;
+    }
+
+    public void setSystemVoucherDiscount(double systemVoucherDiscount) {
+        this.systemVoucherDiscount = systemVoucherDiscount;
+    }
+
+    public double getSystemShippingDiscount() {
+        return systemShippingDiscount;
+    }
+
+    public void setSystemShippingDiscount(double systemShippingDiscount) {
+        this.systemShippingDiscount = systemShippingDiscount;
+    }
 
     public Date getUpdateAt() {
         return updateAt;

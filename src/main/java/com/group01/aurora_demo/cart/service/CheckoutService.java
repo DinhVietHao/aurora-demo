@@ -45,9 +45,10 @@ public class CheckoutService {
                 .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                 .sum();
 
-        double totalDiscount = 0;
-        double shipDiscount = 0;
+        double shopDiscount = 0;
+        double systemDiscount = 0;
         double totalShippingFee = 0;
+        double systemShippingDiscount = 0;
 
         for (Map.Entry<Long, String> entry : shopVouchers.entrySet()) {
             String code = entry.getValue();
@@ -60,8 +61,10 @@ public class CheckoutService {
                             .sum();
 
                     String validation = voucherValidator.validate(voucher, shopTotal, entry.getKey());
-                    if (validation == null)
-                        totalDiscount += voucherValidator.calculateDiscount(voucher, shopTotal);
+                    if (validation == null) {
+                        shopDiscount += voucherValidator.calculateDiscount(voucher, shopTotal);
+
+                    }
                 }
             }
         }
@@ -70,15 +73,17 @@ public class CheckoutService {
             Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherDiscount, false);
             if (voucher != null) {
                 String validation = voucherValidator.validate(voucher, totalProduct, null);
-                if (validation == null)
-                    totalDiscount += voucherValidator.calculateDiscount(voucher, totalProduct);
+                if (validation == null) {
+                    systemDiscount = voucherValidator.calculateDiscount(voucher, totalProduct);
+                }
+
             }
         }
 
         if (systemVoucherShip != null && !systemVoucherShip.isEmpty()) {
             Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherShip, false);
             if (voucher != null && voucher.getDiscountType().equalsIgnoreCase("SHIPPING"))
-                shipDiscount = voucher.getValue();
+                systemShippingDiscount = voucher.getValue();
         }
 
         if (addressId != null) {
@@ -88,8 +93,10 @@ public class CheckoutService {
             }
         }
 
-        double finalAmount = totalProduct + totalShippingFee - totalDiscount - shipDiscount;
-        return new CheckoutSummaryDTO(totalProduct, totalDiscount, totalShippingFee, shipDiscount, finalAmount);
+        double finalAmount = totalProduct + totalShippingFee - shopDiscount - systemDiscount-  systemShippingDiscount;
+        return new CheckoutSummaryDTO(totalProduct, shopDiscount, systemDiscount, totalShippingFee,
+                systemShippingDiscount,
+                finalAmount);
     }
 
     public double calculateShippingFee(List<CartItem> cartItems, Address address) {
