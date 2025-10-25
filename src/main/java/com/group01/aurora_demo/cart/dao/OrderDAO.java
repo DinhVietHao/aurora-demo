@@ -6,10 +6,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-<<<<<<< HEAD
-
-=======
->>>>>>> f7337822a7c55196e576eba5c5bedfc5181176cc
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
