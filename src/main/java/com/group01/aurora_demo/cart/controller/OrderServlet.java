@@ -108,44 +108,6 @@ public class OrderServlet extends HttpServlet {
                     resp.sendRedirect(req.getContextPath() + "/order");
                     return;
                 }
-
-                OrderDTO first = orderShops.get(0);
-
-                double totalOrderAmount = first.getTotalAmount();
-                double totalShippingFee = first.getTotalShippingFee();
-
-                double SystemDiscount = 0;
-                Voucher voucher = voucherDAO.getVoucherByVoucherID(first.getSystemVoucherId());
-                String validation = null;
-                if (voucher != null) {
-                    validation = voucherValidator.validate(voucher, totalOrderAmount, null);
-                    if (validation == null) {
-                        SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
-                    }
-                }
-
-                Map<Long, Double> shopSubtotalMap = orderShops.stream()
-                        .collect(Collectors.groupingBy(
-                                orderShop -> orderShop.getOrderShopId(),
-                                Collectors.summingDouble(orderShop -> orderShop.getSubtotal())));
-
-                for (OrderDTO orderShop : orderShops) {
-                    double totalShopSubtotal = shopSubtotalMap.get(orderShop.getOrderShopId());
-                    double SystemShipDiscount = orderShop.getSystemShippingDiscount();
-                    double shopShippingFee = orderShop.getShopShippingFee();
-                    double shopDiscount = orderShop.getShopDiscount();
-
-                    double proportionDiscount = totalOrderAmount > 0 ? totalShopSubtotal / totalOrderAmount : 1.0;
-                    double proportionShip = totalShippingFee > 0 ? shopShippingFee / totalShippingFee : 1.0;
-
-                    double SystemVoucherDiscount = SystemDiscount * proportionDiscount;
-                    double SystemVoucherShip = SystemShipDiscount * proportionShip;
-
-                    double finalAmount = totalShopSubtotal + shopShippingFee
-                            - SystemVoucherDiscount - SystemVoucherShip - shopDiscount;
-                    orderShop.setShopFinalAmount(Math.max(finalAmount, 0));
-                }
-
                 Map<Long, List<OrderDTO>> grouped = orderShops.stream()
                         .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
                                 LinkedHashMap::new,
@@ -173,47 +135,7 @@ public class OrderServlet extends HttpServlet {
                     resp.sendRedirect(req.getContextPath() + "/order");
                     return;
                 }
-
-                OrderDTO firstItem = orderItems.get(0);
-
-                double totalOrderAmount = firstItem.getTotalAmount();
-                double SystemDiscount = 0;
-                Voucher voucher = voucherDAO.getVoucherByVoucherID(firstItem.getSystemVoucherId());
-
-                String validation = null;
-                if (voucher != null) {
-                    validation = voucherValidator.validate(voucher, totalOrderAmount, null);
-                    if (validation == null) {
-                        SystemDiscount = voucherValidator.calculateDiscount(voucher, totalOrderAmount);
-                    }
-                }
-
-                double SystemShipDiscount = firstItem.getSystemShippingDiscount();
-                double totalShippingFee = firstItem.getTotalShippingFee();
-                double shopShippingFee = firstItem.getShopShippingFee();
-                double shopDiscount = firstItem.getShopDiscount();
-
-                double totalShopSubtotal = orderItems.stream()
-                        .mapToDouble(orderItem -> orderItem.getSubtotal())
-                        .sum();
-
-                double proportionDiscount = totalOrderAmount > 0 ? totalShopSubtotal / totalOrderAmount : 1.0;
-                double proportionShip = totalShippingFee > 0 ? shopShippingFee / totalShippingFee : 1.0;
-
-                double SystemVoucherDiscount = SystemDiscount * proportionDiscount;
-                double SystemVoucherShip = SystemShipDiscount * proportionShip;
-
-                double finalAmount = totalShopSubtotal + shopShippingFee
-                        - SystemVoucherDiscount - SystemVoucherShip - shopDiscount;
-
                 req.setAttribute("orderItems", orderItems);
-                req.setAttribute("totalShopSubtotal", totalShopSubtotal);
-                req.setAttribute("shopShippingFee", shopShippingFee);
-                req.setAttribute("SystemVoucherShip", SystemVoucherShip);
-                req.setAttribute("shopDiscount", shopDiscount);
-                req.setAttribute("SystemVoucherDiscount", SystemVoucherDiscount);
-                req.setAttribute("finalAmount", finalAmount);
-
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order-detail.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();

@@ -22,20 +22,13 @@ public class OrderShopDAO {
     public List<OrderDTO> getOrderShopsByOrderId(long orderId) {
         List<OrderDTO> orderShops = new ArrayList<>();
         String sql = """
-                    SELECT
-                    o.OrderID,
-                    o.VoucherDiscountID,
-                    o.TotalShippingFee,
-                    o.ShippingDiscount AS SystemShippingDiscount,
-                    o.TotalAmount,
-
+                SELECT
+                    os.OrderID,
                     os.OrderShopID,
                     s.Name AS ShopName,
-                    os.Discount AS ShopDiscount,
-                    os.ShippingFee AS ShopShippingFee,
                     os.Status AS ShopStatus,
                     os.UpdateAt,
-
+                    os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
                     p.Title AS ProductName,
                     img.Url AS ImageUrl,
@@ -43,59 +36,55 @@ public class OrderShopDAO {
                     oi.OriginalPrice,
                     oi.SalePrice,
                     oi.Subtotal
-                FROM Orders o
-                JOIN OrderShops os ON o.OrderID = os.OrderID
+                FROM OrderShops os
                 JOIN Shops s ON os.ShopID = s.ShopID
                 JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 JOIN Products p ON oi.ProductID = p.ProductID
                 JOIN ProductImages img ON p.ProductID = img.ProductID
-                WHERE o.OrderID = ?
+                WHERE os.OrderID = ?
                   AND img.IsPrimary = 1
                 ORDER BY os.UpdateAt DESC
-                    """;
+                """;
 
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, orderId);
 
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                OrderDTO orderShop = new OrderDTO();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderDTO orderShop = new OrderDTO();
 
-                orderShop.setOrderId(rs.getLong("OrderID"));
-                orderShop.setSystemVoucherId(rs.getLong("VoucherDiscountID"));
-                orderShop.setTotalShippingFee(rs.getDouble("TotalShippingFee"));
-                orderShop.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
-                orderShop.setTotalAmount(rs.getDouble("TotalAmount"));
+                    orderShop.setOrderId(rs.getLong("OrderID"));
+                    orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setShopName(rs.getString("ShopName"));
+                    orderShop.setShopStatus(rs.getString("ShopStatus"));
+                    orderShop.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    orderShop.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 
-                // --- Shop ---
-                orderShop.setOrderShopId(rs.getLong("OrderShopID"));
-                orderShop.setShopName(rs.getString("ShopName"));
-                orderShop.setShopDiscount(rs.getDouble("ShopDiscount"));
-                orderShop.setShopShippingFee(rs.getDouble("ShopShippingFee"));
-                orderShop.setShopStatus(rs.getString("ShopStatus"));
-                orderShop.setUpdateAt(rs.getDate("UpdateAt"));
+                    // --- Product ---
+                    orderShop.setProductId(rs.getLong("ProductID"));
+                    orderShop.setProductName(rs.getString("ProductName"));
+                    orderShop.setImageUrl(rs.getString("ImageUrl"));
+                    orderShop.setQuantity(rs.getInt("Quantity"));
+                    orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    orderShop.setSalePrice(rs.getDouble("SalePrice"));
+                    orderShop.setSubtotal(rs.getDouble("Subtotal"));
 
-                // --- Product ---
-                orderShop.setProductId(rs.getLong("ProductID"));
-                orderShop.setProductName(rs.getString("ProductName"));
-                orderShop.setImageUrl(rs.getString("ImageUrl"));
-                orderShop.setQuantity(rs.getInt("Quantity"));
-                orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                orderShop.setSalePrice(rs.getDouble("SalePrice"));
-                orderShop.setSubtotal(rs.getDouble("Subtotal"));
-                boolean canReturn = "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())
-                        && ChronoUnit.DAYS.between(
-                                orderShop.getUpdateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
-                                LocalDate.now()) < 7;
+                    // --- Cho phép trả hàng ---
+                    boolean canReturn = "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())
+                            && ChronoUnit.DAYS.between(
+                                    orderShop.getUpdateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
+                                    LocalDate.now()) < 7;
+                    orderShop.setCanReturn(canReturn);
 
-                orderShop.setCanReturn(canReturn);
-
-                orderShops.add(orderShop);
+                    orderShops.add(orderShop);
+                }
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error in getOrderShopsByOrderId: " + e.getMessage());
         }
+
         return orderShops;
     }
 

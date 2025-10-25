@@ -454,7 +454,7 @@ public class OrderDAO {
 
     public int cancelExpiredOrders() {
         String selectSql = """
-                    SELECT os.OrderShopId, os.VoucherID
+                    SELECT os.OrderShopId, os.VoucherID, os.OrderID, os.FinalAmount
                     FROM OrderShops os
                     WHERE os.Status IN ('PENDING')
                       AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
@@ -495,6 +495,8 @@ public class OrderDAO {
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopId");
+                long orderId = rs.getLong("OrderID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
                 Long voucherId = rs.getLong("VoucherID");
                 if (rs.wasNull())
                     voucherId = null;
@@ -513,6 +515,14 @@ public class OrderDAO {
                             psRestoreVoucher.setLong(1, voucherId);
                             psRestoreVoucher.executeUpdate();
                         }
+                    }
+                    // --- HOÀN TIỀN
+                    PaymentDAO paymentDAO = new PaymentDAO();
+                    boolean refunded = paymentDAO.partialRefund(conn, orderId, shopFinalAmount);
+
+                    if (!refunded) {
+                        System.err
+                                .println("Partial refund failed for OrderID=" + orderId + ", ShopID=" + orderShopId);
                     }
 
                     cancelledCount++;
@@ -543,7 +553,7 @@ public class OrderDAO {
 
     public boolean updateOrderShopStatusByBR(long orderShopId, String newStatus) {
         String selectSql = """
-                    SELECT os.VoucherID
+                    SELECT os.VoucherID, os.OrderID, os.FinalAmount
                     FROM OrderShops os
                     WHERE os.OrderShopId = ?
                 """;
@@ -584,8 +594,12 @@ public class OrderDAO {
             ResultSet rs = psSelect.executeQuery();
 
             Long voucherId = null;
+            Long orderId = null;
+            double shopFinalAmount = 0;
             if (rs.next()) {
                 voucherId = rs.getLong("VoucherID");
+                orderId = rs.getLong("OrderID");
+                shopFinalAmount = rs.getDouble("FinalAmount");
                 if (rs.wasNull())
                     voucherId = null;
             }
@@ -609,6 +623,15 @@ public class OrderDAO {
                     psRestoreVoucher.setLong(1, voucherId);
                     psRestoreVoucher.executeUpdate();
                 }
+            }
+            // --- HOÀN TIỀN
+            PaymentDAO paymentDAO = new PaymentDAO();
+            boolean refunded = paymentDAO.partialRefund(conn, orderId, shopFinalAmount);
+
+            if (!refunded) {
+                System.err.println("Partial refund failed for OrderID=" + orderId + ", ShopID=" + orderShopId);
+                conn.rollback();
+                return false;
             }
 
             conn.commit();

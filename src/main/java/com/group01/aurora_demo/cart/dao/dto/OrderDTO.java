@@ -5,11 +5,6 @@ import java.util.Date;
 public class OrderDTO {
     // ----------- Order tổng ----------
     private long orderId;
-    private double totalAmount;
-    private double discountAmount;
-    private double shippingDiscount;
-    private double finalAmount;
-
     // ----------- OrderShop ------------
     private long orderShopId;
     private String shopName;
@@ -17,15 +12,9 @@ public class OrderDTO {
     private double shopShippingFee;
     private double shopFinalAmount;
     private String shopStatus;
-    private Date updateAt;
-
-    // ----------- Phân bổ voucher hệ thống -----------
-    private long systemVoucherId;
+    private double systemVoucherDiscount;
     private double systemShippingDiscount;
-    private double totalShippingFee;
-    private double distributedDiscount;
-    private double distributedShipDiscount;
-    private double finalAmountAfterSystem;
+    private Date updateAt;
 
     // ----------- Sản phẩm trong shop ----------
     private long productId;
@@ -38,14 +27,6 @@ public class OrderDTO {
     private double salePrice;
     private double subtotal;
 
-    public long getSystemVoucherId() {
-        return systemVoucherId;
-    }
-
-    public void setSystemVoucherId(long systemVoucherId) {
-        this.systemVoucherId = systemVoucherId;
-    }
-
     private boolean canReturn;
 
     public long getOrderId() {
@@ -54,54 +35,6 @@ public class OrderDTO {
 
     public void setOrderId(long orderId) {
         this.orderId = orderId;
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public double getDiscountAmount() {
-        return discountAmount;
-    }
-
-    public void setDiscountAmount(double discountAmount) {
-        this.discountAmount = discountAmount;
-    }
-
-    public double getTotalShippingFee() {
-        return totalShippingFee;
-    }
-
-    public void setTotalShippingFee(double totalShippingFee) {
-        this.totalShippingFee = totalShippingFee;
-    }
-
-    public double getShippingDiscount() {
-        return shippingDiscount;
-    }
-
-    public double getSubtotal() {
-        return subtotal;
-    }
-
-    public void setSubtotal(double subtotal) {
-        this.subtotal = subtotal;
-    }
-
-    public void setShippingDiscount(double shippingDiscount) {
-        this.shippingDiscount = shippingDiscount;
-    }
-
-    public double getFinalAmount() {
-        return finalAmount;
-    }
-
-    public void setFinalAmount(double finalAmount) {
-        this.finalAmount = finalAmount;
     }
 
     public long getOrderShopId() {
@@ -152,14 +85,6 @@ public class OrderDTO {
         this.shopStatus = shopStatus;
     }
 
-    public Date getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Date updateAt) {
-        this.updateAt = updateAt;
-    }
-
     public double getSystemShippingDiscount() {
         return systemShippingDiscount;
     }
@@ -168,28 +93,12 @@ public class OrderDTO {
         this.systemShippingDiscount = systemShippingDiscount;
     }
 
-    public double getDistributedDiscount() {
-        return distributedDiscount;
+    public Date getUpdateAt() {
+        return updateAt;
     }
 
-    public void setDistributedDiscount(double distributedDiscount) {
-        this.distributedDiscount = distributedDiscount;
-    }
-
-    public double getDistributedShipDiscount() {
-        return distributedShipDiscount;
-    }
-
-    public void setDistributedShipDiscount(double distributedShipDiscount) {
-        this.distributedShipDiscount = distributedShipDiscount;
-    }
-
-    public double getFinalAmountAfterSystem() {
-        return finalAmountAfterSystem;
-    }
-
-    public void setFinalAmountAfterSystem(double finalAmountAfterSystem) {
-        this.finalAmountAfterSystem = finalAmountAfterSystem;
+    public void setUpdateAt(Date updateAt) {
+        this.updateAt = updateAt;
     }
 
     public long getProductId() {
@@ -240,12 +149,12 @@ public class OrderDTO {
         this.salePrice = salePrice;
     }
 
-    public boolean isCanReturn() {
-        return canReturn;
+    public double getSubtotal() {
+        return subtotal;
     }
 
-    public void setCanReturn(boolean canReturn) {
-        this.canReturn = canReturn;
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
     }
 
     public String getVietnameseStatus() {
@@ -274,5 +183,21 @@ public class OrderDTO {
             default:
                 return "Không xác định";
         }
+    }
+
+    public boolean isCanReturn() {
+        return canReturn;
+    }
+
+    public void setCanReturn(boolean canReturn) {
+        this.canReturn = canReturn;
+    }
+
+    public double getSystemVoucherDiscount() {
+        return systemVoucherDiscount;
+    }
+
+    public void setSystemVoucherDiscount(double systemVoucherDiscount) {
+        this.systemVoucherDiscount = systemVoucherDiscount;
     }
 }
