@@ -9,7 +9,7 @@
                 <c:set var="totalSlides"
                     value="${not empty suggestions ? ((fn:length(suggestions) + chunkSize - 1) / chunkSize) : 0}" />
 
-                <div id="${id}" class="carousel slide" data-bs-ride="false">
+                <div id="${id}" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                     <div class="carousel-inner">
                         <c:choose>
                             <c:when test="${not empty suggestions}">

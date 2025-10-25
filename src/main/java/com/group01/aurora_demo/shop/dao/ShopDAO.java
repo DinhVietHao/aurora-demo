@@ -216,6 +216,11 @@ public class ShopDAO {
                         s.ShopID, s.Name, s.Description, s.RatingAvg, s.Status,
                         s.OwnerUserID, s.InvoiceEmail, s.AvatarUrl, s.PickupAddressID, s.CreatedAt,
 
+                        -- Address fields
+                        a.AddressID, a.RecipientName, a.Phone, a.City, a.ProvinceID,
+                        a.District, a.DistrictID, a.Ward, a.WardCode, a.Description AS AddressDescription,
+
+                        -- Statistics
                         (SELECT COUNT(*)
                          FROM Products
                          WHERE ShopID = s.ShopID AND Status = 'ACTIVE') AS ProductCount,
@@ -233,15 +238,17 @@ public class ShopDAO {
                          WHERE os.ShopID = s.ShopID) AS AvgRating
 
                     FROM Shops s
+                    LEFT JOIN Addresses a ON s.PickupAddressID = a.AddressID
                     WHERE s.ShopID = ? AND s.Status = 'ACTIVE'
                 """;
-
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setLong(1, shopId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Shop shop = new Shop();
+
+                // Basic shop info
                 shop.setShopId(rs.getLong("ShopID"));
                 shop.setName(rs.getString("Name"));
                 shop.setDescription(rs.getString("Description"));
@@ -252,13 +259,39 @@ public class ShopDAO {
                 shop.setAvatarUrl(rs.getString("AvatarUrl"));
                 shop.setPickupAddressId(rs.getLong("PickupAddressID"));
                 shop.setCreatedAt(rs.getTimestamp("CreatedAt"));
+
+                // Statistics
                 shop.setProductCount(rs.getInt("ProductCount"));
                 shop.setReviewCount(rs.getInt("ReviewCount"));
                 shop.setAvgRating(rs.getDouble("AvgRating"));
+
+                // Load Address object
+                Long addressId = rs.getLong("AddressID");
+                if (!rs.wasNull() && addressId != null) {
+                    Address address = new Address();
+                    address.setAddressId(addressId);
+                    address.setRecipientName(rs.getString("RecipientName"));
+                    address.setPhone(rs.getString("Phone"));
+                    address.setCity(rs.getString("City"));
+
+                    // Handle nullable province ID
+                    Integer provinceId = rs.getObject("ProvinceID", Integer.class);
+                    address.setProvinceId(provinceId);
+                    address.setDistrict(rs.getString("District"));
+
+                    // Handle nullable district ID
+                    Integer districtId = rs.getObject("DistrictID", Integer.class);
+                    address.setDistrictId(districtId);
+
+                    address.setWard(rs.getString("Ward"));
+                    address.setWardCode(rs.getString("WardCode"));
+                    address.setDescription(rs.getString("AddressDescription"));
+                    shop.setPickupAddress(address);
+                }
                 return shop;
             }
-        } catch (Exception e) {
-            System.out.println("Error in \"getShopByIdWithStats\" function: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("Error in getShopByIdWithStats: " + e.getMessage());
         }
         return null;
     }

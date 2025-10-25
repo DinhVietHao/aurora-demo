@@ -74,7 +74,7 @@
                   </div>
 
                   <div class="shop-header-right">
-                    <a href="${ctx}/shop/view?id=${shop.shopId}" class="shop-view-button-compact">
+                    <a href="${ctx}/home?action=view-shop&shopId=${shop.shopId}" class="shop-view-button-compact">
                       <i class="bi bi-shop"></i>
                       Xem shop
                     </a>
