@@ -149,12 +149,24 @@
                                         <small>${shop.createdAt}</small>
                                     </td>
                                     <td>
-                                        <c:url var="detailUrl" value="/admin/shops/detail">
-                                            <c:param name="id" value="${shop.shopId}" />
-                                        </c:url>
-                                        <a class="btn btn-sm btn-outline-primary" href="${detailUrl}" title="Xem chi tiết">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <c:url var="detailUrl" value="/admin/shops/detail">
+                                                <c:param name="id" value="${shop.shopId}" />
+                                            </c:url>
+                                            <a class="btn btn-sm btn-outline-primary" href="${detailUrl}" title="Xem chi tiết">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            
+                                            <c:if test="${shop.status == 'PENDING'}">
+                                                <form action="<c:url value='/admin/shops/approval'/>" method="post" style="display:inline;">
+                                                    <input type="hidden" name="id" value="${shop.shopId}">
+                                                    <input type="hidden" name="action" value="approve">
+                                                    <button type="submit" class="btn btn-sm btn-success" title="Duyệt cửa hàng">
+                                                        <i class="bi bi-check-circle"></i>
+                                                    </button>
+                                                </form>
+                                            </c:if>
+                                        </div>
                                     </td>
                                 </tr>
                             </c:forEach>

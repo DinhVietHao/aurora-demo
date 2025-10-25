@@ -228,8 +228,10 @@
                                                 <div class="card-body">
                                                     <p><strong>Tên:</strong> ${orderShop.user.fullName}</p>
                                                     <p><strong>Email:</strong> ${orderShop.user.email}</p>
-                                                    <p><strong>Điện thoại:</strong> ${orderShop.user.phone}</p>
-                                                    <p><strong>Địa chỉ:</strong> ${orderShop.shippingAddress}</p>
+                                                    <p><strong>Điện thoại:</strong> ${orderShop.address.phone}</p>
+                                                    <p><strong>Địa chỉ:</strong> ${orderShop.address.description},
+                                                        ${orderShop.address.ward},
+                                                        ${orderShop.address.district}, ${orderShop.address.city}</p>
                                                 </div>
                                             </div>
                                         </div>

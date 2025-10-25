@@ -181,7 +181,7 @@ public class VoucherManagementServlet extends HttpServlet {
             StringBuilder errors = new StringBuilder();
 
             // Validate value based on discount type
-            if ("PERCENTAGE".equals(discountType) && voucher.getValue().compareTo(new BigDecimal("100")) > 0) {
+            if ("PERCENT".equals(discountType) && voucher.getValue().compareTo(new BigDecimal("100")) > 0) {
                 errors.append("Percentage discount cannot exceed 100%. ");
             }
 
@@ -202,8 +202,13 @@ public class VoucherManagementServlet extends HttpServlet {
             }
 
             // Date validation (additional check beyond what's in extractVoucherFromRequest)
-            if (voucher.getStartAt().isBefore(LocalDateTime.now())) {
-                errors.append("Start date cannot be in the past. ");
+            LocalDateTime now = LocalDateTime.now();
+            if (voucher.getStartAt().isBefore(now)) {
+                errors.append("Ngày bắt đầu không được nằm trong quá khứ. ");
+            }
+
+            if (voucher.getEndAt().isBefore(voucher.getStartAt()) || voucher.getEndAt().isEqual(voucher.getStartAt())) {
+                errors.append("Ngày kết thúc phải sau ngày bắt đầu. ");
             }
 
             // If there are validation errors, show form with error messages
@@ -318,7 +323,7 @@ public class VoucherManagementServlet extends HttpServlet {
             StringBuilder errors = new StringBuilder();
 
             // Validate value based on discount type
-            if ("PERCENTAGE".equals(discountType) && voucher.getValue().compareTo(new BigDecimal("100")) > 0) {
+            if ("PERCENT".equals(discountType) && voucher.getValue().compareTo(new BigDecimal("100")) > 0) {
                 errors.append("Percentage discount cannot exceed 100%. ");
             }
 
@@ -424,7 +429,13 @@ public class VoucherManagementServlet extends HttpServlet {
         String usageLimitStr = request.getParameter("usageLimit");
         String perUserLimitStr = request.getParameter("perUserLimit");
         String status = request.getParameter("status");
+        String defaultStatus = request.getParameter("defaultStatus");
         String description = request.getParameter("description");
+
+        // Nếu checkbox status không được chọn, sử dụng giá trị mặc định
+        if (status == null || status.isEmpty()) {
+            status = defaultStatus != null ? defaultStatus : "PENDING";
+        }
 
         voucher.setCode(code);
         voucher.setDiscountType(discountType);
@@ -479,8 +490,14 @@ public class VoucherManagementServlet extends HttpServlet {
                 throw new IllegalArgumentException("Ngày kết thúc không được để trống");
             }
 
+            // Kiểm tra ngày bắt đầu không được trong quá khứ
+            LocalDateTime now = LocalDateTime.now();
+            if (voucher.getStartAt().isBefore(now)) {
+                throw new IllegalArgumentException("Ngày bắt đầu không được nằm trong quá khứ");
+            }
+
             // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
-            if (voucher.getEndAt().isBefore(voucher.getStartAt())) {
+            if (voucher.getEndAt().isBefore(voucher.getStartAt()) || voucher.getEndAt().isEqual(voucher.getStartAt())) {
                 throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu");
             }
         } catch (Exception e) {
@@ -490,19 +507,21 @@ public class VoucherManagementServlet extends HttpServlet {
             throw new IllegalArgumentException("Định dạng ngày giờ không hợp lệ: " + e.getMessage());
         }
 
-        // Xử lý giới hạn sử dụng
+        // Xử lý giới hạn sử dụng - bắt buộc
         if (usageLimitStr != null && !usageLimitStr.trim().isEmpty()) {
             try {
                 voucher.setUsageLimit(Integer.parseInt(usageLimitStr.trim()));
-                if (voucher.getUsageLimit() < 0) {
-                    throw new NumberFormatException("Giới hạn sử dụng không được âm");
+                if (voucher.getUsageLimit() < 1) {
+                    throw new NumberFormatException("Giới hạn sử dụng phải lớn hơn 0");
                 }
             } catch (NumberFormatException e) {
-                if (e.getMessage().contains("không được âm")) {
+                if (e.getMessage().contains("phải lớn hơn 0")) {
                     throw e;
                 }
                 throw new NumberFormatException("Giới hạn sử dụng phải là số nguyên: " + usageLimitStr);
             }
+        } else {
+            throw new IllegalArgumentException("Giới hạn sử dụng là bắt buộc");
         }
 
         // Xử lý giới hạn sử dụng mỗi người dùng

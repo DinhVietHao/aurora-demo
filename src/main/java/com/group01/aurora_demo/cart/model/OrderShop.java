@@ -4,8 +4,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.profile.model.Address;
 
-public class OrderShop  {
+public class OrderShop {
     private long orderShopId;
     private long orderId;
     private long shopId;
@@ -23,9 +24,17 @@ public class OrderShop  {
     private String voucherCode;
     private String cancelReason;
     private String returnReason;
-    private String shippingAddress;
     private List<OrderItem> items;
     private User user;
+    private Address address;
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
 
     public Date getUpdateAt() {
         return updateAt;
@@ -33,10 +42,6 @@ public class OrderShop  {
 
     public void setUpdateAt(Date updateAt) {
         this.updateAt = updateAt;
-    }
-
-    public String getShippingAddress() {
-        return shippingAddress;
     }
 
     public String getCancelReason() {
@@ -53,10 +58,6 @@ public class OrderShop  {
 
     public void setReturnReason(String returnReason) {
         this.returnReason = returnReason;
-    }
-
-    public void setShippingAddress(String shippingAddress) {
-        this.shippingAddress = shippingAddress;
     }
 
     public String getVoucherCode() {

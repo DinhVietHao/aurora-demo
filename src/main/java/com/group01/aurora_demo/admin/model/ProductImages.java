@@ -4,7 +4,7 @@ public class ProductImages {
 
     private long imageId;
     private long productId;
-    private String imageUrl;
+    private String url;
     private boolean isPrimary;
 
     public long getImageId() {
@@ -23,12 +23,12 @@ public class ProductImages {
         this.productId = productId;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getUrl() {
+        return url;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public boolean isPrimary() {
@@ -44,7 +44,7 @@ public class ProductImages {
     public String toString() {
         return "ProductImages{" + "imageId=" + imageId
                 + ", productId=" + productId
-                + ", imageUrl=" + imageUrl + '}';
+                + ", url=" + url + '}';
 
     }
 }

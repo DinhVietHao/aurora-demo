@@ -10,10 +10,7 @@ public class User {
     private String authProvider;
     private String password;
     private LocalDateTime createdAt;
-    private String status = "active";
-    private String phone;
-    private int points;
-    private String nationalID;
+    private String status = "ACTIVE";
     private String avatarUrl;
     private String roles;
 
@@ -91,39 +88,6 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public int getPoints() {
-        return points;
-    }
-
-    public void setPoints(int points) {
-        this.points = points;
-    }
-
-    public String getNationalID() {
-        return nationalID;
-    }
-
-    public void setNationalID(String nationalID) {
-        this.nationalID = nationalID;
-    }
-
-    // For backward compatibility
-    public String getNationalId() {
-        return nationalID;
-    }
-
-    public void setNationalId(String nationalId) {
-        this.nationalID = nationalId;
     }
 
     public String getAvatarUrl() {

@@ -133,20 +133,80 @@ public class ShopDAO {
 
     public boolean updateAvatarShop(long shopId, String avatarUrl) {
         String sql = "UPDATE Shops SET AvatarUrl = ? WHERE ShopID = ?";
-
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
-
             ps.setString(1, avatarUrl);
             ps.setLong(2, shopId);
-
-            int rows = ps.executeUpdate();
-            return rows > 0;
-
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
 
+    public boolean updateShopProfile(Shop shop, Address address) {
+        String updateShopSql = "UPDATE Shops SET Name = ?, Description = ?, InvoiceEmail = ? WHERE ShopID = ?";
+
+        String updateAddressSql = "UPDATE Addresses SET Phone = ?, City = ?, ProvinceID = ?, " +
+                "District = ?, DistrictID = ?, Ward = ?, WardCode = ?, Description = ? " +
+                "WHERE AddressID = ?";
+
+        Connection conn = null;
+        try {
+            conn = DataSourceProvider.get().getConnection();
+            conn.setAutoCommit(false);
+
+            // Update Shop
+            try (PreparedStatement psShop = conn.prepareStatement(updateShopSql)) {
+                psShop.setString(1, shop.getName());
+                psShop.setString(2, shop.getDescription());
+                psShop.setString(3, shop.getInvoiceEmail());
+                psShop.setLong(4, shop.getShopId());
+                if (psShop.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            // Update Address
+            try (PreparedStatement psAddr = conn.prepareStatement(updateAddressSql)) {
+                psAddr.setString(1, address.getPhone());
+                psAddr.setString(2, address.getCity());
+                psAddr.setInt(3, address.getProvinceId());
+                psAddr.setString(4, address.getDistrict());
+                psAddr.setInt(5, address.getDistrictId());
+                psAddr.setString(6, address.getWard());
+                psAddr.setString(7, address.getWardCode());
+                psAddr.setString(8, address.getDescription());
+                psAddr.setLong(9, address.getAddressId());
+                if (psAddr.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[ERROR] ShopDAO#updateShopProfile: " + e.getMessage());
+            e.printStackTrace();
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

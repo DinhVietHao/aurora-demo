@@ -808,3 +808,23 @@ VALUES
     (N'Tôn giáo', N'VAT5'),
     (N'Trinh Thám', N'VAT5');
 
+INSERT INTO FlashSales
+    (Name, StartAt, EndAt, [Status])
+VALUES
+    -- 1️⃣ Đang diễn ra
+    (N'Flash Sale Halloween 2025',
+        '2025-10-20 00:00:00',
+        '2025-10-25 23:59:59',
+        'ACTIVE'),
+
+    -- 2️⃣ Đã lên lịch (chưa bắt đầu)
+    (N'Black Friday 2025',
+        '2025-11-29 00:00:00',
+        '2025-11-30 23:59:59',
+        'SCHEDULED'),
+
+    -- 3️⃣ Đã kết thúc
+    (N'Flash Sale Trung Thu 2025',
+        '2025-09-01 00:00:00',
+        '2025-09-03 23:59:59',
+        'ENDED');
