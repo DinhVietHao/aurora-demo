@@ -43,9 +43,11 @@
                             <!-- sidebar profile -->
                             <ul class="nav mb-3 " id="profileTabs" role="tablist">
                                 <li class="nav-item mb-2">
-                                    <a class="nav-link text-dark" id="notify-tab" data-bs-toggle="tab" href="#notify"
-                                        role="tab">
+                                    <a class="nav-link text-dark" href="${ctx}/profile?action=notification">
                                         <i class="bi bi-bell me-2"></i> Thông báo
+                                        <c:if test="${unreadNotificationCount > 0}">
+                                            <span class="badge bg-danger ms-2">${unreadNotificationCount}</span>
+                                        </c:if>
                                     </a>
                                 </li>
                                 <li class="nav-item mb-2">
@@ -68,13 +70,13 @@
 
                         <div class="col-9 col-md-10 ">
                             <div class="tab-content" id="profileTabsContent">
-                                <!-- Thông báo -->
+                                <!-- Thông báo
                                 <div class="tab-pane fade" id="notify" role="tabpanel" aria-labelledby="notify-tab">
                                     <div class="text-center mt-5">
                                         <img src="./assets/images/mascot_fail.svg" alt="">
                                         <p class="text-muted mt-3">Chưa có thông báo</p>
                                     </div>
-                                </div>
+                                </div> -->
 
                                 <!-- Hồ sơ -->
                                 <div class="tab-pane fade show active" id="profile" role="tabpanel"
