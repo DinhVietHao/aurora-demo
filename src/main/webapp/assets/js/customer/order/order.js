@@ -5,6 +5,9 @@ btnCancelOrder.forEach((btn) => {
     document.getElementById("cancelOrderShopId").value = orderShopId;
   });
 });
+
+
+
 const btnConfirmOrder = document.querySelectorAll(".btn-confirm-order");
 btnConfirmOrder.forEach((btn) => {
   btn.addEventListener("click", function () {

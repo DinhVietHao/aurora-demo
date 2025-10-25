@@ -35,4 +35,22 @@ public class UserVoucherDAO {
         }
         return 0;
     }
+
+    public boolean cancelUserVoucher(Connection conn, long voucherId, long userId) {
+        String sql = """
+                    UPDATE UserVouchers
+                    SET Status = 'CANCELLED'
+                    WHERE VoucherID = ? AND UserID = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, voucherId);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
 }

@@ -1,0 +1,134 @@
+/* Nút "Về đầu trang" */
+.scroll-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(22, 78, 63, 0.4);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(100px) scale(0);
+}
+
+/* Hiển thị khi cuộn xuống */
+.scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Biểu tượng mũi tên */
+.scroll-to-top i {
+    font-size: 24px;
+    color: var(--color-secondary);
+    transition: transform 0.3s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Hiệu ứng hover */
+.scroll-to-top:hover {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, #e6b800 100%);
+    box-shadow: 0 6px 20px rgba(252, 200, 0, 0.6);
+    transform: translateY(-5px) scale(1.1);
+}
+
+.scroll-to-top:hover i {
+    color: var(--color-primary-dark);
+    transform: translateY(-3px);
+}
+
+/* Khi nhấn giữ */
+.scroll-to-top:active {
+    transform: translateY(-2px) scale(1.05);
+}
+
+/* Hiệu ứng nhịp sáng */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 4px 15px rgba(22, 78, 63, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(22, 78, 63, 0.7);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(22, 78, 63, 0.4);
+    }
+}
+
+.scroll-to-top.show {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .scroll-to-top {
+        width: 45px;
+        height: 45px;
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .scroll-to-top i {
+        font-size: 20px;
+    }
+}
+
+/* Biến thể: Vuông bo góc */
+.scroll-to-top.square {
+    border-radius: 12px;
+}
+
+/* Biến thể: Viền gradient */
+.scroll-to-top.border-gradient {
+    background: var(--color-white);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+}
+
+.scroll-to-top.border-gradient::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+    border-radius: inherit;
+    z-index: -1;
+}
+
+.scroll-to-top.border-gradient i {
+    color: var(--color-primary);
+}
+
+/* Hỗ trợ chế độ tối */
+@media (prefers-color-scheme: dark) {
+    .scroll-to-top {
+        background: linear-gradient(135deg, #1a6b54 0%, #0f3d32 100%);
+        box-shadow: 0 4px 15px rgba(26, 107, 84, 0.4);
+    }
+    
+    .scroll-to-top:hover {
+        box-shadow: 0 6px 20px rgba(252, 200, 0, 0.6);
+    }
+}
+
+/* Trạng thái focus (truy cập bàn phím) */
+.scroll-to-top:focus {
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 3px;
+}
+
+.scroll-to-top:focus:not(:focus-visible) {
+    outline: none;
+}

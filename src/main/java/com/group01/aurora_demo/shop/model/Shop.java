@@ -1,7 +1,6 @@
 package com.group01.aurora_demo.shop.model;
 
-import java.time.LocalDateTime;
-
+import java.sql.Timestamp;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.profile.model.Address;
 
@@ -12,11 +11,15 @@ public class Shop {
     private Double ratingAvg;
     private String status;
     private Long ownerUserId;
-    private LocalDateTime createdAt;
+    private Timestamp createdAt;
     private Long pickupAddressId;
     private String invoiceEmail;
     private String avatarUrl;
     private String rejectReason;
+
+    private int productCount;
+    private int reviewCount;
+    private double avgRating;
 
     // Relationship objects
     private User owner;
@@ -77,11 +80,11 @@ public class Shop {
         this.ownerUserId = ownerUserId;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Timestamp getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -133,6 +136,30 @@ public class Shop {
         this.pickupAddress = pickupAddress;
     }
 
+    public int getProductCount() {
+        return productCount;
+    }
+
+    public void setProductCount(int productCount) {
+        this.productCount = productCount;
+    }
+
+    public int getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(int reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    public double getAvgRating() {
+        return avgRating;
+    }
+
+    public void setAvgRating(double avgRating) {
+        this.avgRating = avgRating;
+    }
+
     public Long getTotalProducts() {
         return totalProducts;
     }
@@ -148,5 +175,4 @@ public class Shop {
     public void setTotalOrders(Long totalOrders) {
         this.totalOrders = totalOrders;
     }
-
 }
