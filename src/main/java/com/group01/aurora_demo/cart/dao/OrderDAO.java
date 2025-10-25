@@ -17,10 +17,6 @@ import java.util.stream.Stream;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.model.Order;
-<<<<<<< HEAD
-=======
-import com.group01.aurora_demo.catalog.dao.CategoryDAO;
->>>>>>> f7337822a7c55196e576eba5c5bedfc5181176cc
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.model.Product;
@@ -29,7 +25,7 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 public class OrderDAO {
     public long createOrder(Connection conn, Order order) {
         String sql = """
-                    INSERT INTO Orders(UserID, AddressID, VoucherDiscountID, VoucherShipID,
+                    INSERT INTO Orders(UserID, Address, VoucherDiscountID, VoucherShipID,
                                        TotalAmount, DiscountAmount, TotalShippingFee, ShippingDiscount,
                                        FinalAmount, OrderStatus)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -37,7 +33,7 @@ public class OrderDAO {
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, order.getUserId());
-            ps.setLong(2, order.getAddressId());
+            ps.setString(2, order.getAddress());
 
             if (order.getVoucherDiscountId() != null)
                 ps.setLong(3, order.getVoucherDiscountId());
@@ -73,6 +69,7 @@ public class OrderDAO {
         String sql = """
                     SELECT
                         o.OrderID,
+                        o.Address,
                         u.FullName,
                         o.TotalAmount,
                         o.DiscountAmount,
@@ -94,6 +91,7 @@ public class OrderDAO {
             while (rs.next()) {
                 Order order = new Order();
                 order.setOrderId(rs.getLong("OrderID"));
+                order.setAddress(rs.getString("Address"));
                 order.setCustomerName(rs.getString("FullName"));
                 order.setTotalAmount(rs.getDouble("TotalAmount"));
                 order.setDiscountAmount(rs.getDouble("DiscountAmount"));
@@ -752,7 +750,7 @@ public class OrderDAO {
                     Order order = new Order();
                     order.setOrderId(rs.getLong("OrderID"));
                     order.setUserId(rs.getLong("UserID"));
-                    order.setAddressId(rs.getLong("AddressID"));
+                    order.setAddress(rs.getString("Address"));
                     order.setVoucherDiscountId(
                             rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
                     order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
@@ -800,7 +798,7 @@ public class OrderDAO {
                     Order order = new Order();
                     order.setOrderId(rs.getLong("OrderID"));
                     order.setUserId(rs.getLong("UserID"));
-                    order.setAddressId(rs.getLong("AddressID"));
+                    order.setAddress(rs.getString("AddressID"));
                     order.setVoucherDiscountId(
                             rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
                     order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
