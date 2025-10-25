@@ -17,3 +17,4 @@
         <link rel="stylesheet" href="${ctx}/assets/css/auth/auth_form.css?v=1.0.1" />
         <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1" />
         <link rel="stylesheet" href="${ctx}/assets/css/shop/sidebar.css?v=1.0.1" />
+        <link rel="stylesheet" href="${ctx}/assets/css/common/scroll-to-top.css?v=1.0.1" />

@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.model.ReviewImage;
+import com.group01.aurora_demo.catalog.dao.AuthorDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.catalog.dao.ReviewDAO;
@@ -76,6 +77,10 @@ public class HomeServlet extends HttpServlet {
 
             case "detail":
                 handleProductDetail(request, response);
+                break;
+
+            case "view-shop":
+                handleViewShop(request, response);
                 break;
 
             case "search":
@@ -216,6 +221,28 @@ public class HomeServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleProductDetail\" function: " + e.getMessage());
+        }
+    }
+
+    private void handleViewShop(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            long shopId = Long.parseLong(request.getParameter("shopId"));
+            Shop shop = shopDAO.getShopByIdWithStats(shopId);
+
+            // Load all products of shop (12 latest products)
+            int totalProducts = productDAO.countProductsByShopId(shopId);
+            List<Product> allProducts = productDAO.getProductsByShopId(shopId, 0, totalProducts);
+
+            // Load bestseller products (12 top-selling products)
+            List<Product> bestsellerProducts = productDAO.getBestsellerByShopId(shopId, 12);
+
+            request.setAttribute("shop", shop);
+            request.setAttribute("allProducts", allProducts);
+            request.setAttribute("bestsellerProducts", bestsellerProducts);
+            request.setAttribute("title", shop.getName());
+            request.getRequestDispatcher("/WEB-INF/views/catalog/shop/viewShop.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.err.println("Error in \"handleViewShop\" of HomeServlet: " + e.getMessage());
         }
     }
 
