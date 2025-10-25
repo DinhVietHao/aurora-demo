@@ -59,9 +59,7 @@
                                 <th>ID</th>
                                 <th>Họ tên</th>
                                 <th>Email</th>
-                                <th>Điện thoại</th>
-                                <th>Điểm</th>
-                                <th>CMND/CCCD</th>
+                                <!-- Removed columns for non-existent fields -->
                                 <th>Vai trò</th>
                                 <th>Trạng thái</th>
                                 <th>Nhà cung cấp</th>
@@ -75,13 +73,11 @@
                                     <td>${u.userID}</td>
                                     <td>${u.fullName}</td>
                                     <td>${u.email}</td>
-                                    <td>${u.phone}</td>
-                                    <td>${u.points}</td>
-                                    <td>${u.nationalID}</td>
+                                    <!-- Removed cells for non-existent fields -->
                                     <td>${u.roles}</td>
                                     <td>
-                                        <span class="badge ${u.status.trim() == 'active' ? 'bg-success' : 'bg-danger'}">
-                                            ${u.status.trim() == 'active' ? 'Hoạt động' : 'Đã khóa'}
+                                        <span class="badge ${u.status == 'active' ? 'bg-success' : 'bg-danger'}">
+                                            ${u.status == 'active' ? 'Hoạt động' : 'Đã khóa'}
                                         </span>
                                     </td>
                                     <td>${u.authProvider}</td>
@@ -90,8 +86,8 @@
                                         <form method="post" action="<c:url value='/admin/users'/>">
                                             <input type="hidden" name="action" value="toggle-status">
                                             <input type="hidden" name="id" value="${u.userID}">
-                                            <button type="submit" class="btn btn-sm ${u.status.trim() == 'active' ? 'btn-danger' : 'btn-success'}">
-                                                ${u.status.trim() == 'active' ? '<i class="bi bi-lock"></i> Khóa' : '<i class="bi bi-unlock"></i> Mở khóa'}
+                                            <button type="submit" class="btn btn-sm ${u.status == 'active' ? 'btn-danger' : 'btn-success'}">
+                                                ${u.status == 'active' ? '<i class="bi bi-lock"></i> Khóa' : '<i class="bi bi-unlock"></i> Mở khóa'}
                                             </button>
                                         </form>
                                     </td>

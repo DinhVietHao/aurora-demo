@@ -162,8 +162,8 @@
                                                     <label for="discountType" class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
                                                     <select class="form-select" id="discountType" name="discountType" required>
                                                         <option value="">Chọn loại giảm giá</option>
-                                                        <option value="percentage" ${voucher != null && voucher.discountType == 'percentage' ? 'selected' : ''}>Phần trăm (%)</option>
-                                                        <option value="fixed" ${voucher != null && voucher.discountType == 'fixed' ? 'selected' : ''}>Số tiền cố định (VNĐ)</option>
+                                                        <option value="PERCENT" ${voucher != null && voucher.discountType == 'PERCENT' ? 'selected' : ''}>Phần trăm (%)</option>
+                                                        <option value="AMOUNT" ${voucher != null && voucher.discountType == 'AMOUNT' ? 'selected' : ''}>Số tiền cố định (VNĐ)</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -183,16 +183,24 @@
                                         </div>
                                         
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="minOrderAmount" class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
                                                     <input type="number" class="form-control" id="minOrderAmount" name="minOrderAmount" value="${voucher != null ? voucher.minOrderAmount : '0'}" placeholder="0" min="0">
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
-                                                    <label for="usageLimit" class="form-label">Giới hạn sử dụng</label>
-                                                    <input type="number" class="form-control" id="usageLimit" name="usageLimit" value="${voucher != null ? voucher.usageLimit : ''}" placeholder="Không giới hạn" min="1">
+                                                    <label for="usageLimit" class="form-label">Giới hạn sử dụng <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="usageLimit" name="usageLimit" value="${voucher != null ? voucher.usageLimit : '100'}" placeholder="Nhập giới hạn sử dụng" min="1" required>
+                                                    <div class="form-text">Số lần voucher có thể được sử dụng</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="perUserLimit" class="form-label">Giới hạn mỗi người</label>
+                                                    <input type="number" class="form-control" id="perUserLimit" name="perUserLimit" value="${voucher != null ? voucher.perUserLimit : '1'}" placeholder="Giới hạn mỗi người dùng" min="1">
+                                                    <div class="form-text">Số lần mỗi người dùng có thể sử dụng</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -202,6 +210,7 @@
                                                 <div class="mb-3">
                                                     <label for="startAt" class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
                                                     <input type="datetime-local" class="form-control" id="startAt" name="startAt" value="${voucher != null ? startAtFormatted : ''}" required>
+                                                    <div class="form-text">Không được chọn ngày trong quá khứ</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
@@ -214,11 +223,12 @@
                                         
                                         <div class="mb-3">
                                             <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="active" name="status" value="active" ${voucher == null || voucher.status == 'active' ? 'checked' : ''}>
+                                                <input class="form-check-input" type="checkbox" id="active" name="status" value="ACTIVE" ${voucher == null || voucher.status == 'ACTIVE' ? 'checked' : ''}>
                                                 <label class="form-check-label" for="active">
                                                     Kích hoạt voucher ${voucher != null ? '' : 'ngay sau khi tạo'}
                                                 </label>
                                             </div>
+                                            <input type="hidden" name="defaultStatus" value="PENDING">
                                         </div>
                                         
                                         <div class="d-flex gap-3">
@@ -247,7 +257,7 @@
                                         <div class="voucher-preview-card">
                                             <div class="voucher-header">
                                                 <div class="voucher-code-preview" id="previewCode">${voucher != null ? voucher.code : 'VOUCHER_CODE'}</div>
-                                                <div class="voucher-type-preview" id="previewType">${voucher != null && voucher.discountType == 'percentage' ? '%' : '₫'}</div>
+                                                <div class="voucher-type-preview" id="previewType">${voucher != null && voucher.discountType == 'PERCENT' ? '%' : '₫'}</div>
                                             </div>
                                             <div class="voucher-body">
                                                 <div class="voucher-name-preview" id="previewName">${voucher != null ? voucher.description : 'Mô tả voucher'}</div>
@@ -348,10 +358,10 @@
             
             // Update discount type and value
             const type = discountTypeSelect.value;
-            previewType.textContent = type === 'percentage' ? '%' : '₫';
+            previewType.textContent = type === 'PERCENT' ? '%' : '₫';
             
             const value = valueInput.value || '0';
-            if (type === 'percentage') {
+            if (type === 'PERCENT') {
                 previewDiscount.textContent = value + '%';
             } else {
                 previewDiscount.textContent = new Intl.NumberFormat('vi-VN').format(value) + ' VNĐ';
@@ -393,19 +403,57 @@
             el.addEventListener('input', updatePreview);
         });
         
+        // Set min date for startAt field to current date/time
+        function setMinStartDate() {
+            const now = new Date();
+            // Format date as yyyy-MM-ddThh:mm (required format for datetime-local input)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            startAtInput.setAttribute('min', formattedDateTime);
+        }
+        
+        // Set min date for endAt field based on startAt value
+        function updateMinEndDate() {
+            if (startAtInput.value) {
+                endAtInput.setAttribute('min', startAtInput.value);
+            }
+        }
+        
+        // Initialize min dates
+        setMinStartDate();
+        startAtInput.addEventListener('change', updateMinEndDate);
+        updateMinEndDate();
+
         // Form validation
         document.getElementById('voucherForm').addEventListener('submit', function(e) {
             const startDate = new Date(startAtInput.value);
             const endDate = new Date(endAtInput.value);
+            const now = new Date();
             
+            // Check if start date is in the past
+            if (startDate < now) {
+                e.preventDefault();
+                alert('Ngày bắt đầu không được nằm trong quá khứ!');
+                return;
+            }
+            
+            // Check if end date is before start date
             if (endDate <= startDate) {
                 e.preventDefault();
                 alert('Ngày kết thúc phải sau ngày bắt đầu!');
+                return;
             }
             
-            if (discountTypeSelect.value === 'percentage' && valueInput.value > 100) {
+            // Check percentage value
+            if (discountTypeSelect.value === 'PERCENT' && valueInput.value > 100) {
                 e.preventDefault();
                 alert('Giá trị phần trăm không thể lớn hơn 100!');
+                return;
             }
         });
         

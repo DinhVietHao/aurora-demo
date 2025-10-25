@@ -133,11 +133,11 @@ public class VoucherDAO {
             ps.setTimestamp(6, Timestamp.valueOf(voucher.getStartAt()));
             ps.setTimestamp(7, Timestamp.valueOf(voucher.getEndAt()));
 
-            if (voucher.getUsageLimit() != null) {
-                ps.setInt(8, voucher.getUsageLimit());
-            } else {
-                ps.setNull(8, Types.INTEGER);
+            // UsageLimit không được null theo schema
+            if (voucher.getUsageLimit() == null) {
+                throw new SQLException("UsageLimit không được null");
             }
+            ps.setInt(8, voucher.getUsageLimit());
 
             if (voucher.getPerUserLimit() != null) {
                 ps.setInt(9, voucher.getPerUserLimit());
@@ -188,11 +188,11 @@ public class VoucherDAO {
             ps.setTimestamp(6, Timestamp.valueOf(voucher.getStartAt()));
             ps.setTimestamp(7, Timestamp.valueOf(voucher.getEndAt()));
 
-            if (voucher.getUsageLimit() != null) {
-                ps.setInt(8, voucher.getUsageLimit());
-            } else {
-                ps.setNull(8, Types.INTEGER);
+            // UsageLimit không được null theo schema
+            if (voucher.getUsageLimit() == null) {
+                throw new SQLException("UsageLimit không được null");
             }
+            ps.setInt(8, voucher.getUsageLimit());
 
             if (voucher.getPerUserLimit() != null) {
                 ps.setInt(9, voucher.getPerUserLimit());
@@ -243,14 +243,14 @@ public class VoucherDAO {
 
     public List<String> getAllDiscountTypes() {
         List<String> types = new ArrayList<>();
-        String query = "SELECT TypeCode FROM DiscountType";
+        String query = "SELECT DISTINCT DiscountType FROM Vouchers";
 
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                types.add(rs.getString("TypeCode"));
+                types.add(rs.getString("DiscountType"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -266,33 +266,42 @@ public class VoucherDAO {
     }
 
     public List<String> getAllVoucherStatuses() {
+        // Lấy các trạng thái trực tiếp từ bảng Vouchers
         List<String> statuses = new ArrayList<>();
-        String query = "SELECT StatusCode FROM VoucherStatus";
+        String query = "SELECT DISTINCT [Status] FROM Vouchers";
 
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
                 ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                statuses.add(rs.getString("StatusCode"));
+                statuses.add(rs.getString("Status"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+
+        // Luôn trả về các trạng thái mặc định nếu không lấy được từ CSDL
+        if (statuses.isEmpty()) {
+            statuses.add("ACTIVE");
+            statuses.add("PENDING");
+            statuses.add("EXPIRED");
+            statuses.add("DISABLED");
         }
 
         return statuses;
     }
 
     public int getActiveVouchersCount() {
-        return getVoucherCountByStatus("active");
+        return getVoucherCountByStatus("ACTIVE");
     }
 
     public int getPendingVouchersCount() {
-        return getVoucherCountByStatus("pending");
+        return getVoucherCountByStatus("PENDING");
     }
 
     public int getExpiredVouchersCount() {
-        return getVoucherCountByStatus("expired");
+        return getVoucherCountByStatus("EXPIRED");
     }
 
     public int getTotalUsageCount() {

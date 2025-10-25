@@ -292,3 +292,6 @@
 
         <!-- Avatar Uploader -->
         <script src="${ctx}/assets/js/common/avatar-uploader.js?v=1.0.1"></script>
+
+        <!-- Scroll to Top -->
+        <script src="${ctx}/assets/js/common/scroll-to-top.js?v=1.0.0"></script>

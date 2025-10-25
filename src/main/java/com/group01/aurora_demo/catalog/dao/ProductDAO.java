@@ -13,11 +13,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.sql.*;
 
 public class ProductDAO {
 
-    // ========== Home page =========
     private Product mapToProduct(ResultSet rs) throws SQLException {
         Product p = new Product();
         p.setProductId(rs.getLong("ProductID"));
@@ -86,8 +86,8 @@ public class ProductDAO {
                 ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
                     """;
         List<Product> products = new ArrayList<>();
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setLong(1, userId);
             stmt.setLong(2, userId);
             stmt.setLong(3, userId);
@@ -172,8 +172,6 @@ public class ProductDAO {
         return products;
     }
 
-    // ============ Bookstore page ============ //
-
     public int countAllProducts() {
         String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE'";
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -203,7 +201,6 @@ public class ProductDAO {
     }
 
     public List<Product> getAllProducts(int offset, int limit, String sort) {
-        // whitelist / enum-like mapping cho sort -> ORDER BY
         String orderBy;
         switch (sort) {
             case "pop":
@@ -269,15 +266,11 @@ public class ProductDAO {
         return products;
     }
 
-    // ========== Search books by keyword =========== //
-
     public List<Product> getAllProductsByKeyword(String keyword, int offset, int limit) {
         List<Product> products = new ArrayList<>();
-
         if (keyword == null || keyword.trim().isEmpty()) {
             return getAllProducts(0, Integer.MAX_VALUE, "best");
         }
-
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                 + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
@@ -302,7 +295,6 @@ public class ProductDAO {
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
-
             ps.setString(1, searchPattern); // Title
             ps.setString(2, searchPattern); // Description
             ps.setString(3, searchPattern); // AuthorName
@@ -310,11 +302,9 @@ public class ProductDAO {
             ps.setString(5, searchPattern); // CategoryName
             ps.setInt(6, offset);
             ps.setInt(7, limit);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    products.add(mapToProduct(rs));
-                }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
             }
         } catch (SQLException e) {
             System.out.println("Error in getAllProductsByKeyword: " + e.getMessage());
@@ -326,7 +316,6 @@ public class ProductDAO {
         if (keyword == null || keyword.trim().isEmpty()) {
             return countAllProducts();
         }
-
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT COUNT(DISTINCT p.ProductID) FROM Products p "
                 + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
@@ -338,27 +327,22 @@ public class ProductDAO {
                 + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
                 + "AND p.Status = 'ACTIVE'";
 
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
             ps.setString(1, searchPattern);
             ps.setString(2, searchPattern);
             ps.setString(3, searchPattern);
             ps.setString(4, searchPattern);
             ps.setString(5, searchPattern);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
             }
         } catch (SQLException e) {
             System.out.println("Error in countSearchResultsByKeyword: " + e.getMessage());
         }
         return 0;
     }
-
-    // ================ Filter ================= //
 
     public List<String> getCategories() {
         List<String> categories = new ArrayList<>();
@@ -433,9 +417,7 @@ public class ProductDAO {
 
     public List<Product> getAllProductsByFilter(int offset, int limit, String category, String author,
             String publisher, String language, Double minPrice, Double maxPrice) {
-
         List<Product> products = new ArrayList<>();
-
         StringBuilder sql = new StringBuilder(
                 "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                         + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
@@ -959,7 +941,7 @@ public class ProductDAO {
             cn.setAutoCommit(false);
             long productId = 0;
 
-            // 1️⃣ Insert Products & lấy ProductID
+            // Insert Products & lấy ProductID
             try (PreparedStatement ps = cn.prepareStatement(sqlInsertProduct,
                     Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, product.getShopId());
@@ -994,7 +976,7 @@ public class ProductDAO {
                 throw new SQLException("Không lấy được ProductID.");
             }
 
-            // 2️⃣ Insert BookDetails (1 record)
+            // Insert BookDetails (1 record)
             if (product.getBookDetail() != null) {
                 BookDetail bd = product.getBookDetail();
                 try (PreparedStatement ps = cn.prepareStatement(sqlInsertBookDetail)) {
@@ -1010,7 +992,7 @@ public class ProductDAO {
                 }
             }
 
-            // 3️⃣ Insert ProductImages (mỗi ảnh 1 executeUpdate) -- Error
+            // Insert ProductImages (mỗi ảnh 1 executeUpdate) -- Error
             if (product.getImageUrls() != null) {
                 try (PreparedStatement ps = cn.prepareStatement(sqlInsertProductImage)) {
                     for (int i = 0; i < product.getImageUrls().size(); i++) {
@@ -1022,7 +1004,7 @@ public class ProductDAO {
                 }
             }
 
-            // 4️⃣ Insert Categories
+            // Insert Categories
             if (product.getCategories() != null) {
                 try (PreparedStatement ps = cn.prepareStatement(sqlInsertCategory)) {
                     for (Category c : product.getCategories()) {
@@ -1033,7 +1015,7 @@ public class ProductDAO {
                 }
             }
 
-            // 5️⃣ Insert Authors
+            // Insert Authors
             if (product.getAuthors() != null) {
                 try (PreparedStatement ps = cn.prepareStatement(sqlInsertAuthor)) {
                     for (Author a : product.getAuthors()) {
@@ -1117,7 +1099,6 @@ public class ProductDAO {
 
     public Product getProductById(long productId) {
         Product product = null;
-
         String sql = """
                     SELECT
                         p.ProductID, p.ShopID, p.Title, p.Description,
@@ -1126,17 +1107,19 @@ public class ProductDAO {
                         p.RejectReason, p.CreatedAt,
                         p.PublisherID, pub.Name AS PublisherName,
                         b.Translator, b.Version, b.CoverType, b.Pages,
-                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN
+                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN,
+                        (SELECT AVG(CAST(r.Rating AS FLOAT))
+                         FROM Reviews r
+                         INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
+                         WHERE oi.ProductID = p.ProductID) AS AvgRating
                     FROM Products p
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
                     LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
                     LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
                     WHERE p.ProductID = ?
                 """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
             ps.setLong(1, productId);
             ResultSet rs = ps.executeQuery();
 
@@ -1157,7 +1140,11 @@ public class ProductDAO {
                 product.setCreatedAt(rs.getDate("CreatedAt"));
                 product.setPublisherId(rs.getLong("PublisherID"));
 
-                // --- Publisher (N:1)
+                // Set avgRating (default to 0.0 if null)
+                Double avgRating = rs.getDouble("AvgRating");
+                product.setAvgRating(rs.wasNull() ? 0.0 : avgRating);
+
+                // Publisher (N:1)
                 if (rs.getString("PublisherName") != null) {
                     Publisher pub = new Publisher();
                     pub.setPublisherId(rs.getLong("PublisherID"));
@@ -1165,7 +1152,7 @@ public class ProductDAO {
                     product.setPublisher(pub);
                 }
 
-                // --- BookDetail (1:1)
+                // BookDetail (1:1)
                 BookDetail bd = new BookDetail();
                 bd.setProductId(productId);
                 bd.setTranslator(rs.getString("Translator"));
@@ -1179,7 +1166,7 @@ public class ProductDAO {
                 bd.setSize(rs.getString("Size"));
                 bd.setIsbn(rs.getString("ISBN"));
 
-                // --- Language object
+                // Language object
                 if (rs.getString("LanguageCode") != null) {
                     Language lang = new Language();
                     lang.setLanguageCode(rs.getString("LanguageCode"));
@@ -1197,7 +1184,7 @@ public class ProductDAO {
         if (product == null)
             return null;
 
-        // --- Load Authors ---
+        // Load Authors
         try {
             AuthorDAO authorDAO = new AuthorDAO();
             product.setAuthors(authorDAO.getAuthorsByProductId(productId));
@@ -1205,7 +1192,7 @@ public class ProductDAO {
             System.err.println("⚠ Error loading authors: " + e.getMessage());
         }
 
-        // --- Load Categories ---
+        // Load Categories
         try {
             CategoryDAO cateDAO = new CategoryDAO();
             product.setCategories(cateDAO.getCategoriesByProductId(productId));
@@ -1213,7 +1200,7 @@ public class ProductDAO {
             System.err.println("⚠ Error loading categories: " + e.getMessage());
         }
 
-        // --- Load Images ---
+        // Load Images
         List<ProductImage> images = new ArrayList<>();
         String imgSql = """
                     SELECT ImageID, Url, IsPrimary
@@ -1247,7 +1234,6 @@ public class ProductDAO {
                 .findFirst()
                 .orElse(images.isEmpty() ? null : images.get(0).getUrl()));
 
-        // --- Compute extra fields ---
         return product;
     }
 
@@ -1330,7 +1316,6 @@ public class ProductDAO {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
-
         return product;
     }
 
@@ -1435,4 +1420,144 @@ public class ProductDAO {
         }
     }
 
+    public List<Product> getRelatedProducts(long productId, List<Long> categoryIds, int limit) {
+        List<Product> products = new ArrayList<>();
+        String categoryIdList = categoryIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        String sql = String.format("""
+                    SELECT TOP (?)
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        p.CreatedAt,
+                        ISNULL(r.AvgRating, 0) AS AvgRating,
+                        img.Url AS PrimaryImageUrl,
+                        pub.Name AS PublisherName,
+                        CASE
+                            WHEN p.SoldCount > 0 OR ISNULL(r.AvgRating, 0) > 0 THEN 0
+                            ELSE 1
+                        END AS SortPriority
+                    FROM Products p
+                    INNER JOIN ProductCategory pc ON p.ProductID = pc.ProductID
+                    LEFT JOIN (
+                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
+                        FROM OrderItems oi
+                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                        GROUP BY oi.ProductID
+                    ) r ON r.ProductID = p.ProductID
+                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    WHERE pc.CategoryID IN (%s)
+                      AND p.ProductID <> ?
+                      AND p.Status = 'ACTIVE'
+                    GROUP BY
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        p.CreatedAt,
+                        r.AvgRating,
+                        img.Url,
+                        pub.Name
+                    ORDER BY
+                        SortPriority ASC,
+                        p.SoldCount DESC,
+                        ISNULL(r.AvgRating, 0) DESC,
+                        p.CreatedAt DESC
+                """, categoryIdList);
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setInt(1, limit);
+            ps.setLong(2, productId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in \"getRelatedProducts\" function: " + e.getMessage());
+        }
+        return products;
+    }
+
+    public List<Product> getProductsByShopId(long shopId, int offset, int limit) {
+        List<Product> products = new ArrayList<>();
+        String sql = """
+                    SELECT
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        ISNULL(r.AvgRating, 0) AS AvgRating,
+                        img.Url AS PrimaryImageUrl,
+                        pub.Name AS PublisherName
+                    FROM Products p
+                    LEFT JOIN (
+                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
+                        FROM OrderItems oi
+                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                        GROUP BY oi.ProductID
+                    ) r ON r.ProductID = p.ProductID
+                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
+                    ORDER BY p.CreatedAt DESC
+                    OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, shopId);
+            ps.setInt(2, offset);
+            ps.setInt(3, limit);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in \"getProductsByShopId\" of viewShop feature: " + e.getMessage());
+        }
+        return products;
+    }
+
+    public List<Product> getBestsellerByShopId(long shopId, int limit) {
+        List<Product> products = new ArrayList<>();
+        String sql = """
+                    SELECT TOP (?)
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.OriginalPrice,
+                        p.SoldCount,
+                        ISNULL(r.AvgRating, 0) AS AvgRating,
+                        img.Url AS PrimaryImageUrl,
+                        pub.Name AS PublisherName
+                    FROM Products p
+                    LEFT JOIN (
+                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
+                        FROM OrderItems oi
+                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                        GROUP BY oi.ProductID
+                    ) r ON r.ProductID = p.ProductID
+                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
+                    ORDER BY p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setInt(1, limit);
+            ps.setLong(2, shopId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                products.add(mapToProduct(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in \"getBestsellerByShopId\" of viewShop feature: " + e.getMessage());
+        }
+        return products;
+    }
 }

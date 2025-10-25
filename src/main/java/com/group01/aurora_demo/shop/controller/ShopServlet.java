@@ -1,25 +1,25 @@
 package com.group01.aurora_demo.shop.controller;
 
 import com.group01.aurora_demo.common.service.AvatarService;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
 import com.group01.aurora_demo.profile.model.Address;
 import jakarta.servlet.annotation.MultipartConfig;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.catalog.dao.NotificationDAO;
-import com.group01.aurora_demo.catalog.model.Notification;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
+import java.time.temporal.ChronoUnit;
 import jakarta.servlet.http.Part;
+import java.time.LocalDateTime;
+import org.json.JSONObject;
 import java.io.PrintWriter;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import org.json.JSONObject;
 
 @MultipartConfig
 @WebServlet("/shop")
@@ -89,10 +89,17 @@ public class ShopServlet extends HttpServlet {
             }
 
             String action = request.getParameter("action");
-            if (action.equalsIgnoreCase("register")) {
-                handleRegisterShop(request, response, json, out, user);
-            } else if (action.equalsIgnoreCase("uploadAvatar")) {
-                handleUploadShopAvatar(request, response, out, json, user);
+            switch (action) {
+                case "register":
+                    handleRegisterShop(request, response, json, out, user);
+                    break;
+
+                case "uploadAvatar":
+                    handleUploadShopAvatar(request, response, out, json, user);
+                    break;
+                case "updateProfile":
+                    handleUpdateShopProfile(request, response, json, out, user);
+                    break;
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -146,17 +153,12 @@ public class ShopServlet extends HttpServlet {
 
             Part filePart = request.getPart("shopLogo");
             String uploadDir = request.getServletContext().getRealPath("/assets/images/shops");
-
-            // Sử dụng AvatarService chung
             String newFilename = AvatarService.uploadAvatar(filePart, uploadDir, "shop");
 
-            // Lấy avatar cũ
-            Shop shop = shopDAO.getShopByUserId(shopID);
+            Shop shop = shopDAO.getShopByUserId(user.getUserID());
             String oldAvatar = shop != null ? shop.getAvatarUrl() : null;
 
-            // Cập nhật database
             if (shopDAO.updateAvatarShop(shopID, newFilename)) {
-                // Xóa avatar cũ
                 if (oldAvatar != null && !oldAvatar.isEmpty()) {
                     AvatarService.deleteOldAvatar(uploadDir, oldAvatar);
                 }
@@ -165,7 +167,6 @@ public class ShopServlet extends HttpServlet {
                 json.put("message", "Cập nhật logo shop thành công.");
                 json.put("avatarUrl", request.getContextPath() + "/assets/images/shops/" + newFilename);
             } else {
-                // Xóa file vừa upload nếu lưu DB thất bại
                 AvatarService.deleteOldAvatar(uploadDir, newFilename);
                 json.put("success", false);
                 json.put("message", "Không thể cập nhật logo. Vui lòng thử lại.");
@@ -281,5 +282,81 @@ public class ShopServlet extends HttpServlet {
         if (minutes < 10080)
             return (minutes / 1440) + " ngày trước";
         return (minutes / 10080) + " tuần trước";
+    }
+
+    private void handleUpdateShopProfile(HttpServletRequest request, HttpServletResponse response, JSONObject json,
+            PrintWriter out, User user) {
+        boolean flag = true;
+        String message = "";
+        try {
+            Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
+            if (shopId == null || shopId == -1) {
+                flag = false;
+                message = "Không tìm thấy shop.";
+            }
+
+            if (flag) {
+                String shopName = request.getParameter("shopName");
+                String shopPhone = request.getParameter("shopPhone");
+                String shopEmail = request.getParameter("shopEmail");
+                String shopDescription = request.getParameter("shopDescription");
+
+                String cityName = request.getParameter("cityName");
+                String districtName = request.getParameter("districtName");
+                String wardName = request.getParameter("wardName");
+
+                int provinceId = Integer.parseInt(request.getParameter("provinceId"));
+                int districtId = Integer.parseInt(request.getParameter("districtId"));
+                String wardCode = request.getParameter("wardCode");
+                String addressLine = request.getParameter("addressLine");
+
+                if (shopName == null || shopName.trim().isEmpty()) {
+                    flag = false;
+                    message = "Tên shop không được để trống.";
+                }
+
+                Shop currentShop = shopDAO.getShopByUserId(user.getId());
+                if (flag && !currentShop.getName().equals(shopName) && shopDAO.isShopNameExists(shopName)) {
+                    flag = false;
+                    message = "Tên shop đã tồn tại.";
+                }
+
+                if (flag) {
+                    Shop shop = new Shop();
+                    shop.setShopId(shopId);
+                    shop.setName(shopName);
+                    shop.setDescription(shopDescription);
+                    shop.setInvoiceEmail(shopEmail);
+
+                    Address address = new Address();
+                    address.setAddressId(currentShop.getPickupAddressId());
+                    address.setPhone(shopPhone);
+                    address.setCity(cityName);
+                    address.setDistrict(districtName);
+                    address.setWard(wardName);
+                    address.setProvinceId(provinceId);
+                    address.setDistrictId(districtId);
+                    address.setWardCode(wardCode);
+                    address.setDescription(addressLine);
+                    address.setRecipientName(currentShop.getPickupAddress().getRecipientName());
+
+                    if (shopDAO.updateShopProfile(shop, address)) {
+                        flag = true;
+                        message = "Cập nhật thông tin shop thành công!";
+                    } else {
+                        flag = false;
+                        message = "Không thể cập nhật thông tin. Vui lòng thử lại.";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error in \"handleUpdateShopProfile\" function: " + e.getMessage());
+            flag = false;
+            message = "Error in \"handleUpdateShopProfile\" function: " + e.getMessage();
+        } finally {
+            json.put("success", flag);
+            json.put("message", message);
+            out.print(json.toString());
+        }
     }
 }

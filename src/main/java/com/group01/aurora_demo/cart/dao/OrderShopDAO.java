@@ -224,6 +224,7 @@ public class OrderShopDAO {
         return count;
     }
 
+<<<<<<< HEAD
     public OrderShop findById(Connection conn, long orderShopId) throws SQLException {
         String sql = """
                 SELECT
@@ -358,3 +359,6 @@ public class OrderShopDAO {
         return list;
     }
 }
+=======
+}
+>>>>>>> f7337822a7c55196e576eba5c5bedfc5181176cc

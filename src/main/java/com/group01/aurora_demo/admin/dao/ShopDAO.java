@@ -115,15 +115,16 @@ public class ShopDAO {
     /**
      * Update shop information
      */
-    public int update(long id, String name, String description, String status, String invoiceEmail) throws SQLException {
-        String sql = "UPDATE Shops SET Name=?, Description=?, Status=?, InvoiceEmail=? WHERE ShopID=?";
+    public int update(long id, String name, String description, String status, String invoiceEmail, String rejectReason) throws SQLException {
+        String sql = "UPDATE Shops SET Name=?, Description=?, Status=?, InvoiceEmail=?, RejectReason=? WHERE ShopID=?";
         try (Connection cn = DataSourceProvider.get().getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, description);
             ps.setString(3, status);
             ps.setString(4, invoiceEmail);
-            ps.setLong(5, id);
+            ps.setString(5, rejectReason.isEmpty() ? null : rejectReason);
+            ps.setLong(6, id);
             return ps.executeUpdate();
         }
     }
@@ -140,6 +141,26 @@ public class ShopDAO {
             return ps.executeUpdate();
         }
     }
+    
+    /**
+     * Update shop status and optionally set a reason
+     */
+    public int updateStatus(long id, String status, String reason) throws SQLException {
+        String sql = "UPDATE Shops SET Status=?, RejectReason=? WHERE ShopID=?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            
+            if (reason == null) {
+                ps.setNull(2, java.sql.Types.NVARCHAR);
+            } else {
+                ps.setString(2, reason);
+            }
+            
+            ps.setLong(3, id);
+            return ps.executeUpdate();
+        }
+    }
 
     /**
      * Inner class for pickup address
@@ -148,22 +169,18 @@ public class ShopDAO {
         public long addressId;
         public String recipientName;
         public String phone;
-        public String line;
+        public String description;
         public String city;
-        public String district;
         public String ward;
-        public String postalCode;
         public Timestamp createdAt;
 
         public PickupAddress(ResultSet rs) throws SQLException {
             this.addressId = rs.getLong("AddressID");
             this.recipientName = rs.getString("RecipientName");
             this.phone = rs.getString("Phone");
-            this.line = rs.getString("Line");
+            this.description = rs.getString("Description");
             this.city = rs.getString("City");
-            this.district = rs.getString("District");
             this.ward = rs.getString("Ward");
-            this.postalCode = rs.getString("PostalCode");
             this.createdAt = rs.getTimestamp("CreatedAt");
         }
 
@@ -171,11 +188,9 @@ public class ShopDAO {
         public long getAddressId() { return addressId; }
         public String getRecipientName() { return recipientName; }
         public String getPhone() { return phone; }
-        public String getLine() { return line; }
+        public String getDescription() { return description; }
         public String getCity() { return city; }
-        public String getDistrict() { return district; }
         public String getWard() { return ward; }
-        public String getPostalCode() { return postalCode; }
         public Timestamp getCreatedAt() { return createdAt; }
     }
 }

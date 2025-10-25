@@ -177,6 +177,9 @@
                                                         </div>
                                                     </div>
 
+                                                    <input type="file" id="shopLogoInput" accept="image/*"
+                                                        style="display: none;" />
+
                                                     <button type="button" class="btn btn-outline-primary btn-sm"
                                                         id="uploadLogoBtn">
                                                         <i class="bi bi-upload me-1"></i>
@@ -193,71 +196,7 @@
                     </div>
 
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
-
-                    <script>
-                        Validator({
-                            form: '#shopInfoForm',
-                            formGroupSelector: '.form-group',
-                            errorSelector: '.form-message',
-                            rules: [
-                                Validator.isRequired('#shopName', 'Vui lòng nhập tên shop'),
-                                Validator.isRequired('#shopPhone', 'Vui lòng nhập số điện thoại'),
-                                Validator.isRequired('#shopEmail', 'Vui lòng nhập email'),
-                                Validator.isEmail('#shopEmail', 'Email không hợp lệ'),
-                                Validator.isRequired('#updateProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
-                                Validator.isRequired('#updateDistrict', 'Vui lòng chọn Quận/Huyện'),
-                                Validator.isRequired('#updateWard', 'Vui lòng chọn Phường/Xã'),
-                                Validator.isRequired('#shopAddress', 'Vui lòng nhập địa chỉ chi tiết')
-                            ]
-                        });
-
-                        const provinceSelect = document.getElementById("updateProvince");
-                        const districtSelect = document.getElementById("updateDistrict");
-                        const wardSelect = document.getElementById("updateWard");
-
-                        const provinceNameInput = document.getElementById("updateProvinceNameInput");
-                        const districtNameInput = document.getElementById("updateDistrictNameInput");
-                        const wardNameInput = document.getElementById("updateWardNameInput");
-                        const provinceIdInput = document.getElementById("updateProvinceIdInput");
-                        const districtIdInput = document.getElementById("updateDistrictIdInput");
-                        const wardCodeInput = document.getElementById("updateWardCodeInput");
-
-                        initAddressSelects(
-                            provinceSelect,
-                            districtSelect,
-                            wardSelect,
-                            provinceNameInput,
-                            districtNameInput,
-                            wardNameInput,
-                            provinceIdInput,
-                            districtIdInput,
-                            wardCodeInput
-                        );
-
-                        document.addEventListener("DOMContentLoaded", function () {
-                            const sidebar = document.getElementById("layoutSidenav_nav");
-                            const sidebarToggle = document.getElementById("sidebarToggle");
-
-                            if (sidebarToggle) {
-                                sidebarToggle.addEventListener("click", function () {
-                                    sidebar.classList.toggle("show");
-                                });
-                            }
-
-                            document.addEventListener("click", function (e) {
-                                const isClickInside = sidebar.contains(e.target) ||
-                                    (sidebarToggle && sidebarToggle.contains(e.target));
-
-                                if (!isClickInside && sidebar.classList.contains("show")) {
-                                    sidebar.classList.remove("show");
-                                }
-                            });
-
-                            sidebar.addEventListener("click", function (e) {
-                                e.stopPropagation();
-                            });
-                        });
-                    </script>
+                    <script src="<c:url value='/assets/js/shop/shopProfile.js'/>?v=1.0.2"></script>
                 </body>
 
                 </html>

@@ -108,7 +108,7 @@
               <div class="suggest container">
                 <h5 class="suggest-title"><i class="bi bi-lightbulb"></i> Gợi ý cho bạn</h5>
 
-                <div id="bookSuggest" class="carousel slide" data-bs-ride="false">
+                <div id="bookSuggest" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                   <div class="carousel-inner">
                     <c:set var="chunkSize" value="6" />
                     <c:forEach var="i" begin="0" end="${fn:length(suggestedProducts) - 1}" step="${chunkSize}"

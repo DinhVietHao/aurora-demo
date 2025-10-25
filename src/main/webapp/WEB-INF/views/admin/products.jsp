@@ -19,7 +19,10 @@
         <main>
             <div class="container-fluid px-4">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h1 class="mt-4">Quản lý sản phẩm</h1>
+                    <div>
+                        <h1 class="mt-4 mb-1">Quản lý sản phẩm</h1>
+                        <div class="text-muted"><i class="bi bi-info-circle-fill me-1"></i>Hiển thị các sản phẩm đã được duyệt (trạng thái ACTIVE)</div>
+                    </div>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="<c:url value='/'/>">Trang chủ</a></li>
@@ -36,6 +39,9 @@
                             <input class="form-control" type="text" name="q" value="${q}" placeholder="Tìm kiếm tên sản phẩm, tác giả...">
                         </div>
                         <div class="d-flex align-items-center gap-2">
+                            <a href="<c:url value='/admin/products/approval'/>" class="btn btn-outline-success">
+                                <i class="bi bi-check-circle me-1"></i>Duyệt sản phẩm mới
+                            </a>
                             <select class="form-select" name="pageSize" style="width: 120px;">
                                 <c:choose>
                                     <c:when test="${pageSize==10}"><option value="10" selected="selected">10</option></c:when>
@@ -104,7 +110,7 @@
                                     <td>
                                         <c:choose>
                                             <c:when test="${not empty product.publisher}">
-                                                <small>${product.publisher.publisherName}</small>
+                                                <small>${product.publisher.name}</small>
                                             </c:when>
                                             <c:otherwise>
                                                 <small class="text-muted">-</small>
@@ -129,14 +135,14 @@
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${product.stock > 50}">
-                                                <span class="badge bg-success">${product.stock}</span>
+                                            <c:when test="${product.quantity > 50}">
+                                                <span class="badge bg-success">${product.quantity}</span>
                                             </c:when>
-                                            <c:when test="${product.stock > 10}">
-                                                <span class="badge bg-warning text-dark">${product.stock}</span>
+                                            <c:when test="${product.quantity > 10}">
+                                                <span class="badge bg-warning text-dark">${product.quantity}</span>
                                             </c:when>
                                             <c:otherwise>
-                                                <span class="badge bg-danger">${product.stock}</span>
+                                                <span class="badge bg-danger">${product.quantity}</span>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
