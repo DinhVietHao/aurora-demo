@@ -274,7 +274,7 @@
           </div>
 
           <!-- Đánh giá -->
-          <div class="row mt-4">
+          <div class="row mt-4" id="reviews">
             <div class="col-12 comment">
               <div class="row comment-header">
                 <h5 class="comment-title">ĐÁNH GIÁ SẢN PHẨM</h5>
@@ -299,292 +299,226 @@
                     </c:forEach>
                   </div>
                 </div>
-                <!-- Filter Buttons -->
+
+                <input type="hidden" id="product-id" value="${product.productId}">
+                <input type="hidden" id="context-path" value="${ctx}">
+
                 <div class="col-md-9 d-flex align-items-center">
                   <div class="comment-filter">
-                    <a href="?action=detail&id=${product.productId}#reviews"
-                      class="button-outline ${selectedRating == 'all' && empty selectedFilter ? 'active' : ''}">
+                    <a href="#" data-rating="all"
+                      class="button-outline ${empty selectedRating || selectedRating == 'all' ? 'active' : ''}">
                       Tất Cả
                     </a>
-                    <a href="?action=detail&id=${product.productId}&rating=5#reviews"
-                      class="button-outline ${selectedRating == '5' ? 'active' : ''}">
+                    <a href="#" data-rating="5" class="button-outline ${selectedRating == '5' ? 'active' : ''}">
                       5 Sao
                     </a>
-                    <a href="?action=detail&id=${product.productId}&rating=4#reviews"
-                      class="button-outline ${selectedRating == '4' ? 'active' : ''}">
+                    <a href="#" data-rating="4" class="button-outline ${selectedRating == '4' ? 'active' : ''}">
                       4 Sao
                     </a>
-                    <a href="?action=detail&id=${product.productId}&rating=3#reviews"
-                      class="button-outline ${selectedRating == '3' ? 'active' : ''}">
+                    <a href="#" data-rating="3" class="button-outline ${selectedRating == '3' ? 'active' : ''}">
                       3 Sao
                     </a>
-                    <a href="?action=detail&id=${product.productId}&rating=2#reviews"
-                      class="button-outline ${selectedRating == '2' ? 'active' : ''}">
+                    <a href="#" data-rating="2" class="button-outline ${selectedRating == '2' ? 'active' : ''}">
                       2 Sao
                     </a>
-                    <a href="?action=detail&id=${product.productId}&rating=1#reviews"
-                      class="button-outline ${selectedRating == '1' ? 'active' : ''}">
+                    <a href="#" data-rating="1" class="button-outline ${selectedRating == '1' ? 'active' : ''}">
                       1 Sao
                     </a>
-                    <a href="?action=detail&id=${product.productId}&filter=comment#reviews"
+                    <a href="#" data-filter="comment"
                       class="button-outline ${selectedFilter == 'comment' ? 'active' : ''}">
                       Có Bình Luận
                     </a>
-                    <a href="?action=detail&id=${product.productId}&filter=image#reviews"
-                      class="button-outline ${selectedFilter == 'image' ? 'active' : ''}">
+                    <a href="#" data-filter="image" class="button-outline ${selectedFilter == 'image' ? 'active' : ''}">
                       Có Hình Ảnh
                     </a>
                   </div>
                 </div>
               </div>
 
-              <!-- Danh sách review -->
-              <c:choose>
-                <c:when test="${not empty reviews}">
-                  <c:forEach var="review" items="${reviews}">
-                    <div class="row comment-body">
-                      <div class="col-auto comment-image">
-                        <c:choose>
-                          <c:when test="${not empty review.user.avatarUrl}">
-                            <img src="${ctx}/assets/images/avatars/${review.user.avatarUrl}" alt="avatar">
-                          </c:when>
-                          <c:otherwise>
-                            <img src="${ctx}/assets/images/common/avatar.png" alt="avatar">
-                          </c:otherwise>
-                        </c:choose>
-                      </div>
+              <div id="reviews-container">
+                <c:choose>
+                  <c:when test="${not empty reviews}">
+                    <c:forEach var="review" items="${reviews}">
+                      <div class="row comment-body">
+                        <div class="col-auto comment-image">
+                          <c:choose>
+                            <c:when test="${not empty review.user.avatarUrl}">
+                              <img src="${ctx}/assets/images/avatars/${review.user.avatarUrl}" alt="avatar"
+                                style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            </c:when>
+                            <c:otherwise>
+                              <img src="${ctx}/assets/images/common/avatar.png" alt="avatar"
+                                style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                            </c:otherwise>
+                          </c:choose>
+                        </div>
 
-                      <div class="col">
-                        <div class="d-flex justify-content-between">
-                          <h6 class="mb-0 fw-bold">
-                            <c:out value="${review.user.fullName}" />
-                          </h6>
-                          <div class="dropdown">
-                            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
-                              aria-expanded="false">
-                              <i class="fa fa-ellipsis-h"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                              <li>
-                                <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                  data-bs-target="#reportModal">Báo cáo</a>
-                              </li>
-                            </ul>
+                        <div class="col">
+                          <div class="d-flex justify-content-between">
+                            <h6 class="mb-0 fw-bold">
+                              <c:out value="${review.user.fullName}" />
+                            </h6>
+                            <div class="dropdown">
+                              <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fa fa-ellipsis-h"></i>
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                  <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                    data-bs-target="#reportModal">Báo cáo</a>
+                                </li>
+                              </ul>
+                            </div>
                           </div>
-                        </div>
-                        <small class="text-muted">
-                          <fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
-                        </small>
+                          <small class="text-muted">
+                            <fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+                          </small>
 
-                        <!-- Rating -->
-                        <div class="text-warning my-1">
-                          <c:forEach begin="1" end="${review.rating}">
-                            <i class="bi bi-star-fill small"></i>
-                          </c:forEach>
-                          <c:forEach begin="${review.rating + 1}" end="5">
-                            <i class="bi bi-star small"></i>
-                          </c:forEach>
-                        </div>
-
-                        <p class="mb-1">
-                          <c:out value="${review.comment}" />
-                        </p>
-
-                        <!-- Hình ảnh review (nếu có) -->
-                        <c:if test="${not empty review.images}">
-                          <div class="d-flex gap-2 comment-review">
-                            <c:forEach var="img" items="${review.images}" varStatus="status">
-                              <img src="${ctx}/assets/images/reviews/${img.url}" class="" alt="ảnh review"
-                                data-bs-toggle="modal" data-bs-target="#reviewModal${review.reviewId}"
-                                data-bs-slide-to="${status.index}">
+                          <!-- Rating -->
+                          <div class="text-warning my-1">
+                            <c:forEach begin="1" end="${review.rating}">
+                              <i class="bi bi-star-fill small"></i>
+                            </c:forEach>
+                            <c:forEach begin="${review.rating + 1}" end="5">
+                              <i class="bi bi-star small"></i>
                             </c:forEach>
                           </div>
-                        </c:if>
-                      </div>
-                    </div>
 
-                    <!-- Modal xem ảnh review -->
-                    <c:if test="${not empty review.images}">
-                      <div class="modal fade" id="reviewModal${review.reviewId}" tabindex="-1"
-                        aria-labelledby="reviewModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-lg modal-dialog-centered">
-                          <div class="modal-content">
-                            <div class="modal-body">
-                              <div class="d-flex justify-content-end">
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                  aria-label="Close"></button>
-                              </div>
-                              <div id="reviewCarousel${review.reviewId}" class="carousel slide">
-                                <div class="carousel-inner">
-                                  <c:forEach var="img" items="${review.images}" varStatus="status">
-                                    <div class="carousel-item ${status.first ? 'active' : ''}">
-                                      <img src="${ctx}/assets/images/reviews/${img.url}" class="d-block w-100"
-                                        alt="ảnh review">
-                                    </div>
-                                  </c:forEach>
+                          <p class="mb-1">
+                            <c:out value="${review.comment}" />
+                          </p>
+
+                          <!-- Hình ảnh review -->
+                          <c:if test="${not empty review.images}">
+                            <div class="d-flex gap-2 comment-review">
+                              <c:forEach var="img" items="${review.images}" varStatus="status">
+                                <img src="${ctx}/assets/images/reviews/${img.url}" alt="ảnh review"
+                                  style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                                  data-bs-toggle="modal" data-bs-target="#reviewModal${review.reviewId}"
+                                  data-bs-slide-to="${status.index}">
+                              </c:forEach>
+                            </div>
+                          </c:if>
+                        </div>
+                      </div>
+
+                      <!-- Modal xem ảnh review -->
+                      <c:if test="${not empty review.images}">
+                        <div class="modal fade" id="reviewModal${review.reviewId}" tabindex="-1"
+                          aria-labelledby="reviewModalLabel" aria-hidden="true">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-body">
+                                <div class="d-flex justify-content-end">
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                                 </div>
-                                <button class="carousel-control-prev" type="button"
-                                  data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="prev">
-                                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                </button>
-                                <button class="carousel-control-next" type="button"
-                                  data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="next">
-                                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                </button>
+                                <div id="reviewCarousel${review.reviewId}" class="carousel slide">
+                                  <div class="carousel-inner">
+                                    <c:forEach var="img" items="${review.images}" varStatus="status">
+                                      <div class="carousel-item ${status.first ? 'active' : ''}">
+                                        <img src="${ctx}/assets/images/reviews/${img.url}" class="d-block w-100"
+                                          alt="ảnh review">
+                                      </div>
+                                    </c:forEach>
+                                  </div>
+                                  <button class="carousel-control-prev" type="button"
+                                    data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                  </button>
+                                  <button class="carousel-control-next" type="button"
+                                    data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </c:if>
-                  </c:forEach>
+                      </c:if>
+                    </c:forEach>
+                  </c:when>
+                  <c:otherwise>
+                    <div class="text-center py-5">
+                      <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
+                      <c:if test="${not empty sessionScope.AUTH_USER}">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
+                          Viết đánh giá đầu tiên
+                        </button>
+                      </c:if>
+                    </div>
+                  </c:otherwise>
+                </c:choose>
+              </div>
 
-                  <!-- Pagination for reviews -->
-                  <c:if test="${totalReviews > 10}">
-                    <nav class="mt-4" aria-label="Review pagination">
-                      <ul class="pagination justify-content-center">
-                        <!-- Previous Button -->
-                        <c:if test="${currentPage > 1}">
-                          <li class="page-item">
-                            <c:url var="prevUrl" value="">
-                              <c:param name="action" value="detail" />
-                              <c:param name="id" value="${product.productId}" />
-                              <c:param name="reviewPage" value="${currentPage - 1}" />
-                              <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                <c:param name="rating" value="${selectedRating}" />
-                              </c:if>
-                              <c:if test="${not empty selectedFilter}">
-                                <c:param name="filter" value="${selectedFilter}" />
-                              </c:if>
-                            </c:url>
-                            <a class="page-link" href="${prevUrl}#reviews" aria-label="Previous">‹</a>
+              <!-- Pagination Container -->
+              <div id="pagination-container">
+                <c:if test="${totalReviews > 10}">
+                  <nav class="mt-4" aria-label="Review pagination">
+                    <ul class="pagination justify-content-center">
+                      <!-- Previous Button -->
+                      <c:if test="${currentPage > 1}">
+                        <li class="page-item">
+                          <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">‹</a>
+                        </li>
+                      </c:if>
+
+                      <!-- Page numbers -->
+                      <c:choose>
+                        <c:when test="${totalPages <= 7}">
+                          <c:forEach begin="1" end="${totalPages}" var="i">
+                            <li class="page-item ${i == currentPage ? 'active' : ''}">
+                              <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>
+                          </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                          <!-- First page -->
+                          <li class="page-item ${currentPage == 1 ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="1">1</a>
                           </li>
-                        </c:if>
 
-                        <!-- Smart Pagination -->
-                        <c:choose>
-                          <c:when test="${totalPages <= 7}">
-                            <!-- Show all pages if ≤7 -->
-                            <c:forEach begin="1" end="${totalPages}" var="i">
+                          <!-- Left ellipsis -->
+                          <c:if test="${currentPage > 3}">
+                            <li class="page-item disabled">
+                              <span class="page-link">...</span>
+                            </li>
+                          </c:if>
+
+                          <!-- Current page group -->
+                          <c:forEach begin="${currentPage - 1}" end="${currentPage + 1}" var="i">
+                            <c:if test="${i > 1 && i < totalPages}">
                               <li class="page-item ${i == currentPage ? 'active' : ''}">
-                                <c:url var="pageUrl" value="">
-                                  <c:param name="action" value="detail" />
-                                  <c:param name="id" value="${product.productId}" />
-                                  <c:param name="reviewPage" value="${i}" />
-                                  <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                    <c:param name="rating" value="${selectedRating}" />
-                                  </c:if>
-                                  <c:if test="${not empty selectedFilter}">
-                                    <c:param name="filter" value="${selectedFilter}" />
-                                  </c:if>
-                                </c:url>
-                                <a class="page-link" href="${pageUrl}#reviews">${i}</a>
-                              </li>
-                            </c:forEach>
-                          </c:when>
-                          <c:otherwise>
-                            <!-- Smart pagination with ellipsis -->
-
-                            <!-- First Page -->
-                            <li class="page-item ${currentPage == 1 ? 'active' : ''}">
-                              <c:url var="firstUrl" value="">
-                                <c:param name="action" value="detail" />
-                                <c:param name="id" value="${product.productId}" />
-                                <c:param name="reviewPage" value="1" />
-                                <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                  <c:param name="rating" value="${selectedRating}" />
-                                </c:if>
-                                <c:if test="${not empty selectedFilter}">
-                                  <c:param name="filter" value="${selectedFilter}" />
-                                </c:if>
-                              </c:url>
-                              <a class="page-link" href="${firstUrl}#reviews">1</a>
-                            </li>
-
-                            <!-- Left Ellipsis -->
-                            <c:if test="${currentPage > 3}">
-                              <li class="page-item disabled">
-                                <span class="page-link">...</span>
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
                               </li>
                             </c:if>
+                          </c:forEach>
 
-                            <!-- Current Page Group -->
-                            <c:forEach begin="${currentPage - 1}" end="${currentPage + 1}" var="i">
-                              <c:if test="${i > 1 && i < totalPages}">
-                                <li class="page-item ${i == currentPage ? 'active' : ''}">
-                                  <c:url var="pageUrl" value="">
-                                    <c:param name="action" value="detail" />
-                                    <c:param name="id" value="${product.productId}" />
-                                    <c:param name="reviewPage" value="${i}" />
-                                    <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                      <c:param name="rating" value="${selectedRating}" />
-                                    </c:if>
-                                    <c:if test="${not empty selectedFilter}">
-                                      <c:param name="filter" value="${selectedFilter}" />
-                                    </c:if>
-                                  </c:url>
-                                  <a class="page-link" href="${pageUrl}#reviews">${i}</a>
-                                </li>
-                              </c:if>
-                            </c:forEach>
-
-                            <!-- Right Ellipsis -->
-                            <c:if test="${currentPage < totalPages - 2}">
-                              <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                              </li>
-                            </c:if>
-
-                            <!-- Last Page -->
-                            <li class="page-item ${currentPage == totalPages ? 'active' : ''}">
-                              <c:url var="lastUrl" value="">
-                                <c:param name="action" value="detail" />
-                                <c:param name="id" value="${product.productId}" />
-                                <c:param name="reviewPage" value="${totalPages}" />
-                                <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                  <c:param name="rating" value="${selectedRating}" />
-                                </c:if>
-                                <c:if test="${not empty selectedFilter}">
-                                  <c:param name="filter" value="${selectedFilter}" />
-                                </c:if>
-                              </c:url>
-                              <a class="page-link" href="${lastUrl}#reviews">${totalPages}</a>
+                          <!-- Right ellipsis -->
+                          <c:if test="${currentPage < totalPages - 2}">
+                            <li class="page-item disabled">
+                              <span class="page-link">...</span>
                             </li>
-                          </c:otherwise>
-                        </c:choose>
+                          </c:if>
 
-                        <!-- Next Button -->
-                        <c:if test="${currentPage < totalPages}">
-                          <li class="page-item">
-                            <c:url var="nextUrl" value="">
-                              <c:param name="action" value="detail" />
-                              <c:param name="id" value="${product.productId}" />
-                              <c:param name="reviewPage" value="${currentPage + 1}" />
-                              <c:if test="${not empty selectedRating && selectedRating != 'all'}">
-                                <c:param name="rating" value="${selectedRating}" />
-                              </c:if>
-                              <c:if test="${not empty selectedFilter}">
-                                <c:param name="filter" value="${selectedFilter}" />
-                              </c:if>
-                            </c:url>
-                            <a class="page-link" href="${nextUrl}#reviews" aria-label="Next">›</a>
+                          <!-- Last page -->
+                          <li class="page-item ${currentPage == totalPages ? 'active' : ''}">
+                            <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
                           </li>
-                        </c:if>
-                      </ul>
-                    </nav>
-                  </c:if>
-                </c:when>
-                <c:otherwise>
-                  <div class="text-center py-5">
-                    <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
-                    <c:if test="${not empty sessionScope.AUTH_USER}">
-                      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#writeReviewModal">
-                        Viết đánh giá đầu tiên
-                      </button>
-                    </c:if>
-                  </div>
-                </c:otherwise>
-              </c:choose>
+                        </c:otherwise>
+                      </c:choose>
+
+                      <!-- Next Button -->
+                      <c:if test="${currentPage < totalPages}">
+                        <li class="page-item">
+                          <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">›</a>
+                        </li>
+                      </c:if>
+                    </ul>
+                  </nav>
+                </c:if>
+              </div>
             </div>
           </div>
 
@@ -602,6 +536,7 @@
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.1"></script>
+        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js"></script>
         <script src="${ctx}/assets/js/catalog/comment.js"></script>
       </body>
 

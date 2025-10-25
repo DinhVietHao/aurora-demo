@@ -67,157 +67,15 @@ public class HomeServlet extends HttpServlet {
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
         switch (action) {
             case "home":
-                List<Product> suggestedProducts = (user != null)
-                        ? productDAO.getSuggestedProductsForCustomer(user.getId())
-                        : productDAO.getSuggestedProductsForGuest();
-                if (suggestedProducts.isEmpty())
-                    suggestedProducts = productDAO.getSuggestedProductsForGuest();
-
-                List<Product> latestProducts = productDAO.getLatestProducts(36);
-
-                request.setAttribute("suggestedProducts", suggestedProducts);
-                request.setAttribute("latestProducts", latestProducts);
-                request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
+                handleHome(request, response, user);
                 break;
 
             case "bookstore":
-                request.setCharacterEncoding("UTF-8");
-
-                int soldProducts = productDAO.countProductsWithSold();
-                String defaultSort = soldProducts > 0 ? "best" : "newest";
-                String sort = request.getParameter("sort");
-                if (sort == null || sort.isEmpty())
-                    sort = defaultSort;
-
-                int page = getPage(request);
-                int offset = (page - 1) * LIMIT;
-
-                List<Product> products = productDAO.getAllProducts(offset, LIMIT, sort);
-                int totalProducts = productDAO.countAllProducts();
-                int totalPages = (int) Math.ceil((double) totalProducts / LIMIT);
-
-                if (products.isEmpty()) {
-                    request.setAttribute("noProductsMessage", "Chưa có sản phẩm nào trong cửa hàng.");
-                    request.setAttribute("showSort", false);
-                } else {
-                    request.setAttribute("products", products);
-                    request.setAttribute("page", page);
-                    request.setAttribute("totalPages", totalPages);
-                    request.setAttribute("showSort", true);
-                }
-                request.setAttribute("title", "Nhà sách");
-                request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
+                handleBookstore(request, response);
                 break;
 
             case "detail":
-                try {
-                    long id = Long.parseLong(request.getParameter("id"));
-                    Product product = productDAO.getProductById(id);
-
-                    if (product != null) {
-                        // Load shop info
-                        Long shopId = shopDAO.getShopIdByProductId(id);
-                        if (shopId != null) {
-                            Shop shop = shopDAO.getShopByIdWithStats(shopId);
-                            request.setAttribute("shop", shop);
-                        }
-
-                        // Parse filter parameters
-                        String ratingParam = request.getParameter("rating");
-                        String filterParam = request.getParameter("filter");
-
-                        Integer filterRating = null;
-                        Boolean hasComment = null;
-                        Boolean hasImage = null;
-
-                        // Parse rating filter (1-5 or "all")
-                        if (ratingParam != null && !ratingParam.equals("all")) {
-                            try {
-                                filterRating = Integer.parseInt(ratingParam);
-                                if (filterRating < 1 || filterRating > 5) {
-                                    filterRating = null;
-                                }
-                            } catch (NumberFormatException e) {
-                                filterRating = null;
-                            }
-                        }
-
-                        // Parse other filters
-                        if ("comment".equals(filterParam)) {
-                            hasComment = true;
-                        } else if ("image".equals(filterParam)) {
-                            hasImage = true;
-                        }
-
-                        // Load reviews with filter and pagination
-                        int reviewPage = 1;
-                        String reviewPageParam = request.getParameter("reviewPage");
-                        if (reviewPageParam != null) {
-                            try {
-                                reviewPage = Integer.parseInt(reviewPageParam);
-                                if (reviewPage < 1)
-                                    reviewPage = 1;
-                            } catch (NumberFormatException e) {
-                                reviewPage = 1;
-                            }
-                        }
-
-                        int reviewsPerPage = 10;
-                        int reviewOffset = (reviewPage - 1) * reviewsPerPage;
-
-                        ReviewDAO reviewDAO = new ReviewDAO();
-
-                        // Get filtered reviews
-                        List<Review> reviews = reviewDAO.getReviewsByProductIdWithFilter(
-                                id, reviewOffset, reviewsPerPage, filterRating, hasComment, hasImage);
-
-                        // Count total filtered reviews
-                        int totalReviews = reviewDAO.countReviewsByProductIdWithFilter(
-                                id, filterRating, hasComment, hasImage);
-
-                        int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
-
-                        // Chỉ dùng mock data khi THỰC SỰ không có reviews
-                        if (reviews.isEmpty() && filterRating == null && hasComment == null && hasImage == null) {
-                            // Chỉ dùng mock khi không filter và không có reviews thật
-                            reviews = createMockReviews();
-                            totalReviews = reviews.size();
-                            totalReviewPages = 1;
-                        }
-
-                        // Set attributes
-                        request.setAttribute("reviews", reviews);
-                        request.setAttribute("currentPage", reviewPage);
-                        request.setAttribute("totalReviews", totalReviews);
-                        request.setAttribute("totalPages", totalReviewPages);
-
-                        // Keep filter state
-                        request.setAttribute("selectedRating", ratingParam != null ? ratingParam : "all");
-                        request.setAttribute("selectedFilter", filterParam != null ? filterParam : "");
-
-                        // Load related products
-                        List<Long> categoryIds = new ArrayList<>();
-                        if (product.getCategories() != null && !product.getCategories().isEmpty()) {
-                            for (Category cat : product.getCategories()) {
-                                categoryIds.add(cat.getCategoryId());
-                            }
-                        }
-
-                        List<Product> relatedProducts = productDAO.getRelatedProducts(id, categoryIds, 12);
-                        request.setAttribute("suggestions", relatedProducts);
-                    }
-
-                    // Total review count (không filter) - cho rating overview
-                    int reviewCount = productDAO.countReviewsByProductId(id);
-                    request.setAttribute("title", product.getTitle());
-                    request.setAttribute("product", product);
-                    request.setAttribute("reviewCount", reviewCount);
-                    request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp")
-                            .forward(request, response);
-
-                } catch (NumberFormatException e) {
-                    System.out.println("Error in \"detail\" of HomeServlet: " + e.getMessage());
-                }
+                handleProductDetail(request, response);
                 break;
 
             case "search":
@@ -249,6 +107,116 @@ public class HomeServlet extends HttpServlet {
             }
         }
         return page;
+    }
+
+    private void handleHome(HttpServletRequest request, HttpServletResponse response, User user) {
+        try {
+            List<Product> suggestedProducts = (user != null)
+                    ? productDAO.getSuggestedProductsForCustomer(user.getId())
+                    : productDAO.getSuggestedProductsForGuest();
+            if (suggestedProducts.isEmpty())
+                suggestedProducts = productDAO.getSuggestedProductsForGuest();
+
+            List<Product> latestProducts = productDAO.getLatestProducts(36);
+
+            request.setAttribute("suggestedProducts", suggestedProducts);
+            request.setAttribute("latestProducts", latestProducts);
+            request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error in \"handleHome\" function: " + e.getMessage());
+        }
+    }
+
+    private void handleBookstore(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            request.setCharacterEncoding("UTF-8");
+
+            int soldProducts = productDAO.countProductsWithSold();
+            String defaultSort = soldProducts > 0 ? "best" : "newest";
+            String sort = request.getParameter("sort");
+            if (sort == null || sort.isEmpty())
+                sort = defaultSort;
+
+            int page = getPage(request);
+            int offset = (page - 1) * LIMIT;
+
+            List<Product> products = productDAO.getAllProducts(offset, LIMIT, sort);
+            int totalProducts = productDAO.countAllProducts();
+            int totalPages = (int) Math.ceil((double) totalProducts / LIMIT);
+
+            if (products.isEmpty()) {
+                request.setAttribute("noProductsMessage", "Chưa có sản phẩm nào trong cửa hàng.");
+                request.setAttribute("showSort", false);
+            } else {
+                request.setAttribute("products", products);
+                request.setAttribute("page", page);
+                request.setAttribute("totalPages", totalPages);
+                request.setAttribute("showSort", true);
+            }
+            request.setAttribute("title", "Nhà sách");
+            request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error in \"handleProductDetail\" function: " + e.getMessage());
+        }
+    }
+
+    private void handleProductDetail(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            long id = Long.parseLong(request.getParameter("id"));
+            Product product = productDAO.getProductById(id);
+
+            if (product != null) {
+                // Load shop info
+                Long shopId = shopDAO.getShopIdByProductId(id);
+                if (shopId != null) {
+                    Shop shop = shopDAO.getShopByIdWithStats(shopId);
+                    request.setAttribute("shop", shop);
+                }
+
+                // Load reviews
+                int reviewsPerPage = 10;
+                ReviewDAO reviewDAO = new ReviewDAO();
+
+                List<Review> reviews = reviewDAO.getReviewsByProductIdWithFilter(id, 0, reviewsPerPage, null, null,
+                        null);
+
+                int totalReviews = reviewDAO.countReviewsByProductIdWithFilter(id, null, null, null);
+
+                int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
+
+                if (reviews.isEmpty()) {
+                    reviews = createMockReviews();
+                    totalReviews = reviews.size();
+                    totalReviewPages = 1;
+                }
+
+                request.setAttribute("reviews", reviews);
+                request.setAttribute("currentPage", 1);
+                request.setAttribute("totalReviews", totalReviews);
+                request.setAttribute("totalPages", totalReviewPages);
+                request.setAttribute("selectedRating", "all");
+                request.setAttribute("selectedFilter", "");
+
+                // Load related products
+                List<Long> categoryIds = new ArrayList<>();
+                if (product.getCategories() != null && !product.getCategories().isEmpty()) {
+                    for (Category cat : product.getCategories()) {
+                        categoryIds.add(cat.getCategoryId());
+                    }
+                }
+
+                List<Product> relatedProducts = productDAO.getRelatedProducts(id, categoryIds, 12);
+                request.setAttribute("suggestions", relatedProducts);
+            }
+
+            int reviewCount = productDAO.countReviewsByProductId(id);
+            request.setAttribute("title", product.getTitle());
+            request.setAttribute("product", product);
+            request.setAttribute("reviewCount", reviewCount);
+            request.getRequestDispatcher("/WEB-INF/views/catalog/books/book_detail.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error in \"handleProductDetail\" function: " + e.getMessage());
+        }
     }
 
     private void handleSearch(HttpServletRequest request, HttpServletResponse response)
