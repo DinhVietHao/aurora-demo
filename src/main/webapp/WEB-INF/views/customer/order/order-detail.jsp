@@ -82,30 +82,31 @@
                                     <div class="order-content">
                                         <div class="tab-content order-body">
                                             <div class="order-detail">
-                                                <c:forEach var="item" items="${orderItems}">
+                                                <c:forEach var="orderItem" items="${orderItems}">
                                                     <div class="order-detail__item row align-items-center mb-3">
                                                         <div class="order-detail__image col-md-2 col-4">
-                                                            <img src="${ctx}/assets/images/catalog/products/${item.imageUrl}"
-                                                                alt="${item.productName}" class="order-detail__img">
+                                                            <img src="${ctx}/assets/images/catalog/products/${orderItem.imageUrl}"
+                                                                alt="${orderItem.productName}"
+                                                                class="order-detail__img">
                                                         </div>
 
                                                         <div class="order-detail__info col-md-7 col-8">
                                                             <h6 class="order-detail__title">
-                                                                ${item.productName}
+                                                                ${orderItem.productName}
                                                             </h6>
                                                             <p class="order-detail__quantity text-muted mb-0">
-                                                                x${item.quantity}</p>
+                                                                x${orderItem.quantity}</p>
                                                         </div>
 
                                                         <div
                                                             class="order-detail__price col-md-3 text-md-end mt-3 mt-md-0">
                                                             <span
                                                                 class="order-detail__old-price text-decoration-line-through">
-                                                                <fmt:formatNumber value="${item.originalPrice}"
+                                                                <fmt:formatNumber value="${orderItem.originalPrice}"
                                                                     type="currency" currencySymbol="₫" />
                                                             </span>
                                                             <span class="order-detail__new-price">
-                                                                <fmt:formatNumber value="${item.salePrice}"
+                                                                <fmt:formatNumber value="${orderItem.salePrice}"
                                                                     type="currency" currencySymbol="₫" />
                                                             </span><br>
                                                         </div>
@@ -119,7 +120,8 @@
                                                                     <td class="order-detail__label">Tổng tiền hàng</td>
                                                                     <td class="order-detail__value">
 
-                                                                        <fmt:formatNumber value="${totalShopSubtotal}"
+                                                                        <fmt:formatNumber
+                                                                            value="${orderItems[0].subtotal}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
 
@@ -127,7 +129,8 @@
                                                                 <tr>
                                                                     <td class="order-detail__label">Phí vận chuyển</td>
                                                                     <td class="order-detail__value">
-                                                                        <fmt:formatNumber value="${shopShippingFee}"
+                                                                        <fmt:formatNumber
+                                                                            value="${orderItems[0].shopShippingFee}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>
@@ -137,7 +140,8 @@
                                                                     <td
                                                                         class="order-detail__value order-detail__value--discount">
                                                                         -
-                                                                        <fmt:formatNumber value="${SystemVoucherShip}"
+                                                                        <fmt:formatNumber
+                                                                            value="${orderItems[0].systemShippingDiscount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>
@@ -146,7 +150,8 @@
                                                                     <td
                                                                         class="order-detail__value order-detail__value--discount">
                                                                         -
-                                                                        <fmt:formatNumber value="${shopDiscount}"
+                                                                        <fmt:formatNumber
+                                                                            value="${orderItems[0].shopDiscount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>
@@ -157,7 +162,7 @@
                                                                         class="order-detail__value order-detail__value--discount">
                                                                         -
                                                                         <fmt:formatNumber
-                                                                            value="${SystemVoucherDiscount}"
+                                                                            value="${orderItems[0].systemVoucherDiscount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>
@@ -168,7 +173,8 @@
                                                                     </td>
                                                                     <td
                                                                         class="order-detail__value order-detail__value--total">
-                                                                        <fmt:formatNumber value="${finalAmount}"
+                                                                        <fmt:formatNumber
+                                                                            value="${orderItems[0].shopFinalAmount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>

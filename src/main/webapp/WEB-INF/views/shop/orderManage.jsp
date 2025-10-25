@@ -239,7 +239,8 @@
                                                             <!-- Cột tổng tiền -->
                                                             <div class="col-md-2 text-start">
                                                                 <span class="fw-semibold text-dark">
-                                                                    <fmt:formatNumber value="${orderShop.finalAmount}"
+                                                                    <fmt:formatNumber
+                                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
                                                                         type="number" />₫
                                                                 </span>
                                                             </div>
@@ -319,7 +320,7 @@
 
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
-                    <script src="${ctx}/assets/js/shop/orderManagement.js"></script>
+                    <script src="${ctx}/assets/js/shop/orderManagement.js?v=1.0.1"></script>
                 </body>
 
                 </html>

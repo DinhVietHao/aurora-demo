@@ -58,7 +58,6 @@ public class ShopOrderServlet extends HttpServlet {
                             if (orderShop == null) {
                                 request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
                             }
-                            System.out.println("------------------------" + orderShop.getFinalAmount());
                             request.setAttribute("orderShop", orderShop);
                             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
                                     response);

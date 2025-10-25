@@ -398,11 +398,7 @@
                 <!--End Confirm Order Received Modal -->
 
                 <!-- Link Javascript of Order -->
-                <script src="./assets/js/customer/order/order.js"></script>
-
-                <!-- Link Javascript of Information Account -->
-                <script src="./assets/js/customer/profile/information_account.js"></script>
-
+                <script src="${ctx}/assets/js/customer/order/order.js"></script>
 
                 <c:if test="${not empty sessionScope.toastMsg}">
                     <script>

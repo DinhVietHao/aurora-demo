@@ -40,6 +40,16 @@
                                 </c:when>
 
                                 <c:otherwise>
+                                    <!-- Notification Bell -->
+                                    <a href="${ctx}/profile?action=notification" class="header-notification">
+                                        <i class="bi bi-bell"></i>
+                                        <c:if test="${sessionScope.unreadNotificationCount > 0}">
+                                            <span class="badge" id="notificationCountBadge">
+                                                <c:out value="${sessionScope.unreadNotificationCount}" />
+                                            </span>
+                                        </c:if>
+                                    </a>
+
                                     <div class="dropdown">
                                         <button class="header-user dropdown-toggle" type="button"
                                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -82,10 +92,10 @@
                     </div>
                 </div>
             </div>
-            <!-- Toast notification Add To Cart -->
+
+            <!-- Toast notification -->
             <div id="notify-toast"></div>
 
             <!-- Include modal dùng chung -->
             <jsp:include page="/WEB-INF/views/auth/_modals.jsp" />
-
         </header>
