@@ -95,37 +95,17 @@ public class CartServlet extends HttpServlet {
         }
 
         String path = req.getPathInfo();
+        if (path == null) {
+            resp.sendRedirect(req.getContextPath() + "/");
+            return;
+        }
         switch (path) {
             case "/add": {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
-                    if (product == null) {
-                        json.put("success", false);
-                        json.put("type", "error");
-                        json.put("title", "Lỗi hệ thống");
-                        json.put("message", "Không tìm thấy sản phẩm.");
-                        out.print(json.toString());
-                        break;
-                    }
-
-                    if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Sản phẩm không khả dụng");
-                        json.put("message", "Sản phẩm này hiện không được bán.");
-                        out.print(json.toString());
-                        break;
-                    }
-
-                    if (product.getQuantity() == null || product.getQuantity() <= 0) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Hết hàng");
-                        json.put("message", "Sản phẩm này hiện đã hết hàng.");
-                        out.print(json.toString());
-                        break;
-                    }
+                    if (!isProductAvailable(product, json))
+                        return;
                     CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
 
                     if (existingItem != null) {
@@ -177,31 +157,8 @@ public class CartServlet extends HttpServlet {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
-                    if (product == null) {
-                        json.put("success", false);
-                        json.put("type", "error");
-                        json.put("title", "Lỗi hệ thống");
-                        json.put("message", "Không tìm thấy sản phẩm.");
-                        out.print(json.toString());
-                        break;
-                    }
-                    if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Sản phẩm không khả dụng");
-                        json.put("message", "Sản phẩm này hiện không được bán.");
-                        out.print(json.toString());
-                        break;
-                    }
-
-                    if (product.getQuantity() == null || product.getQuantity() <= 0) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Hết hàng");
-                        json.put("message", "Sản phẩm này hiện đã hết hàng.");
-                        out.print(json.toString());
-                        break;
-                    }
+                    if (!isProductAvailable(product, json))
+                        return;
 
                     this.cartItemDAO.updateAllChecked(user.getId(), false);
 
@@ -275,23 +232,8 @@ public class CartServlet extends HttpServlet {
                         break;
                     }
                     Product product = productDAO.getBasicProductById(cartItem.getProductId());
-                    if (product == null || !"ACTIVE".equals(product.getStatus())) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Sản phẩm không khả dụng");
-                        json.put("message", "Sản phẩm này hiện không còn khả dụng.");
-                        out.print(json.toString());
-                        break;
-                    }
-
-                    if (product.getQuantity() <= 0) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Hết hàng");
-                        json.put("message", "Sản phẩm này hiện đã hết hàng.");
-                        out.print(json.toString());
-                        break;
-                    }
+                    if (!isProductAvailable(product, json))
+                        return;
 
                     if (quantity > product.getQuantity()) {
                         json.put("success", false);
@@ -385,4 +327,30 @@ public class CartServlet extends HttpServlet {
         }
 
     }
+
+    public boolean isProductAvailable(Product product, JSONObject json) {
+        if (product == null) {
+            json.put("success", false)
+                    .put("type", "error")
+                    .put("title", "Lỗi hệ thống")
+                    .put("message", "Không tìm thấy sản phẩm.");
+            return false;
+        }
+        if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
+            json.put("success", false)
+                    .put("type", "warning")
+                    .put("title", "Sản phẩm không khả dụng")
+                    .put("message", "Sản phẩm này hiện không được bán.");
+            return false;
+        }
+        if (product.getQuantity() == null || product.getQuantity() <= 0) {
+            json.put("success", false)
+                    .put("type", "warning")
+                    .put("title", "Hết hàng")
+                    .put("message", "Sản phẩm này hiện đã hết hàng.");
+            return false;
+        }
+        return true;
+    }
+
 }

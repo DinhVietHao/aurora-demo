@@ -169,7 +169,7 @@ public class CheckoutServlet extends HttpServlet {
                     double totalShop = cartItems.stream()
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
-                    String validation = this.voucherValidator.validate(voucher, totalShop, shopId);
+                    String validation = this.voucherValidator.validate(voucher, totalShop, shopId, user.getUserID());
                     if (validation != null) {
                         json.put("success", false);
                         json.put("message", validation);
@@ -203,7 +203,7 @@ public class CheckoutServlet extends HttpServlet {
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
 
-                    String validation = this.voucherValidator.validate(voucher, totalOrder, null);
+                    String validation = this.voucherValidator.validate(voucher, totalOrder, null, user.getUserID());
                     if (validation != null) {
                         json.put("success", false);
                         json.put("message", validation);

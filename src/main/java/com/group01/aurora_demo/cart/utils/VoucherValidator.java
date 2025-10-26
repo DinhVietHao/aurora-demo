@@ -2,9 +2,16 @@ package com.group01.aurora_demo.cart.utils;
 
 import java.util.Date;
 
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
+import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
 
 public class VoucherValidator {
+    private UserVoucherDAO userVoucherDAO;
+
+    public VoucherValidator() {
+        this.userVoucherDAO = new UserVoucherDAO();
+    }
 
     /**
      * Kiểm tra điều kiện hợp lệ của voucher
@@ -15,7 +22,7 @@ public class VoucherValidator {
      *                    thống
      * @return null nếu hợp lệ, hoặc chuỗi message lỗi nếu không hợp lệ
      */
-    public String validate(Voucher voucher, double totalOrder, Long shopId) {
+    public String validate(Voucher voucher, double totalOrder, Long shopId, Long userId) {
         Date now = new Date();
         if (voucher == null)
             return "Mã giảm giá không hợp lệ.";
@@ -46,6 +53,12 @@ public class VoucherValidator {
         if (voucher.getUsageLimit() > 0 && voucher.getUsageCount() >= voucher.getUsageLimit())
             return "Mã này đã được sử dụng hết lượt.";
 
+        if (voucher.getPerUserLimit() > 0 && userId != null) {
+            int usedCount = this.userVoucherDAO.getUserVoucherUsageCount(userId, voucher.getVoucherID());
+            if (usedCount >= voucher.getPerUserLimit()) {
+                return "Bạn đã sử dụng mã này tối đa số lần cho phép.";
+            }
+        }
         // Kiểm tra giá trị đơn hàng tối thiểu
         if (voucher.getMinOrderAmount() > 0 && totalOrder < voucher.getMinOrderAmount())
             return "Đơn hàng chưa đạt giá trị tối thiểu để áp dụng mã.";

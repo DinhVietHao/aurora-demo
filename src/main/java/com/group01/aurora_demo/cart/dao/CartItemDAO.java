@@ -263,6 +263,7 @@ public class CartItemDAO {
                      ci.UserID,
                      ci.ProductID,
                      ci.Quantity,
+                     ci.UnitPrice,
                      ci.Subtotal,
                      ci.IsChecked,
                      p.Title ,
@@ -277,7 +278,6 @@ public class CartItemDAO {
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID
                 WHERE ci.UserID = ? AND ci.IsChecked = 1
                 AND p.Status = 'ACTIVE'
                 ORDER BY ci.CreatedAt DESC
@@ -292,6 +292,7 @@ public class CartItemDAO {
                 cartItem.setUserId(rs.getLong("UserID"));
                 cartItem.setQuantity(rs.getInt("Quantity"));
                 cartItem.setSubtotal(rs.getDouble("Subtotal"));
+                cartItem.setUnitPrice(rs.getDouble("UnitPrice"));
                 cartItem.setIsChecked(rs.getBoolean("IsChecked"));
 
                 // Mapping thông tin sản phẩm
@@ -306,11 +307,14 @@ public class CartItemDAO {
                 shop.setShopId(rs.getLong("ShopID"));
                 shop.setName(rs.getString("ShopName"));
 
-                Address shopAddress = this.addressDAO.getAddressByShopId(shop.getShopId());
-                if (shopAddress == null) {
-                    System.err.println("Shop " + shop.getShopId() + " chưa cấu hình Pickup Address!");
+                try {
+                    Address shopAddress = this.addressDAO.getAddressByShopId(shop.getShopId());
+                    shop.setPickupAddress(shopAddress);
+                } catch (Exception ex) {
+                    System.err.println(
+                            "Lỗi lấy PickupAddress cho shopID=" + shop.getShopId() + ": " + ex.getMessage());
                 }
-                shop.setPickupAddress(shopAddress);
+
                 product.setShop(shop);
 
                 // Lấy ảnh chính của sản phẩm
@@ -322,7 +326,7 @@ public class CartItemDAO {
                 cartItems.add(cartItem);
             }
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
         return cartItems;
     }

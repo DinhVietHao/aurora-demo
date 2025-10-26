@@ -138,7 +138,9 @@ public class OrderServlet extends HttpServlet {
                     resp.sendRedirect(req.getContextPath() + "/order");
                     return;
                 }
+                double shopSubtotal = orderItems.stream().mapToDouble(orderItem -> orderItem.getSubtotal()).sum();
                 req.setAttribute("orderItems", orderItems);
+                req.setAttribute("shopSubtotal", shopSubtotal);
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order-detail.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
