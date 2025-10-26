@@ -401,6 +401,8 @@ applyVoucherShops.forEach((btn) => {
     if (selectedShopRadio && selectedShopRadio.value === code) {
       msg.classList.add("text-warning");
       msg.textContent = "Mã này đã áp dụng rồi.";
+      btn.disabled = false;
+      btn.innerHTML = originalText;
       return;
     }
     fetch("/checkout/voucher/shop", {
@@ -418,17 +420,21 @@ applyVoucherShops.forEach((btn) => {
             const modal = bootstrap.Modal.getInstance(modalEl);
             modal.hide();
           }
+          btn.innerHTML = originalText;
+          btn.disabled = false;
         } else {
           localStorage.removeItem(`shopVoucher_${shopId}`);
           msg.classList.add("text-danger");
           msg.textContent = data.message || "Mã không hợp lệ.";
           btn.innerHTML = originalText;
+          btn.disabled = false;
         }
       })
       .catch((error) => {
         console.error("Fetch voucher error:", error);
         msg.classList.add("text-danger");
         msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+        btn.innerHTML = originalText;
       })
       .finally(() => {
         btn.disabled = false;
@@ -506,23 +512,29 @@ applySystemVoucher.addEventListener("click", () => {
         } else if (data.type === "AMOUNT" || data.type === "PERCENT") {
           localStorage.setItem("systemVoucherDiscount", code);
         }
+        loadSystemVouchers();
         const modalEl = document.getElementById("voucherModal");
         if (modalEl) {
           const modal = bootstrap.Modal.getInstance(modalEl);
           modal.hide();
         }
-        loadSystemVouchers();
+
+        applySystemVoucher.innerHTML = originalText;
+        applySystemVoucher.disabled = false;
       } else {
         localStorage.removeItem("systemVoucherShip");
         localStorage.removeItem("systemVoucherDiscount");
         msg.classList.add("text-danger");
         msg.textContent = data.message || "Mã không hợp lệ.";
         applySystemVoucher.innerHTML = originalText;
+        applySystemVoucher.disabled = false;
       }
     })
     .catch(() => {
       msg.classList.add("text-danger");
       msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+      applySystemVoucher.innerHTML = originalText;
+      applySystemVoucher.disabled = false;
     })
     .finally(() => {
       applySystemVoucher.disabled = false;

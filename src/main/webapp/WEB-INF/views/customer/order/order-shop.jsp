@@ -250,8 +250,9 @@
                                                                         </form>
 
                                                                     </c:if>
+
                                                                     <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'COMPLETED'}">
+                                                                        test="${entry.value[0].shopStatus == 'COMPLETED'}">
                                                                         <button class="button-four btnRepurchase"
                                                                             data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i>
@@ -263,6 +264,16 @@
                                                                             Đánh giá
                                                                             shop</button>
                                                                     </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus == 'RETURNED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua
+                                                                            lại</button>
+                                                                    </c:if>
+
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus == 'COMPLETED' && entry.value[0].canReturn}">
                                                                         <button class="button-seven btn-return-order"
@@ -397,8 +408,51 @@
                 </form>
                 <!--End Confirm Order Received Modal -->
 
+                <!-- Modal product reviews -->
+                <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content rounded-3 shadow">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold" id="ratingModalLabel">Đánh Giá Sản Phẩm</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Đóng"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="d-flex mb-3">
+                                    <img src="./assets/images/product-1.png" class="rounded border me-3" alt="Sản phẩm">
+                                    <div>
+                                        <p class="mb-1 fw-semibold">Sách Gặp Chính Mình - Phương pháp sống tỉnh thức -
+                                            Cẩm nang tâm
+                                            linh thực dụng</p>
+                                        <small class="text-muted">Phân loại: Bìa mềm</small>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="fw-semibold">Nội dung đánh giá</label>
+                                    <textarea class="form-control" rows="3"
+                                        placeholder="Hãy chia sẻ trải nghiệm của bạn về sản phẩm này với những người mua khác nhé."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fileInput" class="button-four me-2">
+                                        <i class="bi bi-camera"></i> Thêm Hình ảnh
+                                    </label>
+                                    <input type="file" id="fileInput" style="display: none;" multiple>
+                                    <div id="previewImages" class="d-flex flex-wrap mt-2 gap-2"></div>
+
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="button-five" data-bs-dismiss="modal">Trở lại</button>
+                                <button type="button" class="button-four">Hoàn thành</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--End Modal product reviews -->
+
                 <!-- Link Javascript of Order -->
-                <script src="${ctx}/assets/js/customer/order/order.js"></script>
+                <script src="${ctx}/assets/js/customer/order/order.js?v=1.0.1"></script>
 
                 <c:if test="${not empty sessionScope.toastMsg}">
                     <script>

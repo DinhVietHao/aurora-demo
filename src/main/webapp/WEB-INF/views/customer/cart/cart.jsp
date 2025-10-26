@@ -477,7 +477,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
             </body>
 
             </html>

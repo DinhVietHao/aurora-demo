@@ -268,7 +268,17 @@ public class AddressDAO {
 
     public Address getAddressByShopId(long shopId) {
         String sql = """
-                    SELECT a.AddressID, a.RecipientName, a.Phone, a.City, a.Ward, a.Description
+                    SELECT
+                        a.AddressID,
+                        a.RecipientName,
+                        a.Phone,
+                        a.City,
+                        a.ProvinceID,
+                        a.District,
+                        a.DistrictID,
+                        a.Ward,
+                        a.WardCode,
+                        a.Description
                     FROM Shops s
                     JOIN Addresses a ON s.PickupAddressID = a.AddressID
                     WHERE s.ShopID = ?
@@ -285,7 +295,11 @@ public class AddressDAO {
                     address.setRecipientName(rs.getString("RecipientName"));
                     address.setPhone(rs.getString("Phone"));
                     address.setCity(rs.getString("City"));
+                    address.setProvinceId(rs.getInt("ProvinceID"));
+                    address.setDistrict(rs.getString("District"));
+                    address.setDistrictId(rs.getInt("DistrictID"));
                     address.setWard(rs.getString("Ward"));
+                    address.setWardCode(rs.getString("WardCode"));
                     address.setDescription(rs.getString("Description"));
                     return address;
                 }
