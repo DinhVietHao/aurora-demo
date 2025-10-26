@@ -39,10 +39,6 @@ public class ProfileServlet extends HttpServlet {
             if (action == null)
                 action = "profile";
             switch (action) {
-                case "notification":
-                    handleNotificationView(request, response, user);
-                    break;
-
                 default:
                     handleProfileView(request, response, user);
                     break;
@@ -173,23 +169,6 @@ public class ProfileServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleProfileView\" function of ProfileServlet: " + e.getMessage());
-        }
-    }
-
-    private void handleNotificationView(HttpServletRequest request, HttpServletResponse response, User user) {
-        try {
-            request.setAttribute("user", user);
-
-            // Load notifications from database
-            // For now, just set empty/mock data
-            // Logic code ... PhamThanhLuong!
-            request.setAttribute("totalNotifications", 0);
-            request.setAttribute("unreadCount", 0);
-            request.setAttribute("currentPage", 1);
-            request.setAttribute("totalPages", 1);
-            request.getRequestDispatcher("/WEB-INF/views/customer/profile/notification.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("[ERROR] handleNotificationView in ProfileServlet: " + e.getMessage());
         }
     }
 

@@ -56,6 +56,18 @@ public class UserDAO {
                 u.setAuthProvider(rs.getString("AuthProvider"));
                 u.setStatus(rs.getString("Status"));
                 u.setAvatarUrl(rs.getString("AvatarUrl"));
+
+                List<String> roles = new ArrayList<>();
+                String sqlRole = "SELECT RoleCode FROM UserRoles WHERE UserID = ?";
+                try (PreparedStatement psRole = cn.prepareStatement(sqlRole)) {
+                    psRole.setLong(1, u.getUserID());
+                    try (ResultSet rsRole = psRole.executeQuery()) {
+                        while (rsRole.next()) {
+                            roles.add(rsRole.getString("RoleCode"));
+                        }
+                    }
+                }
+                u.setRoles(roles);
                 return u;
             }
         } catch (Exception e) {
@@ -65,54 +77,80 @@ public class UserDAO {
     }
 
     public boolean createAccount(User user) {
-        String sql = "INSERT INTO dbo.Users (Email, FullName, Password, AuthProvider, Status) VALUES (?, ?, ?, ?, 'ACTIVE')";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getFullName());
-            ps.setString(3, user.getPassword());
-            ps.setString(4, user.getAuthProvider());
-            return ps.executeUpdate() == 1;
+        String insertUserSql = "INSERT INTO dbo.Users (Email, FullName, Password, AuthProvider, Status) VALUES (?, ?, ?, ?, 'ACTIVE')";
+        String insertRoleSql = "INSERT INTO dbo.UserRoles (UserID, RoleCode) VALUES (?, 'CUSTOMER')";
+        Connection cn = null;
+        PreparedStatement psUser = null;
+        PreparedStatement psRole = null;
+        ResultSet generatedKeys = null;
+        try {
+            cn = DataSourceProvider.get().getConnection();
+            cn.setAutoCommit(false);
+
+            psUser = cn.prepareStatement(insertUserSql, PreparedStatement.RETURN_GENERATED_KEYS);
+            psUser.setString(1, user.getEmail());
+            psUser.setString(2, user.getFullName());
+            psUser.setString(3, user.getPassword());
+            psUser.setString(4, user.getAuthProvider());
+            int affectedRows = psUser.executeUpdate();
+
+            if (affectedRows == 1) {
+                generatedKeys = psUser.getGeneratedKeys();
+                long userId = -1;
+                if (generatedKeys.next()) {
+                    userId = generatedKeys.getLong(1);
+                }
+                if (userId > 0) {
+                    psRole = cn.prepareStatement(insertRoleSql);
+                    psRole.setLong(1, userId);
+                    psRole.executeUpdate();
+                    cn.commit();
+                    return true;
+                }
+            }
+            cn.rollback();
+            return false;
         } catch (SQLException e) {
             System.err.println("createAccount failed: " + e.getMessage());
-            return false;
         }
+        return false;
     }
 
     /**
      * Get all users with pagination
      */
-    public List<User> getAllUsers(int page, int pageSize) {
-        List<User> users = new ArrayList<>();
-        int offset = (page - 1) * pageSize;
+    // public List<User> getAllUsers(int page, int pageSize) {
+    // List<User> users = new ArrayList<>();
+    // int offset = (page - 1) * pageSize;
 
-        String sql = "SELECT u.UserID, u.Email, u.FullName, "
-                + "u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, "
-                + "STUFF((SELECT ', ' + r.RoleName "
-                + "FROM dbo.UserRoles ur "
-                + "JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode "
-                + "WHERE ur.UserID = u.UserID "
-                + "FOR XML PATH('')), 1, 2, '') as Roles "
-                + "FROM dbo.Users u "
-                + "ORDER BY u.UserID "
-                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+    // String sql = "SELECT u.UserID, u.Email, u.FullName, "
+    // + "u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status,
+    // 'active')))) as Status, u.AvatarUrl, "
+    // + "STUFF((SELECT ', ' + r.RoleName "
+    // + "FROM dbo.UserRoles ur "
+    // + "JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode "
+    // + "WHERE ur.UserID = u.UserID "
+    // + "FOR XML PATH('')), 1, 2, '') as Roles "
+    // + "FROM dbo.Users u "
+    // + "ORDER BY u.UserID "
+    // + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, offset);
-            ps.setInt(2, pageSize);
+    // try (Connection conn = DataSourceProvider.get().getConnection();
+    // PreparedStatement ps = conn.prepareStatement(sql)) {
+    // ps.setInt(1, offset);
+    // ps.setInt(2, pageSize);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    users.add(extractUserFromResultSet(rs));
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error getting all users: " + e.getMessage());
-        }
+    // try (ResultSet rs = ps.executeQuery()) {
+    // while (rs.next()) {
+    // users.add(extractUserFromResultSet(rs));
+    // }
+    // }
+    // } catch (SQLException e) {
+    // System.err.println("Error getting all users: " + e.getMessage());
+    // }
 
-        return users;
-    }
+    // return users;
+    // }
 
     /**
      * Count total number of users
@@ -134,91 +172,95 @@ public class UserDAO {
     /**
      * Search users with filters and pagination
      */
-    public List<User> searchUsers(String keyword, String status, String role, int page, int pageSize) {
-        List<User> users = new ArrayList<>();
-        int offset = (page - 1) * pageSize;
+    // public List<User> searchUsers(String keyword, String status, String role, int
+    // page, int pageSize) {
+    // List<User> users = new ArrayList<>();
+    // int offset = (page - 1) * pageSize;
 
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("SELECT u.UserID, u.Email, u.FullName, ")
-                .append("u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) as Status, u.AvatarUrl, ")
-                .append("STUFF((SELECT ', ' + r.RoleName ")
-                .append("FROM dbo.UserRoles ur ")
-                .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ")
-                .append("WHERE ur.UserID = u.UserID ")
-                .append("FOR XML PATH('')), 1, 2, '') as Roles ")
-                .append("FROM dbo.Users u ");
+    // StringBuilder sqlBuilder = new StringBuilder();
+    // sqlBuilder.append("SELECT u.UserID, u.Email, u.FullName, ")
+    // .append("u.AuthProvider, u.CreatedAt, LOWER(LTRIM(RTRIM(COALESCE(u.Status,
+    // 'active')))) as Status, u.AvatarUrl, ")
+    // .append("STUFF((SELECT ', ' + r.RoleName ")
+    // .append("FROM dbo.UserRoles ur ")
+    // .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ")
+    // .append("WHERE ur.UserID = u.UserID ")
+    // .append("FOR XML PATH('')), 1, 2, '') as Roles ")
+    // .append("FROM dbo.Users u ");
 
-        // Join with roles table if role filter is specified
-        if (!role.isEmpty()) {
-            sqlBuilder.append("JOIN dbo.UserRoles ur ON u.UserID = ur.UserID ")
-                    .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
-        }
+    // // Join with roles table if role filter is specified
+    // if (!role.isEmpty()) {
+    // sqlBuilder.append("JOIN dbo.UserRoles ur ON u.UserID = ur.UserID ")
+    // .append("JOIN dbo.Roles r ON ur.RoleCode = r.RoleCode ");
+    // }
 
-        // Add WHERE clause for filtering
-        boolean hasWhere = false;
+    // // Add WHERE clause for filtering
+    // boolean hasWhere = false;
 
-        // Keyword search (name or email)
-        if (!keyword.isEmpty()) {
-            sqlBuilder.append("WHERE (u.FullName LIKE ? OR u.Email LIKE ?) ");
-            hasWhere = true;
-        }
+    // // Keyword search (name or email)
+    // if (!keyword.isEmpty()) {
+    // sqlBuilder.append("WHERE (u.FullName LIKE ? OR u.Email LIKE ?) ");
+    // hasWhere = true;
+    // }
 
-        // Status filter
-        if (!status.isEmpty()) {
-            sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
-            sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) = LOWER(?) ");
-            hasWhere = true;
-        }
+    // // Status filter
+    // if (!status.isEmpty()) {
+    // sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
+    // sqlBuilder.append("LOWER(LTRIM(RTRIM(COALESCE(u.Status, 'active')))) =
+    // LOWER(?) ");
+    // hasWhere = true;
+    // }
 
-        // Role filter
-        if (!role.isEmpty()) {
-            sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
-            sqlBuilder.append("r.RoleCode = ? ");
-        }
+    // // Role filter
+    // if (!role.isEmpty()) {
+    // sqlBuilder.append(hasWhere ? "AND " : "WHERE ");
+    // sqlBuilder.append("r.RoleCode = ? ");
+    // }
 
-        // Add order by and pagination
-        sqlBuilder.append("ORDER BY u.UserID ")
-                .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+    // // Add order by and pagination
+    // sqlBuilder.append("ORDER BY u.UserID ")
+    // .append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
+    // try (Connection conn = DataSourceProvider.get().getConnection();
+    // PreparedStatement ps = conn.prepareStatement(sqlBuilder.toString())) {
 
-            int paramIndex = 1;
+    // int paramIndex = 1;
 
-            // Set keyword parameters
-            if (!keyword.isEmpty()) {
-                ps.setString(paramIndex++, "%" + keyword + "%");
-                ps.setString(paramIndex++, "%" + keyword + "%");
-            }
+    // // Set keyword parameters
+    // if (!keyword.isEmpty()) {
+    // ps.setString(paramIndex++, "%" + keyword + "%");
+    // ps.setString(paramIndex++, "%" + keyword + "%");
+    // }
 
-            // Set status parameter
-            if (!status.isEmpty()) {
-                System.out.println("Filtering by status: '" + status + "'");
-                ps.setString(paramIndex++, status);
-            }
+    // // Set status parameter
+    // if (!status.isEmpty()) {
+    // System.out.println("Filtering by status: '" + status + "'");
+    // ps.setString(paramIndex++, status);
+    // }
 
-            // Set role parameter
-            if (!role.isEmpty()) {
-                ps.setString(paramIndex++, role);
-            }
+    // // Set role parameter
+    // if (!role.isEmpty()) {
+    // ps.setString(paramIndex++, role);
+    // }
 
-            // Set pagination parameters
-            ps.setInt(paramIndex++, offset);
-            ps.setInt(paramIndex, pageSize);
+    // // Set pagination parameters
+    // ps.setInt(paramIndex++, offset);
+    // ps.setInt(paramIndex, pageSize);
 
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    User user = extractUserFromResultSet(rs);
-                    System.out.println("User ID: " + user.getUserID() + " - Status: '" + user.getStatus() + "'");
-                    users.add(user);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error searching users: " + e.getMessage());
-        }
+    // try (ResultSet rs = ps.executeQuery()) {
+    // while (rs.next()) {
+    // User user = extractUserFromResultSet(rs);
+    // System.out.println("User ID: " + user.getUserID() + " - Status: '" +
+    // user.getStatus() + "'");
+    // users.add(user);
+    // }
+    // }
+    // } catch (SQLException e) {
+    // System.err.println("Error searching users: " + e.getMessage());
+    // }
 
-        return users;
-    }
+    // return users;
+    // }
 
     /**
      * Count users that match search criteria
@@ -370,32 +412,32 @@ public class UserDAO {
      * Helper method to extract User data from ResultSet without accessing
      * non-existent columns
      */
-    private User extractUserFromResultSet(ResultSet rs) throws SQLException {
-        User user = new User();
-        user.setUserID(rs.getLong("UserID"));
-        user.setEmail(rs.getString("Email"));
-        user.setFullName(rs.getString("FullName"));
-        user.setAuthProvider(rs.getString("AuthProvider"));
-        user.setStatus(rs.getString("Status"));
+    // private User extractUserFromResultSet(ResultSet rs) throws SQLException {
+    // User user = new User();
+    // user.setUserID(rs.getLong("UserID"));
+    // user.setEmail(rs.getString("Email"));
+    // user.setFullName(rs.getString("FullName"));
+    // user.setAuthProvider(rs.getString("AuthProvider"));
+    // user.setStatus(rs.getString("Status"));
 
-        // Roles may be null for some queries
-        try {
-            user.setRoles(rs.getString("Roles"));
-        } catch (SQLException e) {
-            // Roles might not be in the result set
-        }
+    // // Roles may be null for some queries
+    // try {
+    // user.setRoles(rs.getString("Roles"));
+    // } catch (SQLException e) {
+    // // Roles might not be in the result set
+    // }
 
-        try {
-            user.setAvatarUrl(rs.getString("AvatarUrl"));
-        } catch (SQLException e) {
-            // AvatarUrl might be null
-        }
+    // try {
+    // user.setAvatarUrl(rs.getString("AvatarUrl"));
+    // } catch (SQLException e) {
+    // // AvatarUrl might be null
+    // }
 
-        Timestamp ts = rs.getTimestamp("CreatedAt");
-        user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
+    // Timestamp ts = rs.getTimestamp("CreatedAt");
+    // user.setCreatedAt(ts != null ? ts.toLocalDateTime() : null);
 
-        return user;
-    }
+    // return user;
+    // }
 
     public User getHashPasswordById(long userId) {
         String sql = "SELECT Password FROM Users WHERE UserID = ?";
