@@ -102,7 +102,7 @@ public class OrderServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else if (path.equals("/order-shop")) {
+        } else if (path.equals("/shop")) {
             try {
                 long orderId = Long.parseLong(req.getParameter("orderId"));
 
@@ -129,7 +129,7 @@ public class OrderServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else if (path.equals("/order-shop/order-detail")) {
+        } else if (path.equals("/detail")) {
             try {
                 long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
 
@@ -383,7 +383,7 @@ public class OrderServlet extends HttpServlet {
                     conn.commit();
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
-                    resp.sendRedirect(req.getContextPath() + "/order/order-shop?orderId=" + order.getOrderId());
+                    resp.sendRedirect(req.getContextPath() + "/order/shop?orderId=" + order.getOrderId());
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (conn != null)
@@ -419,7 +419,12 @@ public class OrderServlet extends HttpServlet {
                         session.setAttribute("toastMsg", "Không thể xác nhận đơn hàng. Vui lòng thử lại.");
                     }
 
-                    resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                    String referer = req.getHeader("Referer");
+                    if (referer != null) {
+                        resp.sendRedirect(referer);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -444,7 +449,12 @@ public class OrderServlet extends HttpServlet {
                         session.setAttribute("toastMsg", "Không thể trả hàng. Vui lòng thử lại.");
                     }
 
-                    resp.sendRedirect(req.getContextPath() + "/order?status=returned");
+                    String referer = req.getHeader("Referer");
+                    if (referer != null) {
+                        resp.sendRedirect(referer);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
