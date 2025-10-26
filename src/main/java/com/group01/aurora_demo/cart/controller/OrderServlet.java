@@ -32,7 +32,6 @@ import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
-import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -60,7 +59,6 @@ public class OrderServlet extends HttpServlet {
     private CartItemDAO cartItemDAO;
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
-    private VoucherValidator voucherValidator;
     private UserVoucherDAO userVoucherDAO;
 
     public OrderServlet() {
@@ -73,7 +71,6 @@ public class OrderServlet extends HttpServlet {
         this.cartItemDAO = new CartItemDAO();
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
-        this.voucherValidator = new VoucherValidator();
         this.userVoucherDAO = new UserVoucherDAO();
     }
 

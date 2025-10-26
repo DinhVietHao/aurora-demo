@@ -65,8 +65,15 @@ public class OrderService {
                     voucherShip != null ? voucherShip.getCode() : null,
                     shopVouchers);
 
+            String fullAddress = String.format(
+                    "%s, %s, %s, %s",
+                    address.getDescription(),
+                    address.getWard(),
+                    address.getDistrict(),
+                    address.getCity());
+
             order.setUserId(user.getId());
-            order.setAddressId(address.getAddressId());
+            order.setAddress(fullAddress);
             order.setVoucherDiscountId(voucherDiscount != null ? voucherDiscount.getVoucherID() : null);
             order.setVoucherShipId(voucherShip != null ? voucherShip.getVoucherID() : null);
             order.setTotalAmount(summary.getTotalProduct());
