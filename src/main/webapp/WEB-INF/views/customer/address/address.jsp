@@ -45,8 +45,7 @@
                             <!-- sidebar profile -->
                             <ul class="nav mb-3 " id="profileTabs" role="tablist">
                                 <li class="nav-item mb-2">
-                                    <a class="nav-link text-dark" id="notify-tab" data-bs-toggle="tab" href="#notify"
-                                        role="tab">
+                                    <a class="nav-link text-dark" href="">
                                         <i class="bi bi-bell me-2"></i> Thông báo
                                     </a>
                                 </li>

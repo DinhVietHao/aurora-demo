@@ -298,27 +298,4 @@ public class AddressDAO {
         return null;
     }
 
-    public boolean canModifyAddress(long userId, long addressId) throws SQLException {
-        String sql = """
-                    SELECT CASE WHEN EXISTS (
-                        SELECT 1
-                        FROM Orders
-                        WHERE UserID = ? AND AddressID = ?
-                          AND OrderStatus NOT IN ('COMPLETED', 'CANCELLED')
-                    ) THEN 0 ELSE 1 END AS CanModify
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, userId);
-            ps.setLong(2, addressId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next())
-                    return rs.getBoolean("CanModify");
-            }
-        }
-
-        return false;
-    }
-
 }
