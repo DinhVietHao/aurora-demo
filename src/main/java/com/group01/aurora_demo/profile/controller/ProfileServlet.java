@@ -1,6 +1,9 @@
 package com.group01.aurora_demo.profile.controller;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.io.PrintWriter;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -11,6 +14,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
+
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +30,7 @@ public class ProfileServlet extends HttpServlet {
 
     private UserDAO userDAO = new UserDAO();
     private EmailService emailService = new EmailService();
+    private NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -40,7 +47,6 @@ public class ProfileServlet extends HttpServlet {
                 action = "profile";
             switch (action) {
                 case "notification":
-                    handleNotificationView(request, response, user);
                     break;
 
                 default:
@@ -173,23 +179,6 @@ public class ProfileServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/customer/profile/profile.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleProfileView\" function of ProfileServlet: " + e.getMessage());
-        }
-    }
-
-    private void handleNotificationView(HttpServletRequest request, HttpServletResponse response, User user) {
-        try {
-            request.setAttribute("user", user);
-
-            // Load notifications from database
-            // For now, just set empty/mock data
-            // Logic code ... PhamThanhLuong!
-            request.setAttribute("totalNotifications", 0);
-            request.setAttribute("unreadCount", 0);
-            request.setAttribute("currentPage", 1);
-            request.setAttribute("totalPages", 1);
-            request.getRequestDispatcher("/WEB-INF/views/customer/profile/notification.jsp").forward(request, response);
-        } catch (Exception e) {
-            System.err.println("[ERROR] handleNotificationView in ProfileServlet: " + e.getMessage());
         }
     }
 
@@ -520,5 +509,24 @@ public class ProfileServlet extends HttpServlet {
             json.put("message", message);
             out.print(json.toString());
         }
+    }
+
+    private String formatTimeAgo(Timestamp createdAt) {
+        if (createdAt == null)
+            return "";
+
+        LocalDateTime created = createdAt.toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = ChronoUnit.MINUTES.between(created, now);
+
+        if (minutes < 1)
+            return "vừa xong";
+        if (minutes < 60)
+            return minutes + " phút trước";
+        if (minutes < 1440)
+            return (minutes / 60) + " giờ trước";
+        if (minutes < 10080)
+            return (minutes / 1440) + " ngày trước";
+        return (minutes / 10080) + " tuần trước";
     }
 }

@@ -75,4 +75,58 @@ public class NotificationDAO {
 
         return list;
     }
+
+    public List<Notification> getNotificationsForCustomer(long userID) throws SQLException {
+        List<Notification> list = new ArrayList<>();
+
+        String sql = """
+                SELECT TOP (50)
+                NotificationID, RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt
+                FROM Notifications
+                WHERE RecipientType = 'CUSTOMER' AND RecipientID = ?
+                ORDER BY CreatedAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, userID);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Notification n = new Notification();
+                    n.setNotificationID(rs.getLong("NotificationID"));
+                    n.setRecipientType(rs.getString("RecipientType"));
+                    n.setRecipientID(rs.getLong("RecipientID"));
+                    n.setType(rs.getString("Type"));
+                    n.setTitle(rs.getString("Title"));
+                    n.setMessage(rs.getString("Message"));
+                    n.setReferenceType(rs.getString("ReferenceType"));
+                    n.setReferenceID(rs.getLong("ReferenceID"));
+                    n.setCreatedAt(rs.getTimestamp("CreatedAt"));
+
+                    // Gán link tương ứng với từng loại thông báo
+                    String link = "#";
+                    switch (n.getType()) {
+                        case "ORDER_SHIPPING":
+                        case "ORDER_CANCELLED":
+                        case "ORDER_CONFIRM":
+                        case "ORDER_RETURNED":
+                        case "ORDER_RETURNED_REJECTED":
+                            link = "/customer/orders?action=detail&orderShopId=" + n.getReferenceID();
+                            break;
+                        default:
+                            link = "#";
+                            break;
+                    }
+
+                    n.setLink(link);
+                    list.add(n);
+                }
+            }
+        }
+
+        return list;
+    }
+
 }
