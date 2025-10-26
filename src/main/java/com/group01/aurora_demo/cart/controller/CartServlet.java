@@ -99,8 +99,6 @@ public class CartServlet extends HttpServlet {
             case "/add": {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
-                    int MAX_CART_ITEMS = 100;
-                    int MAX_QUANTITY_PER_PRODUCT = 20;
                     Product product = productDAO.getBasicProductById(productId);
                     if (product == null) {
                         json.put("success", false);
@@ -132,14 +130,6 @@ public class CartServlet extends HttpServlet {
 
                     if (existingItem != null) {
                         int newQuantity = existingItem.getQuantity() + 1;
-                        if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Quá giới hạn");
-                            json.put("message", "Mỗi sản phẩm chỉ có thể thêm tối đa 20 cái vào giỏ hàng.");
-                            out.print(json.toString());
-                            break;
-                        }
                         if (newQuantity > product.getQuantity()) {
                             json.put("success", false);
                             json.put("type", "warning");
@@ -156,16 +146,6 @@ public class CartServlet extends HttpServlet {
                         json.put("title", "Đã cập nhật");
                         json.put("message", "Đã tăng số lượng sản phẩm trong giỏ hàng.");
                     } else {
-                        int totalItems = cartItemDAO.getDistinctItemCount(user.getId());
-                        if (totalItems >= MAX_CART_ITEMS) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Giỏ hàng đầy");
-                            json.put("message",
-                                    "Bạn chỉ có thể chứa tối đa " + MAX_CART_ITEMS + " sản phẩm trong giỏ hàng.");
-                            out.print(json.toString());
-                            break;
-                        }
                         CartItem newItem = new CartItem();
                         newItem.setUserId(user.getId());
                         newItem.setProductId(productId);
@@ -285,7 +265,6 @@ public class CartServlet extends HttpServlet {
                 try {
                     long cartItemId = Long.parseLong(req.getParameter("cartItemId"));
                     int quantity = Integer.parseInt(req.getParameter("quantity"));
-                    int MAX_QUANTITY_PER_PRODUCT = 20;
                     CartItem cartItem = cartItemDAO.getCartItemById(cartItemId);
                     if (cartItem == null) {
                         json.put("success", false);
@@ -314,14 +293,6 @@ public class CartServlet extends HttpServlet {
                         break;
                     }
 
-                    if (quantity > MAX_QUANTITY_PER_PRODUCT) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Vượt giới hạn");
-                        json.put("message", "Mỗi sản phẩm chỉ có thể mua tối đa " + MAX_QUANTITY_PER_PRODUCT);
-                        out.print(json.toString());
-                        break;
-                    }
                     if (quantity > product.getQuantity()) {
                         json.put("success", false);
                         json.put("type", "warning");

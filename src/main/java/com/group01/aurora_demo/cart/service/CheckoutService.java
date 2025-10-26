@@ -93,7 +93,7 @@ public class CheckoutService {
             }
         }
 
-        double finalAmount = totalProduct + totalShippingFee - shopDiscount - systemDiscount-  systemShippingDiscount;
+        double finalAmount = totalProduct + totalShippingFee - shopDiscount - systemDiscount - systemShippingDiscount;
         return new CheckoutSummaryDTO(totalProduct, shopDiscount, systemDiscount, totalShippingFee,
                 systemShippingDiscount,
                 finalAmount);
@@ -108,7 +108,6 @@ public class CheckoutService {
         for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
             List<CartItem> items = entry.getValue();
             Shop shop = items.get(0).getProduct().getShop();
-
             double shopWeight = items.stream()
                     .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
                     .sum();
@@ -123,8 +122,8 @@ public class CheckoutService {
             }
 
             double fee = this.ghnService.calculateFee(
-                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
-
+                    shop.getPickupAddress().getDistrictId(), shop.getPickupAddress().getWardCode(),
+                    address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
             totalShipping += fee;
         }
 
@@ -156,11 +155,8 @@ public class CheckoutService {
             }
 
             double fee = this.ghnService.calculateFee(
-                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
-            System.out.printf(">>>>>>>>>>>>>>>>>>>>>>>>Shop #%d - Weight: %.2f - Fee: %.2f%n", shopId, shopWeight, fee);
-            System.out.printf(
-                    ">>>>>>>>>>>>>>>>>GHN request → fromDistrict: %d, fromWard: %s, toDistrict: %d, toWard: %s, weight: %.2f%n",
-                    1572, "550110", address.getDistrictId(), address.getWardCode(), shopWeight);
+                    shop.getPickupAddress().getDistrictId(), shop.getPickupAddress().getWardCode(),
+                    address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
             shopShippingFees.put(shopId, fee);
         }
 
