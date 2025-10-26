@@ -1,7 +1,6 @@
 package com.group01.aurora_demo.catalog.controller;
 
 import com.group01.aurora_demo.catalog.model.ReviewImage;
-import com.group01.aurora_demo.catalog.dao.AuthorDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.catalog.dao.ReviewDAO;
@@ -22,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @WebServlet("/home")
-public class HomeServlet extends HttpServlet {
+public class HomeServlet extends NotificationServlet {
 
     private ProductDAO productDAO = new ProductDAO();
     private UserDAO userDAO = new UserDAO();

@@ -1,5 +1,6 @@
 package com.group01.aurora_demo.shop.dao;
 
+import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.model.Shop;
@@ -20,7 +21,7 @@ public class ShopDAO {
         return false;
     }
 
-    public boolean createShop(Shop shop, Address address) {
+    public boolean createShop(Shop shop, Address address, User user) {
         String addressSql = "INSERT INTO Addresses (RecipientName, Phone, City, ProvinceID, District, DistrictID, Ward, WardCode, Description, CreatedAt) "
                 +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, SYSUTCDATETIME())";
@@ -30,6 +31,7 @@ public class ShopDAO {
                 +
                 "VALUES (?, ?, 0, ?, ?, SYSUTCDATETIME(), ?, ?, ?)";
 
+        String addSellerRole = "INSERT INTO UserRoles (UserID, RoleCode) VALUES (?, 'SELLER')";
         try (Connection conn = DataSourceProvider.get().getConnection()) {
             PreparedStatement addrStmt = conn.prepareStatement(addressSql, Statement.RETURN_GENERATED_KEYS);
             addrStmt.setString(1, address.getRecipientName());
@@ -61,7 +63,11 @@ public class ShopDAO {
                 shopStmt.setString(6, shop.getInvoiceEmail());
                 shopStmt.setString(7, shop.getAvatarUrl());
 
-                return shopStmt.executeUpdate() == 1;
+                if (shopStmt.executeUpdate() == 1) {
+                    PreparedStatement roleStmt = conn.prepareStatement(addSellerRole);
+                    roleStmt.setLong(1, user.getUserID());
+                    return roleStmt.executeUpdate() == 1;
+                }
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
