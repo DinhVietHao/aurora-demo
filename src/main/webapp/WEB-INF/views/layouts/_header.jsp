@@ -140,7 +140,8 @@
                                                                         </c:otherwise>
                                                                     </c:choose>
                                                                 </c:set>
-                                                                <a href="${ctx}${n.link}" class="cus-noti-item">
+                                                                <a href="${ctx}${n.link}"
+                                                                    class="cus-noti-item notification-dropdown-item">
                                                                     <div
                                                                         class="cus-noti-icon ${fn:split(iconClass, ' ')[0]}">
                                                                         <i
@@ -179,16 +180,23 @@
 
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
-                        // Add animation when dropdown opens
                         const notificationDropdown = document.getElementById('notificationDropdown');
                         if (notificationDropdown) {
                             notificationDropdown.addEventListener('show.bs.dropdown', function () {
                                 const items = document.querySelectorAll('.notification-dropdown-item');
                                 items.forEach((item, index) => {
-                                    item.style.animation = 'slideInRight 0.3s ease-out';
-                                    item.style.animationDelay = (index * 0.05) + 's';
+                                    item.classList.add('slide-in-right');
+                                    item.style.animationDelay = `${index * 0.05}s`;
+                                });
+                            });
+                            notificationDropdown.addEventListener('hide.bs.dropdown', function () {
+                                const items = document.querySelectorAll('.notification-dropdown-item');
+                                items.forEach(item => {
+                                    item.classList.remove('slide-in-right');
+                                    item.style.animationDelay = '';
                                 });
                             });
                         }
                     });
+
                 </script>
