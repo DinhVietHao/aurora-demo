@@ -660,8 +660,13 @@
 .notification-dropdown-list {
     max-height: 400px;
     overflow-y: auto;
+    overflow-x: hidden;
     background: #fff;
     padding: 0;
+    will-change: transform;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 /* Notification item */
@@ -698,6 +703,12 @@
     align-items: center;
     justify-content: center;
     font-size: 1.3rem;
+}
+
+.notification-dropdown-list,
+.cus-noti-item,
+.cus-noti-icon {
+    box-sizing: border-box;
 }
 
 .cus-icon-purple {
@@ -777,6 +788,14 @@
     display: block;
 }
 
+.notification-dropdown-item {
+    min-height: 56px;
+    animation-fill-mode: backwards;
+    width: 100%;
+    box-sizing: border-box;
+    will-change: transform, opacity;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
     .cus-noti-item {
@@ -799,4 +818,19 @@
     .cus-noti-time {
         font-size: 0.78rem;
     }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translate3d(20px, 0, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out both;
 }
