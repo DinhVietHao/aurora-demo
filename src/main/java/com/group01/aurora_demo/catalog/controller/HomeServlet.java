@@ -21,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @WebServlet("/home")
-public class HomeServlet extends BaseServlet {
+public class HomeServlet extends NotificationServlet {
 
     private ProductDAO productDAO = new ProductDAO();
     private UserDAO userDAO = new UserDAO();

@@ -271,6 +271,7 @@ public class CartItemDAO {
                      p.Weight,
                 	 s.ShopID,
                      s.Name AS ShopName,
+                     s.PickupAddressID,
                      img.Url AS ImageUrl
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
@@ -305,7 +306,10 @@ public class CartItemDAO {
                 shop.setShopId(rs.getLong("ShopID"));
                 shop.setName(rs.getString("ShopName"));
 
-                Address shopAddress = this.addressDAO.getAddressByShopId(rs.getLong("ShopID"));
+                Address shopAddress = this.addressDAO.getAddressByShopId(shop.getShopId());
+                if (shopAddress == null) {
+                    System.err.println("Shop " + shop.getShopId() + " chưa cấu hình Pickup Address!");
+                }
                 shop.setPickupAddress(shopAddress);
                 product.setShop(shop);
 

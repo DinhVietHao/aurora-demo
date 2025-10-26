@@ -1,7 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8" %>
     <%@ taglib prefix="c" uri="jakarta.tags.core" %>
-        <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-            <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+        <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+            <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
                 <header class="header">
@@ -25,7 +25,6 @@
                                     </form>
                                 </div>
                             </div>
-
                             <div class="col-3 col-md-5">
                                 <nav class="header-nav">
                                     <a href="${ctx}/" class="header-nav-item header-mobile-disable">
@@ -44,7 +43,6 @@
                                         </c:when>
 
                                         <c:otherwise>
-
                                             <div class="dropdown">
                                                 <button class="header-user dropdown-toggle" type="button"
                                                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -53,7 +51,8 @@
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông
-                                                            tin tài
+                                                            tin
+                                                            tài
                                                             khoản</a></li>
                                                     <li><a class="dropdown-item" href="<c:url value='/order'/>">Đơn hàng
                                                             của
@@ -80,6 +79,8 @@
                                             </div>
                                         </c:otherwise>
                                     </c:choose>
+
+                                    <!-- Cart Icon -->
                                     <a href="<c:url value='/cart'/>" class="header-cart">
                                         <i class="bi bi-cart3"></i>
                                         <span class="badge" id="cartCountBadge">
@@ -87,16 +88,82 @@
                                                 value="${sessionScope.cartCount != null ? sessionScope.cartCount : 0}" />
                                         </span>
                                     </a>
-                                    <a href="#" class="header-notification" data-bs-toggle="offcanvas"
-                                        data-bs-target="#cusNotificationOffcanvas"
-                                        aria-controls="cusNotificationOffcanvas">
-                                        <i class="bi bi-bell"></i>
-                                        <c:if test="${sessionScope.unreadNotificationCount > 0}">
-                                            <span class="badge" id="notificationCountBadge">
-                                                <c:out value="${sessionScope.unreadNotificationCount}" />
-                                            </span>
-                                        </c:if>
-                                    </a>
+
+                                    <!-- Notification Bell -->
+                                    <c:if test="${not empty sessionScope.AUTH_USER 
+                                            and sessionScope.AUTH_USER.roles != null 
+                                            and sessionScope.AUTH_USER.roles.contains('CUSTOMER')}">
+                                        <div class="dropdown notification-dropdown">
+                                            <button class="header-notification" type="button" id="notificationDropdown"
+                                                data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                                aria-expanded="false">
+                                                <i class="bi bi-bell"></i>
+                                                <!-- Mock badge count -->
+                                                <span class="badge" id="notificationCountBadge">
+                                                    <c:out value="${totalNotifications}" default="0" />
+                                                </span>
+                                            </button>
+
+                                            <!-- Notification Dropdown Menu -->
+                                            <div class="dropdown-menu dropdown-menu-end notification-dropdown-menu"
+                                                aria-labelledby="notificationDropdown">
+
+                                                <!-- Header -->
+                                                <div class="notification-dropdown-header">
+                                                    <h6 class="mb-0">
+                                                        <i class="bi bi-bell-fill text-primary me-2"></i>
+                                                        Thông báo
+                                                    </h6>
+                                                </div>
+
+                                                <!-- Notification List -->
+                                                <div class="notification-dropdown-list" id="notificationDropdownList">
+                                                    <c:choose>
+                                                        <c:when test="${not empty listNotifications}">
+                                                            <c:forEach var="n" items="${listNotifications}">
+                                                                <c:set var="iconClass">
+                                                                    <c:choose>
+                                                                        <c:when test="${n.type == 'ORDER_CONFIRM'}">
+                                                                            cus-icon-purple bi-bag</c:when>
+                                                                        <c:when test="${n.type == 'ORDER_SHIPPING'}">
+                                                                            cus-icon-success bi-truck</c:when>
+                                                                        <c:when test="${n.type == 'ORDER_CANCELLED'}">
+                                                                            cus-icon-danger bi-x-circle</c:when>
+                                                                        <c:when test="${n.type == 'ORDER_RETURNED'}">
+                                                                            cus-icon-warning bi-arrow-return-left
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${n.type == 'ORDER_RETURNED_REJECTED'}">
+                                                                            cus-icon-danger bi-arrow-repeat</c:when>
+                                                                        <c:otherwise>cus-icon-secondary bi-bell
+                                                                        </c:otherwise>
+                                                                    </c:choose>
+                                                                </c:set>
+                                                                <a href="${ctx}${n.link}" class="cus-noti-item">
+                                                                    <div
+                                                                        class="cus-noti-icon ${fn:split(iconClass, ' ')[0]}">
+                                                                        <i
+                                                                            class="bi ${fn:split(iconClass, ' ')[1]}"></i>
+                                                                    </div>
+                                                                    <div class="cus-noti-text flex-grow-1">
+                                                                        <div class="cus-title">${n.title}</div>
+                                                                        <div class="cus-message">${n.message}</div>
+                                                                        <div class="cus-noti-time">${n.timeAgo}</div>
+                                                                    </div>
+                                                                </a>
+                                                            </c:forEach>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="notification-empty-dropdown text-center py-4">
+                                                                <i class="bi bi-bell-slash"></i>
+                                                                <p class="mb-0">Chưa có thông báo</p>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </c:if>
                                 </nav>
                             </div>
                         </div>
@@ -109,153 +176,18 @@
                     <jsp:include page="/WEB-INF/views/auth/_modals.jsp" />
                 </header>
 
-
-                <style>
-                    /* Offcanvas vùng thông báo */
-                    #cusNotificationOffcanvas.offcanvas {
-                        top: 70px;
-                        border-top-left-radius: 1rem;
-                        border-top-right-radius: 1rem;
-                        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-                    }
-
-                    #cusNotificationOffcanvas .offcanvas-header {
-                        background-color: #f8f9fa;
-                        padding: 1rem 1.25rem;
-                    }
-
-                    #cusNotificationOffcanvas .offcanvas-title {
-                        font-weight: 600;
-                        color: #333;
-                    }
-
-                    /* Item thông báo */
-                    .cus-noti-item {
-                        display: flex;
-                        align-items: flex-start;
-                        padding: 0.9rem 1.2rem;
-                        border-bottom: 1px solid #f1f1f1;
-                        text-decoration: none;
-                        transition: background-color 0.2s ease;
-                    }
-
-                    .cus-noti-item:hover {
-                        background-color: #f8f9fa;
-                    }
-
-                    /* Icon tròn màu */
-                    .cus-noti-icon {
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-right: 12px;
-                        flex-shrink: 0;
-                    }
-
-                    .cus-noti-icon i {
-                        font-size: 18px;
-                        color: #fff;
-                    }
-
-                    /* Màu từng loại */
-                    .cus-icon-success {
-                        background-color: #28a745;
-                    }
-
-                    .cus-icon-primary {
-                        background-color: #0d6efd;
-                    }
-
-                    .cus-icon-danger {
-                        background-color: #dc3545;
-                    }
-
-                    .cus-icon-warning {
-                        background-color: #ffc107;
-                        color: #333 !important;
-                    }
-
-                    .cus-icon-purple {
-                        background-color: #6f42c1;
-                    }
-
-                    .cus-icon-secondary {
-                        background-color: #6c757d;
-                    }
-
-                    /* Nội dung thông báo */
-                    .cus-noti-text .cus-title {
-                        font-weight: 600;
-                        color: #212529;
-                        margin-bottom: 2px;
-                    }
-
-                    .cus-noti-text .cus-message {
-                        font-size: 0.9rem;
-                        color: #555;
-                    }
-
-                    .cus-noti-time {
-                        font-size: 0.8rem;
-                        color: #999;
-                        margin-top: 2px;
-                    }
-
-                    .cus-empty {
-                        padding: 3rem 1rem;
-                        text-align: center;
-                        color: #888;
-                    }
-                </style>
-
-                <div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="cusNotificationOffcanvas"
-                    aria-labelledby="cusNotificationOffcanvasLabel">
-                    <div class="offcanvas-header border-bottom">
-                        <h5 class="offcanvas-title" id="cusNotificationOffcanvasLabel">
-                            <i class="bi bi-bell me-2"></i>Thông báo gần đây
-                        </h5>
-                        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"
-                            aria-label="Close"></button>
-                    </div>
-
-                    <div class="offcanvas-body p-0">
-                        <div class="list-group list-group-flush">
-                            <c:forEach var="n" items="${listNotifications}">
-                                <c:set var="iconClass">
-                                    <c:choose>
-                                        <c:when test="${n.type == 'ORDER_CONFIRM'}">cus-icon-purple bi-bag</c:when>
-                                        <c:when test="${n.type == 'ORDER_SHIPPING'}">cus-icon-success bi-truck</c:when>
-                                        <c:when test="${n.type == 'ORDER_CANCELLED'}">cus-icon-danger bi-x-circle
-                                        </c:when>
-                                        <c:when test="${n.type == 'ORDER_RETURNED'}">cus-icon-warning
-                                            bi-arrow-return-left</c:when>
-                                        <c:when test="${n.type == 'ORDER_RETURNED_REJECTED'}">cus-icon-danger
-                                            bi-arrow-repeat</c:when>
-                                        <c:otherwise>cus-icon-secondary bi-bell</c:otherwise>
-                                    </c:choose>
-                                </c:set>
-
-                                <a href="${ctx}${n.link}" class="cus-noti-item">
-                                    <div class="cus-noti-icon ${fn:split(iconClass, ' ')[0]}">
-                                        <i class="bi ${fn:split(iconClass, ' ')[1]}"></i>
-                                    </div>
-                                    <div class="cus-noti-text flex-grow-1">
-                                        <div class="cus-title">${n.title}</div>
-                                        <div class="cus-message">${n.message}</div>
-                                        <div class="cus-noti-time">${n.timeAgo}</div>
-                                    </div>
-                                </a>
-                            </c:forEach>
-
-                            <c:if test="${empty listNotifications}">
-                                <div class="cus-empty">
-                                    <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
-                                    Chưa có thông báo nào
-                                </div>
-                            </c:if>
-                        </div>
-                    </div>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        // Add animation when dropdown opens
+                        const notificationDropdown = document.getElementById('notificationDropdown');
+                        if (notificationDropdown) {
+                            notificationDropdown.addEventListener('show.bs.dropdown', function () {
+                                const items = document.querySelectorAll('.notification-dropdown-item');
+                                items.forEach((item, index) => {
+                                    item.style.animation = 'slideInRight 0.3s ease-out';
+                                    item.style.animationDelay = (index * 0.05) + 's';
+                                });
+                            });
+                        }
+                    });
+                </script>

@@ -249,7 +249,7 @@ public class ShopServlet extends HttpServlet {
             shop.setOwnerUserId(user.getId());
             shop.setInvoiceEmail(invoiceEmail);
 
-            if (shopDAO.createShop(shop, pickupAddress)) {
+            if (shopDAO.createShop(shop, pickupAddress, user)) {
                 json.put("success", true);
                 json.put("message", "Đăng ký shop thành công! Chờ phê duyệt.");
             } else {

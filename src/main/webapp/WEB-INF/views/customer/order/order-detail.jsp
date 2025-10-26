@@ -85,9 +85,12 @@
                                                 <c:forEach var="orderItem" items="${orderItems}">
                                                     <div class="order-detail__item row align-items-center mb-3">
                                                         <div class="order-detail__image col-md-2 col-4">
-                                                            <img src="${ctx}/assets/images/catalog/products/${orderItem.imageUrl}"
-                                                                alt="${orderItem.productName}"
-                                                                class="order-detail__img">
+                                                            <a
+                                                                href="${ctx}/home?action=detail&id=${orderItem.productId}">
+                                                                <img src="${ctx}/assets/images/catalog/products/${orderItem.imageUrl}"
+                                                                    alt="${orderItem.productName}"
+                                                                    class="order-detail__img">
+                                                            </a>
                                                         </div>
 
                                                         <div class="order-detail__info col-md-7 col-8">

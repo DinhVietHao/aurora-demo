@@ -46,9 +46,6 @@ public class ProfileServlet extends HttpServlet {
             if (action == null)
                 action = "profile";
             switch (action) {
-                case "notification":
-                    break;
-
                 default:
                     handleProfileView(request, response, user);
                     break;

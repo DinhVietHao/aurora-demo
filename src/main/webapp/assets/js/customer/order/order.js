@@ -6,8 +6,6 @@ btnCancelOrder.forEach((btn) => {
   });
 });
 
-
-
 const btnConfirmOrder = document.querySelectorAll(".btn-confirm-order");
 btnConfirmOrder.forEach((btn) => {
   btn.addEventListener("click", function () {
@@ -42,7 +40,7 @@ document.querySelectorAll(".btnRepurchase").forEach((btn) => {
           if (cartCountBadge) {
             cartCountBadge.innerText = data.cartCount;
           }
-          window.location.href = "/checkout";
+          window.location.href = "/cart";
         } else {
           if (
             data.messages &&
@@ -82,3 +80,47 @@ document.querySelectorAll(".btnRepurchase").forEach((btn) => {
       });
   });
 });
+// Product Reviews
+const fileInput = document.getElementById("fileInput");
+const previewImages = document.getElementById("previewImages");
+
+fileInput.addEventListener("change", () => {
+  previewImages.innerHTML = "";
+  console.dir(fileInput);
+  const files = Array.from(fileInput.files);
+
+  files.forEach((file, index) => {
+    const imgDiv = document.createElement("div");
+    imgDiv.className = "position-relative";
+    imgDiv.style.width = "80px";
+    imgDiv.style.height = "80px";
+
+    const img = document.createElement("img");
+    img.src = `./assets/images/${file.name}`;
+    img.style.width = "100%";
+    img.style.height = "100%";
+    img.style.objectFit = "cover";
+    img.className = "rounded";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.innerHTML = "&times;";
+    removeBtn.className = "btn btn-sm btn-danger position-absolute top-0 end-0";
+    removeBtn.style.padding = "0 5px";
+    removeBtn.addEventListener("click", () => {
+      files.splice(index, 1);
+      updateFileList(files);
+      imgDiv.remove();
+    });
+
+    imgDiv.appendChild(removeBtn);
+    imgDiv.appendChild(img);
+    previewImages.appendChild(imgDiv);
+  });
+});
+
+function updateFileList(files) {
+  const dataTransfer = new DataTransfer();
+  files.forEach((file) => dataTransfer.items.add(file));
+  fileInput.files = dataTransfer.files;
+}
+//End Product Reviews

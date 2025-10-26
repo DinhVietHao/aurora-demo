@@ -1,6 +1,7 @@
 package com.group01.aurora_demo.auth.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class User {
 
@@ -12,7 +13,7 @@ public class User {
     private LocalDateTime createdAt;
     private String status = "ACTIVE";
     private String avatarUrl;
-    private String roles;
+    private List<String> roles;
 
     public long getUserID() {
         return userID;
@@ -98,11 +99,11 @@ public class User {
         this.avatarUrl = avatarUrl;
     }
 
-    public String getRoles() {
+    public List<String> getRoles() {
         return roles;
     }
 
-    public void setRoles(String roles) {
+    public void setRoles(List<String> roles) {
         this.roles = roles;
     }
 }

@@ -728,7 +728,6 @@ public class OrderDAO {
                     SELECT
                         OrderID,
                         UserID,
-                        AddressID,
                         VoucherDiscountID,
                         VoucherShipID,
                         TotalAmount,
@@ -750,7 +749,6 @@ public class OrderDAO {
                     Order order = new Order();
                     order.setOrderId(rs.getLong("OrderID"));
                     order.setUserId(rs.getLong("UserID"));
-                    order.setAddress(rs.getString("Address"));
                     order.setVoucherDiscountId(
                             rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
                     order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
@@ -777,7 +775,6 @@ public class OrderDAO {
                     SELECT
                         OrderID,
                         UserID,
-                        AddressID,
                         VoucherDiscountID,
                         VoucherShipID,
                         TotalAmount,
@@ -798,7 +795,6 @@ public class OrderDAO {
                     Order order = new Order();
                     order.setOrderId(rs.getLong("OrderID"));
                     order.setUserId(rs.getLong("UserID"));
-                    order.setAddress(rs.getString("AddressID"));
                     order.setVoucherDiscountId(
                             rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
                     order.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);

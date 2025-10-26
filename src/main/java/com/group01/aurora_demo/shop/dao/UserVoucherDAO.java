@@ -21,7 +21,7 @@ public class UserVoucherDAO {
     }
 
     public int getUserVoucherUsageCount(Long userId, Long voucherId) {
-        String sql = "SELECT COUNT(*) FROM UserVouchers WHERE UserID = ? AND VoucherID = ? ";
+        String sql = "SELECT COUNT(*) FROM UserVouchers WHERE UserID = ? AND VoucherID = ? AND [Status] = 'USED'";
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
@@ -38,9 +38,14 @@ public class UserVoucherDAO {
 
     public boolean cancelUserVoucher(Connection conn, long voucherId, long userId) {
         String sql = """
-                    UPDATE UserVouchers
-                    SET Status = 'CANCELLED'
+                UPDATE UserVouchers
+                SET Status = 'CANCELLED'
+                WHERE UserVoucherID = (
+                    SELECT TOP 1 UserVoucherID
+                    FROM UserVouchers
                     WHERE VoucherID = ? AND UserID = ?
+                    ORDER BY UserVoucherID DESC
+                )
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {

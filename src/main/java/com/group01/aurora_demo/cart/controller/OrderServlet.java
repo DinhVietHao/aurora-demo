@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -35,17 +36,20 @@ import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/order/*")
@@ -60,6 +64,7 @@ public class OrderServlet extends HttpServlet {
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
+    private EmailService emailService;
 
     public OrderServlet() {
         this.orderService = new OrderService();
@@ -72,6 +77,7 @@ public class OrderServlet extends HttpServlet {
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
+        this.emailService = new EmailService();
     }
 
     @Override
@@ -147,6 +153,26 @@ public class OrderServlet extends HttpServlet {
                     this.orderDAO.updateOrderStatus(orderId, "PENDING");
                     this.orderShopDAO.updateOrderShopStatusByOrderId(orderId, "PENDING");
                     this.paymentDAO.updatePaymentStatus(orderId, "SUCCESS", transactionNo);
+
+                    try {
+
+                        Order order = this.orderDAO.getOrderById(orderId);
+                        List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
+                        req.setAttribute("order", order);
+                        req.setAttribute("orderShops", orderShops);
+
+                        String html = renderJSPToString(req, resp,
+                                "/WEB-INF/views/customer/order/order_confirmation.jsp");
+
+                        String subject = "Xác nhận đơn hàng #" + order.getOrderId() + " - Aurora";
+                        this.emailService.sendHtml(user.getEmail(), subject, html);
+
+                        System.out.println("Email xác nhận đã gửi tới " + user.getEmail());
+                    } catch (Exception mailEx) {
+                        mailEx.printStackTrace();
+                        System.err.println("Gửi email xác nhận thất bại!");
+                    }
+
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg",
                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
@@ -431,9 +457,6 @@ public class OrderServlet extends HttpServlet {
                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
                     List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
 
-                    int MAX_CART_ITEMS = 100;
-                    int MAX_QUANTITY_PER_PRODUCT = 20;
-
                     List<String> errors = new ArrayList<>();
 
                     for (OrderItem item : items) {
@@ -458,11 +481,6 @@ public class OrderServlet extends HttpServlet {
 
                         if (existingItem != null) {
                             int newQuantity = existingItem.getQuantity() + item.getQuantity();
-                            if (newQuantity > MAX_QUANTITY_PER_PRODUCT) {
-                                errors.add("Sản phẩm '" + product.getTitle()
-                                        + "' chỉ có thể thêm tối đa 20 cái vào giỏ hàng.");
-                                continue;
-                            }
                             if (newQuantity > product.getQuantity()) {
                                 errors.add("Sản phẩm '" + product.getTitle()
                                         + "' không đủ số lượng để thêm vào giỏ hàng.");
@@ -471,11 +489,6 @@ public class OrderServlet extends HttpServlet {
                             existingItem.setQuantity(newQuantity);
                             cartItemDAO.updateQuantity(existingItem);
                         } else {
-                            int totalItems = cartItemDAO.getDistinctItemCount(user.getId());
-                            if (totalItems >= MAX_CART_ITEMS) {
-                                errors.add("Giỏ hàng đã đầy, không thể thêm sản phẩm '" + product.getTitle() + "'.");
-                                continue;
-                            }
                             CartItem newItem = new CartItem();
                             newItem.setUserId(user.getId());
                             newItem.setProductId(item.getProductId());
@@ -546,4 +559,24 @@ public class OrderServlet extends HttpServlet {
             e.printStackTrace();
         }
     }
+
+    public String renderJSPToString(HttpServletRequest req, HttpServletResponse resp, String jspPath)
+            throws ServletException, IOException {
+
+        StringWriter stringWriter = new StringWriter();
+        RequestDispatcher dispatcher = req.getRequestDispatcher(jspPath);
+
+        HttpServletResponseWrapper responseWrapper = new HttpServletResponseWrapper(resp) {
+            private final PrintWriter writer = new PrintWriter(stringWriter);
+
+            @Override
+            public PrintWriter getWriter() {
+                return writer;
+            }
+        };
+
+        dispatcher.include(req, responseWrapper);
+        return stringWriter.toString();
+    }
+
 }
