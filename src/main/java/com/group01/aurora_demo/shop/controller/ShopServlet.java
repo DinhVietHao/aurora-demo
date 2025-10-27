@@ -9,12 +9,15 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.shop.model.DailyRevenue;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpSession;
 import java.time.temporal.ChronoUnit;
 import jakarta.servlet.http.Part;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.json.JSONObject;
 import java.io.PrintWriter;
@@ -52,11 +55,40 @@ public class ShopServlet extends HttpServlet {
                 request.getRequestDispatcher("/WEB-INF/views/shop/registerShop.jsp").forward(request, response);
             } else if (action.equalsIgnoreCase("dashboard")) {
                 long shopId = shopDAO.getShopIdByUserId(user.getId());
+                shop = shopDAO.getShopDashboard(shopId);
+
+                LocalDate today = LocalDate.now();
+                LocalDate defaultStart = today.minusDays(6);
+                String startParam = request.getParameter("startDate");
+                String endParam = request.getParameter("endDate");
+
+                LocalDate startDate = (startParam != null && !startParam.isEmpty()) ? LocalDate.parse(startParam)
+                        : defaultStart;
+                LocalDate endDate = (endParam != null && !endParam.isEmpty()) ? LocalDate.parse(endParam) : today;
+
+                if (endDate.isAfter(today)) {
+                    endDate = today;
+                }
+
+                List<DailyRevenue> revenueList = shopDAO.getRevenueRange(shopId, startDate, endDate);
+                long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
+                if (daysBetween > 31) {
+                    request.setAttribute("warning",
+                            "Khoảng thời gian lớn hơn 31 ngày — biểu đồ có thể dài hơn bình thường.");
+                }
+
                 List<Notification> notifications = notificationDAO.getNotificationsForShop(shopId);
                 for (Notification n : notifications) {
                     n.setTimeAgo(formatTimeAgo(n.getCreatedAt()));
                 }
+
+                request.setAttribute("shop", shop);
+                request.setAttribute("now", java.sql.Date.valueOf(java.time.LocalDate.now()));
                 request.setAttribute("notifications", notifications);
+                request.setAttribute("revenueData", revenueList);
+                request.setAttribute("startDate", startDate);
+                request.setAttribute("endDate", endDate);
+
                 request.getRequestDispatcher("/WEB-INF/views/shop/shopDashboard.jsp").forward(request, response);
             } else if (action.equalsIgnoreCase("shopProfile")) {
                 shop = shopDAO.getShopByUserId(user.getId());

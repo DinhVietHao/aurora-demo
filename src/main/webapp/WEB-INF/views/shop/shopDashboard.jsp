@@ -52,9 +52,12 @@
                                                             <i class="bi bi-graph-up"></i>
                                                         </div>
                                                         <div class="ms-3">
-                                                            <div class="stats-label">Tổng quan</div>
-                                                            <div class="stats-value">15,420,000đ</div>
-                                                            <div class="stats-change positive">+12.5%</div>
+                                                            <div class="stats-label">Tổng doanh thu</div>
+                                                            <div class="stats-value">
+                                                                <fmt:formatNumber value="${shop.totalRevenue}"
+                                                                    type="currency" currencySymbol="₫"
+                                                                    maxFractionDigits="0" groupingUsed="true" />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -69,9 +72,8 @@
                                                             <i class="bi bi-cart-check"></i>
                                                         </div>
                                                         <div class="ms-3">
-                                                            <div class="stats-label">Đơn hàng mới</div>
-                                                            <div class="stats-value">156</div>
-                                                            <div class="stats-change positive">+8.2%</div>
+                                                            <div class="stats-label">Tổng đơn hàng</div>
+                                                            <div class="stats-value">${shop.totalOrders}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -86,9 +88,8 @@
                                                             <i class="bi bi-people"></i>
                                                         </div>
                                                         <div class="ms-3">
-                                                            <div class="stats-label">Sản phẩm</div>
-                                                            <div class="stats-value">89</div>
-                                                            <div class="stats-change negative">-2.1%</div>
+                                                            <div class="stats-label">Sản phẩm đang bán</div>
+                                                            <div class="stats-value">${shop.totalProducts}</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -103,9 +104,8 @@
                                                             <i class="bi bi-star"></i>
                                                         </div>
                                                         <div class="ms-3">
-                                                            <div class="stats-label">Đánh giá TB</div>
-                                                            <div class="stats-value">4.8/5</div>
-                                                            <div class="stats-change neutral">-</div>
+                                                            <div class="stats-label">Đánh giá trung bình</div>
+                                                            <div class="stats-value">${shop.avgRating}/5</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -113,22 +113,46 @@
                                         </div>
                                     </div>
 
-                                    <!-- Charts and Activity Row -->
+                                    <!-- Chart and Notifications -->
                                     <div class="row">
                                         <div class="col-xl-8">
                                             <div class="card mb-4">
-                                                <div class="card-header">
-                                                    <i class="bi bi-bar-chart me-1"></i>
-                                                    Doanh thu 7 ngày qua
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <i class="bi bi-bar-chart me-1"></i>
+                                                        Doanh thu
+                                                    </div>
+
+                                                    <!-- Bộ lọc thời gian -->
+                                                    <form method="get" action="${ctx}/shop"
+                                                        class="d-flex align-items-center gap-2">
+                                                        <input type="hidden" name="action" value="dashboard" />
+                                                        <label>Từ:</label>
+                                                        <input type="date" name="startDate"
+                                                            class="form-control form-control-sm" value="${startDate}"
+                                                            max="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>" />
+                                                        <label>Đến:</label>
+                                                        <input type="date" name="endDate"
+                                                            class="form-control form-control-sm" value="${endDate}"
+                                                            max="<fmt:formatDate value='${now}' pattern='yyyy-MM-dd'/>" />
+                                                        <button type="submit"
+                                                            class="btn btn-primary btn-sm">Xem</button>
+                                                    </form>
                                                 </div>
                                                 <div class="card-body">
-                                                    <div class="chart-placeholder">
-                                                        <div class="text-center py-5">
-                                                            <i class="bi bi-bar-chart-line display-1 text-muted"></i>
-                                                            <p class="text-muted mt-3">Biểu đồ doanh thu sẽ hiển thị tại
-                                                                đây</p>
-                                                        </div>
-                                                    </div>
+                                                    <c:choose>
+                                                        <c:when test="${not empty revenueData}">
+                                                            <canvas id="revenueChart" height="120"></canvas>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="text-center py-5">
+                                                                <i
+                                                                    class="bi bi-bar-chart-line display-1 text-muted"></i>
+                                                                <p class="text-muted mt-3">Chưa có dữ liệu doanh thu</p>
+                                                            </div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </div>
                                         </div>
@@ -223,8 +247,64 @@
                             <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                         </div>
                     </div>
-
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+                    <c:if test="${not empty revenueData}">
+                        <script>
+                            const revenueLabels = [
+                                <c:forEach var="r" items="${revenueData}" varStatus="loop">
+                                    "${r.date}"<c:if test="${!loop.last}">,</c:if>
+                                </c:forEach>
+                            ];
+                            const revenueValues = [
+                                <c:forEach var="r" items="${revenueData}" varStatus="loop">
+                                    ${r.revenue}<c:if test="${!loop.last}">,</c:if>
+                                </c:forEach>
+                            ];
+
+                            document.addEventListener("DOMContentLoaded", function () {
+                                const ctx = document.getElementById('revenueChart').getContext('2d');
+                                new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: revenueLabels,
+                                        datasets: [{
+                                            label: 'Doanh thu (₫)',
+                                            data: revenueValues,
+                                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    callback: function (value) {
+                                                        return value.toLocaleString('vi-VN') + ' ₫';
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        plugins: {
+                                            legend: { display: false },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function (context) {
+                                                        return context.formattedValue + ' ₫';
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                        </script>
+                    </c:if>
+
                     <script src="${ctx}/assets/js/shop/shopDashboard.js"></script>
                 </body>
 

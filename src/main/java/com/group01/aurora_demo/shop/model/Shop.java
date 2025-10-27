@@ -26,6 +26,7 @@ public class Shop {
     private Address pickupAddress;
 
     // Computed fields
+    private double totalRevenue;
     private Long totalProducts;
     private Long totalOrders;
 
@@ -34,6 +35,14 @@ public class Shop {
 
     public Long getShopId() {
         return shopId;
+    }
+
+    public double getTotalRevenue() {
+        return totalRevenue;
+    }
+
+    public void setTotalRevenue(double totalRevenue) {
+        this.totalRevenue = totalRevenue;
     }
 
     public void setShopId(Long shopId) {

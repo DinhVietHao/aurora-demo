@@ -244,6 +244,9 @@ CREATE TABLE Orders
     CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID)
 );
 
+SELECT *
+FROM OrderShops
+
 CREATE TABLE OrderShops
 (
     OrderShopID BIGINT IDENTITY(1,1) PRIMARY KEY,
