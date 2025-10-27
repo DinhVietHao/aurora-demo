@@ -633,12 +633,6 @@ function loadSystemVouchers() {
   syncWithServer();
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  loadSavedVouchers();
-  loadSystemVouchers();
-  refreshShopVoucher();
-});
-
 const btnPlaceOrder = document.getElementById("btnPlaceOrder");
 btnPlaceOrder.addEventListener("click", () => {
   btnPlaceOrder.disabled = true;
@@ -715,4 +709,36 @@ btnPlaceOrder.addEventListener("click", () => {
       btnPlaceOrder.disabled = false;
       btnPlaceOrder.innerHTML = originalText;
     });
+});
+
+// ====================== ALLOW UNSELECT SHOP VOUCHER ON DOUBLE CLICK ======================
+document
+  .querySelectorAll('input[name^="voucherShopDiscount_"]')
+  .forEach((radio) => {
+    radio.addEventListener("click", function (e) {
+      const shopId = this.name.replace("voucherShopDiscount_", "");
+      if (this.dataset.checked === "true") {
+        this.checked = false;
+        this.dataset.checked = "false";
+
+        localStorage.removeItem(`shopVoucher_${shopId}`);
+
+        const shopVoucher = document.querySelector(
+          `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+        );
+        if (shopVoucher) shopVoucher.innerText = "Chưa áp dụng";
+
+        refreshShopVoucher();
+      } else {
+        document
+          .querySelectorAll(`input[name="voucherShopDiscount_${shopId}"]`)
+          .forEach((r) => (r.dataset.checked = "false"));
+        this.dataset.checked = "true";
+      }
+    });
+  });
+window.addEventListener("DOMContentLoaded", () => {
+  loadSavedVouchers();
+  loadSystemVouchers();
+  refreshShopVoucher();
 });

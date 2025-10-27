@@ -41,6 +41,7 @@ public class CheckoutService {
             Map<Long, String> shopVouchers) {
 
         List<CartItem> cartItems = cartItemDAO.getCheckedCartItems(userId);
+
         double totalProduct = cartItems.stream()
                 .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                 .sum();
@@ -50,17 +51,22 @@ public class CheckoutService {
         double totalShippingFee = 0;
         double systemShippingDiscount = 0;
 
+        Map<Long, List<CartItem>> itemsByShop = cartItems.stream()
+                .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
+
         for (Map.Entry<Long, String> entry : shopVouchers.entrySet()) {
             String code = entry.getValue();
             if (code != null && !code.isEmpty()) {
                 Voucher voucher = voucherDAO.getVoucherByCode(entry.getKey(), code, true);
                 if (voucher != null) {
-                    List<CartItem> shopItems = cartItemDAO.getCheckedCartItemsByShop(userId, entry.getKey());
+                    List<CartItem> shopItems = itemsByShop.get(entry.getKey());
+                    if (shopItems == null || shopItems.isEmpty())
+                        continue;
                     double shopTotal = shopItems.stream()
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
 
-                    String validation = voucherValidator.validate(voucher, shopTotal, entry.getKey());
+                    String validation = voucherValidator.validate(voucher, shopTotal, entry.getKey(), userId);
                     if (validation == null) {
                         shopDiscount += voucherValidator.calculateDiscount(voucher, shopTotal);
 
@@ -71,21 +77,14 @@ public class CheckoutService {
 
         if (systemVoucherDiscount != null && !systemVoucherDiscount.isEmpty()) {
             Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherDiscount, false);
-            if (voucher != null) {
-                String validation = voucherValidator.validate(voucher, totalProduct, null);
+            if (voucher != null && !"SHIPPING".equalsIgnoreCase(voucher.getDiscountType())) {
+                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
                 if (validation == null) {
                     systemDiscount = voucherValidator.calculateDiscount(voucher, totalProduct);
                 }
 
             }
         }
-
-        if (systemVoucherShip != null && !systemVoucherShip.isEmpty()) {
-            Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherShip, false);
-            if (voucher != null && voucher.getDiscountType().equalsIgnoreCase("SHIPPING"))
-                systemShippingDiscount = voucher.getValue();
-        }
-
         if (addressId != null) {
             Address address = addressDAO.getAddressById(userId, addressId);
             if (address != null) {
@@ -93,7 +92,20 @@ public class CheckoutService {
             }
         }
 
-        double finalAmount = totalProduct + totalShippingFee - shopDiscount - systemDiscount - systemShippingDiscount;
+        if (systemVoucherShip != null && !systemVoucherShip.isEmpty()) {
+            Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherShip, false);
+            if (voucher != null && voucher.getDiscountType().equalsIgnoreCase("SHIPPING")) {
+                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
+                if (validation == null) {
+                    systemShippingDiscount = Math.min(voucher.getValue(), totalShippingFee);
+                }
+            }
+
+        }
+
+        double finalAmount = Math.max(0,
+                totalProduct + totalShippingFee - shopDiscount - systemDiscount - systemShippingDiscount);
+
         return new CheckoutSummaryDTO(totalProduct, shopDiscount, systemDiscount, totalShippingFee,
                 systemShippingDiscount,
                 finalAmount);

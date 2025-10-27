@@ -1,9 +1,11 @@
 package com.group01.aurora_demo.cart.service;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.group01.aurora_demo.auth.model.User;
@@ -58,6 +60,17 @@ public class OrderService {
         try {
             conn = DataSourceProvider.get().getConnection();
             conn.setAutoCommit(false);
+            List<CartItem> cartItems = cartItemDAO.getCheckedCartItems(user.getId())
+                    .stream()
+                    .filter(ci -> ci.getProduct() != null &&
+                            ci.getProduct().getShop() != null &&
+                            ci.getProduct().getShop().getShopId() != null)
+                    .collect(Collectors.toList());
+
+            if (cartItems.isEmpty()) {
+                return new ServiceResponse("warning", "Giỏ hàng trống", "Vui lòng chọn sản phẩm trước khi đặt hàng.", 0,
+                        0.0);
+            }
 
             Order order = new Order();
             CheckoutSummaryDTO summary = this.checkoutService.calculateCheckoutSummary(
@@ -89,7 +102,7 @@ public class OrderService {
                 return new ServiceResponse("error", "Lỗi tạo đơn hàng",
                         "Không thể tạo đơn hàng. Vui lòng thử lại sau.", 0, 0.0);
             }
-            List<CartItem> cartItems = this.cartItemDAO.getCheckedCartItems(user.getId());
+
             Map<Long, List<CartItem>> groupByShop = cartItems.stream()
                     .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
@@ -117,7 +130,8 @@ public class OrderService {
                             shopVoucherCache.put(shopId, shopVoucher);
                         }
 
-                        String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId);
+                        String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId,
+                                user.getUserID());
                         if (validation != null) {
                             conn.rollback();
                             return new ServiceResponse("warning", "Không thể áp dụng mã giảm giá", validation, 0, 0.0);

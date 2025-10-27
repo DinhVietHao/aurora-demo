@@ -123,8 +123,7 @@
                                                                     <td class="order-detail__label">Tổng tiền hàng</td>
                                                                     <td class="order-detail__value">
 
-                                                                        <fmt:formatNumber
-                                                                            value="${orderItems[0].subtotal}"
+                                                                        <fmt:formatNumber value="${shopSubtotal}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
 
