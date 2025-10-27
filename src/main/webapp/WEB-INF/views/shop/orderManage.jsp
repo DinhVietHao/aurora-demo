@@ -323,10 +323,10 @@
                                     </div>
                                 </div>
                             </main>
+                            <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                         </div>
                     </div>
 
-                    <jsp:include page="/WEB-INF/views/layouts/_footer.jsp?v=1.0.1" />
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/orderManagement.js?v=1.0.1"></script>
                 </body>
