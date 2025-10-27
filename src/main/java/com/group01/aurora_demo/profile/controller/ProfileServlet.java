@@ -1,6 +1,9 @@
 package com.group01.aurora_demo.profile.controller;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.io.PrintWriter;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -11,6 +14,9 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.catalog.dao.NotificationDAO;
+import com.group01.aurora_demo.catalog.model.Notification;
+
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,6 +30,7 @@ public class ProfileServlet extends HttpServlet {
 
     private UserDAO userDAO = new UserDAO();
     private EmailService emailService = new EmailService();
+    private NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -499,5 +506,24 @@ public class ProfileServlet extends HttpServlet {
             json.put("message", message);
             out.print(json.toString());
         }
+    }
+
+    private String formatTimeAgo(Timestamp createdAt) {
+        if (createdAt == null)
+            return "";
+
+        LocalDateTime created = createdAt.toLocalDateTime();
+        LocalDateTime now = LocalDateTime.now();
+        long minutes = ChronoUnit.MINUTES.between(created, now);
+
+        if (minutes < 1)
+            return "vừa xong";
+        if (minutes < 60)
+            return minutes + " phút trước";
+        if (minutes < 1440)
+            return (minutes / 60) + " giờ trước";
+        if (minutes < 10080)
+            return (minutes / 1440) + " ngày trước";
+        return (minutes / 10080) + " tuần trước";
     }
 }

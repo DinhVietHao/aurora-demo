@@ -3,8 +3,12 @@ package com.group01.aurora_demo.shop.dao;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.model.DailyRevenue;
 import com.group01.aurora_demo.shop.model.Shop;
 import java.sql.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShopDAO {
 
@@ -302,6 +306,52 @@ public class ShopDAO {
         return null;
     }
 
+    public Shop getShopDashboard(long shopId) {
+        Shop shop = new Shop();
+        String sqlRevenue = "SELECT ISNULL(SUM(FinalAmount),0) FROM OrderShops WHERE ShopID=? AND Status='COMPLETED'";
+        String sqlOrders = "SELECT COUNT(*) FROM OrderShops WHERE ShopID=? AND Status='COMPLETED'";
+        String sqlProducts = "SELECT COUNT(*) FROM Products WHERE ShopID=? AND Status='ACTIVE'";
+        String sqlRating = """
+                    SELECT ISNULL(AVG(CAST(r.Rating AS FLOAT)), 0)
+                    FROM Reviews r
+                    INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
+                    INNER JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
+                    WHERE os.ShopID = ?
+                """;
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps1 = conn.prepareStatement(sqlRevenue);
+            ps1.setLong(1, shopId);
+            ResultSet rs1 = ps1.executeQuery();
+            if (rs1.next()) {
+                shop.setTotalRevenue(rs1.getDouble(1));
+            }
+
+            PreparedStatement ps2 = conn.prepareStatement(sqlOrders);
+            ps2.setLong(1, shopId);
+            ResultSet rs2 = ps2.executeQuery();
+            if (rs2.next()) {
+                shop.setTotalOrders(rs2.getLong(1));
+            }
+
+            PreparedStatement ps3 = conn.prepareStatement(sqlProducts);
+            ps3.setLong(1, shopId);
+            ResultSet rs3 = ps3.executeQuery();
+            if (rs3.next()) {
+                shop.setTotalProducts(rs3.getLong(1));
+            }
+
+            PreparedStatement ps4 = conn.prepareStatement(sqlRating);
+            ps4.setLong(1, shopId);
+            ResultSet rs4 = ps4.executeQuery();
+            if (rs4.next()) {
+                shop.setAvgRating(rs4.getDouble(1));
+            }
+        } catch (Exception e) {
+            System.out.println("[ERROR] shop/dao/ShopDAO.java - getShopDashboard: " + e.getMessage());
+        }
+        return shop;
+    }
+
     public Long getShopIdByProductId(Long productId) {
         String sql = "SELECT ShopID FROM Products WHERE ProductID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection()) {
@@ -316,4 +366,37 @@ public class ShopDAO {
         }
         return null;
     }
+
+    public List<DailyRevenue> getRevenueRange(long shopId, LocalDate startDate, LocalDate endDate) {
+        List<DailyRevenue> list = new ArrayList<>();
+        String sql = """
+                    SELECT
+                        CAST(CreatedAt AS DATE) AS OrderDate,
+                        SUM(FinalAmount) AS TotalRevenue
+                    FROM OrderShops
+                    WHERE ShopID = ?
+                    AND Status = 'COMPLETED'
+                    AND CreatedAt IS NOT NULL
+                    AND CreatedAt BETWEEN ? AND ?
+                    GROUP BY CAST(CreatedAt AS DATE)
+                    ORDER BY OrderDate;
+                """;
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setLong(1, shopId);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(startDate.atStartOfDay()));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(endDate.atTime(23, 59, 59, 999_000_000)));
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                DailyRevenue dr = new DailyRevenue();
+                dr.setDate(rs.getDate("OrderDate"));
+                dr.setRevenue(rs.getDouble("TotalRevenue"));
+                list.add(dr);
+            }
+        } catch (Exception e) {
+            System.out.println("[ERROR] ShopDAO.getRevenueRange: " + e.getMessage());
+        }
+        return list;
+    }
+
 }
