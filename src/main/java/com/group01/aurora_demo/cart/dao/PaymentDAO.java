@@ -12,12 +12,12 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 public class PaymentDAO {
     public long createPayment(Connection conn, Payment payment) throws SQLException {
         String sql = """
-                    INSERT INTO Payments(OrderID, Amount, TransactionRef, status)
+                    INSERT INTO Payments(OrderShopID, Amount, TransactionRef, status)
                     VALUES (?, ?, ?, ?)
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setLong(1, payment.getOrderId());
+            ps.setLong(1, payment.getOrderShopId());
             ps.setDouble(2, payment.getAmount());
             ps.setString(3, payment.getTransactionRef());
             ps.setString(4, payment.getStatus());
@@ -32,13 +32,13 @@ public class PaymentDAO {
         return -1;
     }
 
-    public boolean updatePaymentStatus(long orderId, String newStatus, String transactionNo) {
-        String sql = "UPDATE Payments SET Status = ?, TransactionRef = ?, CreatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderID = ?";
+    public boolean updatePaymentStatus(String groupOrderCode, String newStatus, String transactionNo) {
+        String sql = "UPDATE Payments SET Status = ?, TransactionRef = ?, CreatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE GroupOrderCode = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
             ps.setString(2, transactionNo);
-            ps.setLong(3, orderId);
+            ps.setString(3, groupOrderCode);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -46,18 +46,18 @@ public class PaymentDAO {
         }
     }
 
-    public Payment getPaymentByOrderId(Connection conn, long orderId) {
-        String sql = "SELECT PaymentID, OrderID, Amount, RefundedAmount, TransactionRef, Status FROM Payments WHERE OrderID = ?";
+    public Payment getPaymentByOrderId(Connection conn, long orderShopId) {
+        String sql = "SELECT PaymentID, OrderShopID, Amount, RefundedAmount, TransactionRef, Status FROM Payments WHERE OrderShopID = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setLong(1, orderId);
+            ps.setLong(1, orderShopId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Payment payment = new Payment();
                     payment.setPaymentId(rs.getLong("PaymentID"));
-                    payment.setOrderId(rs.getLong("OrderID"));
+                    payment.setOrderShopId(rs.getLong("OrderShopID"));
                     payment.setAmount(rs.getDouble("Amount"));
                     payment.setRefundedAmount(rs.getDouble("RefundedAmount"));
                     payment.setTransactionRef(rs.getString("TransactionRef"));
@@ -72,8 +72,8 @@ public class PaymentDAO {
         return null;
     }
 
-    public boolean partialRefund(Connection conn, long orderId, double refundAmount) throws SQLException {
-        Payment payment = getPaymentByOrderId(conn, orderId);
+    public boolean partialRefund(Connection conn, long orderShopId, double refundAmount) throws SQLException {
+        Payment payment = getPaymentByOrderId(conn, orderShopId);
         if (payment == null)
             return false;
 
@@ -82,11 +82,11 @@ public class PaymentDAO {
 
         String status = remaining <= 0 ? "REFUNDED" : "PARTIALLY_REFUNDED";
 
-        String sql = "UPDATE Payments SET RefundedAmount = ?, Status = ? WHERE OrderID = ?";
+        String sql = "UPDATE Payments SET RefundedAmount = ?, Status = ? WHERE OrderShopID = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setDouble(1, newRefunded);
             ps.setString(2, status);
-            ps.setLong(3, orderId);
+            ps.setLong(3, orderShopId);
             int updated = ps.executeUpdate();
             return updated > 0;
         }
