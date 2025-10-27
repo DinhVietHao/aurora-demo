@@ -237,11 +237,19 @@
                                                             </div>
 
                                                             <!-- Cột tổng tiền -->
+                                                            <c:set var="totalAmount"
+                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}" />
+
+                                                            <c:choose>
+                                                                <c:when test="${totalAmount < 0}">
+                                                                    <c:set var="totalAmount" value="0" />
+                                                                </c:when>
+                                                            </c:choose>
+
                                                             <div class="col-md-2 text-start">
                                                                 <span class="fw-semibold text-dark">
-                                                                    <fmt:formatNumber
-                                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
-                                                                        type="number" />₫
+                                                                    <fmt:formatNumber value="${totalAmount}"
+                                                                        type="number" pattern="#,##0" /> VND
                                                                 </span>
                                                             </div>
 

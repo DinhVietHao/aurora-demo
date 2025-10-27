@@ -271,14 +271,21 @@
 
                                                     <hr>
 
+                                                    <c:set var="totalAmount"
+                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}" />
+
+                                                    <c:if test="${totalAmount < 0}">
+                                                        <c:set var="totalAmount" value="0" />
+                                                    </c:if>
+
                                                     <div class="d-flex justify-content-between">
                                                         <strong>Tổng cộng:</strong>
                                                         <span class="text-primary fw-bold">
-                                                            <fmt:formatNumber
-                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}"
-                                                                pattern="#,##0" /> VND
+                                                            <fmt:formatNumber value="${totalAmount}" pattern="#,##0" />
+                                                            VND
                                                         </span>
                                                     </div>
+
                                                     <hr>
 
                                                     <div class="payment-method">
