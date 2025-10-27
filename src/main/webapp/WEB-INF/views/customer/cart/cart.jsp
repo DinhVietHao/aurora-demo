@@ -57,13 +57,19 @@
                                                 </span>
                                             </div>
                                             <c:forEach var="cartItem" items="${shopCart.items}">
-                                                <div class="row cart-body__item" id="cartItemId${cartItem.cartItemId}"
+                                                <c:set var="status" value="${cartItem.product.status}" />
+                                                <div class="row cart-body__item  ${status == 'OUT_OF_STOCK' || status == 'INACTIVE' ? 'disabled-item' : ''}"
+                                                    id="cartItemId${cartItem.cartItemId}"
                                                     data-cartitemid="${cartItem.cartItemId}"
                                                     data-userid="${cartItem.userId}">
                                                     <div class="col-2 d-flex align-items-center">
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
-                                                            type="checkbox" ${cartItem.isChecked ? "checked" : "" }>
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
+                                                            type="checkbox" ${cartItem.isChecked &&
+                                                            cartItem.product.status !='OUT_OF_STOCK' &&
+                                                            cartItem.product.status !='INACTIVE' ? "checked" : "" }
+                                                            ${status=='OUT_OF_STOCK' || status=='INACTIVE' ? "disabled"
+                                                            : "" }>
+                                                        <a href="${ctx}/home?action=detail&id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
                                                                 class="img-fluid" alt="${cartItem.product.title}">
@@ -71,24 +77,26 @@
                                                     </div>
 
                                                     <div class="col-4">
-                                                        <a href="${ctx}/book?id=${cartItem.product.productId}"
+                                                        <a href="${ctx}/home?action=detail&id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <h6 class="cart-book-title">
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
-                                                        <p class="author">
-                                                            <c:out value="${cartItem.product.bookDetail.author}" />
-                                                        </p>
+                                                        <c:if test="${status == 'OUT_OF_STOCK'}">
+                                                            <span class="badge bg-danger">Hết hàng</span>
+                                                        </c:if>
+                                                        <c:if test="${status == 'INACTIVE'}">
+                                                            <span class="badge bg-secondary">Ngừng kinh doanh</span>
+                                                        </c:if>
                                                     </div>
-
                                                     <div class="col-1 text-center">
                                                         <span class="price unit-price">
-                                                            <fmt:formatNumber value="${cartItem.unitPrice}"
+                                                            <fmt:formatNumber value="${cartItem.product.salePrice}"
                                                                 type="currency" />
                                                         </span><br>
                                                         <c:if
-                                                            test="${cartItem.product.originalPrice != cartItem.unitPrice}">
+                                                            test="${cartItem.product.originalPrice != cartItem.product.salePrice}">
                                                             <span class="text-muted text-decoration-line-through">
                                                                 <fmt:formatNumber
                                                                     value="${cartItem.product.originalPrice}"
@@ -100,14 +108,17 @@
                                                     <div class="col-2">
                                                         <div class="text-center">
                                                             <button class="btn btn-outline-secondary btn-sm minus"
-                                                                data-cartitemid="${cartItem.cartItemId}">
+                                                                data-cartitemid="${cartItem.cartItemId}"
+                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
+                                                                ? "disabled" : "" }>
                                                                 -
                                                             </button>
                                                             <span class="mx-2 number">
                                                                 <c:out value="${cartItem.quantity}" />
                                                             </span>
-                                                            <button
-                                                                class="btn btn-outline-secondary btn-sm plus">+</button>
+                                                            <button class="btn btn-outline-secondary btn-sm plus"
+                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
+                                                                ? "disabled" : "" }>+</button>
                                                         </div>
                                                     </div>
 
@@ -140,10 +151,9 @@
                                                 </div>
                                             </div>
                                             <!-- Modal Voucher Shop -->
-
                                             <div class="modal fade cart-shop-voucher"
                                                 id="shopVoucherModal_${shopCart.shop.shopId}" tabindex="-1"
-                                                aria-hidden="true">
+                                                aria-hidden="true" data-shop-id="${shopCart.shop.shopId}">
                                                 <div class="modal-dialog modal-dialog-scrollable">
                                                     <div class="modal-content">
                                                         <div class="modal-header">
@@ -153,14 +163,18 @@
                                                         </div>
                                                         <div class="modal-body">
                                                             <div class="row mb-3 align-items-center">
-                                                                <div class="col-8">
-                                                                    <input type="text" class="form-control"
+                                                                <div class="col-7">
+                                                                    <input type="text"
+                                                                        class="form-control voucherShopInput"
                                                                         placeholder="Nhập mã giảm giá">
                                                                 </div>
-                                                                <div class="col-4">
-                                                                    <button class="button-four w-100">Áp
+                                                                <div class="col-5">
+                                                                    <button
+                                                                        class="button-four w-100 applyVoucherShop">Áp
                                                                         dụng</button>
                                                                 </div>
+                                                                <span class="text-danger small voucherShopMessage">
+                                                                </span>
                                                             </div>
                                                             <c:choose>
                                                                 <c:when test="${empty shopCart.vouchers}">
@@ -218,14 +232,17 @@
                                                                                             pattern="dd/MM/yyyyy" />
                                                                                     </small>
                                                                                 </div>
-                                                                                <input type="radio"
+                                                                                <input class="voucher-input-shop"
+                                                                                    type="radio"
                                                                                     name="voucherShopDiscount_${shopCart.shop.shopId}"
-                                                                                    value="discount1"
+                                                                                    value="${voucher.code}"
+                                                                                    data-value="${voucher.code}"
                                                                                     data-text="Giảm 8% tối đa 30K"
                                                                                     data-discount="${voucher.value}"
                                                                                     data-type="${voucher.discountType}"
                                                                                     data-max="${voucher.maxAmount}"
-                                                                                    data-min-order-amount="${voucher.minOrderAmount}">
+                                                                                    data-min-order-amount="${voucher.minOrderAmount}"
+                                                                                    data-shop-id="${shopCart.shop.shopId}">
                                                                             </label>
                                                                         </c:forEach>
                                                                     </div>
@@ -302,13 +319,16 @@
                                         </div>
                                         <div class="modal-body">
                                             <div class="row mb-3 align-items-center">
-                                                <div class="col-8">
+                                                <div class="col-7">
                                                     <input type="text" class="form-control"
-                                                        placeholder="Nhập mã giảm giá">
+                                                        placeholder="Nhập mã giảm giá" id="voucherSystemInput">
                                                 </div>
-                                                <div class="col-4">
-                                                    <button class="button-four w-100">Áp dụng</button>
+                                                <div class="col-5">
+                                                    <button class="button-four w-100" id="applySystemVoucher">Áp
+                                                        dụng</button>
                                                 </div>
+                                                <span class="text-danger small" id="voucherSystemMessage">
+                                                </span>
                                             </div>
                                             <c:choose>
                                                 <c:when test="${empty systemVouchers}">
@@ -386,12 +406,14 @@
                                                                         </c:otherwise>
                                                                     </c:choose>
                                                                     <input type="radio" name="voucherDiscount"
-                                                                        value="discount1" data-text="${voucherText}"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
+                                                                        data-text="${voucherText}"
                                                                         data-discount="${systemVoucher.value}"
-                                                                        data-type="${voucher.discountType}"
-                                                                        data-max="${voucher.maxAmount}"
-                                                                        data-min-order-amount="${voucher.minOrderAmount}"
-                                                                        data-voucherid="${voucher.maxAmount}">
+                                                                        data-type="${systemVoucher.discountType}"
+                                                                        data-max="${systemVoucher.maxAmount}"
+                                                                        data-min-order-amount="${systemVoucher.minOrderAmount}"
+                                                                        data-voucherid="${systemVoucher.maxAmount}">
                                                                 </label>
                                                             </c:if>
                                                         </c:forEach>
@@ -420,7 +442,9 @@
                                                                                 pattern="dd/MM/yyyyy" />
                                                                         </small>
                                                                     </div>
-                                                                    <input type="radio" name="voucherShip" value="ship1"
+                                                                    <input type="radio" name="voucherShip"
+                                                                        value="${systemVoucher.code}"
+                                                                        data-value="${systemVoucher.code}"
                                                                         data-text="Giảm <fmt:formatNumber value='${systemVoucher.value/1000}' type='number' />K"
                                                                         data-ship="${systemVoucher.value}"
                                                                         data-min-order-amount="${systemVoucher.minOrderAmount}">
@@ -453,7 +477,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
             </body>
 
             </html>

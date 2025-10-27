@@ -206,7 +206,7 @@ public class VoucherManagementServlet extends HttpServlet {
             if (voucher.getStartAt().isBefore(now)) {
                 errors.append("Ngày bắt đầu không được nằm trong quá khứ. ");
             }
-            
+
             if (voucher.getEndAt().isBefore(voucher.getStartAt()) || voucher.getEndAt().isEqual(voucher.getStartAt())) {
                 errors.append("Ngày kết thúc phải sau ngày bắt đầu. ");
             }
@@ -454,7 +454,7 @@ public class VoucherManagementServlet extends HttpServlet {
         String status = request.getParameter("status");
         String defaultStatus = request.getParameter("defaultStatus");
         String description = request.getParameter("description");
-        
+
         // Nếu checkbox status không được chọn, sử dụng giá trị mặc định
         if (status == null || status.isEmpty()) {
             status = defaultStatus != null ? defaultStatus : "PENDING";
@@ -518,7 +518,7 @@ public class VoucherManagementServlet extends HttpServlet {
             if (voucher.getStartAt().isBefore(now)) {
                 throw new IllegalArgumentException("Ngày bắt đầu không được nằm trong quá khứ");
             }
-            
+
             // Kiểm tra ngày kết thúc phải sau ngày bắt đầu
             if (voucher.getEndAt().isBefore(voucher.getStartAt()) || voucher.getEndAt().isEqual(voucher.getStartAt())) {
                 throw new IllegalArgumentException("Ngày kết thúc phải sau ngày bắt đầu");

@@ -1,11 +1,12 @@
 package com.group01.aurora_demo.cart.model;
 
 import java.util.Date;
+import java.util.List;
 
 public class Order {
     private long orderId;
     private long userId;
-    private long addressId;
+    private String address;
     private Long voucherDiscountId;
     private Long voucherShipId;
     private double totalAmount;
@@ -18,6 +19,17 @@ public class Order {
     private Date deliveredAt;
     private String cancelReason;
     private Date cancelledAt;
+    private String customerName;
+
+    private List<OrderShop> orderShop;
+
+    public List<OrderShop> getOrderShop() {
+        return orderShop;
+    }
+
+    public void setOrderShop(List<OrderShop> orderShop) {
+        this.orderShop = orderShop;
+    }
 
     public long getOrderId() {
         return orderId;
@@ -33,14 +45,6 @@ public class Order {
 
     public void setUserId(long userId) {
         this.userId = userId;
-    }
-
-    public long getAddressId() {
-        return addressId;
-    }
-
-    public void setAddressId(long addressId) {
-        this.addressId = addressId;
     }
 
     public Long getVoucherDiscountId() {
@@ -139,14 +143,20 @@ public class Order {
         this.totalShippingFee = totalShippingFee;
     }
 
-    @Override
-    public String toString() {
-        return "Order [orderId=" + orderId + ", userId=" + userId + ", addressId=" + addressId + ", voucherDiscountId="
-                + voucherDiscountId + ", voucherShipId=" + voucherShipId + ", totalAmount=" + totalAmount
-                + ", discountAmount=" + discountAmount + ", totalShippingFee=" + totalShippingFee
-                + ", shippingDiscount=" + shippingDiscount + ", finalAmount=" + finalAmount + ", orderStatus="
-                + orderStatus + ", createdAt=" + createdAt + ", deliveredAt=" + deliveredAt + ", cancelReason="
-                + cancelReason + ", cancelledAt=" + cancelledAt + "]";
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
     }
 
 }

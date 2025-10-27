@@ -9,18 +9,8 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Chi tiết Voucher - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet">
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css">
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/voucherDetail.css">
                 </head>
 
@@ -84,6 +74,7 @@
                                                         </div>
                                                         <div class="col-md-4 text-md-end">
                                                             <div class="voucher-actions">
+                                                                <!-- Hiển thị trạng thái -->
                                                                 <c:choose>
                                                                     <c:when test="${voucher.status == 'ACTIVE'}">
                                                                         <span class="badge bg-success status-badge">Hoạt
@@ -92,6 +83,11 @@
                                                                     <c:when test="${voucher.status == 'UPCOMING'}">
                                                                         <span class="badge bg-warning status-badge">Sắp
                                                                             diễn ra</span>
+                                                                    </c:when>
+                                                                    <c:when test="${voucher.status == 'OUT_OF_STOCK'}">
+                                                                        <span
+                                                                            class="badge bg-secondary status-badge">Hết
+                                                                            Voucher</span>
                                                                     </c:when>
                                                                     <c:when test="${voucher.status == 'EXPIRED'}">
                                                                         <span class="badge bg-danger status-badge">Hết
@@ -102,18 +98,31 @@
                                                                             class="badge bg-secondary status-badge">Khác</span>
                                                                     </c:otherwise>
                                                                 </c:choose>
-                                                                <div class="action-buttons">
-                                                                    <button class="btn btn-warning"
-                                                                        onclick="editVoucher()">
-                                                                        <i class="bi bi-pencil me-2"></i>Chỉnh sửa
-                                                                    </button>
-                                                                    <button class="btn btn-danger"
-                                                                        onclick="deleteVoucher()">
-                                                                        <i class="bi bi-trash me-2"></i>Xóa
-                                                                    </button>
+
+                                                                <!-- Nút thao tác -->
+                                                                <div class="action-buttons mt-2">
+                                                                    <!-- Nút Chỉnh sửa -->
+                                                                    <c:if
+                                                                        test="${voucher.status == 'UPCOMING' || (voucher.status == 'EXPIRED' && (voucher.usageCount < voucher.usageLimit)) || (voucher.status == 'ACTIVE' && voucher.usageCount == 0)}">
+                                                                        <a href="/shop/voucher?action=update&voucherID=${voucher.voucherID}"
+                                                                            class="btn btn-warning">
+                                                                            <i class="bi bi-pencil me-2"></i>Chỉnh sửa
+                                                                        </a>
+                                                                    </c:if>
+
+                                                                    <!-- Nút Xóa -->
+                                                                    <c:if
+                                                                        test="${(voucher.status == 'UPCOMING' || (voucher.status == 'EXPIRED' && voucher.usageCount == 0) || (voucher.status == 'ACTIVE' && voucher.usageCount == 0)) && !voucher.usedInOrders}">
+                                                                        <button class="btn btn-danger"
+                                                                            onclick="deleteVoucher('${voucher.code}')">
+                                                                            <i class="bi bi-trash me-2"></i>Xóa
+                                                                        </button>
+                                                                    </c:if>
                                                                 </div>
+
                                                             </div>
                                                         </div>
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -242,49 +251,96 @@
                                                 </div>
                                                 <div class="card-body">
                                                     <div class="table-responsive">
-                                                        <table class="table table-hover">
+                                                        <table id="voucherHistoryTable"
+                                                            class="table table-hover align-middle">
                                                             <thead>
                                                                 <tr>
                                                                     <th>Đơn hàng</th>
                                                                     <th>Khách hàng</th>
                                                                     <th>Giá trị đơn</th>
                                                                     <th>Giảm giá</th>
+                                                                    <th>Trạng thái</th>
                                                                     <th>Thời gian</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                <tr>
-                                                                    <td><a
-                                                                            href="orderDetails.html?id=ORD001">#ORD001</a>
-                                                                    </td>
-                                                                    <td>Nguyễn Văn A</td>
-                                                                    <td>450.000 VNĐ</td>
-                                                                    <td class="text-success">-200.000 VNĐ</td>
-                                                                    <td>15/01/2024 14:30</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><a
-                                                                            href="orderDetails.html?id=ORD002">#ORD002</a>
-                                                                    </td>
-                                                                    <td>Trần Thị B</td>
-                                                                    <td>320.000 VNĐ</td>
-                                                                    <td class="text-success">-160.000 VNĐ</td>
-                                                                    <td>14/01/2024 09:15</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td><a
-                                                                            href="orderDetails.html?id=ORD003">#ORD003</a>
-                                                                    </td>
-                                                                    <td>Lê Văn C</td>
-                                                                    <td>280.000 VNĐ</td>
-                                                                    <td class="text-success">-140.000 VNĐ</td>
-                                                                    <td>13/01/2024 16:45</td>
-                                                                </tr>
+                                                                <c:forEach var="h" items="${history}">
+                                                                    <tr>
+                                                                        <td><a
+                                                                                href="orderDetails.jsp?id=${h.orderId}">#${h.orderId}</a>
+                                                                        </td>
+                                                                        <td>${h.customerName}</td>
+                                                                        <td>
+                                                                            <fmt:formatNumber value="${h.orderValue}"
+                                                                                type="number" groupingUsed="true" /> VNĐ
+                                                                        </td>
+                                                                        <td class="text-success">
+                                                                            -
+                                                                            <fmt:formatNumber value="${h.discountValue}"
+                                                                                type="number" groupingUsed="true" /> VNĐ
+                                                                        </td>
+                                                                        <td>
+                                                                            <c:choose>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'COMPLETED'}">
+                                                                                    <span class="badge bg-success">Hoàn
+                                                                                        tất</span>
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'CANCELLED'}">
+                                                                                    <span class="badge bg-danger">Đã
+                                                                                        hủy</span>
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'RETURNED_REQUESTED'}">
+                                                                                    <span class="badge bg-secondary">Yêu
+                                                                                        cầu trả hàng</span>
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'RETURNED_REJECTED'}">
+                                                                                    <span class="badge bg-secondary">Từ
+                                                                                        chối trả hàng</span>
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'PENDING'}">
+                                                                                    <span
+                                                                                        class="badge bg-warning text-dark">Đặt
+                                                                                        đơn</span>
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${h.orderStatus == 'SHIPPING' || h.orderStatus == 'WAITING_SHIP' || h.orderStatus == 'CONFIRM'}">
+                                                                                    <span
+                                                                                        class="badge bg-warning text-dark">Vận
+                                                                                        chuyển</span>
+                                                                                </c:when>
+                                                                                <c:otherwise>
+                                                                                    <span
+                                                                                        class="badge bg-secondary">${h.orderStatus}</span>
+                                                                                </c:otherwise>
+                                                                            </c:choose>
+                                                                        </td>
+                                                                        <td>
+                                                                            <fmt:formatDate value="${h.usedAt}"
+                                                                                pattern="dd/MM/yyyy HH:mm" />
+                                                                        </td>
+                                                                    </tr>
+                                                                </c:forEach>
+
+                                                                <c:if test="${empty history}">
+                                                                    <tr>
+                                                                        <td colspan="6"
+                                                                            class="text-center text-muted py-3">
+                                                                            Chưa có lịch sử sử dụng
+                                                                        </td>
+                                                                    </tr>
+                                                                </c:if>
                                                             </tbody>
                                                         </table>
                                                     </div>
+
                                                     <div class="text-center">
-                                                        <button class="btn btn-outline-primary btn-sm">
+                                                        <button id="showAllHistoryBtn"
+                                                            class="btn btn-outline-primary btn-sm">
                                                             <i class="bi bi-eye me-2"></i>Xem tất cả
                                                         </button>
                                                     </div>
@@ -367,19 +423,28 @@
                                                     <div class="stats-list">
                                                         <div class="stat-item">
                                                             <div class="stat-label">Tổng tiết kiệm:</div>
-                                                            <div class="stat-value text-success">12.500.000 VNĐ</div>
+                                                            <div class="stat-value text-success">
+                                                                <fmt:formatNumber value="${stats.totalSaved}"
+                                                                    type="number" groupingUsed="true" /> VNĐ
+                                                            </div>
                                                         </div>
                                                         <div class="stat-item">
                                                             <div class="stat-label">Trung bình mỗi đơn:</div>
-                                                            <div class="stat-value">52.083 VNĐ</div>
+                                                            <div class="stat-value">
+                                                                <fmt:formatNumber value="${stats.avgSaved}"
+                                                                    type="number" groupingUsed="true" /> VNĐ
+                                                            </div>
                                                         </div>
                                                         <div class="stat-item">
-                                                            <div class="stat-label">Tỷ lệ sử dụng:</div>
-                                                            <div class="stat-value">24%</div>
+                                                            <div class="stat-label">Số lượt sử dụng:</div>
+                                                            <div class="stat-value">
+                                                                <fmt:formatNumber value="${stats.totalOrders}"
+                                                                    type="number" /> lượt
+                                                            </div>
                                                         </div>
                                                         <div class="stat-item">
                                                             <div class="stat-label">Khách hàng duy nhất:</div>
-                                                            <div class="stat-value">187 người</div>
+                                                            <div class="stat-value">${stats.uniqueCustomers} người</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -392,7 +457,7 @@
                         </div>
                     </div>
 
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/voucherDetail.js?v=1.0.1"></script>
                 </body>
 

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.group01</groupId>
   <artifactId>aurora-demo</artifactId>
@@ -115,7 +114,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
         </configuration>
       </plugin>
 
@@ -153,12 +152,16 @@
         <executions>
           <execution>
             <id>open-browser</id>
-            <goals><goal>exec</goal></goals>
+            <goals>
+              <goal>exec</goal>
+            </goals>
             <configuration>
               <executable>cmd</executable>
               <arguments>
-                <argument>/c</argument><argument>start</argument>
-                <argument>chrome</argument><argument>http://localhost:8080/</argument>
+                <argument>/c</argument>
+                <argument>start</argument>
+                <argument>chrome</argument>
+                <argument>http://localhost:8080/</argument>
               </arguments>
             </configuration>
           </execution>

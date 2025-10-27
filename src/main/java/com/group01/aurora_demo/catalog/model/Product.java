@@ -18,7 +18,6 @@ public class Product {
     private Date publishedDate;
     private Double weight;
     private String rejectReason;
-    private String returnReason;
     private Date createdAt;
 
     // Publisher relationship (N:1)
@@ -147,14 +146,6 @@ public class Product {
 
     public void setRejectReason(String rejectReason) {
         this.rejectReason = rejectReason;
-    }
-
-    public String getReturnReason() {
-        return returnReason;
-    }
-
-    public void setReturnReason(String returnReason) {
-        this.returnReason = returnReason;
     }
 
     public Date getCreatedAt() {

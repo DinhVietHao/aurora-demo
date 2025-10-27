@@ -5,11 +5,13 @@
 /dist/
 /build/
 /out/
-
+/jsp/
+/.history/
 # Jetty/Tomcat work dirs (dự phòng)
 work/
 temp/
 logs/
+
 
 # =========================================
 # Java artifacts
@@ -23,6 +25,7 @@ logs/
 *.bak
 *.swp
 *.swo
+*.h
 *~
 *.hprof
 hs_err_pid*

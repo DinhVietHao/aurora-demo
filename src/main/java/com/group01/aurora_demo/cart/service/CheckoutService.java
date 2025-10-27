@@ -1,5 +1,6 @@
 package com.group01.aurora_demo.cart.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,14 +22,14 @@ public class CheckoutService {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private AddressDAO addressDAO;
-    private GHNShippingService ghnShippingService;
+    private GHNService ghnService;
     private VoucherValidator voucherValidator;
 
     public CheckoutService() {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.addressDAO = new AddressDAO();
-        this.ghnShippingService = new GHNShippingService();
+        this.ghnService = new GHNService();
         this.voucherValidator = new VoucherValidator();
     }
 
@@ -40,46 +41,50 @@ public class CheckoutService {
             Map<Long, String> shopVouchers) {
 
         List<CartItem> cartItems = cartItemDAO.getCheckedCartItems(userId);
+
         double totalProduct = cartItems.stream()
                 .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                 .sum();
 
-        double totalDiscount = 0;
-        double shipDiscount = 0;
+        double shopDiscount = 0;
+        double systemDiscount = 0;
         double totalShippingFee = 0;
+        double systemShippingDiscount = 0;
+
+        Map<Long, List<CartItem>> itemsByShop = cartItems.stream()
+                .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
         for (Map.Entry<Long, String> entry : shopVouchers.entrySet()) {
             String code = entry.getValue();
             if (code != null && !code.isEmpty()) {
-                Voucher voucher = voucherDAO.getVoucherByCode(code, true);
+                Voucher voucher = voucherDAO.getVoucherByCode(entry.getKey(), code, true);
                 if (voucher != null) {
-                    List<CartItem> shopItems = cartItemDAO.getCheckedCartItemsByShop(userId, entry.getKey());
+                    List<CartItem> shopItems = itemsByShop.get(entry.getKey());
+                    if (shopItems == null || shopItems.isEmpty())
+                        continue;
                     double shopTotal = shopItems.stream()
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
 
-                    String validation = voucherValidator.validate(voucher, shopTotal, entry.getKey());
-                    if (validation == null)
-                        totalDiscount += voucherValidator.calculateDiscount(voucher, shopTotal);
+                    String validation = voucherValidator.validate(voucher, shopTotal, entry.getKey(), userId);
+                    if (validation == null) {
+                        shopDiscount += voucherValidator.calculateDiscount(voucher, shopTotal);
+
+                    }
                 }
             }
         }
 
         if (systemVoucherDiscount != null && !systemVoucherDiscount.isEmpty()) {
-            Voucher voucher = voucherDAO.getVoucherByCode(systemVoucherDiscount, false);
-            if (voucher != null) {
-                String validation = voucherValidator.validate(voucher, totalProduct, null);
-                if (validation == null)
-                    totalDiscount += voucherValidator.calculateDiscount(voucher, totalProduct);
+            Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherDiscount, false);
+            if (voucher != null && !"SHIPPING".equalsIgnoreCase(voucher.getDiscountType())) {
+                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
+                if (validation == null) {
+                    systemDiscount = voucherValidator.calculateDiscount(voucher, totalProduct);
+                }
+
             }
         }
-
-        if (systemVoucherShip != null && !systemVoucherShip.isEmpty()) {
-            Voucher voucher = voucherDAO.getVoucherByCode(systemVoucherShip, false);
-            if (voucher != null && voucher.getDiscountType().equalsIgnoreCase("SHIPPING"))
-                shipDiscount = voucher.getValue();
-        }
-
         if (addressId != null) {
             Address address = addressDAO.getAddressById(userId, addressId);
             if (address != null) {
@@ -87,9 +92,23 @@ public class CheckoutService {
             }
         }
 
-        double finalAmount = totalProduct + totalShippingFee - totalDiscount - shipDiscount;
+        if (systemVoucherShip != null && !systemVoucherShip.isEmpty()) {
+            Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherShip, false);
+            if (voucher != null && voucher.getDiscountType().equalsIgnoreCase("SHIPPING")) {
+                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
+                if (validation == null) {
+                    systemShippingDiscount = Math.min(voucher.getValue(), totalShippingFee);
+                }
+            }
 
-        return new CheckoutSummaryDTO(totalProduct, totalDiscount, totalShippingFee, shipDiscount, finalAmount);
+        }
+
+        double finalAmount = Math.max(0,
+                totalProduct + totalShippingFee - shopDiscount - systemDiscount - systemShippingDiscount);
+
+        return new CheckoutSummaryDTO(totalProduct, shopDiscount, systemDiscount, totalShippingFee,
+                systemShippingDiscount,
+                finalAmount);
     }
 
     public double calculateShippingFee(List<CartItem> cartItems, Address address) {
@@ -99,6 +118,38 @@ public class CheckoutService {
                 .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
         for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
+            List<CartItem> items = entry.getValue();
+            Shop shop = items.get(0).getProduct().getShop();
+            double shopWeight = items.stream()
+                    .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
+                    .sum();
+
+            JSONArray jsonItems = new JSONArray();
+            for (CartItem ci : items) {
+                JSONObject item = new JSONObject();
+                item.put("name", ci.getProduct().getTitle());
+                item.put("quantity", ci.getQuantity());
+                item.put("weight", ci.getProduct().getWeight() * ci.getQuantity());
+                jsonItems.put(item);
+            }
+
+            double fee = this.ghnService.calculateFee(
+                    shop.getPickupAddress().getDistrictId(), shop.getPickupAddress().getWardCode(),
+                    address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
+            totalShipping += fee;
+        }
+
+        return totalShipping;
+    }
+
+    public Map<Long, Double> calculateShippingFeePerShop(List<CartItem> cartItems, Address address) {
+        Map<Long, Double> shopShippingFees = new HashMap<>();
+
+        Map<Long, List<CartItem>> grouped = cartItems.stream()
+                .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
+
+        for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
+            Long shopId = entry.getKey();
             List<CartItem> items = entry.getValue();
             Shop shop = items.get(0).getProduct().getShop();
 
@@ -115,12 +166,12 @@ public class CheckoutService {
                 jsonItems.put(item);
             }
 
-            double fee = ghnShippingService.calculateFee(
-                    1454, "21211", 1452, "21012", shopWeight, jsonItems, 53320, null);
-
-            totalShipping += fee;
+            double fee = this.ghnService.calculateFee(
+                    shop.getPickupAddress().getDistrictId(), shop.getPickupAddress().getWardCode(),
+                    address.getDistrictId(), address.getWardCode(), shopWeight, jsonItems, null, null);
+            shopShippingFees.put(shopId, fee);
         }
 
-        return totalShipping;
+        return shopShippingFees;
     }
 }

@@ -27,20 +27,23 @@
                         <div class="col-3 col-md-2 information-account__sidebar">
 
                             <div class="text-center mb-4">
-                                <img src="./assets/images/common/avatar.png" alt="avatar"
+                                <c:choose>
+                                    <c:when test="${user.avatarUrl != null && !user.avatarUrl.isEmpty()}">
+                                        <c:set var="avatarPath"
+                                            value="http://localhost:8080/assets/images/avatars/${user.avatarUrl}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="avatarPath"
+                                            value="http://localhost:8080/assets/images/common/avatar.png" />
+                                    </c:otherwise>
+                                </c:choose>
+                                <img id="avatarSidebar" src="${avatarPath}" alt="avatar"
                                     class="information-account__image">
-                                <p class="mt-2 fw-bold mb-0">Minh Kha</p>
+                                <p class="mt-2 fw-bold mb-0">${user.fullName}</p>
                             </div>
-
 
                             <!-- sidebar profile -->
                             <ul class="nav mb-3 " id="profileTabs" role="tablist">
-                                <li class="nav-item mb-2">
-                                    <a class="nav-link text-dark" id="notify-tab" data-bs-toggle="tab" href="#notify"
-                                        role="tab">
-                                        <i class="bi bi-bell me-2"></i> Thông báo
-                                    </a>
-                                </li>
                                 <li class="nav-item mb-2">
                                     <a class="nav-link text-dark " href="/profile">
                                         <i class="bi bi-person me-2"></i> Hồ sơ
@@ -123,7 +126,8 @@
                                                                 </div>
                                                                 <p class="mb-1"><strong>Địa chỉ:</strong>
                                                                     ${address.description},
-                                                                    ${address.ward}, ${address.city}
+                                                                    ${address.ward}, ${address.district},
+                                                                    ${address.city}
                                                                 </p>
                                                                 <p class="mb-1">Việt Nam</p>
                                                                 <p class="mb-3"><strong>Điện thoại:</strong>
@@ -149,135 +153,6 @@
                     </div>
                 </div>
 
-                <!-- <div class="mb-3">
-                    <label for="province">Tỉnh/Thành phố</label>
-                    <select id="province" class="form-select">
-                        <option value="">-- Chọn Tỉnh/Thành phố --</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="district">Quận/Huyện</label>
-                    <select id="district" class="form-select" disabled>
-                        <option value="">-- Chọn Quận/Huyện --</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label for="ward">Phường/Xã</label>
-                    <select id="ward" class="form-select" disabled>
-                        <option value="">-- Chọn Phường/Xã --</option>
-                    </select>
-                </div> -->
-
-                <!-- Hidden fields để lưu mã GHN -->
-                <!-- <input type="hidden" id="provinceName" name="provinceName">
-                <input type="hidden" id="districtName" name="districtName">
-                <input type="hidden" id="wardName" name="wardName"> -->
-
-                <script>
-                    // document.addEventListener("DOMContentLoaded", function () {
-                    //     const provinceSelect = document.getElementById("province");
-                    //     const districtSelect = document.getElementById("district");
-                    //     const wardSelect = document.getElementById("ward");
-
-                    //     const provinceNameInput = document.getElementById("provinceName");
-                    //     const districtNameInput = document.getElementById("districtName");
-                    //     const wardNameInput = document.getElementById("wardName");
-
-                    //     // ✅ Lấy context path JSP (rất quan trọng để không bị 404)
-                    //     const contextPath = "<%= request.getContextPath() %>";
-
-                    //     // ------------------ LOAD TỈNH ------------------
-                    //     fetch(contextPath + "/ghn?type=province")
-                    //         .then(res => res.json())
-                    //         .then(provinceData => {
-                    //             console.log("GHN province:", provinceData);
-                    //             if (provinceData.data && Array.isArray(provinceData.data)) {
-                    //                 provinceData.data.forEach(p => {
-                    //                     const opt = document.createElement("option");
-                    //                     opt.value = p.ProvinceID;
-                    //                     opt.textContent = p.ProvinceName;
-                    //                     provinceSelect.appendChild(opt);
-                    //                 });
-                    //             } else {
-                    //                 console.error("Không có dữ liệu tỉnh:", provinceData);
-                    //             }
-                    //         })
-                    //         .catch(err => console.error("Lỗi tải danh sách tỉnh:", err));
-
-                    //     // ------------------ KHI CHỌN TỈNH ------------------
-                    //     provinceSelect.addEventListener("change", function () {
-                    //         const id = provinceSelect.value;
-                    //         const name = provinceSelect.options[provinceSelect.selectedIndex]?.text || "";
-                    //         provinceNameInput.value = name;
-
-                    //         districtSelect.innerHTML = '<option value="">-- Chọn Quận/Huyện --</option>';
-                    //         wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-                    //         wardSelect.disabled = true;
-
-                    //         if (!id) {
-                    //             districtSelect.disabled = true;
-                    //             return;
-                    //         }
-                    //         districtSelect.disabled = false;
-
-                    //         fetch(contextPath + "/ghn?type=district&province_id=" + id)
-                    //             .then(res => res.json())
-                    //             .then(data => {
-                    //                 if (data.data && Array.isArray(data.data)) {
-                    //                     data.data.forEach(d => {
-                    //                         const opt = document.createElement("option");
-                    //                         opt.value = d.DistrictID;
-                    //                         opt.textContent = d.DistrictName;
-                    //                         districtSelect.appendChild(opt);
-                    //                     });
-                    //                 } else {
-                    //                     console.error("Không có dữ liệu quận:", data);
-                    //                 }
-                    //             })
-                    //             .catch(err => console.error("Lỗi tải quận:", err));
-                    //     });
-
-                    //     // ------------------ KHI CHỌN QUẬN ------------------
-                    //     districtSelect.addEventListener("change", function () {
-                    //         const id = districtSelect.value;
-                    //         const name = districtSelect.options[districtSelect.selectedIndex]?.text || "";
-                    //         districtNameInput.value = name;
-
-                    //         wardSelect.innerHTML = '<option value="">-- Chọn Phường/Xã --</option>';
-                    //         if (!id) {
-                    //             wardSelect.disabled = true;
-                    //             return;
-                    //         }
-                    //         wardSelect.disabled = false;
-
-                    //         fetch(contextPath + "/ghn?type=ward&district_id=" + id)
-                    //             .then(res => res.json())
-                    //             .then(data => {
-                    //                 if (data.data && Array.isArray(data.data)) {
-                    //                     data.data.forEach(w => {
-                    //                         const opt = document.createElement("option");
-                    //                         opt.value = w.WardCode;
-                    //                         opt.textContent = w.WardName;
-                    //                         wardSelect.appendChild(opt);
-                    //                     });
-                    //                 } else {
-                    //                     console.error("Không có dữ liệu phường:", data);
-                    //                 }
-                    //             })
-                    //             .catch(err => console.error("Lỗi tải phường:", err));
-                    //     });
-
-                    //     // ------------------ KHI CHỌN PHƯỜNG ------------------
-                    //     wardSelect.addEventListener("change", function () {
-                    //         const name = wardSelect.options[wardSelect.selectedIndex]?.text || "";
-                    //         wardNameInput.value = name;
-                    //     });
-                    // });
-                </script>
-
-
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
@@ -294,12 +169,6 @@
                 <jsp:include page="/WEB-INF/views/customer/address/partials/_address_delete_modal.jsp" />
                 <!--End Modal Delete Cart -->
 
-                <!-- Link javascript of Shipping Address -->
-                <script src="./assets/js/customer/address/address.js"></script>
-
-                <!-- Link javascript of Validator -->
-                <script src="./assets/js/common/validator.js"></script>
-
                 <!-- Check Input create address user  -->
                 <script>
                     Validator({
@@ -310,16 +179,33 @@
                             Validator.isRequired('#fullName', 'Vui lòng nhập họ tên'),
                             Validator.isRequired('#phone', 'Vui lòng nhập số điện thoại'),
                             Validator.isRequired('#addProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
+                            Validator.isRequired('#addDistrict', 'Vui lòng chọn Quận/Huyện'),
                             Validator.isRequired('#addWard', 'Vui lòng chọn Phường/Xã'),
                             Validator.isRequired('#address', 'Vui lòng nhập đại chỉ'),
                         ],
                     })
 
-                    const addProvinceSelect = document.getElementById("addProvince");
-                    const addWardSelect = document.getElementById("addWard");
+                    const addProvince = document.getElementById("addProvince");
+                    const addDistrict = document.getElementById("addDistrict");
+                    const addWard = document.getElementById("addWard");
 
-                    initProvinceWard(addProvinceSelect, addWardSelect);
+                    const addProvinceNameInput = document.getElementById("provinceNameInput");
+                    const addDistrictNameInput = document.getElementById("districtNameInput");
+                    const addWardNameInput = document.getElementById("wardNameInput");
+                    const addProvinceIdInput = document.getElementById("provinceIdInput");
+                    const addDistrictIdInput = document.getElementById("districtIdInput");
+                    const addWardCodeInput = document.getElementById("wardCodeInput");
 
+                    initAddressSelects(addProvince,
+                        addDistrict,
+                        addWard,
+                        addProvinceNameInput,
+                        addDistrictNameInput,
+                        addWardNameInput,
+                        addProvinceIdInput,
+                        addDistrictIdInput,
+                        addWardCodeInput
+                    );
                 </script>
 
 
@@ -332,11 +218,47 @@
                             Validator.isRequired('#updateFullname', 'Vui lòng nhập tên đầy đủ'),
                             Validator.isRequired('#updatePhone', 'Vui lòng nhập số điện thoại'),
                             Validator.isRequired('#updateProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
+                            Validator.isRequired('#updateDistrict', 'Vui lòng chọn Quận/Huyện'),
                             Validator.isRequired('#updateWard', 'Vui lòng chọn Phường/Xã'),
                             Validator.isRequired('#updateAddress', 'Vui lòng nhập đại chỉ')
                         ]
                     })
+                    const provinceSelect = document.getElementById("updateProvince");
+                    const districtSelect = document.getElementById("updateDistrict");
+                    const wardSelect = document.getElementById("updateWard");
+
+                    const provinceNameInput = document.getElementById("updateProvinceNameInput");
+                    const districtNameInput = document.getElementById("updateDistrictNameInput");
+                    const wardNameInput = document.getElementById("updateWardNameInput");
+                    const provinceIdInput = document.getElementById("updateProvinceIdInput");
+                    const districtIdInput = document.getElementById("updateDistrictIdInput");
+                    const wardCodeInput = document.getElementById("updateWardCodeInput");
+                    initAddressSelects(
+                        provinceSelect,
+                        districtSelect,
+                        wardSelect,
+                        provinceNameInput,
+                        districtNameInput,
+                        wardNameInput,
+                        provinceIdInput,
+                        districtIdInput,
+                        wardCodeInput
+                    );
                 </script>
+                <script src="./assets/js/customer/address/address.js?v=1.0.1"></script>
+
+                <c:if test="${not empty sessionScope.toastMsg}">
+                    <script>
+                        toast({
+                            title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Không thể cập nhật'}",
+                            message: "${sessionScope.toastMsg}",
+                            type: "${sessionScope.toastType}",
+                            duration: 3000
+                        });
+                    </script>
+                    <c:remove var="toastMsg" scope="session" />
+                    <c:remove var="toastType" scope="session" />
+                </c:if>
             </body>
 
             </html>

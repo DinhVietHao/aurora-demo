@@ -9,21 +9,11 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-                    <title>Quản lý Shop - Aurora Bookstore</title>
-                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-                        rel="stylesheet" />
-                    <link rel="stylesheet"
-                        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-                    <link rel="stylesheet"
-                        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/adminPage.css?v=1.0.1" />
+                    <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shopInfo.css?v=1.0.1" />
                 </head>
 
-                <body class="sb-nav-fixed">
+                <body class="sb-nav-fixed" data-page="shop-profile">
                     <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
                     <div id="layoutSidenav">
                         <jsp:include page="/WEB-INF/views/layouts/_sidebarShop.jsp" />
@@ -32,20 +22,7 @@
                             <main>
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <h1 class="mt-4 shop-management-title">Quản lý Shop</h1>
-                                        <nav aria-label="breadcrumb">
-                                            <ol class="breadcrumb">
-                                                <li class="breadcrumb-item">
-                                                    <a href="/home">Trang chủ</a>
-                                                </li>
-                                                <li class="breadcrumb-item">
-                                                    <a href="adminDashboard.html">Dashboard</a>
-                                                </li>
-                                                <li class="breadcrumb-item active" aria-current="page">
-                                                    Quản lý shop
-                                                </li>
-                                            </ol>
-                                        </nav>
+                                        <h1 class="mt-4 shop-management-title">Thông tin cửa hàng</h1>
                                     </div>
 
                                     <div class="row mt-4">
@@ -53,67 +30,107 @@
                                             <div class="card mb-4">
                                                 <div class="card-header">
                                                     <i class="bi bi-info-circle me-1"></i>
-                                                    Thông tin Shop
+                                                    Thông tin
                                                 </div>
                                                 <div class="card-body">
                                                     <form id="shopInfoForm">
                                                         <div class="row mb-3">
-                                                            <div class="col-md-6">
-                                                                <label for="shopName" class="form-label">Tên Shop <span
-                                                                        class="text-danger">*</span></label>
+                                                            <div class="col-md-6 form-group">
+                                                                <label for="shopName" class="form-label">Tên
+                                                                    <span class="text-danger">*</span></label>
                                                                 <input type="text" class="form-control" id="shopName"
                                                                     value="${shop.name}" required />
+                                                                <span class="form-message"></span>
                                                             </div>
-                                                            <div class="col-md-6">
+                                                            <div class="col-md-6 form-group">
                                                                 <label for="shopPhone" class="form-label">Số điện thoại
                                                                     <span class="text-danger">*</span></label>
                                                                 <input type="tel" class="form-control" id="shopPhone"
                                                                     value="${shop.pickupAddress.phone}" required />
+                                                                <span class="form-message"></span>
                                                             </div>
                                                         </div>
                                                         <div class="row mb-3">
-                                                            <div class="col-md-6">
-                                                                <label for="shopEmail" class="form-label">Email Shop
+                                                            <div class="col-md-6 form-group">
+                                                                <label for="shopEmail" class="form-label">Email
                                                                     <span class="text-danger">*</span></label>
                                                                 <input type="email" class="form-control" id="shopEmail"
                                                                     value="${shop.invoiceEmail}" required />
+                                                                <span class="form-message"></span>
                                                             </div>
                                                         </div>
 
-                                                        <div class="mb-3">
+                                                        <div class="mb-3 form-group">
                                                             <label for="shopDescription" class="form-label">Mô tả
-                                                                Shop</label>
+                                                                <span class="text-danger">*</span></label>
                                                             <textarea class="form-control" id="shopDescription"
                                                                 rows="3">${shop.description}</textarea>
+                                                            <span class="form-message"></span>
                                                         </div>
 
                                                         <div class="row mb-3">
-                                                            <div class="col-md-4">
-                                                                <label for="provinceSelect">Tỉnh/Thành phố</label>
-                                                                <select id="provinceSelect" class="form-control">
-                                                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                                            <!-- Province Select -->
+                                                            <div class="col-md-4 form-group">
+                                                                <label for="updateProvince" class="form-label">
+                                                                    Tỉnh/Thành phố <span class="text-danger">*</span>
+                                                                </label>
+                                                                <select class="form-select" id="updateProvince"
+                                                                    name="city">
+                                                                    <!-- <option value="">Chọn Tỉnh/Thành phố</option> -->
+                                                                    <option value="${shop.pickupAddress.provinceId}">
+                                                                        ${shop.pickupAddress.city}</option>
                                                                 </select>
+                                                                <span class="form-message"></span>
                                                             </div>
-                                                            <div class="col-md-4">
-                                                                <label for="districtSelect">Quận/Huyện</label>
-                                                                <select id="districtSelect" class="form-control">
-                                                                    <option value="">-- Chọn Quận/Huyện --</option>
+
+                                                            <!-- District Select -->
+                                                            <div class="col-md-4 form-group">
+                                                                <label for="updateDistrict" class="form-label">
+                                                                    Quận/Huyện <span class="text-danger">*</span>
+                                                                </label>
+                                                                <select id="updateDistrict" class="form-select"
+                                                                    name="district" disabled>
+                                                                    <!-- <option value="">-- Chọn Quận/Huyện --</option> -->
+                                                                    <option value="${shop.pickupAddress.districtId}">
+                                                                        ${shop.pickupAddress.district}</option>
                                                                 </select>
+                                                                <span class="form-message"></span>
                                                             </div>
-                                                            <div class="col-md-4">
-                                                                <label for="wardSelect">Phường/Xã</label>
-                                                                <select id="wardSelect" class="form-control">
-                                                                    <option value="">-- Chọn Phường/Xã --</option>
+
+                                                            <!-- Ward Select -->
+                                                            <div class="col-md-4 form-group">
+                                                                <label for="updateWard" class="form-label">
+                                                                    Phường/Xã <span class="text-danger">*</span>
+                                                                </label>
+                                                                <select class="form-select" id="updateWard" name="ward"
+                                                                    disabled>
+                                                                    <!-- <option value="">-- Chọn Phường/Xã --</option> -->
+                                                                    <option value="${shop.pickupAddress.wardCode}">
+                                                                        ${shop.pickupAddress.ward}</option>
                                                                 </select>
+                                                                <span class="form-message"></span>
                                                             </div>
+
+                                                            <input type="hidden" id="updateProvinceNameInput"
+                                                                name="cityName">
+                                                            <input type="hidden" id="updateDistrictNameInput"
+                                                                name="districtName">
+                                                            <input type="hidden" id="updateWardNameInput"
+                                                                name="wardName">
+                                                            <input type="hidden" id="updateProvinceIdInput"
+                                                                name="provinceId">
+                                                            <input type="hidden" id="updateDistrictIdInput"
+                                                                name="districtId">
+                                                            <input type="hidden" id="updateWardCodeInput"
+                                                                name="wardCode">
                                                         </div>
 
-
-                                                        <div class="mb-3">
+                                                        <div class="mb-3 form-group">
                                                             <label for="shopAddress" class="form-label">Địa chỉ chi
-                                                                tiết</label>
+                                                                tiết <span class="text-danger">*</span></label>
                                                             <input type="text" class="form-control" id="shopAddress"
-                                                                value="${shop.pickupAddress.line}, ${shop.pickupAddress.ward}" />
+                                                                value="${shop.pickupAddress.description}" />
+                                                            <span class="form-message"></span>
                                                         </div>
 
                                                         <div class="d-flex justify-content-end">
@@ -131,21 +148,38 @@
                                             <div class="card mb-4">
                                                 <div class="card-header">
                                                     <i class="bi bi-image me-1"></i>
-                                                    Logo Shop
+                                                    Logo
                                                 </div>
+
                                                 <div class="card-body text-center">
                                                     <div class="shop-logo-container mb-3">
-                                                        <img src="${ctx}/assets/images/catalog/products/product-1.png"
-                                                            alt="Shop Logo" name="shopLogo" class="shop-logo"
-                                                            id="shopLogoPreview" />
+                                                        <c:choose>
+                                                            <c:when test="${not empty shop.avatarUrl}">
+                                                                <img src="${ctx}/assets/images/shops/${shop.avatarUrl}"
+                                                                    alt="Shop Logo" class="shop-logo"
+                                                                    id="shopLogoPreview"
+                                                                    onerror="this.src='${ctx}/assets/images/shops/default-shop.png'" />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <img src="${ctx}/assets/images/shops/default-shop.png"
+                                                                    alt="Default Shop Logo" class="shop-logo"
+                                                                    id="shopLogoPreview" />
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </div>
+
                                                     <div class="mb-3">
-                                                        <input type="file" class="form-control" id="shopLogoInput"
-                                                            accept="image/*" />
-                                                        <div class="form-text">
-                                                            Kích thước tối đa: 2MB. Định dạng: JPG, PNG. WEBP
+                                                        <div class="form-text mt-2">
+                                                            <i class="bi bi-info-circle text-primary"></i>
+                                                            Kích thước tối đa: 5MB<br>
+                                                            Định dạng: JPG, PNG, WEBP<br>
+                                                            Khuyến nghị: 500x500px (tỷ lệ 1:1)
                                                         </div>
                                                     </div>
+
+                                                    <input type="file" id="shopLogoInput" accept="image/*"
+                                                        style="display: none;" />
+
                                                     <button type="button" class="btn btn-outline-primary btn-sm"
                                                         id="uploadLogoBtn">
                                                         <i class="bi bi-upload me-1"></i>
@@ -161,11 +195,8 @@
                         </div>
                     </div>
 
-
-
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-                    <script src="${ctx}/assets/js/shop/scripts.js"></script>
-                    <script src="${ctx}/assets/js/shop/shopInfo.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+                    <script src="<c:url value='/assets/js/shop/shopProfile.js'/>?v=1.0.2"></script>
                 </body>
 
                 </html>

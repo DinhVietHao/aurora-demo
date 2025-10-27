@@ -16,6 +16,7 @@ import com.group01.aurora_demo.cart.dao.dto.ShopCartDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.service.CheckoutService;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
@@ -23,13 +24,12 @@ import com.group01.aurora_demo.shop.model.Voucher;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/checkout/*")
-public class CheckoutServlet extends HttpServlet {
+public class CheckoutServlet extends NotificationServlet {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private AddressDAO addressDAO;
@@ -78,8 +78,6 @@ public class CheckoutServlet extends HttpServlet {
             }).toList();
 
             List<Address> addressList = this.addressDAO.getAddressesByUserId(user.getId());
-            boolean isAddress = addressDAO.hasAddress(user.getId());
-
             Address selectedAddress = this.addressDAO.getDefaultAddress(user.getId());
             String addressId = req.getParameter("addressId");
             if (addressId != null && !addressId.isEmpty()) {
@@ -89,34 +87,13 @@ public class CheckoutServlet extends HttpServlet {
                     System.out.println(e.getMessage());
                 }
             }
-
-            // long totalShippingFee = 0;
-            // if (selectedAddress != null) {
-            // for (Map.Entry<Long, List<CartItem>> entry : grouped.entrySet()) {
-            // var items = entry.getValue();
-            // var shop = items.get(0).getProduct().getShop();
-            // double shopWeight = items.stream()
-            // .mapToDouble(ci -> ci.getProduct().getWeight() * ci.getQuantity())
-            // .sum();
-            // double fee = shippingCalculator.calculateShippingFee(
-            // shop.getPickupAddress().getCity(),
-            // selectedAddress.getCity(),
-            // shopWeight);
-
-            // totalShippingFee += fee;
-            // }
-            // }
             req.setAttribute("shopCarts", shopCarts);
             req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
             req.setAttribute("addresses", addressList);
-            req.setAttribute("isAddress", isAddress);
             req.setAttribute("address", selectedAddress);
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
-            // req.setAttribute("shippingFee", totalShippingFee);
-
             req.getRequestDispatcher("/WEB-INF/views/customer/checkout/checkout.jsp").forward(req, resp);
         }
-
     }
 
     @Override
@@ -164,9 +141,9 @@ public class CheckoutServlet extends HttpServlet {
 
                     json.put("success", true);
                     json.put("totalProduct", summary.getTotalProduct());
-                    json.put("totalDiscount", summary.getTotalDiscount());
+                    json.put("totalDiscount", summary.getShopDiscount() + summary.getSystemDiscount());
                     json.put("totalShippingFee", summary.getTotalShippingFee());
-                    json.put("shipDiscount", summary.getShippingDiscount());
+                    json.put("shipDiscount", summary.getSystemShippingDiscount());
                     json.put("finalAmount", summary.getFinalAmount());
 
                 } catch (Exception e) {
@@ -181,7 +158,7 @@ public class CheckoutServlet extends HttpServlet {
                 try {
                     String code = req.getParameter("code");
                     long shopId = Long.parseLong(req.getParameter("shopId"));
-                    Voucher voucher = this.voucherDAO.getVoucherByCode(code, true);
+                    Voucher voucher = this.voucherDAO.getVoucherByCode(shopId, code, true);
                     if (voucher == null) {
                         json.put("success", false);
                         json.put("message", "Mã giảm giá không tồn tại.");
@@ -192,7 +169,7 @@ public class CheckoutServlet extends HttpServlet {
                     double totalShop = cartItems.stream()
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
-                    String validation = this.voucherValidator.validate(voucher, totalShop, shopId);
+                    String validation = this.voucherValidator.validate(voucher, totalShop, shopId, user.getUserID());
                     if (validation != null) {
                         json.put("success", false);
                         json.put("message", validation);
@@ -214,7 +191,7 @@ public class CheckoutServlet extends HttpServlet {
             case "/voucher/system": {
                 try {
                     String code = req.getParameter("code");
-                    Voucher voucher = this.voucherDAO.getVoucherByCode(code, false);
+                    Voucher voucher = this.voucherDAO.getVoucherByCode(null, code, false);
                     if (voucher == null) {
                         json.put("success", false);
                         json.put("message", "Mã giảm giá không tồn tại.");
@@ -226,7 +203,7 @@ public class CheckoutServlet extends HttpServlet {
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
 
-                    String validation = this.voucherValidator.validate(voucher, totalOrder, null);
+                    String validation = this.voucherValidator.validate(voucher, totalOrder, null, user.getUserID());
                     if (validation != null) {
                         json.put("success", false);
                         json.put("message", validation);

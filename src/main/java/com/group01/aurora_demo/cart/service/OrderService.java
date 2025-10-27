@@ -1,10 +1,11 @@
 package com.group01.aurora_demo.cart.service;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.group01.aurora_demo.auth.model.User;
@@ -19,12 +20,14 @@ import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.cart.model.Payment;
+import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.shop.model.Voucher;
-import com.group01.aurora_demo.admin.dao.VATDAO;
 
 public class OrderService {
     private OrderDAO orderDAO;
@@ -35,7 +38,8 @@ public class OrderService {
     private CheckoutService checkoutService;
     private CartItemDAO cartItemDAO;
     private VoucherValidator voucherValidator;
-    private VATDAO vatDAO;
+    private UserVoucherDAO userVoucherDAO;
+    private ProductDAO productDAO;
 
     public OrderService() {
         this.orderDAO = new OrderDAO();
@@ -46,39 +50,65 @@ public class OrderService {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.voucherValidator = new VoucherValidator();
-        this.vatDAO = new VATDAO();
+        this.userVoucherDAO = new UserVoucherDAO();
+        this.productDAO = new ProductDAO();
     }
 
-    public boolean createOrder(User user, Address address, Voucher voucherDiscount,
+    public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
             Voucher voucherShip, Map<Long, String> shopVouchers) {
-        try (Connection conn = DataSourceProvider.get().getConnection()) {
+        Connection conn = null;
+        try {
+            conn = DataSourceProvider.get().getConnection();
             conn.setAutoCommit(false);
+            List<CartItem> cartItems = cartItemDAO.getCheckedCartItems(user.getId())
+                    .stream()
+                    .filter(ci -> ci.getProduct() != null &&
+                            ci.getProduct().getShop() != null &&
+                            ci.getProduct().getShop().getShopId() != null)
+                    .collect(Collectors.toList());
+
+            if (cartItems.isEmpty()) {
+                return new ServiceResponse("warning", "Giỏ hàng trống", "Vui lòng chọn sản phẩm trước khi đặt hàng.", 0,
+                        0.0);
+            }
+
             Order order = new Order();
             CheckoutSummaryDTO summary = this.checkoutService.calculateCheckoutSummary(
                     user.getId(), address.getAddressId(), voucherDiscount != null ? voucherDiscount.getCode() : null,
                     voucherShip != null ? voucherShip.getCode() : null,
                     shopVouchers);
 
+            String fullAddress = String.format(
+                    "%s - %s, %s, %s, %s",
+                    address.getPhone(),
+                    address.getDescription(),
+                    address.getWard(),
+                    address.getDistrict(),
+                    address.getCity());
+
             order.setUserId(user.getId());
-            order.setAddressId(address.getAddressId());
+            order.setAddress(fullAddress);
             order.setVoucherDiscountId(voucherDiscount != null ? voucherDiscount.getVoucherID() : null);
             order.setVoucherShipId(voucherShip != null ? voucherShip.getVoucherID() : null);
             order.setTotalAmount(summary.getTotalProduct());
-            order.setDiscountAmount(summary.getTotalDiscount());
+            order.setDiscountAmount(summary.getShopDiscount() + summary.getSystemDiscount());
             order.setTotalShippingFee(summary.getTotalShippingFee());
-            order.setShippingDiscount(summary.getShippingDiscount());
+            order.setShippingDiscount(summary.getSystemShippingDiscount());
             order.setFinalAmount(summary.getFinalAmount());
-            order.setOrderStatus("PENDING");
+            order.setOrderStatus("PENDING_PAYMENT");
 
-            if (!orderDAO.createOrder(conn, order)) {
+            long orderId = orderDAO.createOrder(conn, order);
+            if (orderId == -1) {
                 conn.rollback();
-                return false;
+                return new ServiceResponse("error", "Lỗi tạo đơn hàng",
+                        "Không thể tạo đơn hàng. Vui lòng thử lại sau.", 0, 0.0);
             }
 
-            long orderId = order.getOrderId();
-            List<CartItem> cartItems = this.cartItemDAO.getCheckedCartItems(user.getId());
             Map<Long, List<CartItem>> groupByShop = cartItems.stream()
                     .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
+
+            Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
+            Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();
@@ -87,50 +117,103 @@ public class OrderService {
                         .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity()).sum();
 
                 double shopDiscount = 0;
-                Long voucherId = null;
+                Long shopVoucherId = null;
                 if (shopVouchers != null && shopVouchers.containsKey(shopId)) {
                     String shopVoucherCode = shopVouchers.get(shopId);
                     if (shopVoucherCode != null && !shopVoucherCode.isEmpty()) {
-                        Voucher shopVoucher = this.voucherDAO.getVoucherByCode(shopVoucherCode, true);
-                        if (shopVoucher != null) {
-                            shopDiscount = this.voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
-                            voucherId = shopVoucher.getVoucherID();
+                        Voucher shopVoucher = this.voucherDAO.getVoucherByCode(shopId, shopVoucherCode, true);
+                        if (shopVoucher == null) {
+                            conn.rollback();
+                            return new ServiceResponse("warning", "Mã giảm giá không hợp lệ",
+                                    "Mã shop #" + shopVoucherCode + " đã hết hạn hoặc không tồn tại.", 0, 0.0);
                         }
+                        if (shopVoucher != null) {
+                            shopVoucherCache.put(shopId, shopVoucher);
+                        }
+
+                        String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId,
+                                user.getUserID());
+                        if (validation != null) {
+                            conn.rollback();
+                            return new ServiceResponse("warning", "Không thể áp dụng mã giảm giá", validation, 0, 0.0);
+                        }
+
+                        if (shopVoucher.getPerUserLimit() > 0) {
+                            int usedCount = this.userVoucherDAO.getUserVoucherUsageCount(user.getId(),
+                                    shopVoucher.getVoucherID());
+                            if (usedCount >= shopVoucher.getPerUserLimit()) {
+                                conn.rollback();
+                                return new ServiceResponse("warning", "Vượt giới hạn sử dụng mã",
+                                        "Bạn đã sử dụng mã giảm giá này quá số lần cho phép.", 0, 0.0);
+                            }
+                        }
+                        shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
+                        shopVoucherId = shopVoucher.getVoucherID();
                     }
                 }
-                Double shopShippingFees = this.checkoutService.calculateShippingFee(cartItems, address);
+
+                double shopShippingFee = shopShippingFees.getOrDefault(shopId, 0.0);
+                double totalProduct = order.getTotalAmount();
+                double totalShipping = order.getTotalShippingFee();
+                double systemDiscount = summary.getSystemDiscount();
+                double systemShippingDiscount = summary.getSystemShippingDiscount();
+
+                double systemVoucherDiscountAllocated = 0;
+                double systemShippingDiscountAllocated = 0;
+
+                if (systemDiscount > 0 && totalProduct > 0) {
+                    systemVoucherDiscountAllocated = (shopSubtotal / totalProduct) * systemDiscount;
+                }
+
+                if (systemShippingDiscount > 0 && totalShipping > 0) {
+                    systemShippingDiscountAllocated = (shopShippingFee / totalShipping) * systemShippingDiscount;
+                }
+
+                double finalAmount = shopSubtotal
+                        - shopDiscount
+                        - systemVoucherDiscountAllocated
+                        + shopShippingFee
+                        - systemShippingDiscountAllocated;
+
                 OrderShop orderShop = new OrderShop();
                 orderShop.setOrderId(orderId);
                 orderShop.setShopId(shopId);
-                orderShop.setVoucherId(voucherId);
+                orderShop.setVoucherId(shopVoucherId);
                 orderShop.setSubtotal(shopSubtotal);
                 orderShop.setDiscount(shopDiscount);
-                orderShop.setShippingFee(shopShippingFees);
-                orderShop.setFinalAmount(shopSubtotal - shopDiscount);
-                orderShop.setStatus("PENDING");
+                orderShop.setSystemVoucherDiscount(systemVoucherDiscountAllocated);
+                orderShop.setSystemShippingDiscount(systemShippingDiscountAllocated);
+                orderShop.setShippingFee(shopShippingFee);
+                orderShop.setFinalAmount(finalAmount);
+                orderShop.setStatus("PENDING_PAYMENT");
+                long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
 
-                if (!orderShopDAO.createOrderShop(conn, orderShop)) {
+                if (orderShopId == -1) {
                     conn.rollback();
-                    return false;
+                    return new ServiceResponse("error", "Lỗi hệ thống",
+                            "Không thể tạo đơn hàng cho shop #" + shopId + ".", 0, 0.0);
                 }
-
-                long orderShopId = orderShop.getOrderShopId();
 
                 for (CartItem item : items) {
                     OrderItem orderItem = new OrderItem();
                     orderItem.setOrderShopId(orderShopId);
                     orderItem.setProductId(item.getProduct().getProductId());
                     orderItem.setQuantity(item.getQuantity());
-                    orderItem.setUnitPrice(item.getProduct().getSalePrice());
+                    orderItem.setOriginalPrice(item.getProduct().getOriginalPrice());
+                    orderItem.setSalePrice(item.getProduct().getSalePrice());
                     orderItem.setSubtotal(item.getQuantity() * item.getProduct().getSalePrice());
+                    orderItem.setVatRate(0);
 
-                    // Calculate VAT rate based on product category
-                    double vatRate = vatDAO.getVATRateByProductId(item.getProduct().getProductId());
-                    orderItem.setVatRate(vatRate);
-
-                    if (!orderItemDAO.createOrderItem(conn, orderItem)) {
+                    if (orderItemDAO.createOrderItem(conn, orderItem) == -1) {
                         conn.rollback();
-                        return false;
+                        return new ServiceResponse("error", "Lỗi hệ thống",
+                                "Đã xảy ra sự cố. Vui lòng thử lại sau.", 0, 0.0);
+                    }
+
+                    if (!productDAO.updateStock(conn, item.getProduct().getProductId(), item.getQuantity())) {
+                        conn.rollback();
+                        return new ServiceResponse("warning", "Sản phẩm hết hàng",
+                                "Sản phẩm '" + item.getProduct().getTitle() + "' không đủ số lượng.", 0, 0.0);
                     }
                 }
             }
@@ -139,18 +222,74 @@ public class OrderService {
             payment.setOrderId(orderId);
             payment.setAmount(summary.getFinalAmount());
             payment.setTransactionRef("SYS-" + System.currentTimeMillis());
-
-            if (!paymentDAO.createPayment(conn, payment)) {
+            payment.setStatus("FAILED");
+            if (paymentDAO.createPayment(conn, payment) == -1) {
                 conn.rollback();
-                return false;
+                return new ServiceResponse("error", "Lỗi thanh toán",
+                        "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.", 0, 0.0);
+            }
+            if (!cartItemDAO.deleteCheckout(conn, user.getId())) {
+                conn.rollback();
+                return new ServiceResponse("error", "Lỗi hệ thống",
+                        "Đã xảy ra sự cố. Vui lòng thử lại sau.", 0, 0.0);
             }
 
+            if (voucherDiscount != null) {
+                if (!voucherDAO.incrementUsageCount(conn, voucherDiscount.getVoucherID()) ||
+                        !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherDiscount.getVoucherID())) {
+                    conn.rollback();
+                    return new ServiceResponse("warning", "Mã giảm giá hết lượt",
+                            "Mã giảm giá đơn hàng đã hết lượt sử dụng.", 0, 0.0);
+                }
+            }
+            if (voucherShip != null) {
+                if (!voucherDAO.incrementUsageCount(conn, voucherShip.getVoucherID()) ||
+                        !userVoucherDAO.insertUserVoucher(conn, user.getId(), voucherShip.getVoucherID())) {
+                    conn.rollback();
+                    return new ServiceResponse("warning", "Mã vận chuyển hết lượt",
+                            "Mã giảm giá phí vận chuyển đã hết lượt sử dụng.", 0, 0.0);
+                }
+
+            }
+            if (shopVouchers != null && !shopVoucherCache.isEmpty()) {
+                for (Voucher shopVoucher : shopVoucherCache.values()) {
+                    if (!voucherDAO.incrementUsageCount(conn, shopVoucher.getVoucherID()) ||
+                            !userVoucherDAO.insertUserVoucher(conn, user.getId(), shopVoucher.getVoucherID())) {
+                        conn.rollback();
+                        return new ServiceResponse("warning", "Mã giảm giá shop hết lượt",
+                                "Một trong các mã shop đã vượt giới hạn sử dụng.", 0, 0.0);
+                    }
+                }
+            }
             conn.commit();
-            return true;
+            return new ServiceResponse(
+                    "success",
+                    "Đặt hàng thành công",
+                    "Đơn hàng của bạn đã được tạo thành công!",
+                    orderId,
+                    summary.getFinalAmount());
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return false;
+            e.printStackTrace();
+            System.err.println("Error cause: " + e.getCause());
+            System.err.println("Error message: " + e.getMessage());
+            System.out.println("insertUserVoucher ERROR: " + e.getMessage());
+            try {
+                if (conn != null)
+                    conn.rollback();
+            } catch (Exception rbEx) {
+                rbEx.printStackTrace();
+            }
+            return new ServiceResponse("error", "Lỗi hệ thống", "Đã xảy ra sự cố. Vui lòng thử lại sau.", 0, 0.0);
+        } finally {
+            try {
+                if (conn != null)
+                    conn.setAutoCommit(true);
+                if (conn != null)
+                    conn.close();
+            } catch (Exception closeEx) {
+                closeEx.printStackTrace();
+            }
         }
     }
 

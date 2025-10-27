@@ -10,9 +10,12 @@
         <!-- Check Input Register  -->
         <script src="<c:url value='/assets/js/common/validator.js'/>?v=1.0.1"></script>
 
+        <!-- JS của thông báo Toast -->
+        <script src="${ctx}/assets/js/common/toast.js?v=1.0.1"></script>
+
         <!-- Tạo redirect_uri động, đúng host/port/context hiện tại -->
         <c:set var="redirectUri"
-            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth/login" />
+            value="${pageContext.request.scheme}://${pageContext.request.serverName}:${pageContext.request.serverPort}${pageContext.request.contextPath}/auth" />
 
         <!-- Tạo URL đăng nhập Google OAuth v2, đã encode tham số -->
         <c:url var="googleAuthUrl" value="https://accounts.google.com/o/oauth2/v2/auth">
@@ -43,7 +46,7 @@
                         Validator.isRequired('#register-email', 'Vui lòng nhập email'),
                         Validator.isEmail('#register-email', 'Email không hợp lệ'),
                         Validator.isRequired('#register-password', 'Vui lòng nhập mật khẩu'),
-                        Validator.minLength('#register-password', 6),
+                        Validator.minLength('#register-password', 8),
                         Validator.isRequired('#register-password-confirmation', 'Vui lòng nhập lại mật khẩu'),
                         Validator.isConfirmed('#register-password-confirmation', function () {
                             return document.querySelector('#form-register #register-password').value;
@@ -104,7 +107,7 @@
                     rules: [
                         Validator.isRequired('#create-password-otp', 'Vui lòng nhập mã OTP'),
                         Validator.isRequired('#create-password-password', 'Vui lòng nhập mật khẩu'),
-                        Validator.minLength('#create-password-password', 6),
+                        Validator.minLength('#create-password-password', 8),
                         Validator.isRequired('#create-password-password-confirmation', 'Vui lòng nhập lại mật khẩu'),
                         Validator.isConfirmed('#create-password-password-confirmation', function () {
                             return document.querySelector('#form-create-password #create-password-password').value;
@@ -183,17 +186,112 @@
             });
         </script>
 
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const currentPage = document.body.dataset.page;
+                const currentPath = window.location.pathname;
+                const currentSearch = window.location.search;
+
+                const navLinks = document.querySelectorAll('.sb-sidenav .nav-link');
+
+                // Remove all active
+                navLinks.forEach(link => link.classList.remove('active'));
+
+                let foundActive = false;
+
+                // Priority 1: Match by data-page attribute (Most accurate)
+                if (currentPage) {
+                    const activeLink = document.querySelector(`.sb-sidenav .nav-link[data-page="${currentPage}"]`);
+                    if (activeLink) {
+                        activeLink.classList.add('active');
+                        foundActive = true;
+                    }
+                }
+
+                // Priority 2: Match by URL (Fallback)
+                if (!foundActive) {
+                    // Sort links by specificity (longer href = more specific)
+                    const sortedLinks = Array.from(navLinks).sort((a, b) => {
+                        const hrefA = a.getAttribute('href') || '';
+                        const hrefB = b.getAttribute('href') || '';
+                        return hrefB.length - hrefA.length; // Longer first
+                    });
+
+                    for (const link of sortedLinks) {
+                        const linkHref = link.getAttribute('href');
+                        if (!linkHref) continue;
+
+                        // Split path and query
+                        const [linkPath, linkQuery] = linkHref.split('?');
+
+                        // Check exact match with query string (most specific)
+                        if (linkQuery && currentSearch) {
+                            const currentQueryParams = new URLSearchParams(currentSearch);
+                            const linkQueryParams = new URLSearchParams(linkQuery);
+
+                            let allMatch = true;
+                            for (const [key, value] of linkQueryParams) {
+                                if (currentQueryParams.get(key) !== value) {
+                                    allMatch = false;
+                                    break;
+                                }
+                            }
+
+                            if (allMatch && currentPath === linkPath) {
+                                link.classList.add('active');
+                                foundActive = true;
+                                break;
+                            }
+                        }
+
+                        // Check exact path match (without query)
+                        if (currentPath === linkPath && !linkQuery && !currentSearch) {
+                            link.classList.add('active');
+                            foundActive = true;
+                            break;
+                        }
+
+                        // Check filename match (for JSP files)
+                        if (linkPath.endsWith('.jsp')) {
+                            const currentFile = currentPath.split('/').pop();
+                            const linkFile = linkPath.split('/').pop();
+                            if (currentFile === linkFile) {
+                                link.classList.add('active');
+                                foundActive = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Priority 3: Default to Dashboard
+                if (!foundActive) {
+                    const dashboardLink = document.querySelector('.sb-sidenav .nav-link[data-page="shop-dashboard"]') ||
+                        document.querySelector('.sb-sidenav .nav-link[href*="Dashboard"]');
+                    if (dashboardLink) {
+                        dashboardLink.classList.add('active');
+                    }
+                }
+            });
+        </script>
+
         <!--Gửi mã OTP-->
-        <script src="<c:url value='/assets/js/auth/send_otp.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/send_otp.js'/>?v=1.0.2"></script>
 
         <!--Đăng ký-->
-        <script src="<c:url value='/assets/js/auth/register.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/register.js'/>?v=1.0.2"></script>
 
         <!--Đăng nhập-->
-        <script src="<c:url value='/assets/js/auth/login.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/login.js'/>?v=1.0.2"></script>
 
         <!--Quên mật khẩu-->
-        <script src="<c:url value='/assets/js/auth/forgot-password.js'/>?v=1.0.2" defer></script>
+        <script src="<c:url value='/assets/js/auth/forgot-password.js'/>?v=1.0.2"></script>
 
-        <!-- Address loader for provinces/wards -->
+        <!-- Link javascript of Shipping Address -->
         <script src="<c:url value='/assets/js/common/address.js'/>?v=1.0.1"></script>
+
+        <!-- Avatar Uploader -->
+        <script src="${ctx}/assets/js/common/avatar-uploader.js?v=1.0.1"></script>
+
+        <!-- Scroll to Top -->
+        <script src="${ctx}/assets/js/common/scroll-to-top.js?v=1.0.0"></script>

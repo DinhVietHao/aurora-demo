@@ -35,12 +35,26 @@
                                     <span class="form-message"></span>
                                 </div>
                                 <div class="col-md-6 form-group">
+                                    <label for="addDistrict" class="form-label">Quận/Huyện</label>
+                                    <select id="addDistrict" class="form-select" disabled name="district">
+                                        <option value="">-- Chọn Quận/Huyện --</option>
+                                    </select>
+                                    <span class="form-message"></span>
+                                </div>
+                                <div class="col-md-12 form-group">
                                     <label for="ward" class="form-label">Phường/Xã</label>
-                                    <select class="form-select" id="addWard" name="ward">
+                                    <select class="form-select" id="addWard" name="ward" disabled>
                                         <option value="">Chọn Phường/Xã</option>
                                     </select>
                                     <span class="form-message"></span>
                                 </div>
+                                <input type="hidden" id="provinceNameInput" name="cityName">
+                                <input type="hidden" id="districtNameInput" name="districtName">
+                                <input type="hidden" id="wardNameInput" name="wardName">
+
+                                <input type="hidden" id="provinceIdInput" name="provinceId">
+                                <input type="hidden" id="districtIdInput" name="districtId">
+                                <input type="hidden" id="wardCodeInput" name="wardCode">
                             </div>
 
                             <div class="mb-3 form-group">
