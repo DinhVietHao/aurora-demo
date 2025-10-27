@@ -10,7 +10,7 @@
 
                 <head>
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_dashboard.css?v=1.0.1" />
                 </head>
 
