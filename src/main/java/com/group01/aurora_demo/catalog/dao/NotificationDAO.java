@@ -103,7 +103,7 @@ public class NotificationDAO {
                     case "ORDER_CONFIRM":
                     case "ORDER_RETURNED":
                     case "ORDER_RETURNED_REJECTED":
-                        link = "/customer/orders?action=detail&orderShopId=" + n.getReferenceID();
+                        link = "/order/shop?orderId=" + n.getReferenceID();
                         break;
                     default:
                         link = "#";

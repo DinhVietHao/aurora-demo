@@ -70,15 +70,12 @@ public class OrderShopDAO {
                     orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
                     orderShop.setSalePrice(rs.getDouble("SalePrice"));
                     orderShop.setSubtotal(rs.getDouble("Subtotal"));
-                    System.out.println(">>>>>Check getUpdateAt=" + (orderShop.getUpdateAt()));
-                    System.out.println(">>>>>Check getShopStatus=" + (orderShop.getShopStatus()));
 
                     boolean canReturn = false;
                     if (orderShop.getUpdateAt() != null && "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())) {
                         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
                         LocalDate updateDate = orderShop.getUpdateAt().toInstant().atZone(zone).toLocalDate();
                         long days = ChronoUnit.DAYS.between(updateDate, LocalDate.now(zone));
-                        System.out.println(">>>>>Check days=" + days);
                         canReturn = days >= 0 && days < 7;
                     }
                     orderShop.setCanReturn(canReturn);

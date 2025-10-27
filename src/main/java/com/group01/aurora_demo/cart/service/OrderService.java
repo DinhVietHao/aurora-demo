@@ -79,7 +79,8 @@ public class OrderService {
                     shopVouchers);
 
             String fullAddress = String.format(
-                    "%s, %s, %s, %s",
+                    "%s - %s, %s, %s, %s",
+                    address.getPhone(),
                     address.getDescription(),
                     address.getWard(),
                     address.getDistrict(),

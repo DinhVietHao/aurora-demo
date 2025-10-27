@@ -7,18 +7,18 @@ import java.util.List;
 import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/address/*")
-public class AddressServlet extends HttpServlet {
+public class AddressServlet extends NotificationServlet {
     private AddressDAO addressDAO;
 
     public AddressServlet() {

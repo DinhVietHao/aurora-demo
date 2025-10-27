@@ -33,6 +33,7 @@ import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -46,14 +47,13 @@ import com.group01.aurora_demo.shop.model.Voucher;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/order/*")
-public class OrderServlet extends HttpServlet {
+public class OrderServlet extends NotificationServlet {
     private OrderService orderService;
     private VoucherDAO voucherDAO;
     private OrderDAO orderDAO;

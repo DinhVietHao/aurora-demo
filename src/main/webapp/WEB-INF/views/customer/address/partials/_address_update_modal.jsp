@@ -39,6 +39,7 @@
                                 <select id="updateDistrict" class="form-select" name="district">
                                     <option value="">-- Chọn Quận/Huyện --</option>
                                 </select>
+                                <span class=" form-message"></span>
                             </div>
                             <div class="col-md-12 form-group">
                                 <label for="updateWard" class="form-label">Phường/Xã</label>
