@@ -213,7 +213,7 @@
                                                                         </div>
                                                                     </div>
                                                                     <div class="section-title mt-3">
-                                                                        <a href="/order/order-shop?orderId=${order.orderId}"
+                                                                        <a href="/order/shop?orderId=${order.orderId}"
                                                                             class="btn btn-detail">
                                                                             <i class="bi bi-eye"></i> Xem chi tiết
                                                                         </a>

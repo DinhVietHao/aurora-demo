@@ -16,6 +16,7 @@ import com.group01.aurora_demo.cart.dao.dto.ShopCartDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.service.CheckoutService;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
@@ -23,13 +24,12 @@ import com.group01.aurora_demo.shop.model.Voucher;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/checkout/*")
-public class CheckoutServlet extends HttpServlet {
+public class CheckoutServlet extends NotificationServlet {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private AddressDAO addressDAO;

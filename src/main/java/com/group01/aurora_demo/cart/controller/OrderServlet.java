@@ -33,6 +33,7 @@ import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -46,14 +47,13 @@ import com.group01.aurora_demo.shop.model.Voucher;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/order/*")
-public class OrderServlet extends HttpServlet {
+public class OrderServlet extends NotificationServlet {
     private OrderService orderService;
     private VoucherDAO voucherDAO;
     private OrderDAO orderDAO;
@@ -102,7 +102,7 @@ public class OrderServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else if (path.equals("/order-shop")) {
+        } else if (path.equals("/shop")) {
             try {
                 long orderId = Long.parseLong(req.getParameter("orderId"));
 
@@ -129,7 +129,7 @@ public class OrderServlet extends HttpServlet {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else if (path.equals("/order-shop/order-detail")) {
+        } else if (path.equals("/detail")) {
             try {
                 long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
 
@@ -383,7 +383,7 @@ public class OrderServlet extends HttpServlet {
                     conn.commit();
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
-                    resp.sendRedirect(req.getContextPath() + "/order/order-shop?orderId=" + order.getOrderId());
+                    resp.sendRedirect(req.getContextPath() + "/order/shop?orderId=" + order.getOrderId());
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (conn != null)
@@ -419,7 +419,12 @@ public class OrderServlet extends HttpServlet {
                         session.setAttribute("toastMsg", "Không thể xác nhận đơn hàng. Vui lòng thử lại.");
                     }
 
-                    resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                    String referer = req.getHeader("Referer");
+                    if (referer != null) {
+                        resp.sendRedirect(referer);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -444,7 +449,12 @@ public class OrderServlet extends HttpServlet {
                         session.setAttribute("toastMsg", "Không thể trả hàng. Vui lòng thử lại.");
                     }
 
-                    resp.sendRedirect(req.getContextPath() + "/order?status=returned");
+                    String referer = req.getHeader("Referer");
+                    if (referer != null) {
+                        resp.sendRedirect(referer);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();

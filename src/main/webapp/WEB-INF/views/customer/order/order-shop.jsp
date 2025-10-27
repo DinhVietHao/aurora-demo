@@ -176,7 +176,7 @@
                                                                 </div>
                                                                 <c:forEach var="orderShop" items="${entry.value}">
                                                                     <a
-                                                                        href="/order/order-shop/order-detail?orderShopId=${orderShop.orderShopId}">
+                                                                        href="/order/detail?orderShopId=${orderShop.orderShopId}">
                                                                         <div class="order-card__body">
                                                                             <div class="col-2 text-center">
                                                                                 <img class="order-card__image"

@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import org.json.JSONObject;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,13 +16,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
 import com.group01.aurora_demo.cart.dao.dto.ShopCartDTO;
 
 @WebServlet("/cart/*")
-public class CartServlet extends HttpServlet {
+public class CartServlet extends NotificationServlet {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private ProductDAO productDAO;
