@@ -9,11 +9,8 @@
                 <html lang="vi">
 
                 <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Tham gia Flash Sale</title>
-
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/flashsale.css?v=1.0.2" />
                 </head>
 
@@ -187,9 +184,7 @@
                         </div>
                     </div>
 
-
-                    <!-- JS -->
-                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/flashSale.js?v=1.0.2"></script>
                 </body>
 

@@ -10,7 +10,7 @@
 
                 <head>
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/admin/shop_products.css?v=1.0.1" />
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
                 </head>
 
@@ -550,11 +550,7 @@
                                             <div class="col-md-6">
                                                 <label for="isbn" class="form-label">Mã ISBN <span
                                                         class="text-danger">*</span></label>
-<<<<<<< HEAD
                                                 <input type="text" class="form-control" id="isbn" name="ISBN"
-=======
-                                                <input type="text" class="form-control" id="isbn" name="isbn"
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                     placeholder="VD: 9786042109443" required>
                                                 <div class="form-text">Mã số của sách.</div>
                                             </div>
@@ -989,11 +985,7 @@
                                             <div class="col-md-6">
                                                 <label for="isbn" class="form-label">Mã ISBN <span
                                                         class="text-danger">*</span></label>
-<<<<<<< HEAD
                                                 <input type="text" class="form-control" id="isbnUpdate" name="ISBN"
-=======
-                                                <input type="text" class="form-control" id="isbnUpdate" name="isbn"
->>>>>>> 6a13786814f123593cf52f52fe60d13c593aa470
                                                     placeholder="VD: 9786042109443" required>
                                                 <div class="form-text">Mã số của sách.</div>
                                             </div>
