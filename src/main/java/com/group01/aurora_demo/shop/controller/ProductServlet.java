@@ -57,6 +57,10 @@ public class ProductServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
+        String productStatus = request.getParameter("productStatus");
+        if(productStatus == null){
+            productStatus = "all";
+        }
         if (action == null)
             action = "view";
 

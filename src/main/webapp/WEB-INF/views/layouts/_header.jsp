@@ -25,7 +25,6 @@
                                     </form>
                                 </div>
                             </div>
-
                             <div class="col-3 col-md-5">
                                 <nav class="header-nav">
                                     <a href="${ctx}/" class="header-nav-item header-mobile-disable">
