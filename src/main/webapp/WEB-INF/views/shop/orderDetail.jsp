@@ -228,10 +228,8 @@
                                                 <div class="card-body">
                                                     <p><strong>Tên:</strong> ${orderShop.user.fullName}</p>
                                                     <p><strong>Email:</strong> ${orderShop.user.email}</p>
-                                                    <p><strong>Điện thoại:</strong> ${orderShop.address.phone}</p>
-                                                    <p><strong>Địa chỉ:</strong> ${orderShop.address.description},
-                                                        ${orderShop.address.ward},
-                                                        ${orderShop.address.district}, ${orderShop.address.city}</p>
+                                                    <p><strong>Điện thoại:</strong> ${phone}</p>
+                                                    <p><strong>Địa chỉ:</strong> ${address}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -264,7 +262,7 @@
                                                         <strong>Phí voucher:</strong>
                                                         <span>
                                                             -
-                                                            <fmt:formatNumber value="${orderShop.discount}"
+                                                            <fmt:formatNumber value="${orderShop.shopDiscount}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>
@@ -272,7 +270,7 @@
                                                     <hr>
 
                                                     <c:set var="totalAmount"
-                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}" />
+                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.shopDiscount}" />
 
                                                     <c:if test="${totalAmount < 0}">
                                                         <c:set var="totalAmount" value="0" />

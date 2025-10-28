@@ -155,7 +155,7 @@ public class OrderServlet extends NotificationServlet {
                 if ("00".equals(responseCode)) {
 
                     this.paymentDAO.updatePaymentStatus(groupOrderCode, "SUCCESS", transactionNo);
-                    orderShopDAO.updateOrderShopStatus(groupOrderCode, "PENDING");
+                    orderShopDAO.updateOrderShopStatusByGroupOrderCode(groupOrderCode, "PENDING");
                     try {
                         List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderShopId(groupOrderCode);
                         req.setAttribute("orderShops", orderShops);

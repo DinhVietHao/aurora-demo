@@ -98,10 +98,10 @@ public class VoucherServlet extends HttpServlet {
                         Voucher voucher = voucherDAO.getVoucherByVoucherID(voucherId);
                         List<VoucherUsageHistory> history = voucherUsageHistoryDAO.getVoucherUsageHistory(voucherId);
                         Map<String, Object> statstic = voucherDAO.getVoucherStats(voucherId);
-
+                        
                         if (voucher == null) {
                             request.setAttribute("errorMessage", "Không tìm thấy voucher.");
-                            request.getRequestDispatcher("/WEB-INF/views/shop/voucherList.jsp")
+                            request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp")
                                     .forward(request, response);
                             return;
                         }
@@ -112,8 +112,8 @@ public class VoucherServlet extends HttpServlet {
                                 .forward(request, response);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        request.setAttribute("errorMessage", "Lỗi hệ thống khi tải voucher.");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/voucherList.jsp")
+                        request.setAttribute("errorMessage", "Lỗi hệ thống khi tải voucher." + e);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp")
                                 .forward(request, response);
                     }
                     break;

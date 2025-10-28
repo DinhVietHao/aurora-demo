@@ -237,8 +237,7 @@ public class VoucherDAO {
         String sql = """
                     SELECT v.*,
                            CASE
-                               WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
-                                    OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID)
                                THEN 1 ELSE 0
                            END AS UsedInOrders
                     FROM Vouchers v
@@ -346,8 +345,7 @@ public class VoucherDAO {
         String sql = """
                 SELECT v.*,
                        CASE
-                           WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
-                                OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                           WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID)
                            THEN 1 ELSE 0
                        END AS UsedInOrders
                 FROM Vouchers v
@@ -441,8 +439,7 @@ public class VoucherDAO {
         String sql = """
                     SELECT v.VoucherID, v.Status, v.UsageCount,
                            CASE
-                               WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID) THEN 1
-                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID) THEN 1
+                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID) THEN 1
                                ELSE 0
                            END AS UsedInOrders
                     FROM Vouchers v
@@ -599,16 +596,15 @@ public class VoucherDAO {
 
     public Map<String, Object> getVoucherStats(long voucherID) throws SQLException {
         String sql = """
-                    SELECT
-                    COUNT(DISTINCT o.UserID) AS UniqueCustomers,
+                SELECT
+                    COUNT(DISTINCT os.UserID) AS UniqueCustomers,
                     COUNT(*) AS TotalOrders,
-                    SUM(os.Discount) AS TotalSaved,
-                    AVG(os.Discount) AS AvgSaved
+                    SUM(os.ShopDiscount) AS TotalSaved,
+                    AVG(os.ShopDiscount) AS AvgSaved
                 FROM OrderShops os
-                JOIN Orders o ON os.OrderID = o.OrderID
-                WHERE os.VoucherID = ?
+                WHERE os.VoucherShopID = ?
                   AND os.Status NOT IN ('CANCELLED', 'RETURNED')
-                                """;
+                """;
 
         Map<String, Object> stats = new HashMap<>();
 
@@ -616,17 +612,16 @@ public class VoucherDAO {
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, voucherID);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                stats.put("uniqueCustomers", rs.getInt("UniqueCustomers"));
-                stats.put("totalOrders", rs.getInt("TotalOrders"));
-                stats.put("totalSaved", rs.getDouble("TotalSaved"));
-                stats.put("avgSaved", rs.getDouble("AvgSaved"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    stats.put("uniqueCustomers", rs.getInt("UniqueCustomers"));
+                    stats.put("totalOrders", rs.getInt("TotalOrders"));
+                    stats.put("totalSaved", rs.getDouble("TotalSaved"));
+                    stats.put("avgSaved", rs.getDouble("AvgSaved"));
+                }
             }
         }
 
         return stats;
     }
-
 }
