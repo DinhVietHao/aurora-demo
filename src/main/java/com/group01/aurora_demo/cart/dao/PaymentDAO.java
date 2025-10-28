@@ -47,7 +47,7 @@ public class PaymentDAO {
         }
     }
 
-    public Payment getPaymentByOrderId(Connection conn, long orderShopId) {
+    public Payment getPaymentByOrderShopId(Connection conn, long orderShopId) {
         String sql = "SELECT PaymentID, OrderShopID, Amount, RefundedAmount, TransactionRef, Status FROM Payments WHERE OrderShopID = ?";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -73,21 +73,11 @@ public class PaymentDAO {
         return null;
     }
 
-    public boolean partialRefund(Connection conn, long orderShopId, double refundAmount) throws SQLException {
-        Payment payment = getPaymentByOrderId(conn, orderShopId);
-        if (payment == null)
-            return false;
-
-        double newRefunded = payment.getRefundedAmount() + refundAmount;
-        double remaining = payment.getAmount() - newRefunded;
-
-        String status = remaining <= 0 ? "REFUNDED" : "PARTIALLY_REFUNDED";
-
-        String sql = "UPDATE Payments SET RefundedAmount = ?, Status = ? WHERE OrderShopID = ?";
+    public boolean refundShopPayment(Connection conn, long orderShopId, double refundAmount) throws SQLException {
+        String sql = "UPDATE Payments SET RefundedAmount = ?, Status = 'REFUNDED' WHERE OrderShopID = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setDouble(1, newRefunded);
-            ps.setString(2, status);
-            ps.setLong(3, orderShopId);
+            ps.setDouble(1, refundAmount);
+            ps.setLong(2, orderShopId);
             int updated = ps.executeUpdate();
             return updated > 0;
         }

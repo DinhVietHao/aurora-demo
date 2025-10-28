@@ -36,14 +36,14 @@ public class UserVoucherDAO {
         return 0;
     }
 
-    public boolean cancelUserVoucher(Connection conn, long voucherId, long userId) {
+    public boolean restoreUserVoucher(Connection conn, long voucherId, long userId) {
         String sql = """
                 UPDATE UserVouchers
-                SET Status = 'CANCELLED'
+                SET Status = 'ACTIVE'
                 WHERE UserVoucherID = (
                     SELECT TOP 1 UserVoucherID
                     FROM UserVouchers
-                    WHERE VoucherID = ? AND UserID = ?
+                    WHERE VoucherID = ? AND UserID = ? AND Status = 'USED'
                     ORDER BY UserVoucherID DESC
                 )
                 """;

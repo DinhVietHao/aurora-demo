@@ -51,9 +51,10 @@
                                             style="border:1px solid #eee; border-collapse:collapse; margin-top:16px;">
                                             <tr>
                                                 <td style="padding:16px; font-size:14px; color:#000;">
-                                                    <strong>Mã đơn hàng:</strong> #${order.orderId}<br>
+                                                    <strong>Mã đơn hàng:</strong> #${orderShops[0].groupOrderCode}<br>
                                                     <strong>Ngày đặt:</strong>
-                                                    <fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy" />
+                                                    <fmt:formatDate value="${orderShops[0].createdAt}"
+                                                        pattern="dd/MM/yyyy" />
                                                 </td>
                                             </tr>
 
@@ -106,7 +107,7 @@
                                             <tr>
                                                 <td style="font-size:14px;">Tạm tính :</td>
                                                 <td align="right" style="font-size:14px;">
-                                                    <fmt:formatNumber value="${order.totalAmount}" type="currency"
+                                                    <fmt:formatNumber value="${totalItems}" type="currency"
                                                         currencySymbol="₫" maxFractionDigits="0" />
                                                 </td>
                                             </tr>
@@ -114,7 +115,7 @@
                                             <tr>
                                                 <td style="font-size:14px;">Tổng tiền phí vận chuyển :</td>
                                                 <td align="right" style="font-size:14px;">
-                                                    <fmt:formatNumber value="${order.totalShippingFee}" type="currency"
+                                                    <fmt:formatNumber value="${totalShipping}" type="currency"
                                                         currencySymbol="₫" maxFractionDigits="0" />
                                                 </td>
                                             </tr>
@@ -124,7 +125,7 @@
                                                 </td>
                                                 <td align="right" style="font-size:14px; color:#ef4444;">
                                                     -
-                                                    <fmt:formatNumber value="${order.discountAmount}" type="currency"
+                                                    <fmt:formatNumber value="${totalVoucherDiscount}" type="currency"
                                                         currencySymbol="₫" maxFractionDigits="0" />
                                                 </td>
                                             </tr>
@@ -134,7 +135,7 @@
                                                 </td>
                                                 <td align="right" style="font-size:14px; color:#ef4444;">
                                                     -
-                                                    <fmt:formatNumber value="${order.shippingDiscount}" type="currency"
+                                                    <fmt:formatNumber value="${totalShipDiscount}" type="currency"
                                                         currencySymbol="₫" maxFractionDigits="0" />
                                                 </td>
                                             </tr>
@@ -148,7 +149,7 @@
                                                 </td>
                                                 <td align="right"
                                                     style="font-size:18px; font-weight:bold; color:#164e3f;">
-                                                    <fmt:formatNumber value="${order.finalAmount}" type="currency"
+                                                    <fmt:formatNumber value="${grandTotal}" type="currency"
                                                         currencySymbol="₫" maxFractionDigits="0" />
                                                 </td>
                                             </tr>
