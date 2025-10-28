@@ -93,27 +93,26 @@ public class OrderServlet extends NotificationServlet {
 
         if (path == null || path.equals("/")) {
             try {
-                List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
-                req.setAttribute("orders", orders);
+                List<OrderShop> orderShops = this.orderShopDAO.getOrderShopsByUserId(user.getUserID());
+
+                if (orderShops != null && !orderShops.isEmpty()) {
+                    String rawAddress = orderShops.get(0).getAddress();
+                    String[] parts = rawAddress.split(" - ");
+                    String address = parts.length > 1 ? parts[1].trim() : rawAddress.trim();
+                    req.setAttribute("orderShops", orderShops);
+                    req.setAttribute("address", address);
+                } else {
+                    System.out.println("No orders found for user " + user.getUserID());
+                }
                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (path.equals("/shop")) {
             try {
-                long orderId = Long.parseLong(req.getParameter("orderId"));
-
-                // List<OrderShopDTO> orderShops =
-                // this.orderShopDAO.getOrderShopsByOrderId(orderId);
-                // if (orderShops == null || orderShops.isEmpty()) {
-                // resp.sendRedirect(req.getContextPath() + "/order");
-                // return;
-                // }
-                // Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
-                // .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
-                // LinkedHashMap::new,
-                // Collectors.toList()));
-                // req.setAttribute("orderShops", grouped);
+                long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+                List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderShopId(orderShopId);
+                req.setAttribute("orderShops", orderShops);
 
                 String filePathCancel = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
                 List<Map<String, String>> cancelReasons = loadCancelReasons(filePathCancel);
@@ -154,8 +153,9 @@ public class OrderServlet extends NotificationServlet {
                     this.paymentDAO.updatePaymentStatus(groupOrderCode, "SUCCESS", transactionNo);
                     orderShopDAO.updateOrderShopStatusByGroupOrderCode(groupOrderCode, "PENDING");
                     try {
-                        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderShopId(groupOrderCode);
-                        req.setAttribute("orderShops", orderShops);
+                        // List<OrderShopDTO> orderShops =
+                        // this.orderShopDAO.getOrderShopsByOrderShopId(groupOrderCode);
+                        // req.setAttribute("orderShops", orderShops);
 
                         String html = renderJSPToString(req, resp,
                                 "/WEB-INF/views/customer/order/order_confirmation.jsp");

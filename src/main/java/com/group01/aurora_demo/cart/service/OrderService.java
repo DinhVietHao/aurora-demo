@@ -91,6 +91,7 @@ public class OrderService {
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
             String groupOrderCode = this.orderShopUtils.generateGroupOrderCode();
+            System.out.println(">>>> Check groupCode" + groupOrderCode);
 
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();

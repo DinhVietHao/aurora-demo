@@ -11,40 +11,40 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.shop.model.VoucherUsageHistory;
 
 public class VoucherUsageHistoryDAO {
+
     public List<VoucherUsageHistory> getVoucherUsageHistory(long voucherID) throws SQLException {
         List<VoucherUsageHistory> list = new ArrayList<>();
 
         String sql = """
-                    SELECT
+                SELECT
                     os.OrderShopID AS OrderID,
                     u.FullName AS CustomerName,
                     os.FinalAmount AS OrderValue,
-                    os.Discount AS DiscountValue,
+                    os.ShopDiscount AS DiscountValue,
                     os.CreatedAt AS UsedAt,
                     os.Status AS OrderStatus
                 FROM OrderShops os
-                JOIN Orders o ON os.OrderID = o.OrderID
-                JOIN Users u ON o.UserID = u.UserID
-                WHERE os.VoucherID = ?
-                AND os.Status NOT IN ('CANCELLED', 'RETURNED')
-                ORDER BY os.CreatedAt DESC;
-                                """;
+                JOIN Users u ON os.UserID = u.UserID
+                WHERE os.VoucherShopID = ?
+                  AND os.Status NOT IN ('CANCELLED', 'RETURNED')
+                ORDER BY os.CreatedAt DESC
+                """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, voucherID);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                VoucherUsageHistory h = new VoucherUsageHistory();
-                h.setOrderId(rs.getLong("OrderID"));
-                h.setCustomerName(rs.getString("CustomerName"));
-                h.setOrderValue(rs.getDouble("OrderValue"));
-                h.setDiscountValue(rs.getDouble("DiscountValue"));
-                h.setUsedAt(rs.getTimestamp("UsedAt"));
-                h.setOrderStatus(rs.getString("OrderStatus"));
-                list.add(h);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    VoucherUsageHistory h = new VoucherUsageHistory();
+                    h.setOrderId(rs.getLong("OrderID"));
+                    h.setCustomerName(rs.getString("CustomerName"));
+                    h.setOrderValue(rs.getDouble("OrderValue"));
+                    h.setDiscountValue(rs.getDouble("DiscountValue"));
+                    h.setUsedAt(rs.getTimestamp("UsedAt"));
+                    h.setOrderStatus(rs.getString("OrderStatus"));
+                    list.add(h);
+                }
             }
         }
 

@@ -12,15 +12,16 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 public class PaymentDAO {
     public long createPayment(Connection conn, Payment payment) throws SQLException {
         String sql = """
-                    INSERT INTO Payments(OrderShopID, Amount, TransactionRef, status)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO Payments(OrderShopID, GroupOrderCode, Amount, TransactionRef, Status)
+                    VALUES (?, ?, ?, ?, ?)
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, payment.getOrderShopId());
-            ps.setDouble(2, payment.getAmount());
-            ps.setString(3, payment.getTransactionRef());
-            ps.setString(4, payment.getStatus());
+            ps.setString(2, payment.getGroupOrderCode());
+            ps.setDouble(3, payment.getAmount());
+            ps.setString(4, payment.getTransactionRef());
+            ps.setString(5, payment.getStatus());
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next())

@@ -58,7 +58,7 @@ public class ProductServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String productStatus = request.getParameter("productStatus");
-        if(productStatus == null){
+        if (productStatus == null) {
             productStatus = "all";
         }
         if (action == null)
@@ -431,8 +431,6 @@ public class ProductServlet extends HttpServlet {
                         String[] authorNames = request.getParameterValues("authorsUpdate");
                         String[] categoryIds = request.getParameterValues("CategoryIDs");
 
-                        // --- 2️⃣ Lấy đối tượng product hiện tại
-
                         if (product == null) {
                             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                             request.setAttribute("errorMessage", "Không tìm thấy sản phẩm để cập nhật.");
@@ -682,7 +680,6 @@ public class ProductServlet extends HttpServlet {
                             product.setPrimaryImageUrl(firstNewUrl);
                         }
                     }
-                    // --- 7️⃣ Cập nhật thông tin sản phẩm
                     boolean updated = productDAO.updateProduct(product);
 
                     if (updated) {

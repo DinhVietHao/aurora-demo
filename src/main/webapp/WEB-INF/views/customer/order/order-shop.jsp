@@ -101,201 +101,190 @@
                                                     </div>
 
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
-                                                        <c:forEach var="entry" items="${orderShops}">
 
-                                                            <div class="order-card">
-                                                                <div class="order-card__header">
-                                                                    <span><strong><i class="bi bi-shop me-2"></i>
-                                                                            ${entry.value[0].shopName}</strong>
-                                                                        <a href="./viewShop.html"
-                                                                            class="button-outline mx-2">
-                                                                            Xem
-                                                                            shop</a></span>
-                                                                    <div>
-                                                                        <span class="text-color">Trạng thái: </span>
-                                                                        <c:set var="badgeClass"
-                                                                            value="bg-secondary text-light" />
 
-                                                                        <c:choose>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'PENDING_PAYMENT'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-warning text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'PENDING'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-info text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'WAITING_SHIP'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-primary" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'SHIPPING'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-secondary" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'CONFIRM'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-info" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'COMPLETED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-success" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'CANCELLED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-danger" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED_REQUESTED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-warning text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-success" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED_REJECTED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-danger" />
-                                                                            </c:when>
-                                                                        </c:choose>
+                                                        <div class="order-card">
+                                                            <div class="order-card__header">
+                                                                <span><strong><i class="bi bi-shop me-2"></i>
+                                                                        ${orderShops[0].shopName}</strong>
+                                                                    <a href="./viewShop.html"
+                                                                        class="button-outline mx-2">
+                                                                        Xem
+                                                                        shop</a></span>
+                                                                <div>
+                                                                    <span class="text-color">Trạng thái: </span>
+                                                                    <c:set var="badgeClass"
+                                                                        value="bg-secondary text-light" />
 
-                                                                        <span class="badge ${badgeClass}">
-                                                                            ${entry.value[0].vietnameseStatus}
-                                                                        </span>
-                                                                    </div>
+                                                                    <c:choose>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'PENDING_PAYMENT'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-warning text-dark" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'PENDING'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-info text-dark" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'WAITING_SHIP'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-primary" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'SHIPPING'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-secondary" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'CONFIRM'}">
+                                                                            <c:set var="badgeClass" value="bg-info" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'COMPLETED'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-success" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'CANCELLED'}">
+                                                                            <c:set var="badgeClass" value="bg-danger" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'RETURNED_REQUESTED'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-warning text-dark" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'RETURNED'}">
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-success" />
+                                                                        </c:when>
+                                                                        <c:when
+                                                                            test="${orderShops[0].shopStatus == 'RETURNED_REJECTED'}">
+                                                                            <c:set var="badgeClass" value="bg-danger" />
+                                                                        </c:when>
+                                                                    </c:choose>
+
+                                                                    <span class="badge ${badgeClass}">
+                                                                        ${orderShops[0].vietnameseStatus}
+                                                                    </span>
                                                                 </div>
-                                                                <c:forEach var="orderShop" items="${entry.value}">
-                                                                    <a
-                                                                        href="/order/detail?orderShopId=${orderShop.orderShopId}">
-                                                                        <div class="order-card__body">
-                                                                            <div class="col-2 text-center">
-                                                                                <img class="order-card__image"
-                                                                                    src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
-                                                                                    alt="Ảnh sảm phẩm">
-                                                                            </div>
-                                                                            <div class="col-10">
-                                                                                <h6>${orderShop.productName}</h6>
-                                                                                <div
-                                                                                    class="d-flex justify-content-between">
-                                                                                    <p class="text-color">Số lượng:
-                                                                                        ${orderShop.quantity}
-                                                                                    </p>
-                                                                                    <div>
-                                                                                        <c:if
-                                                                                            test="${orderShop.originalPrice != orderShop.salePrice}">
-                                                                                            <span
-                                                                                                class="text-decoration-line-through text-color">
-                                                                                                <fmt:formatNumber
-                                                                                                    value="${orderShop.originalPrice}"
-                                                                                                    type="currency" />
-                                                                                            </span>
-                                                                                        </c:if>
+                                                            </div>
+                                                            <c:forEach var="orderShop" items="${orderShops}">
+                                                                <a
+                                                                    href="/order/detail?orderShopId=${orderShop.orderShopId}">
+                                                                    <div class="order-card__body">
+                                                                        <div class="col-2 text-center">
+                                                                            <img class="order-card__image"
+                                                                                src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
+                                                                                alt="Ảnh sảm phẩm">
+                                                                        </div>
+                                                                        <div class="col-10">
+                                                                            <h6>${orderShop.productName}</h6>
+                                                                            <div class="d-flex justify-content-between">
+                                                                                <p class="text-color">Số lượng:
+                                                                                    ${orderShop.quantity}
+                                                                                </p>
+                                                                                <div>
+                                                                                    <c:if
+                                                                                        test="${orderShop.originalPrice != orderShop.salePrice}">
                                                                                         <span
-                                                                                            class="fw-bold text-danger">
+                                                                                            class="text-decoration-line-through text-color">
                                                                                             <fmt:formatNumber
-                                                                                                value="${orderShop.salePrice}"
+                                                                                                value="${orderShop.originalPrice}"
                                                                                                 type="currency" />
                                                                                         </span>
-                                                                                    </div>
+                                                                                    </c:if>
+                                                                                    <span class="fw-bold text-danger">
+                                                                                        <fmt:formatNumber
+                                                                                            value="${orderShop.salePrice}"
+                                                                                            type="currency" />
+                                                                                    </span>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                    </a>
-                                                                </c:forEach>
+                                                                    </div>
+                                                                </a>
+                                                            </c:forEach>
 
-                                                                <div class="text-end">
-                                                                    <p class="text-color">Thành tiền: <span
-                                                                            class="order-card__price">
-                                                                            <fmt:formatNumber
-                                                                                value="${entry.value[0].shopFinalAmount}"
-                                                                                type="currency" />
-                                                                        </span></span>
-                                                                    </p>
+                                                            <div class="text-end">
+                                                                <p class="text-color">Thành tiền: <span
+                                                                        class="order-card__price">
+                                                                        <fmt:formatNumber
+                                                                            value="${orderShops[0].shopFinalAmount}"
+                                                                            type="currency" />
+                                                                    </span></span>
+                                                                </p>
 
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'PENDING'}">
-                                                                        <button class="button-six btn-cancel-order"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#cancelOrderModal"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
-                                                                            Hủy
-                                                                            đơn</button>
-                                                                    </c:if>
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'CANCELLED'}">
-                                                                        <button class="button-four btnRepurchase"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
-                                                                                class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
+                                                                <c:if test="${orderShops[0].shopStatus  == 'PENDING'}">
+                                                                    <button class="button-six btn-cancel-order"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#cancelOrderModal"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}">
+                                                                        Hủy
+                                                                        đơn</button>
+                                                                </c:if>
+                                                                <c:if
+                                                                    test="${orderShops[0].shopStatus  == 'CANCELLED'}">
+                                                                    <button class="button-four btnRepurchase"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}"><i
+                                                                            class="bi bi-arrow-repeat me-1"></i>
+                                                                        Mua
+                                                                        lại</button>
+                                                                </c:if>
+                                                                <c:if
+                                                                    test="${orderShops[0].shopStatus  == 'PENDING_PAYMENT'}">
+                                                                    <form action="/order/repayment" method="post">
+                                                                        <input type="hidden" name="orderId"
+                                                                            value="${orderShops[0].orderId}" />
+                                                                        <button class="button-four">
+                                                                            Thanh toán
                                                                             lại</button>
-                                                                    </c:if>
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
-                                                                        <form action="/order/repayment" method="post">
-                                                                            <input type="hidden" name="orderId"
-                                                                                value="${entry.value[0].orderId}" />
-                                                                            <button class="button-four">
-                                                                                Thanh toán
-                                                                                lại</button>
-                                                                        </form>
+                                                                    </form>
 
-                                                                    </c:if>
+                                                                </c:if>
 
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus == 'COMPLETED'}">
-                                                                        <button class="button-four btnRepurchase"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
-                                                                                class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
-                                                                            lại</button>
-                                                                        <button class="button-five"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#ratingModal">
-                                                                            Đánh giá
-                                                                            shop</button>
-                                                                    </c:if>
+                                                                <c:if test="${orderShops[0].shopStatus == 'COMPLETED'}">
+                                                                    <button class="button-four btnRepurchase"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}"><i
+                                                                            class="bi bi-arrow-repeat me-1"></i>
+                                                                        Mua
+                                                                        lại</button>
+                                                                    <button class="button-five" data-bs-toggle="modal"
+                                                                        data-bs-target="#ratingModal">
+                                                                        Đánh giá
+                                                                        shop</button>
+                                                                </c:if>
 
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus == 'RETURNED'}">
-                                                                        <button class="button-four btnRepurchase"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
-                                                                                class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
-                                                                            lại</button>
-                                                                    </c:if>
+                                                                <c:if test="${orderShops[0].shopStatus == 'RETURNED'}">
+                                                                    <button class="button-four btnRepurchase"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}"><i
+                                                                            class="bi bi-arrow-repeat me-1"></i>
+                                                                        Mua
+                                                                        lại</button>
+                                                                </c:if>
 
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus == 'COMPLETED' && entry.value[0].canReturn}">
-                                                                        <button class="button-seven btn-return-order"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#returnOrderModal"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
-                                                                            Trả hàng
-                                                                        </button>
-                                                                    </c:if>
+                                                                <c:if
+                                                                    test="${orderShops[0].shopStatus == 'COMPLETED' && orderShops[0].canReturn}">
+                                                                    <button class="button-seven btn-return-order"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#returnOrderModal"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}">
+                                                                        Trả hàng
+                                                                    </button>
+                                                                </c:if>
 
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
-                                                                        <button class="button-four btn-confirm-order"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#confirmOrderModal"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}">Đã
-                                                                            nhận
-                                                                            hàng</button>
-                                                                    </c:if>
-                                                                </div>
+                                                                <c:if test="${orderShops[0].shopStatus  == 'CONFIRM'}">
+                                                                    <button class="button-four btn-confirm-order"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#confirmOrderModal"
+                                                                        data-order-shop-id="${orderShops[0].orderShopId}">Đã
+                                                                        nhận
+                                                                        hàng</button>
+                                                                </c:if>
                                                             </div>
-                                                        </c:forEach>
+                                                        </div>
                                                     </div>
                                                 </c:otherwise>
                                             </c:choose>

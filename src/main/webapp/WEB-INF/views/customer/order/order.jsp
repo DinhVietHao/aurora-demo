@@ -77,7 +77,7 @@
                                     <div class="order-content">
                                         <div class="tab-content order-body">
                                             <c:choose>
-                                                <c:when test="${empty orders}">
+                                                <c:when test="${empty orderShops}">
                                                     <div class="text-center">
                                                         <img src="./assets/images/common/empty-order.png" alt="">
                                                         <p class="text-muted">Chưa có đơn hàng</p>
@@ -96,17 +96,18 @@
                                                     </div>
 
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
-                                                        <c:forEach var="order" items="${orders}">
+                                                        <c:forEach var="orderShop" items="${orderShops}">
                                                             <div class="order-card">
                                                                 <div class="order-header">
                                                                     <div
                                                                         class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                                                                         <span class="order-id"><i
                                                                                 class="bi bi-receipt me-1">
-                                                                            </i>#${order.orderId}</span>
+                                                                            </i>#${orderShop.groupOrderCode}</span>
                                                                         <span class="date-badge"><i
                                                                                 class="bi bi-calendar"></i>
-                                                                            <fmt:formatDate value="${order.createdAt}"
+                                                                            <fmt:formatDate
+                                                                                value="${orderShop.createdAt}"
                                                                                 pattern="dd/MM/yyyy" />
                                                                         </span>
                                                                     </div>
@@ -120,7 +121,7 @@
                                                                                     class="fw-semibold small text-muted">
                                                                                     Người mua</div>
                                                                                 <div class="fw-medium text-dark">
-                                                                                    ${order.customerName}</div>
+                                                                                    ${orderShop.customerName}</div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -133,7 +134,7 @@
                                                                                     class="fw-semibold small text-muted">
                                                                                     Địa chỉ giao hàng</div>
                                                                                 <div class="fw-medium text-dark">
-                                                                                    ${order.address}</div>
+                                                                                    ${address}</div>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -147,7 +148,7 @@
                                                                                     Tổng tiền hàng</div>
                                                                                 <div class="fw-medium text-dark">
                                                                                     <fmt:formatNumber
-                                                                                        value="${order.totalAmount}"
+                                                                                        value="${orderShop.subtotal}"
                                                                                         type="currency"
                                                                                         currencySymbol="₫"
                                                                                         maxFractionDigits="0" />
@@ -165,7 +166,7 @@
                                                                                     Phí vận chuyển</div>
                                                                                 <div class="fw-medium text-dark">
                                                                                     <fmt:formatNumber
-                                                                                        value="${order.totalShippingFee}"
+                                                                                        value="${orderShop.shippingFee}"
                                                                                         type="currency"
                                                                                         currencySymbol="₫"
                                                                                         maxFractionDigits="0" />
@@ -184,7 +185,7 @@
                                                                                 <div class="fw-medium text-dark">
                                                                                     -
                                                                                     <fmt:formatNumber
-                                                                                        value="${order.discountAmount}"
+                                                                                        value="${orderShop.shopDiscount + orderShop.systemDiscount}"
                                                                                         type="currency"
                                                                                         currencySymbol="₫"
                                                                                         maxFractionDigits="0" />
@@ -204,7 +205,7 @@
                                                                                 <div class="fw-medium text-dark">
                                                                                     -
                                                                                     <fmt:formatNumber
-                                                                                        value="${order.shippingDiscount}"
+                                                                                        value="${orderShop.systemShippingDiscount}"
                                                                                         type="currency"
                                                                                         currencySymbol="₫"
                                                                                         maxFractionDigits="0" />
@@ -213,7 +214,7 @@
                                                                         </div>
                                                                     </div>
                                                                     <div class="section-title mt-3">
-                                                                        <a href="/order/shop?orderId=${order.orderId}"
+                                                                        <a href="/order/shop?orderShopId=${orderShop.orderShopId}"
                                                                             class="btn btn-detail">
                                                                             <i class="bi bi-eye"></i> Xem chi tiết
                                                                         </a>
@@ -221,7 +222,7 @@
                                                                             <span>Tổng thanh toán:</span>
                                                                             <span class="total">
                                                                                 <fmt:formatNumber
-                                                                                    value="${order.finalAmount}"
+                                                                                    value="${orderShop.finalAmount}"
                                                                                     type="currency" currencySymbol="₫"
                                                                                     maxFractionDigits="0" />
                                                                             </span>

@@ -26,6 +26,8 @@ public class OrderShop {
     private String cancelReason;
     private String returnReason;
 
+    private String customerName;
+
     private List<OrderItem> items;
     private User user;
 
@@ -195,6 +197,14 @@ public class OrderShop {
 
     public void setGroupOrderCode(String groupOrderCode) {
         this.groupOrderCode = groupOrderCode;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 
 }

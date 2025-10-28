@@ -3,16 +3,16 @@ package com.group01.aurora_demo.cart.dao.task;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import com.group01.aurora_demo.cart.dao.OrderDAO;
+import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 
 public class OrderBackgroundTasks {
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderShopDAO orderShopDAO = new OrderShopDAO();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 
     public void start() {
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                int cancelled = orderDAO.cancelExpiredOrders();
+                int cancelled = orderShopDAO.cancelExpiredOrders();
                 if (cancelled > 0) {
                     System.out.println("🕒 Đã tự động hủy " + cancelled + " đơn hàng quá hạn (3 ngày).");
                 }
@@ -23,7 +23,7 @@ public class OrderBackgroundTasks {
 
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                int returned = orderDAO.autoApproveReturnRequests();
+                int returned = orderShopDAO.autoApproveReturnRequests();
                 if (returned > 0) {
                     System.out.println("♻️ Đã tự động chuyển " + returned
                             + " đơn hàng RETURNED_REQUESTED sang RETURNED (3 ngày).");
