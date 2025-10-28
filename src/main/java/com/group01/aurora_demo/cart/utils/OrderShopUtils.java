@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
 public class OrderShopUtils {
-    private static final String PREFIX = "ORD";
+    private static final String PREFIX = "AURORA";
     private static final String CHAR_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int RANDOM_PART_LENGTH = 6;
 

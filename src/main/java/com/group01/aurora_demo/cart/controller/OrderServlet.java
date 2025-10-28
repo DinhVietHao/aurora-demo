@@ -10,10 +10,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,7 +27,6 @@ import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
-import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
@@ -155,7 +152,7 @@ public class OrderServlet extends NotificationServlet {
                 if ("00".equals(responseCode)) {
 
                     this.paymentDAO.updatePaymentStatus(groupOrderCode, "SUCCESS", transactionNo);
-                    orderShopDAO.updateOrderShopStatus(groupOrderCode, "PENDING");
+                    orderShopDAO.updateOrderShopStatusByGroupOrderCode(groupOrderCode, "PENDING");
                     try {
                         List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderShopId(groupOrderCode);
                         req.setAttribute("orderShops", orderShops);

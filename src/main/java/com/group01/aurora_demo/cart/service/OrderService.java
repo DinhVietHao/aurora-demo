@@ -204,6 +204,7 @@ public class OrderService {
                     return new ServiceResponse("error", "Lỗi thanh toán",
                             "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.", "", 0.0);
                 }
+
             }
 
             if (!cartItemDAO.deleteCheckout(conn, user.getId())) {
