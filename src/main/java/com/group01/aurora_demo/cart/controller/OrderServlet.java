@@ -190,12 +190,18 @@ public class OrderServlet extends NotificationServlet {
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg",
                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
-                    resp.sendRedirect(req.getContextPath() + "/order");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=pending");
                 } else {
-                    this.paymentDAO.updatePaymentStatus(groupOrderCode, "FAILED", transactionNo);
-                    session.setAttribute("toastType", "error");
-                    session.setAttribute("toastMsg", "Thanh toán không thành công. Vui lòng thử lại.");
-                    resp.sendRedirect(req.getContextPath() + "/order");
+                    boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPayment(groupOrderCode);
+                    if (!rollbackSuccess) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Thanh toán không thành công. Có lỗi khi hoàn trả đơn.");
+                    } else {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Thanh toán không thành công.");
+                    }
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -299,38 +305,6 @@ public class OrderServlet extends NotificationServlet {
                 break;
 
             }
-            case "/repayment": {
-                try {
-                    long orderId = Long.parseLong(req.getParameter("orderId"));
-                    // Order order = orderDAO.getOrderById(orderId);
-
-                    // if (order == null) {
-                    // session.setAttribute("toastType", "error");
-                    // session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán
-                    // lại.");
-                    // resp.sendRedirect(req.getContextPath() + "/order");
-                    // break;
-                    // }
-
-                    // if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
-                    // session.setAttribute("toastType", "warning");
-                    // session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
-                    // resp.sendRedirect(req.getContextPath() + "/order");
-                    // break;
-                    // }
-
-                    // String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId,
-                    // order.getFinalAmount());
-                    // resp.sendRedirect(paymentUrl);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    session.setAttribute("toastType", "error");
-                    session.setAttribute("toastMsg", "Không thể khởi tạo lại thanh toán. Vui lòng thử lại sau.");
-                    resp.sendRedirect(req.getContextPath() + "/order");
-                }
-                break;
-            }
             case "/cancel": {
                 Connection conn = null;
                 try {
@@ -390,7 +364,7 @@ public class OrderServlet extends NotificationServlet {
                     conn.commit();
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
-                    resp.sendRedirect(req.getContextPath() + "/order");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (conn != null)
@@ -421,16 +395,13 @@ public class OrderServlet extends NotificationServlet {
                     if (success) {
                         session.setAttribute("toastType", "success");
                         session.setAttribute("toastMsg", "Bạn đã xác nhận đã nhận hàng thành công.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                        return;
                     } else {
                         session.setAttribute("toastType", "error");
                         session.setAttribute("toastMsg", "Không thể xác nhận đơn hàng. Vui lòng thử lại.");
-                    }
-
-                    String referer = req.getHeader("Referer");
-                    if (referer != null) {
-                        resp.sendRedirect(referer);
-                    } else {
-                        resp.sendRedirect(req.getContextPath() + "/order");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=confirm");
+                        return;
                     }
 
                 } catch (Exception e) {
@@ -451,18 +422,14 @@ public class OrderServlet extends NotificationServlet {
                     if (success) {
                         session.setAttribute("toastType", "success");
                         session.setAttribute("toastMsg", "Đã gửi yêu cầu trả hàng thành công.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=returned");
+                        return;
                     } else {
                         session.setAttribute("toastType", "error");
                         session.setAttribute("toastMsg", "Không thể trả hàng. Vui lòng thử lại.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                        return;
                     }
-
-                    String referer = req.getHeader("Referer");
-                    if (referer != null) {
-                        resp.sendRedirect(referer);
-                    } else {
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                    }
-
                 } catch (Exception e) {
                     e.printStackTrace();
                     session.setAttribute("toastType", "error");

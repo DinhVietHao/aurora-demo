@@ -318,66 +318,71 @@ public class OrderShopDAO {
         }
     }
 
-    public int autoCancelPendingPaymentOrders() {
-        String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1";
-        int count = 0;
+    public boolean rollbackFailedPayment(String groupOrderCode) {
+        String sql = "SELECT OrderShopID FROM OrderShops WHERE GroupOrderCode = ? AND Status = 'PENDING_PAYMENT'";
+        boolean success = false;
 
         try (Connection conn = DataSourceProvider.get().getConnection()) {
             conn.setAutoCommit(false); // Bắt đầu transaction
 
-            try (PreparedStatement ps = conn.prepareStatement(sql);
-                    ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, groupOrderCode);
+                try (ResultSet rs = ps.executeQuery()) {
 
-                while (rs.next()) {
-                    Long orderShopId = rs.getLong("OrderShopID");
+                    while (rs.next()) {
+                        Long orderShopId = rs.getLong("OrderShopID");
 
-                    OrderShop orderShop = findByOrderShopId(conn, orderShopId);
-                    if (orderShop == null)
-                        continue;
+                        OrderShop orderShop = findByOrderShopId(conn, orderShopId);
+                        if (orderShop == null)
+                            continue;
 
-                    boolean cancelled = cancelOrderShop(conn, orderShopId, "Quá thời hạn thanh toán");
+                        boolean cancelled = cancelOrderShop(conn, orderShopId, "Thanh toán thất bại");
+                        if (!cancelled)
+                            continue;
 
-                    if (!cancelled)
-                        continue;
-
-                    if (orderShop.getVoucherShopId() != null) {
-                        userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(), orderShop.getUserId());
-                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
-                    }
-
-                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
-                    for (OrderItem item : items) {
-                        productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
-                    }
-
-                    List<OrderShop> activeShop = getActiveShopsByGroupOrderCode(conn,
-                            orderShop.getGroupOrderCode());
-
-                    if (activeShop.isEmpty()) {
-                        if (orderShop.getVoucherDiscountId() != null) {
-                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                        // Restore voucher shop
+                        if (orderShop.getVoucherShopId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(),
                                     orderShop.getUserId());
-                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
                         }
-                        if (orderShop.getVoucherShipId() != null) {
-                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
-                                    orderShop.getUserId());
-                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+
+                        // Restore stock
+                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
+                        for (OrderItem item : items) {
+                            productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                        }
+
+                        // Nếu tất cả shop trong groupOrderCode đều hủy
+                        List<OrderShop> activeShop = getActiveShopsByGroupOrderCode(conn,
+                                orderShop.getGroupOrderCode());
+                        if (activeShop.isEmpty()) {
+                            // Restore voucher discount & shipping
+                            if (orderShop.getVoucherDiscountId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                            }
+                            if (orderShop.getVoucherShipId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                            }
                         }
                     }
-                    count++;
+                    conn.commit();
+                    success = true;
+
                 }
-
-                conn.commit(); // Commit transaction
             } catch (SQLException e) {
-                conn.rollback(); // Rollback nếu có lỗi
+                conn.rollback();
                 e.printStackTrace();
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return count;
+        return success;
     }
 
     public OrderShop findByOrderShopId(Connection conn, long orderShopId) throws SQLException {
