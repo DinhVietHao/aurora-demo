@@ -189,15 +189,16 @@
                                                         class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top">
                                                         <div>
                                                             <strong class="text-primary">
-                                                                Mã đơn hàng: #${orderShop.orderShopId}
+                                                                Mã đơn hàng: #${orderShop.groupOrderCode}
                                                             </strong>
                                                             <span
-                                                                class="ms-2 text-dark fw-semibold">(${orderShop.customerName})</span>
+                                                                class="ms-2 text-dark fw-semibold">(${orderShop.user.fullName})
+                                                            </span>
                                                         </div>
 
                                                         <div class="text-muted small">
                                                             Cập nhật:
-                                                            <fmt:formatDate value="${orderShop.updateAt}"
+                                                            <fmt:formatDate value="${orderShop.updatedAt}"
                                                                 pattern="dd/MM/yyyy HH:mm" />
                                                             <br>
                                                             <c:if test="${orderShop.status == 'PENDING'}">
@@ -238,7 +239,7 @@
 
                                                             <!-- Cột tổng tiền -->
                                                             <c:set var="totalAmount"
-                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}" />
+                                                                value="${orderShop.subtotal + orderShop.shippingFee - orderShop.shopDiscount}" />
 
                                                             <c:choose>
                                                                 <c:when test="${totalAmount < 0}">

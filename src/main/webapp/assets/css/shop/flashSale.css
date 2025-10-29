@@ -93,3 +93,19 @@ footer {
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
+
+.flashsale-item-card:hover {
+  transform: scale(1.01);
+  transition: all 0.2s ease;
+  border-color: #ffc107;
+}
+.flashsale-item-card img {
+  transition: transform 0.2s ease;
+}
+.flashsale-item-card:hover img {
+  transform: scale(1.05);
+}
+
+.btn-flashsale:hover {
+  background: rgb(204, 207, 204);
+}

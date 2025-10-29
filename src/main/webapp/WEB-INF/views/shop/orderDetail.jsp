@@ -24,7 +24,8 @@
                                 <div class="container-fluid px-4">
                                     <!-- Header -->
                                     <div class="d-flex justify-content-between align-items-center mt-4">
-                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.orderShopId}</h1>
+                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.groupOrderCode}
+                                        </h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
                                                 <li class="breadcrumb-item"><a
@@ -40,7 +41,7 @@
                                     <div class="card mt-4 order-header-card">
                                         <div class="card-body d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h5>Mã đơn hàng: #${orderShop.orderShopId}</h5>
+                                                <h5>Mã đơn hàng: #${orderShop.groupOrderCode}</h5>
                                                 <c:choose>
                                                     <c:when test="${orderShop.status == 'PENDING'}">
                                                         <span class="badge bg-warning text-dark">Chờ xác nhận</span>
@@ -218,10 +219,8 @@
                                                 <div class="card-body">
                                                     <p><strong>Tên:</strong> ${orderShop.user.fullName}</p>
                                                     <p><strong>Email:</strong> ${orderShop.user.email}</p>
-                                                    <p><strong>Điện thoại:</strong> ${orderShop.address.phone}</p>
-                                                    <p><strong>Địa chỉ:</strong> ${orderShop.address.description},
-                                                        ${orderShop.address.ward},
-                                                        ${orderShop.address.district}, ${orderShop.address.city}</p>
+                                                    <p><strong>Điện thoại:</strong> ${phone}</p>
+                                                    <p><strong>Địa chỉ:</strong> ${address}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -254,7 +253,7 @@
                                                         <strong>Phí voucher:</strong>
                                                         <span>
                                                             -
-                                                            <fmt:formatNumber value="${orderShop.discount}"
+                                                            <fmt:formatNumber value="${orderShop.shopDiscount}"
                                                                 pattern="#,##0" /> VND
                                                         </span>
                                                     </div>
@@ -262,7 +261,7 @@
                                                     <hr>
 
                                                     <c:set var="totalAmount"
-                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.discount}" />
+                                                        value="${orderShop.subtotal + orderShop.shippingFee - orderShop.shopDiscount}" />
 
                                                     <c:if test="${totalAmount < 0}">
                                                         <c:set var="totalAmount" value="0" />

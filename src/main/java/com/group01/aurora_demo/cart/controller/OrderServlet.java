@@ -20,13 +20,11 @@ import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
-import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.OrderItemDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.dao.PaymentDAO;
-import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
+import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
-import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.cart.model.Payment;
@@ -56,7 +54,6 @@ import jakarta.servlet.http.HttpSession;
 public class OrderServlet extends NotificationServlet {
     private OrderService orderService;
     private VoucherDAO voucherDAO;
-    private OrderDAO orderDAO;
     private OrderShopDAO orderShopDAO;
     private PaymentDAO paymentDAO;
     private AddressDAO addressDAO;
@@ -69,7 +66,6 @@ public class OrderServlet extends NotificationServlet {
     public OrderServlet() {
         this.orderService = new OrderService();
         this.voucherDAO = new VoucherDAO();
-        this.orderDAO = new OrderDAO();
         this.paymentDAO = new PaymentDAO();
         this.orderShopDAO = new OrderShopDAO();
         this.addressDAO = new AddressDAO();
@@ -96,27 +92,15 @@ public class OrderServlet extends NotificationServlet {
 
         if (path == null || path.equals("/")) {
             try {
-                List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
-                req.setAttribute("orders", orders);
-                req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else if (path.equals("/shop")) {
-            try {
-                long orderId = Long.parseLong(req.getParameter("orderId"));
+                String status = req.getParameter("status");
+                List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByStatus(user.getUserID(), status);
 
-                List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
-                if (orderShops == null || orderShops.isEmpty()) {
-                    resp.sendRedirect(req.getContextPath() + "/order");
-                    return;
-                }
-                Map<Long, List<OrderDTO>> grouped = orderShops.stream()
+                Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
                         .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
                                 LinkedHashMap::new,
                                 Collectors.toList()));
-                req.setAttribute("orderShops", grouped);
 
+                req.setAttribute("orderShops", grouped);
                 String filePathCancel = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
                 List<Map<String, String>> cancelReasons = loadCancelReasons(filePathCancel);
                 req.setAttribute("cancelReasons", cancelReasons);
@@ -125,15 +109,16 @@ public class OrderServlet extends NotificationServlet {
                 List<Map<String, String>> returnReasons = loadCancelReasons(filePathReturn);
                 req.setAttribute("returnReasons", returnReasons);
 
-                req.getRequestDispatcher("/WEB-INF/views/customer/order/order-shop.jsp").forward(req, resp);
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (path.equals("/detail")) {
             try {
-                long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+                long orderShopId = Long.parseLong(req.getParameter("id"));
 
-                List<OrderDTO> orderItems = this.orderItemDAO.getOrderItemsByOrderShopId(orderShopId);
+                List<OrderShopDTO> orderItems = this.orderItemDAO.getOrderItemsByOrderShopId(orderShopId);
                 if (orderItems == null || orderItems.isEmpty()) {
                     resp.sendRedirect(req.getContextPath() + "/order");
                     return;
@@ -150,23 +135,50 @@ public class OrderServlet extends NotificationServlet {
             String txnRef = req.getParameter("vnp_TxnRef");
             String transactionNo = req.getParameter("vnp_TransactionNo");
             try {
-                long orderId = Long.parseLong(txnRef);
+                String groupOrderCode = txnRef;
                 if ("00".equals(responseCode)) {
-                    this.orderDAO.updateOrderStatus(orderId, "PENDING");
-                    this.orderShopDAO.updateOrderShopStatusByOrderId(orderId, "PENDING");
-                    this.paymentDAO.updatePaymentStatus(orderId, "SUCCESS", transactionNo);
 
+                    this.paymentDAO.updatePaymentStatus(groupOrderCode, "SUCCESS", transactionNo);
+                    orderShopDAO.updateOrderShopStatusByGroupOrderCode(groupOrderCode, "PENDING");
                     try {
+                        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByGroupOrderCode(groupOrderCode);
 
-                        Order order = this.orderDAO.getOrderById(orderId);
-                        List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
-                        req.setAttribute("order", order);
+                        Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
+                                .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
+                                        LinkedHashMap::new,
+                                        Collectors.toList()));
+
+                        double totalItems = 0, totalShipping = 0, totalSystemDiscount = 0, totalShopDiscount = 0,
+                                totalShipDiscount = 0;
+
+                        for (Map.Entry<Long, List<OrderShopDTO>> entry : grouped.entrySet()) {
+                            List<OrderShopDTO> shopItems = entry.getValue();
+                            if (shopItems.isEmpty())
+                                continue;
+
+                            OrderShopDTO shop = shopItems.get(0);
+
+                            totalItems += shop.getSubtotal();
+                            totalShipping += shop.getShopShippingFee();
+                            totalSystemDiscount += shop.getSystemDiscount();
+                            totalShopDiscount += shop.getShopDiscount();
+                            totalShipDiscount += shop.getSystemShippingDiscount();
+                        }
+
+                        double totalVoucherDiscount = totalSystemDiscount + totalShopDiscount;
+                        double grandTotal = totalItems + totalShipping - totalVoucherDiscount - totalShipDiscount;
+
                         req.setAttribute("orderShops", orderShops);
+                        req.setAttribute("totalItems", totalItems);
+                        req.setAttribute("totalShipping", totalShipping);
+                        req.setAttribute("totalVoucherDiscount", totalVoucherDiscount);
+                        req.setAttribute("totalShipDiscount", totalShipDiscount);
+                        req.setAttribute("grandTotal", grandTotal);
 
                         String html = renderJSPToString(req, resp,
                                 "/WEB-INF/views/customer/order/order_confirmation.jsp");
 
-                        String subject = "Xác nhận đơn hàng #" + order.getOrderId() + " - Aurora";
+                        String subject = "Xác nhận đơn hàng #" + groupOrderCode + " - Aurora";
                         this.emailService.sendHtml(user.getEmail(), subject, html);
 
                         System.out.println("Email xác nhận đã gửi tới " + user.getEmail());
@@ -180,7 +192,7 @@ public class OrderServlet extends NotificationServlet {
                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
                     resp.sendRedirect(req.getContextPath() + "/order");
                 } else {
-                    this.paymentDAO.updatePaymentStatus(orderId, "FAILED", transactionNo);
+                    this.paymentDAO.updatePaymentStatus(groupOrderCode, "FAILED", transactionNo);
                     session.setAttribute("toastType", "error");
                     session.setAttribute("toastMsg", "Thanh toán không thành công. Vui lòng thử lại.");
                     resp.sendRedirect(req.getContextPath() + "/order");
@@ -259,7 +271,7 @@ public class OrderServlet extends NotificationServlet {
                             shopVouchers);
                     if ("success".equalsIgnoreCase(result.getType())) {
                         System.out.println("Check FinalAmount= " + result.getFinalAmount());
-                        String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getOrderId(),
+                        String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getGroupOrderCode(),
                                 result.getFinalAmount());
 
                         int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
@@ -290,24 +302,26 @@ public class OrderServlet extends NotificationServlet {
             case "/repayment": {
                 try {
                     long orderId = Long.parseLong(req.getParameter("orderId"));
-                    Order order = orderDAO.getOrderById(orderId);
+                    // Order order = orderDAO.getOrderById(orderId);
 
-                    if (order == null) {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán lại.");
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                        break;
-                    }
+                    // if (order == null) {
+                    // session.setAttribute("toastType", "error");
+                    // session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán
+                    // lại.");
+                    // resp.sendRedirect(req.getContextPath() + "/order");
+                    // break;
+                    // }
 
-                    if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
-                        session.setAttribute("toastType", "warning");
-                        session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                        break;
-                    }
+                    // if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
+                    // session.setAttribute("toastType", "warning");
+                    // session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
+                    // resp.sendRedirect(req.getContextPath() + "/order");
+                    // break;
+                    // }
 
-                    String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId, order.getFinalAmount());
-                    resp.sendRedirect(paymentUrl);
+                    // String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId,
+                    // order.getFinalAmount());
+                    // resp.sendRedirect(paymentUrl);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -327,7 +341,7 @@ public class OrderServlet extends NotificationServlet {
                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
                     String cancelReason = req.getParameter("cancelReason");
 
-                    OrderShop orderShop = orderShopDAO.findById(conn, orderShopId);
+                    OrderShop orderShop = orderShopDAO.findByOrderShopId(conn, orderShopId);
                     if (orderShop == null) {
                         session.setAttribute("toastType", "error");
                         session.setAttribute("toastMsg", "Không tìm thấy đơn hàng shop.");
@@ -335,21 +349,11 @@ public class OrderServlet extends NotificationServlet {
                         return;
                     }
 
-                    Order order = orderDAO.finById(conn, orderShop.getOrderId());
-                    if (order == null) {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng tổng.");
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                        return;
-                    }
+                    orderShopDAO.cancelOrderShop(conn, orderShopId, cancelReason);
 
-                    orderShop.setStatus("CANCELLED");
-                    orderShop.setCancelReason(cancelReason);
-                    orderShopDAO.update(conn, orderShop);
-
-                    if (orderShop.getVoucherId() != null) {
-                        userVoucherDAO.cancelUserVoucher(conn, orderShop.getVoucherId(), order.getUserId());
-                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherId());
+                    if (orderShop.getVoucherShopId() != null) {
+                        userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(), orderShop.getUserId());
+                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
                     }
 
                     List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShop.getOrderShopId());
@@ -357,33 +361,36 @@ public class OrderServlet extends NotificationServlet {
                         productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
                     }
 
-                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByOrderId(conn, order.getOrderId());
-                    Payment payment = paymentDAO.getPaymentByOrderId(conn, order.getOrderId());
+                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByGroupOrderCode(conn,
+                            orderShop.getGroupOrderCode());
+                    Payment payment = paymentDAO.getPaymentByOrderShopId(conn, orderShop.getOrderShopId());
+
                     if (activeShop.isEmpty()) {
-                        order.setOrderStatus("CANCELLED");
-                        if (order.getVoucherDiscountId() != null) {
-                            userVoucherDAO.cancelUserVoucher(conn, order.getVoucherDiscountId(), order.getUserId());
-                            voucherDAO.decreaseUsageCount(conn, order.getVoucherDiscountId());
+                        if (orderShop.getVoucherDiscountId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
                         }
-                        if (order.getVoucherShipId() != null) {
-                            userVoucherDAO.cancelUserVoucher(conn, order.getVoucherShipId(),
-                                    order.getUserId());
-                            voucherDAO.decreaseUsageCount(conn, order.getVoucherShipId());
+                        if (orderShop.getVoucherShipId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
                         }
                         if (payment != null) {
-                            paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
+                            paymentDAO.refundShopPayment(conn, orderShop.getOrderShopId(),
+                                    orderShop.getFinalAmount());
                         }
-                        orderDAO.update(conn, order);
                     } else {
                         if (payment != null) {
-                            paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
+                            paymentDAO.refundShopPayment(conn, orderShop.getOrderShopId(),
+                                    orderShop.getFinalAmount());
                         }
                     }
 
                     conn.commit();
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
-                    resp.sendRedirect(req.getContextPath() + "/order/shop?orderId=" + order.getOrderId());
+                    resp.sendRedirect(req.getContextPath() + "/order");
                 } catch (Exception e) {
                     e.printStackTrace();
                     if (conn != null)

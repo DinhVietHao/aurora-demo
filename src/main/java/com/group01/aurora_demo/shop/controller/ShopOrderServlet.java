@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.*;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.common.service.EmailService;
@@ -17,7 +16,6 @@ import jakarta.servlet.http.*;
 @WebServlet("/shop/orders")
 public class ShopOrderServlet extends HttpServlet {
 
-    private final OrderDAO orderDAO = new OrderDAO();
     private final ShopDAO shopDAO = new ShopDAO();
     private final OrderShopDAO orderShopDAO = new OrderShopDAO();
 
@@ -39,8 +37,8 @@ public class ShopOrderServlet extends HttpServlet {
         String action = request.getParameter("action");
         try {
             Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
-            Map<String, Integer> orderCounts = orderDAO.getOrderCountsByShopId(shopId);
-            request.setAttribute("orderCountAll", orderDAO.countOrdersByShop(shopId));
+            Map<String, Integer> orderCounts = orderShopDAO.getOrderShopCountsByShopId(shopId);
+            request.setAttribute("orderCountAll", orderShopDAO.countOrderShopByShop(shopId));
             request.setAttribute("orderCountPending", orderCounts.getOrDefault("PENDING", 0));
             request.setAttribute("orderCountShipping", orderCounts.getOrDefault("SHIPPING", 0));
             request.setAttribute("orderCountWaiting", orderCounts.getOrDefault("WAITING_SHIP", 0));
@@ -54,10 +52,12 @@ public class ShopOrderServlet extends HttpServlet {
                     switch (action) {
                         case "detail":
                             Long orderShopId = Long.parseLong(request.getParameter("orderShopId"));
-                            OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
+                            OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
                             if (orderShop == null) {
                                 request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
                             }
+                            request.setAttribute("phone", orderShop.getAddress().split("-")[0].trim());
+                            request.setAttribute("address", orderShop.getAddress().split("-")[1].trim());
                             request.setAttribute("orderShop", orderShop);
                             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
                                     response);
@@ -75,56 +75,56 @@ public class ShopOrderServlet extends HttpServlet {
                 List<OrderShop> orderShops = new ArrayList<>();
                 switch (status.toUpperCase()) {
                     case "ALL":
-                        orderShops = orderDAO.getOrdersByShopId(shopId);
+                        orderShops = orderShopDAO.getOrderShopByShopId(shopId);
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("pageTitle", "Tất cả đơn hàng");
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "PENDING":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "PENDING");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "PENDING");
                         request.setAttribute("pageTitle", "chờ xác nhận");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "SHIPPING":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "SHIPPING");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "SHIPPING");
                         request.setAttribute("pageTitle", "giao cho đơn vận chuyển");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "WAITING_SHIP":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "WAITING_SHIP");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "WAITING_SHIP");
                         request.setAttribute("pageTitle", "Đơn hàng đang giao");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "CONFIRM":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "CONFIRM");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "CONFIRM");
                         request.setAttribute("pageTitle", "Đơn hàng chờ xác nhận của khách hàng");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "COMPLETED":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "COMPLETED");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "COMPLETED");
                         request.setAttribute("pageTitle", "hoàn thành");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "CANCELLED":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "CANCELLED");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "CANCELLED");
                         request.setAttribute("pageTitle", "đã hủy");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
                         break;
                     case "RETURNED":
-                        orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "RETURNED");
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "RETURNED");
                         request.setAttribute("pageTitle", "hoàn đơn hàng");
                         request.setAttribute("orderShops", orderShops);
                         request.setAttribute("status", status);
@@ -172,7 +172,7 @@ public class ShopOrderServlet extends HttpServlet {
 
                     boolean updated = false;
                     if ("RETURNED".equals(newStatus)) {
-                        updated = orderDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
+                        updated = orderShopDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
                     } else {
                         updated = orderShopDAO.updateOrderShopStatus(orderShopId, newStatus);
                     }
@@ -189,10 +189,10 @@ public class ShopOrderServlet extends HttpServlet {
                         if (shouldSendEmail) {
                             try {
                                 EmailService emailService = new EmailService();
-                                OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
+                                OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
 
                                 String customerEmail = orderShop.getUser().getEmail();
-                                String customerName = orderShop.getCustomerName();
+                                String customerName = orderShop.getUser().getFullName();
 
                                 String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
                                 String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);

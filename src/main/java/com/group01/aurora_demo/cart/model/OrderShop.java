@@ -4,120 +4,32 @@ import java.util.Date;
 import java.util.List;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.profile.model.Address;
 
 public class OrderShop {
     private long orderShopId;
-    private long orderId;
+    private String groupOrderCode;
+    private long userId;
     private long shopId;
-    private Long voucherId;
+    private String address;
+    private Long voucherShopId;
+    private Long voucherDiscountId;
+    private Long voucherShipId;
     private double subtotal;
-    private double discount;
+    private double shopDiscount;
+    private double systemDiscount;
     private double shippingFee;
+    private double systemShippingDiscount;
     private double finalAmount;
     private String status;
     private Date createdAt;
-    private Date updateAt;
-    private String customerName;
-    private String orderStatus;
-    private double orderTotal;
-    private String voucherCode;
+    private Date updatedAt;
     private String cancelReason;
     private String returnReason;
+
+    private String customerName;
+
     private List<OrderItem> items;
     private User user;
-    private Address address;
-
-    public Address getAddress() {
-        return address;
-    }
-
-    public void setAddress(Address address) {
-        this.address = address;
-    }
-
-    private double systemVoucherDiscount;
-    private double systemShippingDiscount;
-
-    public double getSystemVoucherDiscount() {
-        return systemVoucherDiscount;
-    }
-
-    public void setSystemVoucherDiscount(double systemVoucherDiscount) {
-        this.systemVoucherDiscount = systemVoucherDiscount;
-    }
-
-    public double getSystemShippingDiscount() {
-        return systemShippingDiscount;
-    }
-
-    public void setSystemShippingDiscount(double systemShippingDiscount) {
-        this.systemShippingDiscount = systemShippingDiscount;
-    }
-
-    public Date getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Date updateAt) {
-        this.updateAt = updateAt;
-    }
-
-    public String getCancelReason() {
-        return cancelReason;
-    }
-
-    public void setCancelReason(String cancelReason) {
-        this.cancelReason = cancelReason;
-    }
-
-    public String getReturnReason() {
-        return returnReason;
-    }
-
-    public void setReturnReason(String returnReason) {
-        this.returnReason = returnReason;
-    }
-
-    public String getVoucherCode() {
-        return voucherCode;
-    }
-
-    public void setVoucherCode(String voucherCode) {
-        this.voucherCode = voucherCode;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
-
-    public String getOrderStatus() {
-        return orderStatus;
-    }
-
-    public void setOrderStatus(String orderStatus) {
-        this.orderStatus = orderStatus;
-    }
-
-    public double getOrderTotal() {
-        return orderTotal;
-    }
-
-    public void setOrderTotal(double orderTotal) {
-        this.orderTotal = orderTotal;
-    }
 
     public long getOrderShopId() {
         return orderShopId;
@@ -127,12 +39,12 @@ public class OrderShop {
         this.orderShopId = orderShopId;
     }
 
-    public long getOrderId() {
-        return orderId;
+    public long getUserId() {
+        return userId;
     }
 
-    public void setOrderId(long orderId) {
-        this.orderId = orderId;
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
 
     public long getShopId() {
@@ -143,12 +55,36 @@ public class OrderShop {
         this.shopId = shopId;
     }
 
-    public Long getVoucherId() {
-        return voucherId;
+    public String getAddress() {
+        return address;
     }
 
-    public void setVoucherId(Long voucherId) {
-        this.voucherId = voucherId;
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Long getVoucherShopId() {
+        return voucherShopId;
+    }
+
+    public void setVoucherShopId(Long voucherShopId) {
+        this.voucherShopId = voucherShopId;
+    }
+
+    public Long getVoucherDiscountId() {
+        return voucherDiscountId;
+    }
+
+    public void setVoucherDiscountId(Long voucherDiscountId) {
+        this.voucherDiscountId = voucherDiscountId;
+    }
+
+    public Long getVoucherShipId() {
+        return voucherShipId;
+    }
+
+    public void setVoucherShipId(Long voucherShipId) {
+        this.voucherShipId = voucherShipId;
     }
 
     public double getSubtotal() {
@@ -159,12 +95,20 @@ public class OrderShop {
         this.subtotal = subtotal;
     }
 
-    public double getDiscount() {
-        return discount;
+    public double getShopDiscount() {
+        return shopDiscount;
     }
 
-    public void setDiscount(double discount) {
-        this.discount = discount;
+    public void setShopDiscount(double shopDiscount) {
+        this.shopDiscount = shopDiscount;
+    }
+
+    public double getSystemDiscount() {
+        return systemDiscount;
+    }
+
+    public void setSystemDiscount(double systemDiscount) {
+        this.systemDiscount = systemDiscount;
     }
 
     public double getShippingFee() {
@@ -173,6 +117,14 @@ public class OrderShop {
 
     public void setShippingFee(double shippingFee) {
         this.shippingFee = shippingFee;
+    }
+
+    public double getSystemShippingDiscount() {
+        return systemShippingDiscount;
+    }
+
+    public void setSystemShippingDiscount(double systemShippingDiscount) {
+        this.systemShippingDiscount = systemShippingDiscount;
     }
 
     public double getFinalAmount() {
@@ -199,12 +151,60 @@ public class OrderShop {
         this.createdAt = createdAt;
     }
 
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
+    }
+
+    public String getReturnReason() {
+        return returnReason;
+    }
+
+    public void setReturnReason(String returnReason) {
+        this.returnReason = returnReason;
+    }
+
     public List<OrderItem> getItems() {
         return items;
     }
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getGroupOrderCode() {
+        return groupOrderCode;
+    }
+
+    public void setGroupOrderCode(String groupOrderCode) {
+        this.groupOrderCode = groupOrderCode;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
     }
 
 }

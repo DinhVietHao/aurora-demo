@@ -164,7 +164,7 @@
                                                                         class="order-detail__value order-detail__value--discount">
                                                                         -
                                                                         <fmt:formatNumber
-                                                                            value="${orderItems[0].systemVoucherDiscount}"
+                                                                            value="${orderItems[0].systemDiscount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>
