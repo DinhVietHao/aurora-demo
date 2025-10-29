@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
+import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
@@ -71,18 +71,17 @@ public class OrderItemDAO {
         return items;
     }
 
-    public List<OrderDTO> getOrderItemsByOrderShopId(long orderShopId) {
-        List<OrderDTO> orderItems = new ArrayList<>();
+    public List<OrderShopDTO> getOrderItemsByOrderShopId(long orderShopId) {
+        List<OrderShopDTO> orderItems = new ArrayList<>();
         String sql = """
                 SELECT
-                    os.OrderID,
                     os.OrderShopID,
                     s.Name AS ShopName,
                     os.Status AS ShopStatus,
-                    os.UpdateAt,
-                    os.Discount AS ShopDiscount,
+                    os.UpdatedAt,
+                    os.ShopDiscount AS ShopDiscount,
                     os.ShippingFee AS ShopShippingFee,
-                    os.SystemVoucherDiscount,
+                    os.SystemDiscount,
                     os.SystemShippingDiscount,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
@@ -99,7 +98,7 @@ public class OrderItemDAO {
                 JOIN ProductImages img ON p.ProductID = img.ProductID
                 WHERE os.OrderShopID = ?
                   AND img.IsPrimary = 1
-                ORDER BY os.UpdateAt DESC
+                ORDER BY os.UpdatedAt DESC
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -109,12 +108,11 @@ public class OrderItemDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    OrderDTO order = new OrderDTO();
-                    order.setOrderId(rs.getLong("OrderID"));
+                    OrderShopDTO order = new OrderShopDTO();
                     order.setOrderShopId(rs.getLong("OrderShopID"));
                     order.setShopName(rs.getString("ShopName"));
                     order.setShopStatus(rs.getString("ShopStatus"));
-                    order.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    order.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
 
                     // --- Sản phẩm ---
                     order.setProductId(rs.getLong("ProductID"));
@@ -128,7 +126,7 @@ public class OrderItemDAO {
                     // --- Shop ---
                     order.setShopDiscount(rs.getDouble("ShopDiscount"));
                     order.setShopShippingFee(rs.getDouble("ShopShippingFee"));
-                    order.setSystemVoucherDiscount(rs.getDouble("SystemVoucherDiscount"));
+                    order.setSystemDiscount(rs.getDouble("SystemDiscount"));
                     order.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
                     order.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 

@@ -2,19 +2,20 @@ package com.group01.aurora_demo.cart.dao.dto;
 
 import java.util.Date;
 
-public class OrderDTO {
-    // ----------- Order tổng ----------
-    private long orderId;
-    // ----------- OrderShop ------------
+public class OrderShopDTO {
+    private String groupOrderCode;
     private long orderShopId;
+    private long ShopId;
+
     private String shopName;
     private double shopDiscount;
     private double shopShippingFee;
     private double shopFinalAmount;
     private String shopStatus;
-    private double systemVoucherDiscount;
+    private double systemDiscount;
     private double systemShippingDiscount;
-    private Date updateAt;
+    private Date updatedAt;
+    private Date createdAt;
 
     // ----------- Sản phẩm trong shop ----------
     private long productId;
@@ -29,14 +30,6 @@ public class OrderDTO {
 
     private boolean canReturn;
 
-    public long getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(long orderId) {
-        this.orderId = orderId;
-    }
-
     public long getOrderShopId() {
         return orderShopId;
     }
@@ -49,8 +42,24 @@ public class OrderDTO {
         return shopName;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public String getGroupOrderCode() {
+        return groupOrderCode;
+    }
+
+    public void setGroupOrderCode(String groupOrderCode) {
+        this.groupOrderCode = groupOrderCode;
     }
 
     public double getShopDiscount() {
@@ -91,14 +100,6 @@ public class OrderDTO {
 
     public void setSystemShippingDiscount(double systemShippingDiscount) {
         this.systemShippingDiscount = systemShippingDiscount;
-    }
-
-    public Date getUpdateAt() {
-        return updateAt;
-    }
-
-    public void setUpdateAt(Date updateAt) {
-        this.updateAt = updateAt;
     }
 
     public long getProductId() {
@@ -193,11 +194,27 @@ public class OrderDTO {
         this.canReturn = canReturn;
     }
 
-    public double getSystemVoucherDiscount() {
-        return systemVoucherDiscount;
+    public long getShopId() {
+        return ShopId;
     }
 
-    public void setSystemVoucherDiscount(double systemVoucherDiscount) {
-        this.systemVoucherDiscount = systemVoucherDiscount;
+    public void setShopId(long shopId) {
+        ShopId = shopId;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public double getSystemDiscount() {
+        return systemDiscount;
+    }
+
+    public void setSystemDiscount(double systemDiscount) {
+        this.systemDiscount = systemDiscount;
     }
 }
