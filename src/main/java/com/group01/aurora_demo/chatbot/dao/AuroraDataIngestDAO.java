@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.chatbot.dao;
 
-import java.sql.Date;
 import java.util.List;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -19,9 +18,10 @@ public class AuroraDataIngestDAO {
             conn.setAutoCommit(false);
             ingestProducts(conn);
             ingestVouchers(conn);
-            ingestReviews(conn);
             conn.commit();
-            updateNewOrUpdatedEmbeddings(conn);
+            try (Connection embedConn = DataSourceProvider.get().getConnection()) {
+                updateNewOrUpdatedEmbeddings(embedConn);
+            }
             System.out.println("[SYNC] Document ingestion completed successfully.");
         } catch (Exception e) {
             System.out.println("[ERROR] chatbot/dao/AuroraDataIngestDAO in syncAllDocuments: " + e.getMessage());
@@ -51,7 +51,6 @@ public class AuroraDataIngestDAO {
                     update.setNString(1, arr.toString());
                     update.setLong(2, docId);
                     update.executeUpdate();
-                    System.out.println("[EMBED] Updated embedding for doc ID: " + docId);
                 }
             }
             conn.commit();
@@ -65,26 +64,13 @@ public class AuroraDataIngestDAO {
                     SELECT
                         p.ProductID,
                         p.Title,
-                        p.Description,
-                        p.OriginalPrice,
                         p.SalePrice,
                         p.Quantity,
-                        p.Status,
-                        p.CreatedAt,
-                        p.Weight,
-                        p.PublishedDate,
                         s.Name AS ShopName,
-                        s.RatingAvg AS ShopRating,
                         cat.CategoryNames AS CategoryName,
-                        pub.Name AS PublisherName,
-                        b.Pages,
-                        b.Version,
-                        b.CoverType,
-                        l.LanguageName,
                         revs.AvgRating,
                         revs.ReviewCount,
-                        sales.TotalSold,
-                        auth.Authors
+                        sales.TotalSold
                     FROM Products p
                     LEFT JOIN Shops s ON p.ShopID = s.ShopID
                     LEFT JOIN (
@@ -93,9 +79,6 @@ public class AuroraDataIngestDAO {
                         JOIN Category c ON pc.CategoryID = c.CategoryID
                         GROUP BY pc.ProductID
                     ) cat ON cat.ProductID = p.ProductID
-                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    LEFT JOIN BookDetails b ON b.ProductID = p.ProductID
-                    LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
                     LEFT JOIN (
                         SELECT oi.ProductID, SUM(oi.Quantity) AS TotalSold
                         FROM OrderItems oi
@@ -112,89 +95,57 @@ public class AuroraDataIngestDAO {
                         WHERE r.Comment IS NOT NULL AND LEN(r.Comment) > 3
                         GROUP BY oi.ProductID
                     ) revs ON revs.ProductID = p.ProductID
-                    LEFT JOIN (
-                        SELECT ba.ProductID,
-                               STRING_AGG(a.AuthorName, ', ') AS Authors
-                        FROM BookAuthors ba
-                        JOIN Authors a ON ba.AuthorID = a.AuthorID
-                        GROUP BY ba.ProductID
-                    ) auth ON auth.ProductID = p.ProductID
                     WHERE p.Status = 'ACTIVE';
                 """;
 
         String upsertSql = """
-                    MERGE Documents AS target
-                    USING (VALUES (?, ?, ?, ?)) AS source (Source, SourceID, Title, Content)
-                    ON target.Source = source.Source AND target.SourceID = source.SourceID
-                    WHEN MATCHED THEN
-                        UPDATE SET Title = source.Title, Content = source.Content, UpdatedAt = SYSUTCDATETIME()
-                    WHEN NOT MATCHED THEN
-                        INSERT (Source, SourceID, Title, Content, CreatedAt, UpdatedAt)
-                        VALUES (source.Source, source.SourceID, source.Title, source.Content, SYSUTCDATETIME(), SYSUTCDATETIME());
+                    EXEC sp_executesql N'
+                        UPDATE Documents
+                        SET Title = @title, Content = @content, UpdatedAt = SYSUTCDATETIME()
+                        WHERE Source = @source AND SourceID = @sourceId;
+
+                        IF @@ROWCOUNT = 0
+                        BEGIN
+                            INSERT INTO Documents (Source, SourceID, Title, Content, CreatedAt, UpdatedAt)
+                            VALUES (@source, @sourceId, @title, @content, SYSUTCDATETIME(), SYSUTCDATETIME());
+                        END
+                    ',
+                    N'@source NVARCHAR(100), @sourceId BIGINT, @title NVARCHAR(255), @content NVARCHAR(MAX)',
+                    @source=?, @sourceId=?, @title=?, @content=?;
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql);
                 PreparedStatement ins = conn.prepareStatement(upsertSql)) {
 
+            conn.setAutoCommit(false);
             ResultSet rs = ps.executeQuery();
             int batchCount = 0;
 
             while (rs.next()) {
                 long id = rs.getLong("ProductID");
                 String title = rs.getString("Title");
-                String description = rs.getString("Description");
-                double originalPrice = rs.getDouble("OriginalPrice");
                 double salePrice = rs.getDouble("SalePrice");
                 int quantity = rs.getInt("Quantity");
-                double weight = rs.getDouble("Weight");
-                Date published = rs.getDate("PublishedDate");
 
                 String shopName = rs.getString("ShopName");
-                double shopRating = rs.getDouble("ShopRating");
                 String categoryName = rs.getString("CategoryName");
-                String publisherName = rs.getString("PublisherName");
-                String authors = rs.getString("Authors");
-                String version = rs.getString("Version");
-                String coverType = rs.getString("CoverType");
-                String language = rs.getString("LanguageName");
-                int pages = rs.getInt("Pages");
                 Double avgRating = rs.getObject("AvgRating") != null ? rs.getDouble("AvgRating") : null;
                 Long reviewCount = rs.getObject("ReviewCount") != null ? rs.getLong("ReviewCount") : null;
                 Long totalSold = rs.getObject("TotalSold") != null ? rs.getLong("TotalSold") : null;
 
                 StringBuilder content = new StringBuilder();
-                content.append("Tên sản phẩm: ").append(title).append("\n");
+                content.append("Tên sản phẩm: ").append(title).append(". ");
                 if (categoryName != null)
-                    content.append("Thể loại: ").append(categoryName).append("\n");
-                if (authors != null)
-                    content.append("Tác giả: ").append(authors).append("\n");
-                if (publisherName != null)
-                    content.append("Nhà xuất bản: ").append(publisherName).append("\n");
-                if (version != null)
-                    content.append("Phiên bản: ").append(version).append("\n");
-                if (coverType != null)
-                    content.append("Loại bìa: ").append(coverType).append("\n");
-                if (pages > 0)
-                    content.append("Số trang: ").append(pages).append("\n");
-                if (language != null)
-                    content.append("Ngôn ngữ: ").append(language).append("\n");
-
-                content.append("Giá gốc: ").append(String.format("%,.0f VNĐ\n", originalPrice));
-                content.append("Giá bán: ").append(String.format("%,.0f VNĐ\n", salePrice));
-                content.append("Còn lại: ").append(quantity).append(" sản phẩm\n");
-                content.append("Khối lượng: ").append(String.format("%.2f gram", weight)).append("\n");
-
+                    content.append("Thể loại: ").append(categoryName).append(". ");
+                content.append("Giá bán: ").append(String.format("%,.0f VNĐ. ", salePrice));
+                content.append("Còn lại: ").append(quantity).append(" sản phẩm. ");
                 if (totalSold != null && totalSold > 0)
-                    content.append("Đã bán: ").append(String.format("%,d sản phẩm", totalSold)).append("\n");
+                    content.append("Đã bán: ").append(String.format("%,d sản phẩm. ", totalSold));
                 if (avgRating != null && reviewCount != null && reviewCount > 0)
                     content.append("Đánh giá trung bình: ")
-                            .append(String.format("%.1f★ (%d lượt)", avgRating, reviewCount)).append("\n");
+                            .append(String.format("%.1f★ (%d lượt). ", avgRating, reviewCount));
                 if (shopName != null)
-                    content.append("Shop: ").append(shopName).append(" (").append(shopRating).append("★)\n");
-                if (published != null)
-                    content.append("Ngày phát hành: ").append(published.toString()).append("\n");
-                if (description != null && !description.isBlank())
-                    content.append("Mô tả: ").append(description).append("\n");
+                    content.append("Shop: ").append(shopName).append(".");
 
                 ins.setString(1, "Product");
                 ins.setLong(2, id);
@@ -202,17 +153,24 @@ public class AuroraDataIngestDAO {
                 ins.setString(4, content.toString());
                 ins.addBatch();
                 batchCount++;
-
                 if (batchCount % 200 == 0) {
                     ins.executeBatch();
+                    conn.commit();
                     batchCount = 0;
                 }
             }
 
-            if (batchCount > 0)
+            if (batchCount > 0) {
                 ins.executeBatch();
-            System.out.println("[SYNC] Products upsert completed.");
+                conn.commit();
+            }
+            System.out.println("[INFO] ingestProducts completed successfully.");
         } catch (SQLException e) {
+            try {
+                conn.rollback();
+            } catch (SQLException ignored) {
+                System.out.println(ignored.getMessage());
+            }
             System.err.println("[ERROR] ingestProducts: " + e.getMessage());
         }
     }
@@ -221,29 +179,32 @@ public class AuroraDataIngestDAO {
         String sql = """
                     SELECT
                         v.VoucherID, v.Code, v.DiscountType, v.Value, v.MaxAmount, v.MinOrderAmount,
-                        v.StartAt, v.EndAt, v.[Status], v.[Description], v.IsShopVoucher, v.ShopID,
-                        s.Name AS ShopName, s.Description AS ShopDescription, s.RatingAvg,
-                        addr.Description AS PickupAddressDesc, addr.City, addr.District, addr.Ward
+                        v.StartAt, v.EndAt, v.IsShopVoucher, s.Name AS ShopName
                     FROM Vouchers v
                     LEFT JOIN Shops s ON v.ShopID = s.ShopID
-                    LEFT JOIN Addresses addr ON s.PickupAddressID = addr.AddressID
-                    WHERE v.[Status] = 'ACTIVE'
+                    WHERE v.[Status] = 'ACTIVE';
                 """;
 
         String upsertSql = """
-                    MERGE Documents AS target
-                    USING (VALUES (?, ?, ?, ?)) AS source (Source, SourceID, Title, Content)
-                    ON target.Source = source.Source AND target.SourceID = source.SourceID
-                    WHEN MATCHED THEN
-                        UPDATE SET Title = source.Title, Content = source.Content, UpdatedAt = SYSUTCDATETIME()
-                    WHEN NOT MATCHED THEN
-                        INSERT (Source, SourceID, Title, Content, CreatedAt, UpdatedAt)
-                        VALUES (source.Source, source.SourceID, source.Title, source.Content, SYSUTCDATETIME(), SYSUTCDATETIME());
+                    EXEC sp_executesql N'
+                        UPDATE Documents
+                        SET Title = @title, Content = @content, UpdatedAt = SYSUTCDATETIME()
+                        WHERE Source = @source AND SourceID = @sourceId;
+
+                        IF @@ROWCOUNT = 0
+                        BEGIN
+                            INSERT INTO Documents (Source, SourceID, Title, Content, CreatedAt, UpdatedAt)
+                            VALUES (@source, @sourceId, @title, @content, SYSUTCDATETIME(), SYSUTCDATETIME());
+                        END
+                    ',
+                    N'@source NVARCHAR(100), @sourceId BIGINT, @title NVARCHAR(255), @content NVARCHAR(MAX)',
+                    @source=?, @sourceId=?, @title=?, @content=?;
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql);
                 PreparedStatement ins = conn.prepareStatement(upsertSql)) {
 
+            conn.setAutoCommit(false);
             ResultSet rs = ps.executeQuery();
             int batch = 0;
 
@@ -251,62 +212,33 @@ public class AuroraDataIngestDAO {
                 long id = rs.getLong("VoucherID");
                 String code = rs.getString("Code");
                 String discountType = rs.getString("DiscountType");
-                Double value = rs.getDouble("Value");
-                Double maxAmount = rs.getDouble("MaxAmount");
-                Double minOrder = rs.getDouble("MinOrderAmount");
+                Double value = rs.getObject("Value") != null ? rs.getDouble("Value") : null;
+                Double maxAmount = rs.getObject("MaxAmount") != null ? rs.getDouble("MaxAmount") : null;
+                Double minOrder = rs.getObject("MinOrderAmount") != null ? rs.getDouble("MinOrderAmount") : null;
                 Timestamp startAt = rs.getTimestamp("StartAt");
                 Timestamp endAt = rs.getTimestamp("EndAt");
-                String desc = rs.getString("Description");
                 boolean isShopVoucher = rs.getBoolean("IsShopVoucher");
-
-                Long shopId = rs.getObject("ShopID") != null ? rs.getLong("ShopID") : null;
                 String shopName = rs.getString("ShopName");
-                String shopDesc = rs.getString("ShopDescription");
-                Double shopRating = rs.getDouble("RatingAvg");
-
-                String pickupAddrDesc = rs.getString("PickupAddressDesc");
-                String pickupCity = rs.getString("City");
-                String pickupDistrict = rs.getString("District");
-                String pickupWard = rs.getString("Ward");
 
                 StringBuilder content = new StringBuilder();
-                content.append("Mã: ").append(code).append("\n");
-                content.append("Loại giảm giá: ").append(discountType).append("\n");
-                if (value != null)
-                    content.append("Giá trị: ").append(formatValueByType(discountType, value)).append("\n");
-                if (maxAmount != null)
-                    content.append("Giảm tối đa: ").append(String.format("%,.0f VNĐ\n", maxAmount));
-                if (minOrder != null)
-                    content.append("Đơn tối thiểu: ").append(String.format("%,.0f VNĐ\n", minOrder));
-                if (startAt != null)
-                    content.append("Bắt đầu: ").append(startAt.toLocalDateTime()).append("\n");
-                if (endAt != null)
-                    content.append("Hết hạn: ").append(endAt.toLocalDateTime()).append("\n");
-                if (!desc.isEmpty())
-                    content.append("Mô tả: ").append(desc).append("\n");
+                content.append("Mã: ").append(code).append(". ");
+                content.append("Loại giảm giá: ").append(discountType).append(". ");
 
-                if (isShopVoucher && shopId != null) {
-                    content.append("Áp dụng tại shop: ").append(shopName).append(" (ShopID: ").append(shopId)
-                            .append(")\n");
-                    if (!shopDesc.isEmpty())
-                        content.append("Giới thiệu shop: ").append(shopDesc).append("\n");
-                    if (shopRating != null)
-                        content.append("Đánh giá trung bình: ").append(shopRating).append("\n");
-                    if (!pickupAddrDesc.isEmpty() || !pickupWard.isEmpty() || !pickupDistrict.isEmpty()
-                            || !pickupCity.isEmpty()) {
-                        content.append("Địa chỉ shop: ");
-                        if (!pickupAddrDesc.isEmpty())
-                            content.append(pickupAddrDesc).append(", ");
-                        if (!pickupWard.isEmpty())
-                            content.append(pickupWard).append(", ");
-                        if (!pickupDistrict.isEmpty())
-                            content.append(pickupDistrict).append(", ");
-                        if (!pickupCity.isEmpty())
-                            content.append(pickupCity).append(".");
-                        content.append("\n");
-                    }
+                if (value != null)
+                    content.append("Giá trị: ").append(formatValueByType(discountType, value)).append(". ");
+                if (maxAmount != null)
+                    content.append("Giảm tối đa: ").append(String.format("%,.0f VNĐ. ", maxAmount));
+                if (minOrder != null)
+                    content.append("Đơn tối thiểu: ").append(String.format("%,.0f VNĐ. ", minOrder));
+                if (startAt != null)
+                    content.append("Bắt đầu: ").append(startAt.toLocalDateTime().toLocalDate()).append(". ");
+                if (endAt != null)
+                    content.append("Hết hạn: ").append(endAt.toLocalDateTime().toLocalDate()).append(". ");
+
+                if (isShopVoucher) {
+                    content.append("Áp dụng tại shop: ").append(shopName != null ? shopName : "Không rõ").append(". ");
                 } else {
-                    content.append("Áp dụng toàn hệ thống.\n");
+                    content.append("Áp dụng toàn hệ thống. ");
                 }
 
                 ins.setString(1, "Voucher");
@@ -315,85 +247,25 @@ public class AuroraDataIngestDAO {
                 ins.setString(4, content.toString());
                 ins.addBatch();
                 batch++;
-
                 if (batch % 200 == 0) {
                     ins.executeBatch();
+                    conn.commit();
                     batch = 0;
                 }
             }
-            if (batch > 0)
+
+            if (batch > 0) {
                 ins.executeBatch();
-            System.out.println("[SYNC] Vouchers upsert completed.");
+                conn.commit();
+            }
+            System.out.println("[SYNC] Vouchers upsert completed successfully.");
         } catch (SQLException e) {
+            try {
+                conn.rollback();
+            } catch (SQLException ignored) {
+                System.out.println(ignored.getMessage());
+            }
             System.err.println("[ERROR] ingestVouchers: " + e.getMessage());
-        }
-    }
-
-    private void ingestReviews(Connection conn) {
-        String sql = """
-                    SELECT r.ReviewID, r.OrderItemID, r.UserID, r.Rating, r.Comment, r.CreatedAt,
-                           oi.ProductID, p.Title AS ProductTitle
-                    FROM Reviews r
-                    LEFT JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
-                    LEFT JOIN Products p ON oi.ProductID = p.ProductID
-                    WHERE r.Rating IS NOT NULL
-                """;
-
-        String upsertSql = """
-                    MERGE Documents AS target
-                    USING (VALUES (?, ?, ?, ?, ?)) AS source (Source, SourceID, Title, Content, CreatedAt)
-                    ON target.Source = source.Source AND target.SourceID = source.SourceID
-                    WHEN MATCHED THEN
-                        UPDATE SET Title = source.Title, Content = source.Content, UpdatedAt = SYSUTCDATETIME()
-                    WHEN NOT MATCHED THEN
-                        INSERT (Source, SourceID, Title, Content, CreatedAt, UpdatedAt)
-                        VALUES (source.Source, source.SourceID, source.Title, source.Content, source.CreatedAt, SYSUTCDATETIME());
-                """;
-
-        try (PreparedStatement ps = conn.prepareStatement(sql);
-                PreparedStatement ins = conn.prepareStatement(upsertSql)) {
-
-            ResultSet rs = ps.executeQuery();
-            int batch = 0;
-
-            while (rs.next()) {
-                long reviewId = rs.getLong("ReviewID");
-                Integer rating = rs.getInt("Rating");
-                String comment = rs.getString("Comment");
-                String productTitle = rs.getString("ProductTitle");
-                Timestamp createdAt = rs.getTimestamp("CreatedAt");
-                if (createdAt == null)
-                    createdAt = new Timestamp(System.currentTimeMillis());
-
-                String title = String.format("Đánh giá %d★ cho '%s'",
-                        rating == null ? 0 : rating,
-                        productTitle.isEmpty() ? "(không rõ sản phẩm)" : productTitle);
-
-                StringBuilder content = new StringBuilder();
-                content.append("Sản phẩm: ").append(productTitle).append("\n");
-                content.append("Điểm đánh giá: ").append(rating == null ? "chưa có" : rating + "★").append("\n");
-                content.append("Nhận xét: ").append(comment).append("\n");
-
-                ins.setString(1, "Review");
-                ins.setLong(2, reviewId);
-                ins.setString(3, title);
-                ins.setString(4, content.toString());
-                ins.setTimestamp(5, createdAt);
-                ins.addBatch();
-                batch++;
-
-                if (batch % 200 == 0) {
-                    ins.executeBatch();
-                    batch = 0;
-                }
-            }
-
-            if (batch > 0)
-                ins.executeBatch();
-            System.out.println("[SYNC] Reviews upsert completed.");
-
-        } catch (SQLException e) {
-            System.err.println("[ERROR] ingestReviews: " + e.getMessage());
         }
     }
 
@@ -401,8 +273,8 @@ public class AuroraDataIngestDAO {
         if (value == null)
             return "";
         if ("PERCENT".equalsIgnoreCase(discountType) || discountType.toLowerCase().contains("percent"))
-            return String.format("%.0f%%", value);
-        return String.format("%,.0f₫\n", value);
+            return String.format("%.0f%%. ", value);
+        return String.format("%,.0f₫. ", value);
     }
 
     public void updateAllDocumentEmbeddings(Connection conn) {
@@ -496,7 +368,7 @@ public class AuroraDataIngestDAO {
 
     public List<Document> searchRelevantDocuments(String query, int topN) {
         List<Double> queryEmbedding = generateEmbedding(query);
-        String sql = "SELECT DocumentID, Title, Content, Embedding FROM Documents WHERE Embedding IS NOT NULL";
+        String sql = "SELECT TOP (1000) DocumentID, Title, Content, Embedding FROM Documents WHERE Embedding IS NOT NULL";
         try (Connection conn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = conn.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
