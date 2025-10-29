@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.*;
 
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.common.service.EmailService;
@@ -17,7 +16,6 @@ import jakarta.servlet.http.*;
 @WebServlet("/shop/orders")
 public class ShopOrderServlet extends HttpServlet {
 
-    private final OrderDAO orderDAO = new OrderDAO();
     private final ShopDAO shopDAO = new ShopDAO();
     private final OrderShopDAO orderShopDAO = new OrderShopDAO();
 

@@ -26,16 +26,13 @@ import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 
 public class OrderShopDAO {
-
     private VoucherDAO voucherDAO;
-    private OrderShopDAO orderShopDAO;
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
 
     public OrderShopDAO() {
         this.voucherDAO = new VoucherDAO();
-        this.orderShopDAO = new OrderShopDAO();
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
@@ -334,11 +331,11 @@ public class OrderShopDAO {
                 while (rs.next()) {
                     Long orderShopId = rs.getLong("OrderShopID");
 
-                    OrderShop orderShop = orderShopDAO.findByOrderShopId(conn, orderShopId);
+                    OrderShop orderShop = findByOrderShopId(conn, orderShopId);
                     if (orderShop == null)
                         continue;
 
-                    boolean cancelled = orderShopDAO.cancelOrderShop(conn, orderShopId, "Quá thời hạn thanh toán");
+                    boolean cancelled = cancelOrderShop(conn, orderShopId, "Quá thời hạn thanh toán");
 
                     if (!cancelled)
                         continue;
@@ -353,7 +350,7 @@ public class OrderShopDAO {
                         productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
                     }
 
-                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByGroupOrderCode(conn,
+                    List<OrderShop> activeShop = getActiveShopsByGroupOrderCode(conn,
                             orderShop.getGroupOrderCode());
 
                     if (activeShop.isEmpty()) {

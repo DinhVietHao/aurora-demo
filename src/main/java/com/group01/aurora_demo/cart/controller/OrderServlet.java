@@ -20,13 +20,11 @@ import org.json.JSONObject;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
-import com.group01.aurora_demo.cart.dao.OrderDAO;
 import com.group01.aurora_demo.cart.dao.OrderItemDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.dao.PaymentDAO;
 import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
-import com.group01.aurora_demo.cart.model.Order;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.cart.model.Payment;
@@ -56,7 +54,6 @@ import jakarta.servlet.http.HttpSession;
 public class OrderServlet extends NotificationServlet {
     private OrderService orderService;
     private VoucherDAO voucherDAO;
-    private OrderDAO orderDAO;
     private OrderShopDAO orderShopDAO;
     private PaymentDAO paymentDAO;
     private AddressDAO addressDAO;
@@ -69,7 +66,6 @@ public class OrderServlet extends NotificationServlet {
     public OrderServlet() {
         this.orderService = new OrderService();
         this.voucherDAO = new VoucherDAO();
-        this.orderDAO = new OrderDAO();
         this.paymentDAO = new PaymentDAO();
         this.orderShopDAO = new OrderShopDAO();
         this.addressDAO = new AddressDAO();
@@ -306,21 +302,22 @@ public class OrderServlet extends NotificationServlet {
             case "/repayment": {
                 try {
                     long orderId = Long.parseLong(req.getParameter("orderId"));
-                    Order order = orderDAO.getOrderById(orderId);
+                    // Order order = orderDAO.getOrderById(orderId);
 
-                    if (order == null) {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán lại.");
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                        break;
-                    }
+                    // if (order == null) {
+                    // session.setAttribute("toastType", "error");
+                    // session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán
+                    // lại.");
+                    // resp.sendRedirect(req.getContextPath() + "/order");
+                    // break;
+                    // }
 
-                    if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
-                        session.setAttribute("toastType", "warning");
-                        session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
-                        resp.sendRedirect(req.getContextPath() + "/order");
-                        break;
-                    }
+                    // if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
+                    // session.setAttribute("toastType", "warning");
+                    // session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
+                    // resp.sendRedirect(req.getContextPath() + "/order");
+                    // break;
+                    // }
 
                     // String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId,
                     // order.getFinalAmount());
