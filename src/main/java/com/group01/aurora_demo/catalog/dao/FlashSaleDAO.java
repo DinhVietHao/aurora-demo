@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.group01.aurora_demo.catalog.model.FlashSale;
+import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class FlashSaleDAO {
@@ -57,4 +58,86 @@ public class FlashSaleDAO {
 
         return list;
     }
+
+    public boolean insertFlashSaleItem(long flashSaleId, long shopId, long productId,
+            double flashPrice, int fsStock,
+            Integer perUserLimit, String approvalStatus) {
+        String sql = "INSERT INTO FlashSaleItems (FlashSaleID, ProductID, ShopID, FlashPrice, FsStock, PerUserLimit, ApprovalStatus) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, flashSaleId);
+            ps.setLong(2, productId);
+            ps.setLong(3, shopId);
+            ps.setDouble(4, flashPrice);
+            ps.setInt(5, fsStock);
+            if (perUserLimit != null)
+                ps.setInt(6, perUserLimit);
+            else
+                ps.setNull(6, java.sql.Types.INTEGER);
+            ps.setString(7, approvalStatus);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isProductInThisFlashSale(long flashSaleId, long productId) {
+        String sql = "SELECT COUNT(*) FROM FlashSaleItems WHERE FlashSaleID = ? AND ProductID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, flashSaleId);
+            ps.setLong(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next())
+                    return rs.getInt(1) > 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<FlashSaleItem> getFlashSaleItemsByFlashSaleIdAndShopId(long flashSaleId, long shopId)
+            throws SQLException {
+        List<FlashSaleItem> list = new ArrayList<>();
+
+        String sql = """
+                    SELECT fsi.FlashSaleItemID, fsi.ProductID, p.Title, p.OriginalPrice,
+                           fsi.FlashPrice, fsi.FsStock, fsi.PerUserLimit, fsi.ApprovalStatus,
+                           img.Url AS ImageUrl
+                    FROM FlashSaleItems fsi
+                    JOIN Products p ON fsi.ProductID = p.ProductID
+                    OUTER APPLY (
+                        SELECT TOP 1 Url FROM ProductImages
+                        WHERE ProductID = p.ProductID AND IsPrimary = 1
+                    ) img
+                    WHERE fsi.FlashSaleID = ? AND fsi.ShopID = ?
+                    ORDER BY fsi.CreatedAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, flashSaleId);
+            ps.setLong(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    FlashSaleItem item = new FlashSaleItem();
+                    item.setFlashSaleItemID(rs.getLong("FlashSaleItemID"));
+                    item.setProductID(rs.getLong("ProductID"));
+                    item.setTitle(rs.getString("Title"));
+                    item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    item.setFlashPrice(rs.getDouble("FlashPrice"));
+                    item.setFsStock(rs.getInt("FsStock"));
+                    item.setPerUserLimit(rs.getInt("PerUserLimit"));
+                    item.setApprovalStatus(rs.getString("ApprovalStatus"));
+                    item.setImageUrl(rs.getString("ImageUrl"));
+                    list.add(item);
+                }
+            }
+        }
+        return list;
+    }
+
 }
