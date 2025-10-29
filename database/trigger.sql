@@ -52,10 +52,14 @@ BEGIN
     -- 4️⃣ Sản phẩm PENDING nhưng đã có SoldCount > 0
     INSERT INTO @Blocked
         (ProductID, Reason)
-    SELECT d.ProductID, N'Sản phẩm đang ở trạng thái chờ duyệt (PENDING) nhưng đã được bán'
+    SELECT d.ProductID,
+        CASE p.Status
+        WHEN N'PENDING' THEN N'Sản phẩm đang ở trạng thái chờ duyệt (PENDING) nhưng đã được bán'
+        WHEN N'REJECTED' THEN N'Sản phẩm đã bị từ chối (REJECTED) nhưng vẫn có đơn hàng bán'
+    END
     FROM deleted d
         JOIN Products p ON p.ProductID = d.ProductID
-    WHERE p.Status = N'PENDING' AND p.SoldCount > 0;
+    WHERE p.Status IN (N'PENDING', N'REJECTED') AND p.SoldCount > 0;
 
     -- 5️⃣ Nếu có sản phẩm bị chặn xóa → báo lỗi
     IF EXISTS (SELECT 1
