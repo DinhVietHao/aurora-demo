@@ -4,9 +4,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Executors;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
+// import jakarta.servlet.annotation.WebListener;
+
 import java.util.concurrent.ScheduledExecutorService;
 import com.group01.aurora_demo.chatbot.service.DocumentSyncTask;
 
+// @WebListener
 public class SchedulerConfig implements ServletContextListener {
     private ScheduledExecutorService scheduler;
 
