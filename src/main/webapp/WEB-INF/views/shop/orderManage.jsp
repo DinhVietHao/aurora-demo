@@ -189,7 +189,7 @@
                                                         class="card-header bg-light d-flex justify-content-between align-items-center py-3 rounded-top">
                                                         <div>
                                                             <strong class="text-primary">
-                                                                Mã đơn hàng: #${orderShop.orderShopId}
+                                                                Mã đơn hàng: #${orderShop.groupOrderCode}
                                                             </strong>
                                                             <span
                                                                 class="ms-2 text-dark fw-semibold">(${orderShop.user.fullName})

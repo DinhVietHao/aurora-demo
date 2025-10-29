@@ -468,8 +468,6 @@ public class OrderShopDAO {
 
                 while (rs.next()) {
                     long orderShopId = rs.getLong("OrderShopID");
-
-                    // Nếu đơn hàng chưa tồn tại trong map → tạo mới
                     OrderShop os = orderShopMap.get(orderShopId);
                     if (os == null) {
                         os = new OrderShop();
@@ -487,16 +485,14 @@ public class OrderShopDAO {
                         os.setCreatedAt(rs.getTimestamp("CreatedAt"));
                         os.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                         os.setItems(new ArrayList<>());
-
-                        // Gán thông tin người mua (User)
+                        
                         User user = new User();
                         user.setFullName(rs.getString("CustomerName"));
                         os.setUser(user);
 
                         orderShopMap.put(orderShopId, os);
                     }
-
-                    // Thêm OrderItem nếu có
+                    
                     long orderItemId = rs.getLong("OrderItemID");
                     if (!rs.wasNull()) {
                         OrderItem item = new OrderItem();

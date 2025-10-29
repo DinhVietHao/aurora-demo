@@ -34,7 +34,8 @@
                                 <div class="container-fluid px-4">
                                     <!-- Header -->
                                     <div class="d-flex justify-content-between align-items-center mt-4">
-                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.orderShopId}</h1>
+                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.groupOrderCode}
+                                        </h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
                                                 <li class="breadcrumb-item"><a
@@ -50,7 +51,7 @@
                                     <div class="card mt-4 order-header-card">
                                         <div class="card-body d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h5>Mã đơn hàng: #${orderShop.orderShopId}</h5>
+                                                <h5>Mã đơn hàng: #${orderShop.groupOrderCode}</h5>
                                                 <c:choose>
                                                     <c:when test="${orderShop.status == 'PENDING'}">
                                                         <span class="badge bg-warning text-dark">Chờ xác nhận</span>

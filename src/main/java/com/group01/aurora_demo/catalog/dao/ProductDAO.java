@@ -1611,4 +1611,19 @@ public class ProductDAO {
         }
         return products;
     }
+
+    public boolean reduceQuantityProduct(long productId, int quantity) {
+        String sql = "UPDATE Products SET Quantity = Quantity - ? WHERE ProductID = ? AND Quantity >= ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setLong(2, productId);
+            ps.setInt(3, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 }

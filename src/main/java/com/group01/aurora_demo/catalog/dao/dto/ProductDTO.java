@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.catalog.dao.dto;
 
-import java.math.BigDecimal;
 
 public class ProductDTO {
     private long productId;

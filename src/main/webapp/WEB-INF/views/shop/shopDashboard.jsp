@@ -170,7 +170,7 @@
                                                             <c:set var="iconClass">
                                                                 <c:choose>
                                                                     <c:when test="${n.type == 'ORDER_NEW'}">
-                                                                        activity-icon-success</c:when>
+                                                                        activity-icon-warning</c:when>
                                                                     <c:when test="${n.type == 'ORDER_DELIVERED'}">
                                                                         activity-icon-primary</c:when>
                                                                     <c:when test="${n.type == 'OUT_OF_STOCK'}">
