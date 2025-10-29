@@ -9,8 +9,7 @@
 
             <head>
                 <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-
-                <!-- CSS riêng cho trang chi tiết sách -->
+                <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
                 <link rel="stylesheet" href="${ctx}/assets/css/shop/bookDetail.css?v=1.0.2" />
             </head>
 
@@ -172,8 +171,6 @@
 
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
-
-                <!-- JS riêng cho trang chi tiết sách -->
                 <script src="${ctx}/assets/js/shop/bookDetail.js?v=1.0.1"></script>
             </body>
 

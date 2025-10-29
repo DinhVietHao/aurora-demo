@@ -3,8 +3,10 @@ package com.group01.aurora_demo.cart.dao.dto;
 import java.util.Date;
 
 public class OrderShopDTO {
+    private String groupOrderCode;
     private long orderShopId;
     private long ShopId;
+
     private String shopName;
     private double shopDiscount;
     private double shopShippingFee;
@@ -13,6 +15,7 @@ public class OrderShopDTO {
     private double systemDiscount;
     private double systemShippingDiscount;
     private Date updatedAt;
+    private Date createdAt;
 
     // ----------- Sản phẩm trong shop ----------
     private long productId;
@@ -39,8 +42,24 @@ public class OrderShopDTO {
         return shopName;
     }
 
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public void setShopName(String shopName) {
         this.shopName = shopName;
+    }
+
+    public String getGroupOrderCode() {
+        return groupOrderCode;
+    }
+
+    public void setGroupOrderCode(String groupOrderCode) {
+        this.groupOrderCode = groupOrderCode;
     }
 
     public double getShopDiscount() {

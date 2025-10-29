@@ -19,47 +19,79 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
+import com.group01.aurora_demo.shop.dao.VoucherDAO;
 
 public class OrderShopDAO {
-    public List<OrderShop> getOrderShopsByUserId(long userId) {
-        List<OrderShop> orderShops = new ArrayList<>();
+    private VoucherDAO voucherDAO;
+    private OrderItemDAO orderItemDAO;
+    private ProductDAO productDAO;
+    private UserVoucherDAO userVoucherDAO;
 
+    public OrderShopDAO() {
+        this.voucherDAO = new VoucherDAO();
+        this.orderItemDAO = new OrderItemDAO();
+        this.productDAO = new ProductDAO();
+        this.userVoucherDAO = new UserVoucherDAO();
+
+    }
+
+    public List<OrderShopDTO> getOrderShopsByGroupOrderCode(String groupOrderCode) {
+        List<OrderShopDTO> orderShops = new ArrayList<>();
         String sql = """
                     SELECT
+                        os.GroupOrderCode,
                         os.OrderShopID,
-                        os.ShopID,
-                        os.Status,
-                        os.UpdatedAt,
-                        os.FinalAmount,
-                        os.ShippingFee,
                         os.Subtotal,
-                        os.Address,
+                        os.ShippingFee,
+                        os.ShopDiscount,
+                        os.SystemShippingDiscount,
+                        os.SystemDiscount,
+                        p.ProductID,
+                        p.Title AS ProductName,
+                        img.Url AS ImageUrl,
+                        oi.Quantity,
+                        oi.OriginalPrice,
+                        oi.SalePrice,
                         os.CreatedAt
                     FROM OrderShops os
-                    JOIN Shops s ON os.ShopID = s.ShopID
-                    WHERE os.UserID = ?
-                    ORDER BY os.UpdatedAt DESC
+                    JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    JOIN Products p ON oi.ProductID = p.ProductID
+                    JOIN ProductImages img ON p.ProductID = img.ProductID
+                    WHERE os.GroupOrderCode = ?
+                      AND img.IsPrimary = 1
+                    ORDER BY os.OrderShopID;
                 """;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setLong(1, userId);
+            ps.setString(1, groupOrderCode);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    OrderShop orderShop = new OrderShop();
+                    OrderShopDTO orderShop = new OrderShopDTO();
+                    orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
-                    orderShop.setShopId(rs.getLong("ShopID"));
-                    orderShop.setStatus(rs.getString("Status"));
-                    orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
-                    orderShop.setFinalAmount(rs.getDouble("FinalAmount"));
-                    orderShop.setShippingFee(rs.getDouble("ShippingFee"));
-                    orderShop.setSubtotal(rs.getDouble("Subtotal"));
-                    orderShop.setAddress(rs.getString("Address"));
                     orderShop.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                    // --- Shop info ---
+                    orderShop.setShopShippingFee(rs.getDouble("ShippingFee"));
+                    orderShop.setShopDiscount(rs.getDouble("ShopDiscount"));
+                    orderShop.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                    orderShop.setSystemDiscount(rs.getDouble("SystemDiscount"));
+
+                    // --- Product info ---
+                    orderShop.setProductId(rs.getLong("ProductID"));
+                    orderShop.setProductName(rs.getString("ProductName"));
+                    orderShop.setImageUrl(rs.getString("ImageUrl"));
+                    orderShop.setQuantity(rs.getInt("Quantity"));
+                    orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    orderShop.setSalePrice(rs.getDouble("SalePrice"));
+
                     orderShops.add(orderShop);
                 }
             }
@@ -70,10 +102,11 @@ public class OrderShopDAO {
         return orderShops;
     }
 
-    public List<OrderShopDTO> getOrderShopsByOrderShopId(String groupOrderCode) {
+    public List<OrderShopDTO> getOrderShopsByStatus(long userId, String status) {
         List<OrderShopDTO> orderShops = new ArrayList<>();
-        String sql = """
+        StringBuilder sql = new StringBuilder("""
                 SELECT
+                    os.GroupOrderCode,
                     os.OrderShopID,
                     s.Name AS ShopName,
                     os.Status AS ShopStatus,
@@ -91,19 +124,33 @@ public class OrderShopDAO {
                 JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 JOIN Products p ON oi.ProductID = p.ProductID
                 JOIN ProductImages img ON p.ProductID = img.ProductID
-                WHERE os.GroupOrderCode = ?
+                WHERE os.UserID = ?
                   AND img.IsPrimary = 1
-                ORDER BY os.UpdatedAt DESC
-                """;
-
+                """);
+        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+            if (status.equalsIgnoreCase("waiting_ship")) {
+                sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
+            } else if (status.equalsIgnoreCase("returned")) {
+                sql.append(
+                        " AND (os.Status = 'RETURN_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURN_REJECTED') ");
+            } else {
+                sql.append(" AND os.Status = ? ");
+            }
+        }
+        sql.append(" ORDER BY os.UpdatedAt DESC");
         try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setString(1, groupOrderCode);
+                PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+            ps.setLong(1, userId);
+            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+                if (!status.equalsIgnoreCase("waiting_ship") && !status.equalsIgnoreCase("returned")) {
+                    ps.setString(2, status.toUpperCase());
+                }
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
+                    orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
                     orderShop.setShopName(rs.getString("ShopName"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
@@ -141,38 +188,39 @@ public class OrderShopDAO {
     public long createOrderShop(Connection conn, OrderShop orderShop) throws SQLException {
         String sql = """
                     INSERT INTO OrderShops (
-                        UserID, ShopID, Address,
+                        GroupOrderCode, UserID, ShopID, Address,
                         VoucherShopID, VoucherDiscountID, VoucherShipID,
                         Subtotal, ShopDiscount, SystemDiscount,
                         ShippingFee, SystemShippingDiscount, FinalAmount,
                         Status, CreatedAt
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setLong(1, orderShop.getUserId());
-            ps.setLong(2, orderShop.getShopId());
-            ps.setString(3, orderShop.getAddress());
+            ps.setString(1, orderShop.getGroupOrderCode());
+            ps.setLong(2, orderShop.getUserId());
+            ps.setLong(3, orderShop.getShopId());
+            ps.setString(4, orderShop.getAddress());
             if (orderShop.getVoucherShopId() != null)
-                ps.setLong(4, orderShop.getVoucherShopId());
-            else
-                ps.setNull(4, Types.BIGINT);
-            if (orderShop.getVoucherDiscountId() != null)
-                ps.setLong(5, orderShop.getVoucherDiscountId());
+                ps.setLong(5, orderShop.getVoucherShopId());
             else
                 ps.setNull(5, Types.BIGINT);
-            if (orderShop.getVoucherShipId() != null)
-                ps.setLong(6, orderShop.getVoucherShipId());
+            if (orderShop.getVoucherDiscountId() != null)
+                ps.setLong(6, orderShop.getVoucherDiscountId());
             else
                 ps.setNull(6, Types.BIGINT);
-            ps.setDouble(7, orderShop.getSubtotal());
-            ps.setDouble(8, orderShop.getShopDiscount());
-            ps.setDouble(9, orderShop.getSystemDiscount());
-            ps.setDouble(10, orderShop.getShippingFee());
-            ps.setDouble(11, orderShop.getSystemShippingDiscount());
-            ps.setDouble(12, orderShop.getFinalAmount());
-            ps.setString(13, orderShop.getStatus());
+            if (orderShop.getVoucherShipId() != null)
+                ps.setLong(7, orderShop.getVoucherShipId());
+            else
+                ps.setNull(7, Types.BIGINT);
+            ps.setDouble(8, orderShop.getSubtotal());
+            ps.setDouble(9, orderShop.getShopDiscount());
+            ps.setDouble(10, orderShop.getSystemDiscount());
+            ps.setDouble(11, orderShop.getShippingFee());
+            ps.setDouble(12, orderShop.getSystemShippingDiscount());
+            ps.setDouble(13, orderShop.getFinalAmount());
+            ps.setString(14, orderShop.getStatus());
 
             ps.executeUpdate();
 
@@ -211,7 +259,7 @@ public class OrderShopDAO {
         }
     }
 
-    public boolean cancelOrderShop(long orderShopId, String reason) {
+    public boolean cancelOrderShop(Connection conn, long orderShopId, String reason) {
         String sql = """
                     UPDATE OrderShops
                     SET Status = 'CANCELLED',
@@ -220,8 +268,7 @@ public class OrderShopDAO {
                     WHERE OrderShopID = ?
                 """;
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, reason);
             ps.setLong(2, orderShopId);
             return ps.executeUpdate() > 0;
@@ -275,23 +322,65 @@ public class OrderShopDAO {
         String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1";
         int count = 0;
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            conn.setAutoCommit(false); // Bắt đầu transaction
 
-            while (rs.next()) {
-                Long orderShopId = rs.getLong("OrderShopID");
-                if (cancelOrderShop(orderShopId, "Quá thời hạn thanh toán")) {
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                    ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    Long orderShopId = rs.getLong("OrderShopID");
+
+                    OrderShop orderShop = findByOrderShopId(conn, orderShopId);
+                    if (orderShop == null)
+                        continue;
+
+                    boolean cancelled = cancelOrderShop(conn, orderShopId, "Quá thời hạn thanh toán");
+
+                    if (!cancelled)
+                        continue;
+
+                    if (orderShop.getVoucherShopId() != null) {
+                        userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(), orderShop.getUserId());
+                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
+                    }
+
+                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
+                    for (OrderItem item : items) {
+                        productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                    }
+
+                    List<OrderShop> activeShop = getActiveShopsByGroupOrderCode(conn,
+                            orderShop.getGroupOrderCode());
+
+                    if (activeShop.isEmpty()) {
+                        if (orderShop.getVoucherDiscountId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                        }
+                        if (orderShop.getVoucherShipId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                        }
+                    }
                     count++;
                 }
+
+                conn.commit(); // Commit transaction
+            } catch (SQLException e) {
+                conn.rollback(); // Rollback nếu có lỗi
+                e.printStackTrace();
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return count;
     }
 
-    public OrderShop findById(Connection conn, long orderShopId) throws SQLException {
+    public OrderShop findByOrderShopId(Connection conn, long orderShopId) throws SQLException {
         String sql = """
                 SELECT
                     OrderShopID,
@@ -302,6 +391,8 @@ public class OrderShopDAO {
                     ShopDiscount,
                     FinalAmount,
                     VoucherShopID,
+                    VoucherDiscountID,
+                    VoucherShipID,
                     CancelReason,
                     UpdatedAt
                 FROM OrderShops
@@ -321,6 +412,9 @@ public class OrderShopDAO {
                     shop.setShopDiscount(rs.getDouble("ShopDiscount"));
                     shop.setFinalAmount(rs.getDouble("FinalAmount"));
                     shop.setVoucherShopId(rs.getObject("VoucherShopID") != null ? rs.getLong("VoucherShopID") : null);
+                    shop.setVoucherDiscountId(
+                            rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
+                    shop.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
                     shop.setCancelReason(rs.getString("CancelReason"));
                     shop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                     return shop;
@@ -330,18 +424,18 @@ public class OrderShopDAO {
         return null;
     }
 
-    public List<OrderShop> getActiveShopsByOrderId(Connection conn, long OrderShopId) throws SQLException {
+    public List<OrderShop> getActiveShopsByGroupOrderCode(Connection conn, String groupOrderCode) throws SQLException {
         String sql = """
                  SELECT
                     OrderShopID, ShopID, Subtotal, ShippingFee,
                     ShopDiscount, FinalAmount, Status, VoucherShopID
                 FROM OrderShops
-                WHERE OrderShopID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
+                WHERE GroupOrderCode = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
                 """;
 
         List<OrderShop> list = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, OrderShopId);
+            ps.setString(1, groupOrderCode);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShop s = new OrderShop();
@@ -358,37 +452,6 @@ public class OrderShopDAO {
             }
         }
         return list;
-    }
-
-    public boolean update(Connection conn, OrderShop shop) throws SQLException {
-        String sql = """
-                UPDATE OrderShops
-                SET
-                    Status = ?,
-                    CancelReason = ?,
-                    FinalAmount = ?,
-                    UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
-                    ShopDiscount = ?,
-                    ShippingFee = ?,
-                    VoucherShopID = ?
-                WHERE OrderShopID = ?
-                """;
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, shop.getStatus());
-            ps.setString(2, shop.getCancelReason());
-            ps.setDouble(3, shop.getFinalAmount());
-            ps.setDouble(4, shop.getShopDiscount());
-            ps.setDouble(5, shop.getShippingFee());
-            if (shop.getVoucherShopId() != null) {
-                ps.setLong(6, shop.getVoucherShopId());
-            } else {
-                ps.setNull(6, Types.BIGINT);
-            }
-            ps.setLong(7, shop.getOrderShopId());
-
-            return ps.executeUpdate() > 0;
-        }
     }
 
     public List<OrderShop> getAllShopsByOrderShopId(Connection conn, long orderShopId) throws SQLException {
@@ -633,7 +696,7 @@ public class OrderShopDAO {
                 if (orderShop != null) {
                     orderShop.setItems(items);
                 } else {
-                    System.out.println("⚠️ Không tìm thấy dữ liệu cho OrderShopID = " + orderShopId);
+                    System.out.println("Không tìm thấy dữ liệu cho OrderShopID = " + orderShopId);
                 }
 
                 return orderShop;
@@ -879,7 +942,7 @@ public class OrderShopDAO {
             }
 
             PaymentDAO paymentDAO = new PaymentDAO();
-            boolean refunded = paymentDAO.partialRefund(conn, orderShopId,
+            boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId,
                     shopFinalAmount);
             if (!refunded) {
                 conn.rollback();
@@ -967,7 +1030,7 @@ public class OrderShopDAO {
 
                 // 🔹 Gọi hoàn tiền (nếu PaymentDAO hỗ trợ theo OrderShopId)
                 PaymentDAO paymentDAO = new PaymentDAO();
-                boolean refunded = paymentDAO.partialRefund(conn, orderShopId, shopFinalAmount);
+                boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId, shopFinalAmount);
 
                 if (!refunded) {
                     System.err.println("Partial refund failed for OrderShopID=" + orderShopId);
@@ -1057,7 +1120,7 @@ public class OrderShopDAO {
 
                     // ✅ 4. Hoàn tiền lại cho khách (nếu có PaymentDAO)
                     PaymentDAO paymentDAO = new PaymentDAO();
-                    boolean refunded = paymentDAO.partialRefund(conn, orderShopId, finalAmount);
+                    boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId, finalAmount);
                     if (!refunded) {
                         System.err.println("Refund failed for OrderShopID=" + orderShopId);
                         conn.rollback();
