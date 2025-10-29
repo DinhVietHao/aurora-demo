@@ -1,8 +1,11 @@
 package com.group01.aurora_demo.catalog.model;
 
+import java.sql.Timestamp;
+
 public class FlashSaleItem {
     private long flashSaleItemID;
     private long productID;
+    private long flashSaleId;
     private String title;
     private double originalPrice;
     private double flashPrice;
@@ -11,6 +14,33 @@ public class FlashSaleItem {
     private String approvalStatus;
     private String imageUrl;
     private Product product;
+    private int soldCount;
+    private Timestamp startAt;
+    private Timestamp endAt;
+
+    public int getSoldCount() {
+        return soldCount;
+    }
+
+    public void setSoldCount(int soldCount) {
+        this.soldCount = soldCount;
+    }
+
+    public Timestamp getStartAt() {
+        return startAt;
+    }
+
+    public void setStartAt(Timestamp startAt) {
+        this.startAt = startAt;
+    }
+
+    public Timestamp getEndAt() {
+        return endAt;
+    }
+
+    public void setEndAt(Timestamp endAt) {
+        this.endAt = endAt;
+    }
 
     public long getFlashSaleItemID() {
         return flashSaleItemID;
@@ -90,6 +120,14 @@ public class FlashSaleItem {
 
     public void setProduct(Product product) {
         this.product = product;
+    }
+
+    public long getFlashSaleId() {
+        return flashSaleId;
+    }
+
+    public void setFlashSaleId(long flashSaleId) {
+        this.flashSaleId = flashSaleId;
     }
 
 }

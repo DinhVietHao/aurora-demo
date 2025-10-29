@@ -186,6 +186,11 @@
                                                                         activity-icon-warning</c:when>
                                                                     <c:when test="${n.type == 'VOUCHER_EXPIRED'}">
                                                                         activity-icon-secondary</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_REJECTED'}">
+                                                                        activity-icon-danger
+                                                                    </c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_ACTIVE'}">
+                                                                        activity-icon-success</c:when>
                                                                     <c:otherwise>activity-icon-secondary
                                                                     </c:otherwise>
                                                                 </c:choose>
@@ -199,8 +204,7 @@
                                                                         bi-box-seam</c:when>
                                                                     <c:when test="${n.type == 'OUT_OF_STOCK'}">bi
                                                                         bi-exclamation-triangle</c:when>
-                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">
-                                                                        bi
+                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">bi
                                                                         bi-arrow-return-left</c:when>
                                                                     <c:when test="${n.type == 'ORDER_CANCELLED'}">bi
                                                                         bi-x-circle</c:when>
@@ -210,9 +214,14 @@
                                                                         bi bi-exclamation-triangle</c:when>
                                                                     <c:when test="${n.type == 'VOUCHER_EXPIRED'}">bi
                                                                         bi-calendar-x</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_ACTIVE'}">bi
+                                                                        bi-award</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_REJECTED'}">bi
+                                                                        bi-slash-circle</c:when>
                                                                     <c:otherwise>bi bi-bell</c:otherwise>
                                                                 </c:choose>
                                                             </c:set>
+
 
                                                             <!-- Form bao quanh thông báo -->
                                                             <a href="${ctx}${n.link}"
@@ -272,8 +281,8 @@
                                         datasets: [{
                                             label: 'Doanh thu (₫)',
                                             data: revenueValues,
-                                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            backgroundColor: '#164e3f',
+                                            borderColor: '#164e3f',
                                             borderWidth: 1
                                         }]
                                     },
