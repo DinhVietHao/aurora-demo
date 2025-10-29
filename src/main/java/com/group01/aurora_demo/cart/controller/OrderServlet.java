@@ -135,13 +135,21 @@ public class OrderServlet extends NotificationServlet {
             String txnRef = req.getParameter("vnp_TxnRef");
             String transactionNo = req.getParameter("vnp_TransactionNo");
             try {
-                String groupOrderCode = txnRef;
-                if ("00".equals(responseCode)) {
+                Payment payment = this.paymentDAO.findByTransactionRef(txnRef);
+                if (payment == null) {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Giao dịch không hợp lệ.");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+                    return;
+                }
 
-                    this.paymentDAO.updatePaymentStatus(groupOrderCode, "SUCCESS", transactionNo);
-                    orderShopDAO.updateOrderShopStatusByGroupOrderCode(groupOrderCode, "PENDING");
+                long paymentId = payment.getPaymentId();
+
+                if ("00".equals(responseCode)) {
+                    this.paymentDAO.updatePaymentStatusById(paymentId, "SUCCESS", transactionNo);
+                    orderShopDAO.updateOrderShopStatusByPaymentId(paymentId, "PENDING");
                     try {
-                        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByGroupOrderCode(groupOrderCode);
+                        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByPaymentId(paymentId);
 
                         Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
                                 .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
@@ -178,7 +186,7 @@ public class OrderServlet extends NotificationServlet {
                         String html = renderJSPToString(req, resp,
                                 "/WEB-INF/views/customer/order/order_confirmation.jsp");
 
-                        String subject = "Xác nhận đơn hàng #" + groupOrderCode + " - Aurora";
+                        String subject = "Xác nhận đơn hàng #" + paymentId + " - Aurora";
                         this.emailService.sendHtml(user.getEmail(), subject, html);
 
                         System.out.println("Email xác nhận đã gửi tới " + user.getEmail());
@@ -191,18 +199,19 @@ public class OrderServlet extends NotificationServlet {
                     session.setAttribute("toastMsg",
                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
                     resp.sendRedirect(req.getContextPath() + "/order?status=pending");
-                } else {
-                    boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPayment(groupOrderCode);
-                    if (!rollbackSuccess) {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Thanh toán không thành công. Có lỗi khi hoàn trả đơn.");
-                    } else {
-                        session.setAttribute("toastType", "error");
-                        session.setAttribute("toastMsg", "Thanh toán không thành công.");
-                    }
-                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
-
+                    return;
                 }
+
+                boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPaymentByPaymentId(paymentId);
+                if (!rollbackSuccess) {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công. Có lỗi khi hoàn trả đơn.");
+                } else {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công.");
+                }
+                resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+
             } catch (Exception e) {
                 e.printStackTrace();
                 resp.sendRedirect(req.getContextPath() + "/checkout");
@@ -277,7 +286,7 @@ public class OrderServlet extends NotificationServlet {
                             shopVouchers);
                     if ("success".equalsIgnoreCase(result.getType())) {
                         System.out.println("Check FinalAmount= " + result.getFinalAmount());
-                        String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getGroupOrderCode(),
+                        String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getTransactionRef(),
                                 result.getFinalAmount());
 
                         int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
@@ -330,14 +339,14 @@ public class OrderServlet extends NotificationServlet {
                         voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
                     }
 
-                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShop.getOrderShopId());
+                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShop.getOrderShopId());
                     for (OrderItem item : items) {
                         productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
                     }
 
-                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByGroupOrderCode(conn,
-                            orderShop.getGroupOrderCode());
-                    Payment payment = paymentDAO.getPaymentByOrderShopId(conn, orderShop.getOrderShopId());
+                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByPaymentId(conn,
+                            orderShop.getPaymentId());
+                    Payment payment = paymentDAO.getPaymentById(conn, orderShop.getPaymentId());
 
                     if (activeShop.isEmpty()) {
                         if (orderShop.getVoucherDiscountId() != null) {
@@ -351,12 +360,12 @@ public class OrderServlet extends NotificationServlet {
                             voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
                         }
                         if (payment != null) {
-                            paymentDAO.refundShopPayment(conn, orderShop.getOrderShopId(),
+                            paymentDAO.partialRefund(conn, orderShop.getPaymentId(),
                                     orderShop.getFinalAmount());
                         }
                     } else {
                         if (payment != null) {
-                            paymentDAO.refundShopPayment(conn, orderShop.getOrderShopId(),
+                            paymentDAO.partialRefund(conn, orderShop.getPaymentId(),
                                     orderShop.getFinalAmount());
                         }
                     }
@@ -441,7 +450,7 @@ public class OrderServlet extends NotificationServlet {
             case "/repurchase": {
                 try {
                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
-                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
+                    List<OrderItem> items = orderItemDAO.getOrderItems(orderShopId);
 
                     List<String> errors = new ArrayList<>();
 

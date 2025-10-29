@@ -39,11 +39,10 @@ public class OrderShopDAO {
 
     }
 
-    public List<OrderShopDTO> getOrderShopsByGroupOrderCode(String groupOrderCode) {
+    public List<OrderShopDTO> getOrderShopsByPaymentId(long paymentId) {
         List<OrderShopDTO> orderShops = new ArrayList<>();
         String sql = """
                     SELECT
-                        os.GroupOrderCode,
                         os.OrderShopID,
                         os.Subtotal,
                         os.ShippingFee,
@@ -61,7 +60,7 @@ public class OrderShopDAO {
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                     JOIN Products p ON oi.ProductID = p.ProductID
                     JOIN ProductImages img ON p.ProductID = img.ProductID
-                    WHERE os.GroupOrderCode = ?
+                    WHERE os.PaymentID = ?
                       AND img.IsPrimary = 1
                     ORDER BY os.OrderShopID;
                 """;
@@ -69,12 +68,11 @@ public class OrderShopDAO {
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, groupOrderCode);
+            ps.setLong(1, paymentId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
-                    orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
                     orderShop.setCreatedAt(rs.getTimestamp("CreatedAt"));
                     orderShop.setSubtotal(rs.getDouble("Subtotal"));
@@ -106,9 +104,9 @@ public class OrderShopDAO {
         List<OrderShopDTO> orderShops = new ArrayList<>();
         StringBuilder sql = new StringBuilder("""
                 SELECT
-                    os.GroupOrderCode,
                     os.OrderShopID,
                     s.Name AS ShopName,
+                    s.ShopId,
                     os.Status AS ShopStatus,
                     os.UpdatedAt,
                     os.FinalAmount AS ShopFinalAmount,
@@ -150,9 +148,9 @@ public class OrderShopDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
-                    orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
                     orderShop.setShopName(rs.getString("ShopName"));
+                    orderShop.setShopId(rs.getLong("ShopId"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
                     orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                     orderShop.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
@@ -188,7 +186,7 @@ public class OrderShopDAO {
     public long createOrderShop(Connection conn, OrderShop orderShop) throws SQLException {
         String sql = """
                     INSERT INTO OrderShops (
-                        GroupOrderCode, UserID, ShopID, Address,
+                        UserID, ShopID, PaymentID, Address,
                         VoucherShopID, VoucherDiscountID, VoucherShipID,
                         Subtotal, ShopDiscount, SystemDiscount,
                         ShippingFee, SystemShippingDiscount, FinalAmount,
@@ -198,9 +196,9 @@ public class OrderShopDAO {
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, orderShop.getGroupOrderCode());
-            ps.setLong(2, orderShop.getUserId());
-            ps.setLong(3, orderShop.getShopId());
+            ps.setLong(1, orderShop.getUserId());
+            ps.setLong(2, orderShop.getShopId());
+            ps.setLong(3, orderShop.getPaymentId());
             ps.setString(4, orderShop.getAddress());
             if (orderShop.getVoucherShopId() != null)
                 ps.setLong(5, orderShop.getVoucherShopId());
@@ -233,12 +231,12 @@ public class OrderShopDAO {
         return -1;
     }
 
-    public boolean updateOrderShopStatusByGroupOrderCode(String groupOrderCode, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE GroupOrderCode = ?";
+    public boolean updateOrderShopStatusByPaymentId(long paymentId, String newStatus) {
+        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE PaymentID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
-            ps.setString(2, groupOrderCode);
+            ps.setLong(2, paymentId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -318,15 +316,15 @@ public class OrderShopDAO {
         }
     }
 
-    public boolean rollbackFailedPayment(String groupOrderCode) {
-        String sql = "SELECT OrderShopID FROM OrderShops WHERE GroupOrderCode = ? AND Status = 'PENDING_PAYMENT'";
+    public boolean rollbackFailedPaymentByPaymentId(long paymentId) {
+        String sql = "SELECT OrderShopID FROM OrderShops WHERE PaymentID = ? AND Status = 'PENDING_PAYMENT'";
         boolean success = false;
 
         try (Connection conn = DataSourceProvider.get().getConnection()) {
-            conn.setAutoCommit(false); // Bắt đầu transaction
+            conn.setAutoCommit(false);
 
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, groupOrderCode);
+                ps.setLong(1, paymentId);
                 try (ResultSet rs = ps.executeQuery()) {
 
                     while (rs.next()) {
@@ -340,24 +338,21 @@ public class OrderShopDAO {
                         if (!cancelled)
                             continue;
 
-                        // Restore voucher shop
                         if (orderShop.getVoucherShopId() != null) {
                             userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(),
                                     orderShop.getUserId());
                             voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
                         }
 
-                        // Restore stock
-                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
+                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShopId);
                         for (OrderItem item : items) {
                             productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
                         }
 
-                        // Nếu tất cả shop trong groupOrderCode đều hủy
-                        List<OrderShop> activeShop = getActiveShopsByGroupOrderCode(conn,
-                                orderShop.getGroupOrderCode());
+                        List<OrderShop> activeShop = getActiveShopsByPaymentId(conn,
+                                orderShop.getPaymentId());
                         if (activeShop.isEmpty()) {
-                            // Restore voucher discount & shipping
+
                             if (orderShop.getVoucherDiscountId() != null) {
                                 userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
                                         orderShop.getUserId());
@@ -390,6 +385,7 @@ public class OrderShopDAO {
                 SELECT
                     OrderShopID,
                     ShopID,
+                    PaymentID,
                     Status,
                     Subtotal,
                     ShippingFee,
@@ -411,6 +407,7 @@ public class OrderShopDAO {
                     OrderShop shop = new OrderShop();
                     shop.setOrderShopId(rs.getLong("OrderShopID"));
                     shop.setShopId(rs.getLong("ShopID"));
+                    shop.setPaymentId(rs.getLong("PaymentID"));
                     shop.setStatus(rs.getString("Status"));
                     shop.setSubtotal(rs.getDouble("Subtotal"));
                     shop.setShippingFee(rs.getDouble("ShippingFee"));
@@ -429,18 +426,18 @@ public class OrderShopDAO {
         return null;
     }
 
-    public List<OrderShop> getActiveShopsByGroupOrderCode(Connection conn, String groupOrderCode) throws SQLException {
+    public List<OrderShop> getActiveShopsByPaymentId(Connection conn, long paymentId) throws SQLException {
         String sql = """
                  SELECT
                     OrderShopID, ShopID, Subtotal, ShippingFee,
                     ShopDiscount, FinalAmount, Status, VoucherShopID
                 FROM OrderShops
-                WHERE GroupOrderCode = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
+                WHERE PaymentID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
                 """;
 
         List<OrderShop> list = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, groupOrderCode);
+            ps.setLong(1, paymentId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShop s = new OrderShop();
@@ -540,7 +537,7 @@ public class OrderShopDAO {
                     if (os == null) {
                         os = new OrderShop();
                         os.setOrderShopId(orderShopId);
-                        os.setGroupOrderCode(rs.getString("GroupOrderCode"));
+                        // os.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         os.setUserId(rs.getLong("UserID"));
                         os.setShopId(rs.getLong("ShopID"));
                         os.setStatus(rs.getString("ShopStatus"));
@@ -553,14 +550,14 @@ public class OrderShopDAO {
                         os.setCreatedAt(rs.getTimestamp("CreatedAt"));
                         os.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                         os.setItems(new ArrayList<>());
-                        
+
                         User user = new User();
                         user.setFullName(rs.getString("CustomerName"));
                         os.setUser(user);
 
                         orderShopMap.put(orderShopId, os);
                     }
-                    
+
                     long orderItemId = rs.getLong("OrderItemID");
                     if (!rs.wasNull()) {
                         OrderItem item = new OrderItem();
@@ -650,7 +647,7 @@ public class OrderShopDAO {
                     if (orderShop == null) {
                         orderShop = new OrderShop();
                         orderShop.setOrderShopId(rs.getLong("OrderShopID"));
-                        orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
+                        // orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         orderShop.setUserId(rs.getLong("UserID"));
                         orderShop.setShopId(rs.getLong("ShopID"));
                         orderShop.setAddress(rs.getString("Address"));
@@ -815,7 +812,7 @@ public class OrderShopDAO {
                     if (os == null) {
                         os = new OrderShop();
                         os.setOrderShopId(orderShopId);
-                        os.setGroupOrderCode(rs.getString("GroupOrderCode"));
+                        // os.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         os.setShopId(rs.getLong("ShopID"));
                         os.setUserId(rs.getLong("UserID"));
                         os.setStatus(rs.getString("ShopStatus"));
@@ -947,7 +944,7 @@ public class OrderShopDAO {
             }
 
             PaymentDAO paymentDAO = new PaymentDAO();
-            boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId,
+            boolean refunded = paymentDAO.partialRefund(conn, orderShopId,
                     shopFinalAmount);
             if (!refunded) {
                 conn.rollback();
@@ -1035,7 +1032,7 @@ public class OrderShopDAO {
 
                 // 🔹 Gọi hoàn tiền (nếu PaymentDAO hỗ trợ theo OrderShopId)
                 PaymentDAO paymentDAO = new PaymentDAO();
-                boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId, shopFinalAmount);
+                boolean refunded = paymentDAO.partialRefund(conn, orderShopId, shopFinalAmount);
 
                 if (!refunded) {
                     System.err.println("Partial refund failed for OrderShopID=" + orderShopId);
@@ -1125,7 +1122,7 @@ public class OrderShopDAO {
 
                     // ✅ 4. Hoàn tiền lại cho khách (nếu có PaymentDAO)
                     PaymentDAO paymentDAO = new PaymentDAO();
-                    boolean refunded = paymentDAO.refundShopPayment(conn, orderShopId, finalAmount);
+                    boolean refunded = paymentDAO.partialRefund(conn, orderShopId, finalAmount);
                     if (!refunded) {
                         System.err.println("Refund failed for OrderShopID=" + orderShopId);
                         conn.rollback();

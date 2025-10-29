@@ -92,8 +92,17 @@ public class OrderService {
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
-            String groupOrderCode = this.orderShopUtils.generateGroupOrderCode();
-            System.out.println(">>>> Check groupCode" + groupOrderCode);
+            Payment payment = new Payment();
+            payment.setAmount(summary.getFinalAmount());
+            String transactionRef = "SYS-" + System.currentTimeMillis() + "-" + user.getUserID();
+            payment.setTransactionRef(transactionRef);
+            payment.setStatus("PENDING");
+            long paymentId = this.paymentDAO.createPayment(conn, payment);
+            if (paymentId == -1) {
+                conn.rollback();
+                return new ServiceResponse("error", "Lỗi thanh toán",
+                        "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.", "", 0.0);
+            }
 
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();
@@ -141,18 +150,20 @@ public class OrderService {
 
                 double shopShippingFee = shopShippingFees.getOrDefault(shopId, 0.0);
 
-                double systemDiscountAllocated = (shopSubtotal / summary.getTotalProduct())
-                        * summary.getSystemDiscount();
-                double systemShippingDiscountAllocated = (shopShippingFee / summary.getTotalShippingFee())
-                        * summary.getSystemShippingDiscount();
+                double systemDiscountAllocated = (summary.getTotalProduct() > 0)
+                        ? (shopSubtotal / summary.getTotalProduct()) * summary.getSystemDiscount()
+                        : 0.0;
 
+                double systemShippingDiscountAllocated = (summary.getTotalShippingFee() > 0)
+                        ? (shopShippingFee / summary.getTotalShippingFee()) * summary.getSystemShippingDiscount()
+                        : 0.0;
                 double finalAmount = shopSubtotal - shopDiscount - systemDiscountAllocated
                         + shopShippingFee - systemShippingDiscountAllocated;
 
                 OrderShop orderShop = new OrderShop();
-                orderShop.setGroupOrderCode(groupOrderCode);
                 orderShop.setUserId(user.getId());
                 orderShop.setShopId(shopId);
+                orderShop.setPaymentId(paymentId);
                 orderShop.setAddress(fullAddress);
                 orderShop.setVoucherShopId(shopVoucherId);
                 orderShop.setVoucherDiscountId(voucherDiscount != null ? voucherDiscount.getVoucherID() : null);
@@ -195,19 +206,6 @@ public class OrderService {
                     }
                 }
 
-                Payment payment = new Payment();
-
-                payment.setAmount(finalAmount);
-                payment.setOrderShopId(orderShopId);
-                payment.setGroupOrderCode(groupOrderCode);
-                payment.setTransactionRef("SYS-" + System.currentTimeMillis());
-                payment.setStatus("FAILED");
-                if (paymentDAO.createPayment(conn, payment) == -1) {
-                    conn.rollback();
-                    return new ServiceResponse("error", "Lỗi thanh toán",
-                            "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.", "", 0.0);
-                }
-
             }
 
             if (!cartItemDAO.deleteCheckout(conn, user.getId())) {
@@ -248,7 +246,7 @@ public class OrderService {
                     "success",
                     "Đặt hàng thành công",
                     "Đơn hàng của bạn đã được tạo thành công!",
-                    groupOrderCode,
+                    transactionRef,
                     summary.getFinalAmount());
 
         } catch (Exception e) {

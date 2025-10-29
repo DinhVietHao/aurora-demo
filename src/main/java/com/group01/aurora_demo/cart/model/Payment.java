@@ -4,8 +4,6 @@ import java.util.Date;
 
 public class Payment {
     private long paymentId;
-    private long orderShopId;
-    private String groupOrderCode;
     private double amount;
     private double refundedAmount;
     private String transactionRef;
@@ -14,14 +12,6 @@ public class Payment {
 
     public long getPaymentId() {
         return paymentId;
-    }
-
-    public String getGroupOrderCode() {
-        return groupOrderCode;
-    }
-
-    public void setGroupOrderCode(String groupOrderCode) {
-        this.groupOrderCode = groupOrderCode;
     }
 
     public double getRefundedAmount() {
@@ -66,14 +56,6 @@ public class Payment {
 
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public long getOrderShopId() {
-        return orderShopId;
-    }
-
-    public void setOrderShopId(long orderShopId) {
-        this.orderShopId = orderShopId;
     }
 
 }

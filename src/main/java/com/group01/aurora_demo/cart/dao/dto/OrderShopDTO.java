@@ -3,9 +3,10 @@ package com.group01.aurora_demo.cart.dao.dto;
 import java.util.Date;
 
 public class OrderShopDTO {
-    private String groupOrderCode;
+
     private long orderShopId;
     private long ShopId;
+    private long paymentId;
 
     private String shopName;
     private double shopDiscount;
@@ -52,14 +53,6 @@ public class OrderShopDTO {
 
     public void setShopName(String shopName) {
         this.shopName = shopName;
-    }
-
-    public String getGroupOrderCode() {
-        return groupOrderCode;
-    }
-
-    public void setGroupOrderCode(String groupOrderCode) {
-        this.groupOrderCode = groupOrderCode;
     }
 
     public double getShopDiscount() {
@@ -216,5 +209,13 @@ public class OrderShopDTO {
 
     public void setSystemDiscount(double systemDiscount) {
         this.systemDiscount = systemDiscount;
+    }
+
+    public long getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(long paymentId) {
+        this.paymentId = paymentId;
     }
 }
