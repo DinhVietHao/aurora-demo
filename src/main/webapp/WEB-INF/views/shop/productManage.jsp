@@ -82,6 +82,7 @@
                                                                 <option value="PENDING">Chờ duyệt</option>
                                                                 <option value="ACTIVE">Đang bán</option>
                                                                 <option value="INACTIVE">Ngừng bán</option>
+                                                                <option value="REJECT">Bị từ chối</option>
                                                                 <option value="OUT_OF_STOCK">Hết hàng</option>
                                                             </select>
                                                         </div>
@@ -215,8 +216,11 @@
                                                                             Duyệt</span>
                                                                     </c:when>
                                                                     <c:when test="${p.status eq 'OUT_OF_STOCK'}">
-                                                                        <span class="badge bg-danger">Hết
+                                                                        <span class="badge bg-warning">Hết
                                                                             hàng</span>
+                                                                    </c:when>
+                                                                    <c:when test="${p.status eq 'REJECTED'}">
+                                                                        <span class="badge bg-warning">Bị từ chối</span>
                                                                     </c:when>
                                                                     <c:otherwise>
                                                                         <span class="badge bg-dark">Không xác
@@ -248,8 +252,20 @@
                                                                             <i class="bi bi-slash-circle"></i>
                                                                         </button>
                                                                     </c:when>
+
                                                                     <c:when test="${p.status eq 'PENDING'}">
                                                                     </c:when>
+
+                                                                    <c:when test="${p.status eq 'REJECTED'}">
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-primary me-1"
+                                                                            title="Đăng bán lại" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmRepublishModal"
+                                                                            onclick="setRepublishModal('${p.productId}', '${fn:escapeXml(p.title)}')">
+                                                                            <i class="bi bi-arrow-repeat"></i>
+                                                                        </button>
+                                                                    </c:when>
+
                                                                     <c:otherwise>
                                                                         <button
                                                                             class="btn btn-sm btn-outline-success me-1"
@@ -311,6 +327,39 @@
                         </div>
                     </div>
 
+                    <!-- Modal xác nhận Đăng bán lại -->
+                    <div class="modal fade" id="confirmRepublishModal" tabindex="-1"
+                        aria-labelledby="confirmRepublishModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <!-- Header màu xanh primary -->
+                                <div class="modal-header custom-primary">
+                                    <h5 class="modal-title" id="confirmRepublishModalLabel">Xác nhận đăng bán lại</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <p>Bạn có chắc chắn muốn đăng bán lại sản phẩm <strong
+                                            id="republishProductNameInModal"></strong> không?</p>
+                                    <p class="text-muted mb-0"><small>Sản phẩm sẽ được gửi lại để xét duyệt.</small></p>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/shop/product?action=toggleStatus" method="post">
+                                        <input type="hidden" name="productId" id="republishProductId">
+                                        <input type="hidden" name="newStatus" value="PENDING">
+                                        <button type="submit" class="btn"
+                                            style="background-color: #154C3D; color: white;">Đăng bán
+                                            lại</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
                     <!-- Modal: Xác nhận ngừng kinh doanh -->
                     <div class="modal fade" id="confirmDeactivateModal" tabindex="-1"
                         aria-labelledby="confirmDeactivateModalLabel" aria-hidden="true">
@@ -332,7 +381,8 @@
                                     <form action="/shop/product?action=toggleStatus" method="post">
                                         <input type="hidden" name="productId" id="deactivateProductId">
                                         <input type="hidden" name="newStatus" value="INACTIVE">
-                                        <button type="submit" class="btn btn-warning">Ngừng bán</button>
+                                        <button type="submit" class="btn"
+                                            style="background-color: #154C3D; color: white;">Ngừng bán</button>
                                     </form>
                                 </div>
                             </div>
@@ -361,7 +411,8 @@
                                     <form action="/shop/product?action=toggleStatus" method="post">
                                         <input type="hidden" name="productId" id="activateProductId">
                                         <input type="hidden" name="newStatus" value="PENDING">
-                                        <button type="submit" class="btn btn-success">Kích hoạt lại</button>
+                                        <button type="submit" class="btn"
+                                            style="background-color: #154C3D; color: white;">Kích hoạt lại</button>
                                     </form>
                                 </div>
                             </div>
@@ -985,14 +1036,12 @@
                                             <div class="col-md-6">
                                                 <label for="isbn" class="form-label">Mã ISBN <span
                                                         class="text-danger">*</span></label>
-<<<<<<< HEAD
-                                                <input type="text" class="form-control" id="isbnUpdate" name="ISBN"
-=======
                                                 <<<<<<< HEAD <input type="text" class="form-control" id="isbnUpdate"
-                                                    name="ISBN"=======<input type="text" class="form-control"
-                                                    id="isbnUpdate" name="isbn">>>>>>>
+                                                    name="ISBN"=======<<<<<<< HEAD <input type="text"
+                                                    class="form-control" id="isbnUpdate" name="ISBN"=======<input
+                                                    type="text" class="form-control" id="isbnUpdate" name="isbn">>>>>>>
                                                     6a13786814f123593cf52f52fe60d13c593aa470
->>>>>>> 204ea9a4367b8d6b5e7b7c5bc8e778a3c44f38f4
+                                                    >>>>>>> 204ea9a4367b8d6b5e7b7c5bc8e778a3c44f38f4
                                                     placeholder="VD: 9786042109443" required>
                                                     <div class="form-text">Mã số của sách.</div>
                                             </div>
@@ -1246,6 +1295,10 @@
                         function setDeactivateModal(productId, productName) {
                             document.getElementById('deactivateProductId').value = productId;
                             document.getElementById('productNameInModal').textContent = productName;
+                        }
+                        function setRepublishModal(productId, title) {
+                            document.getElementById('republishProductId').value = productId;
+                            document.getElementById('republishProductNameInModal').textContent = title;
                         }
                     </script>
                 </body>
