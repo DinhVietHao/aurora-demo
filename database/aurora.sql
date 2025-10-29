@@ -381,3 +381,14 @@ VALUES
     (N'Flash Sale Halloween 2025', '2025-10-20 00:00:00', '2025-10-25 23:59:59', 'ACTIVE'),
     (N'Black Friday 2025', '2025-11-29 00:00:00', '2025-11-30 23:59:59', 'SCHEDULED'),
     (N'Flash Sale Trung Thu 2025', '2025-09-01 00:00:00', '2025-09-03 23:59:59', 'ENDED');
+
+CREATE TABLE Documents
+(
+    DocumentID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    Source NVARCHAR(100) NOT NULL,
+    SourceID BIGINT NULL,
+    Title NVARCHAR(255) NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    Embedding NVARCHAR(MAX) NULL
+);
