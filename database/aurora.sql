@@ -244,9 +244,6 @@ CREATE TABLE Orders
     CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID)
 );
 
-SELECT *
-FROM OrderShops
-
 CREATE TABLE OrderShops
 (
     OrderShopID BIGINT IDENTITY(1,1) PRIMARY KEY,
@@ -327,8 +324,6 @@ CREATE TABLE Payments
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_Payments_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
 );
-
-
 
 -- Bảng lưu số dư của admin/shop
 CREATE TABLE AccountBalances

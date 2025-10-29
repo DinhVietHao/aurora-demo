@@ -4,6 +4,8 @@
             <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
+                <jsp:include page="/WEB-INF/views/layouts/_chatbot.jsp" />
+
                 <header class="header">
                     <div class="container">
                         <div class="row header-content">
