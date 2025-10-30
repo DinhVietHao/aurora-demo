@@ -216,12 +216,22 @@ CREATE TABLE UserVouchers
     CONSTRAINT FK_UserVouchers_User    FOREIGN KEY (UserID)    REFERENCES Users(UserID)
 );
 
+CREATE TABLE Payments
+(
+    PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Amount DECIMAL(12,2) NOT NULL,
+    RefundedAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    TransactionRef NVARCHAR(100) NOT NULL,
+    Status NVARCHAR(20) NOT NULL,
+    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
+);
+
 CREATE TABLE OrderShops
 (
     OrderShopID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    GroupOrderCode NVARCHAR(50) NULL,
     UserID BIGINT NOT NULL,
     ShopID BIGINT NOT NULL,
+    PaymentID BIGINT NOT NULL,
     Address NVARCHAR(255) NOT NULL DEFAULT N'',
     VoucherShopID BIGINT NULL,
     VoucherDiscountID BIGINT NULL,
@@ -241,7 +251,8 @@ CREATE TABLE OrderShops
     CONSTRAINT FK_Orders_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
     CONSTRAINT FK_Orders_VoucherShop FOREIGN KEY (VoucherShopID) REFERENCES Vouchers(VoucherID),
     CONSTRAINT FK_Orders_VoucherDiscount FOREIGN KEY (VoucherDiscountID) REFERENCES Vouchers(VoucherID),
-    CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID)
+    CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID),
+    CONSTRAINT FK_OrderShops_Payment FOREIGN KEY (PaymentID) REFERENCES Payments(PaymentID)
 );
 
 CREATE TABLE OrderItems
@@ -289,18 +300,7 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
 
-CREATE TABLE Payments
-(
-    PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    OrderShopID BIGINT NOT NULL UNIQUE,
-    GroupOrderCode NVARCHAR(50) NOT NULL,
-    Amount DECIMAL(12,2) NOT NULL,
-    RefundedAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    TransactionRef NVARCHAR(100) NOT NULL,
-    Status NVARCHAR(20) NOT NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_Payments_OrderShop FOREIGN KEY (OrderShopID) REFERENCES OrderShops(OrderShopID)
-);
+
 
 CREATE TABLE Reviews
 (

@@ -7,9 +7,9 @@ import com.group01.aurora_demo.auth.model.User;
 
 public class OrderShop {
     private long orderShopId;
-    private String groupOrderCode;
     private long userId;
     private long shopId;
+    private long paymentId;
     private String address;
     private Long voucherShopId;
     private Long voucherDiscountId;
@@ -191,20 +191,20 @@ public class OrderShop {
         this.updatedAt = updatedAt;
     }
 
-    public String getGroupOrderCode() {
-        return groupOrderCode;
-    }
-
-    public void setGroupOrderCode(String groupOrderCode) {
-        this.groupOrderCode = groupOrderCode;
-    }
-
     public String getCustomerName() {
         return customerName;
     }
 
     public void setCustomerName(String customerName) {
         this.customerName = customerName;
+    }
+
+    public long getPaymentId() {
+        return paymentId;
+    }
+
+    public void setPaymentId(long paymentId) {
+        this.paymentId = paymentId;
     }
 
 }

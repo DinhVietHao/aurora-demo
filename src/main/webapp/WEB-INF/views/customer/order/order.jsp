@@ -68,14 +68,6 @@
 
                         <div class="col-9 col-md-10 ">
                             <div class="tab-content" id="profileTabsContent">
-                                <!-- Thông báo -->
-                                <div class="tab-pane fade" id="notify" role="tabpanel" aria-labelledby="notify-tab">
-                                    <div class="text-center mt-5">
-                                        <img src="./assets/images/mascot_fail.svg" alt="">
-                                        <p class="text-muted mt-3">Chưa có thông báo</p>
-                                    </div>
-                                </div>
-
                                 <!-- Quản lý đơn hàng -->
                                 <div class="tab-pane fade show active order-management" id="order" role="tabpanel"
                                     aria-labelledby="order-tab">
@@ -136,7 +128,7 @@
                                                                 <div class="order-card__header">
                                                                     <span><strong><i class="bi bi-shop me-2"></i>
                                                                             ${entry.value[0].shopName}</strong>
-                                                                        <a href="./viewShop.html"
+                                                                        <a href="${ctx}/home?action=view-shop&shopId=${entry.value[0].shopId}"
                                                                             class="button-outline mx-2">
                                                                             Xem
                                                                             shop</a></span>
@@ -267,17 +259,7 @@
                                                                             Mua
                                                                             lại</button>
                                                                     </c:if>
-                                                                    <c:if
-                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
-                                                                        <form action="/order/repayment" method="post">
-                                                                            <input type="hidden" name="orderId"
-                                                                                value="${entry.value[0].orderId}" />
-                                                                            <button class="button-four">
-                                                                                Thanh toán
-                                                                                lại</button>
-                                                                        </form>
 
-                                                                    </c:if>
 
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus == 'COMPLETED'}">
@@ -336,7 +318,7 @@
                 </div>
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
-                <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+
 
                 <!-- Cancel Order Modal -->
                 <form id="cancelOrderForm" method="POST" action="/order/cancel">
@@ -481,7 +463,9 @@
                 <!--End Modal product reviews -->
 
                 <!-- Link Javascript of Order -->
-                <script src="${ctx}/assets/js/customer/order/order.js?v=1.0.1"></script>
+                <script src="${ctx}/assets/js/customer/order/order.js"></script>
+                <!-- Include scripts chung -->
+                <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <c:if test="${not empty sessionScope.toastMsg}">
                     <script>

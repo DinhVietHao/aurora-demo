@@ -12,12 +12,6 @@ public class OrderAutoCancelTask {
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> {
             try {
 
-                // Hủy đơn quá hạn thanh toán (chờ thanh toán quá 60 phút)
-                int pendingCancelled = orderShopDAO.autoCancelPendingPaymentOrders();
-                if (pendingCancelled > 0) {
-                    System.out.println("Đã tự động hủy " + pendingCancelled + " đơn CHỜ THANH TOÁN quá 60 phút.");
-                }
-
                 // Hoàn tất đơn giao thành công sau 7 ngày mà không xác nhận
                 int completedCount = orderShopDAO.autoCompleteConfirmOrders();
                 if (completedCount > 0) {

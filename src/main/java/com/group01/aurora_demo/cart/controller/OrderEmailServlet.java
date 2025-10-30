@@ -30,7 +30,7 @@ public class OrderEmailServlet extends NotificationServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByGroupOrderCode("AUR202510282250506432");
+        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByPaymentId(1);
         Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
                 .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
                         LinkedHashMap::new,

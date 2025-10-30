@@ -53,7 +53,8 @@
                                             <div class="col-12 cart-body__header">
                                                 <span><strong><i
                                                             class="bi bi-shop me-2"></i>${shopCart.shop.name}</strong>
-                                                    <a href="#" class="button-outline mx-2"> Xem shop</a>
+                                                    <a href="${ctx}/home?action=view-shop&shopId=${shopCart.shop.shopId}"
+                                                        class="button-outline mx-2"> Xem shop</a>
                                                 </span>
                                             </div>
                                             <c:forEach var="cartItem" items="${shopCart.items}">

@@ -48,7 +48,30 @@ public class OrderItemDAO {
         return -1;
     }
 
-    public List<OrderItem> getItemsByOrderShopId(Long orderShopId) {
+    public List<OrderItem> getItemsByOrderShopId(Connection conn, Long orderShopId) {
+        String sql = "SELECT ProductID, Quantity FROM OrderItems WHERE OrderShopID = ?";
+        List<OrderItem> items = new ArrayList<>();
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery();) {
+
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setProductId(rs.getLong("ProductID"));
+                    item.setQuantity(rs.getInt("Quantity"));
+                    items.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return items;
+    }
+
+    public List<OrderItem> getOrderItems(Long orderShopId) {
         String sql = "SELECT ProductID, Quantity FROM OrderItems WHERE OrderShopID = ?";
         List<OrderItem> items = new ArrayList<>();
 
@@ -56,13 +79,14 @@ public class OrderItemDAO {
                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, orderShopId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery();) {
 
-            while (rs.next()) {
-                OrderItem item = new OrderItem();
-                item.setProductId(rs.getLong("ProductID"));
-                item.setQuantity(rs.getInt("Quantity"));
-                items.add(item);
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setProductId(rs.getLong("ProductID"));
+                    item.setQuantity(rs.getInt("Quantity"));
+                    items.add(item);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
