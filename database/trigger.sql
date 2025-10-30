@@ -178,16 +178,19 @@ GO
 
 
 ---------------------------------------------------
--- TRIGGER 2: Hết hàng (Products)
+-- TRIGGER 2:(Products)
 ---------------------------------------------------
 
-CREATE OR ALTER TRIGGER trg_ProductOutOfStockNotification
+CREATE OR ALTER TRIGGER trg_ProductNotifications
 ON Products
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    --------------------------------------------------------
+    -- 1️⃣  THÔNG BÁO: SẢN PHẨM HẾT HÀNG
+    --------------------------------------------------------
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -200,10 +203,51 @@ BEGIN
         i.ProductID,
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
-        JOIN deleted d ON d.ProductID = i.ProductID
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
     WHERE d.Quantity > 0 AND i.Quantity <= 0;
+
+
+    --------------------------------------------------------
+    -- 2️⃣  THÔNG BÁO: SẢN PHẨM ĐƯỢC DUYỆT (PENDING → ACTIVE)
+    --------------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'PRODUCT_ACTIVE',
+        N'Sản phẩm đã được duyệt',
+        CONCAT(N'Sản phẩm "', i.Title, N'" đã được duyệt và đang bán.'),
+        'PRODUCT',
+        i.ProductID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
+    WHERE i.Status = 'ACTIVE';
+
+
+    --------------------------------------------------------
+    -- 3️⃣  THÔNG BÁO: SẢN PHẨM BỊ TỪ CHỐI (PENDING → REJECTED)
+    --------------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'PRODUCT_REJECTED',
+        N'Sản phẩm bị từ chối',
+        CONCAT(N'Sản phẩm "', i.Title, N'" đã bị từ chối.'),
+        'PRODUCT',
+        i.ProductID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
+    WHERE i.Status = 'REJECTED';
 END;
 GO
+
+
+
 
 
 
@@ -233,7 +277,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         LEFT JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'ACTIVE'
         AND NOT EXISTS (
             SELECT 1
@@ -262,7 +307,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'OUT_OF_STOCK'
         AND NOT EXISTS (
             SELECT 1
@@ -291,7 +337,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'EXPIRED'
         AND NOT EXISTS (
             SELECT 1
