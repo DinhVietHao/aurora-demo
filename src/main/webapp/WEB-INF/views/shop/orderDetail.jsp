@@ -24,7 +24,7 @@
                                 <div class="container-fluid px-4">
                                     <!-- Header -->
                                     <div class="d-flex justify-content-between align-items-center mt-4">
-                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.groupOrderCode}
+                                        <h1 class="order-details-title">Chi tiết Đơn hàng #${orderShop.orderShopId}
                                         </h1>
                                         <nav aria-label="breadcrumb">
                                             <ol class="breadcrumb">
