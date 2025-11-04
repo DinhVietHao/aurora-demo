@@ -106,7 +106,7 @@
                                             <c:choose>
                                                 <c:when test="${empty orderShops}">
                                                     <div class="text-center">
-                                                        <img src="./assets/images/common/empty-order.png" alt="">
+                                                        <img src="./assets/images/common/empty-order.png" alt="" />
                                                         <p class="text-muted">Chưa có đơn hàng</p>
                                                     </div>
                                                 </c:when>
@@ -302,6 +302,18 @@
                                                                             data-order-shop-id="${entry.value[0].orderShopId}">Đã
                                                                             nhận
                                                                             hàng</button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
+                                                                        <form action="/order/repayment" method="post">
+                                                                            <input type="hidden" name="paymentId"
+                                                                                value="${entry.value[0].paymentId}" />
+                                                                            <button class="button-four">
+                                                                                Thanh toán
+                                                                                lại</button>
+                                                                        </form>
+
                                                                     </c:if>
                                                                 </div>
                                                             </div>
