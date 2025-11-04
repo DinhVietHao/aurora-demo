@@ -207,9 +207,10 @@ public class CartItemDAO {
                      p.Title,
                      p.OriginalPrice,
                      p.SalePrice,
-                     p.status,
+                     p.Status AS ProductStatus,
                 	 s.ShopID,
                      s.Name AS ShopName,
+                     s.Status AS ShopStatus,
                      img.Url AS ImageUrl
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
@@ -236,11 +237,12 @@ public class CartItemDAO {
                     product.setTitle(rs.getString("Title"));
                     product.setOriginalPrice(rs.getDouble("OriginalPrice"));
                     product.setSalePrice(rs.getDouble("SalePrice"));
-                    product.setStatus(rs.getString("status"));
+                    product.setStatus(rs.getString("ProductStatus"));
 
                     Shop shop = new Shop();
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setName(rs.getString("ShopName"));
+                    shop.setStatus(rs.getString("ShopStatus"));
                     product.setShop(shop);
 
                     // Lấy ảnh chính của sản phẩm
@@ -282,7 +284,7 @@ public class CartItemDAO {
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 WHERE ci.UserID = ? AND ci.IsChecked = 1
-                AND p.Status = 'ACTIVE'
+                AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -359,7 +361,7 @@ public class CartItemDAO {
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1
-                AND p.Status = 'ACTIVE'
+                AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 ORDER BY ci.CreatedAt DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();

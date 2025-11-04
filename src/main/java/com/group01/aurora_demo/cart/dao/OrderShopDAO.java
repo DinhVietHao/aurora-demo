@@ -30,12 +30,14 @@ public class OrderShopDAO {
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
+    private PaymentDAO paymentDAO;
 
     public OrderShopDAO() {
         this.voucherDAO = new VoucherDAO();
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
+        this.paymentDAO = new PaymentDAO();
 
     }
 
@@ -105,6 +107,7 @@ public class OrderShopDAO {
         StringBuilder sql = new StringBuilder("""
                 SELECT
                     os.OrderShopID,
+                    os.PaymentID,
                     s.Name AS ShopName,
                     s.ShopId,
                     os.Status AS ShopStatus,
@@ -149,6 +152,7 @@ public class OrderShopDAO {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
                     orderShop.setShopName(rs.getString("ShopName"));
                     orderShop.setShopId(rs.getLong("ShopId"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
@@ -190,9 +194,9 @@ public class OrderShopDAO {
                         VoucherShopID, VoucherDiscountID, VoucherShipID,
                         Subtotal, ShopDiscount, SystemDiscount,
                         ShippingFee, SystemShippingDiscount, FinalAmount,
-                        Status, CreatedAt
+                        Status, CreatedAt, UpdatedAt
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -314,6 +318,39 @@ public class OrderShopDAO {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    public int autoCancelPendingPayments() {
+        String sql = """
+                    SELECT PaymentID, TransactionRef
+                    FROM Payments
+                    WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1;
+                """;
+        int cancelledCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                long paymentId = rs.getLong("PaymentID");
+                String transactionRef = rs.getString("TransactionRef");
+
+                boolean rolledBack = rollbackFailedPaymentByPaymentId(paymentId);
+
+                if (rolledBack) {
+                    this.paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
+                    cancelledCount++;
+                    System.out.println("Tự động hủy Payment #" + paymentId + " do quá hạn thanh toán.");
+                } else {
+                    System.err.println("Không thể rollback Payment #" + paymentId);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return cancelledCount;
     }
 
     public boolean rollbackFailedPaymentByPaymentId(long paymentId) {
@@ -954,7 +991,7 @@ public class OrderShopDAO {
 
     public int cancelExpiredOrders() {
         String selectSql = """
-                SELECT os.OrderShopId, os.VoucherShopID, os.FinalAmount
+                SELECT os.OrderShopId, os.PaymentID, os.VoucherShopID, os.FinalAmount
                 FROM OrderShops os
                 WHERE os.Status = 'PENDING'
                 AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
@@ -997,6 +1034,7 @@ public class OrderShopDAO {
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopId");
+                long paymentId = rs.getLong("PaymentID");
                 double shopFinalAmount = rs.getDouble("FinalAmount");
                 Long voucherId = rs.getLong("VoucherID");
                 if (rs.wasNull())
@@ -1024,7 +1062,7 @@ public class OrderShopDAO {
 
                 // 🔹 Gọi hoàn tiền (nếu PaymentDAO hỗ trợ theo OrderShopId)
                 PaymentDAO paymentDAO = new PaymentDAO();
-                boolean refunded = paymentDAO.partialRefund(conn, orderShopId, shopFinalAmount);
+                boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
 
                 if (!refunded) {
                     System.err.println("Partial refund failed for OrderShopID=" + orderShopId);
