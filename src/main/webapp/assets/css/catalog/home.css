@@ -1128,6 +1128,9 @@
   cursor: pointer;
   border-radius: 8px;
   overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .flash-sale-card:hover {
@@ -1142,6 +1145,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .flash-sale-card .product-img img {
@@ -1153,6 +1157,13 @@
 
 .flash-sale-card:hover .product-img img {
   transform: scale(1.05);
+}
+
+.flash-sale-card .product-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
 }
 
 .flash-sale-card .discount {
@@ -1168,10 +1179,32 @@
   z-index: 10;
 }
 
+.flash-sale-card .title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.9rem;
+  min-height: 2.4em;
+  flex-grow: 1;
+}
+
+.flash-sale-card .rating {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.flash-sale-card .rating i {
+  font-size: 0.7rem;
+  margin-right: 0.2rem;
+}
+
 .flash-sale-card .progress {
   background-color: #e9ecef;
   border-radius: 3px;
   overflow: hidden;
+  margin-bottom: 0.5rem;
 }
 
 .flash-sale-card .progress-bar {
@@ -1183,6 +1216,11 @@
   from {
     width: 0 !important;
   }
+}
+
+.flash-sale-card .text-muted {
+  font-size: 0.75rem;
+  margin-top: auto;
 }
 
 .flash-sale-card .badge.bg-danger {
@@ -1198,13 +1236,57 @@
   }
 }
 
+.flash-sale-card .price {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #d32f2f;
+  margin-bottom: 0.3rem;
+}
+
+.flash-sale-card .price .text-muted {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.flash-sale-card .author {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
 /* Responsive */
+@media (max-width: 992px) {
+  .flash-sale-card .product-img {
+    height: 120px;
+  }
+}
+
 @media (max-width: 768px) {
   .flash-sale-card .product-img {
     height: 100px;
   }
   
   .flash-sale-card .title {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    -webkit-line-clamp: 1;
+  }
+
+  .flash-sale-card .price {
+    font-size: 0.85rem;
+  }
+
+  .flash-sale-card .rating {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .flash-sale-card .product-img {
+    height: 80px;
+  }
+
+  .flash-sale-card .product-body {
+    padding: 0.5rem;
   }
 }

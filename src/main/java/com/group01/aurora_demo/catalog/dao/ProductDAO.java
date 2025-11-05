@@ -1631,7 +1631,7 @@ public class ProductDAO {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> products = new ArrayList<>();
         String sql = """
-                SELECT TOP 12
+                SELECT
                     p.ProductID,
                     p.Title,
                     p.OriginalPrice,

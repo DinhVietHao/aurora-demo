@@ -300,8 +300,6 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
 
-
-
 CREATE TABLE Reviews
 (
     ReviewID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
