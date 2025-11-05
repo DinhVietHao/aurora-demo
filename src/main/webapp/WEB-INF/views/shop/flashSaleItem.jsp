@@ -43,7 +43,7 @@
                                 <div class="container-fluid px-4">
                                     <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
                                         <h1 class="fw-bold" style="color: #154C3D;">Sản phẩm tham gia Flash Sale</h1>
-                                        <a href="/shop/flashSale" class="btn btn-outline-secondary">
+                                        <a href="${ctx}/shop/flashSale" class="btn btn-outline-secondary">
                                             <i class="bi bi-arrow-left me-1"></i> Quay lại
                                         </a>
                                     </div>
@@ -141,7 +141,7 @@
 
                                                             <!-- Thao tác -->
                                                             <div class="col-md-1">
-                                                                <a href="${ctx}/shop/flashSale?action=getFlashsaleItemDetail&itemId=${item.flashSaleItemID}"
+                                                                <a href="${ctx}/shop/flashSale?action=detail&itemId=${item.flashSaleItemID}"
                                                                     class="btn btn-outline-primary btn-sm rounded-pill px-3">
                                                                     Xem
                                                                 </a>

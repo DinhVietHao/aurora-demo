@@ -58,8 +58,10 @@
                                                 </span>
                                             </div>
                                             <c:forEach var="cartItem" items="${shopCart.items}">
-                                                <c:set var="status" value="${cartItem.product.status}" />
-                                                <div class="row cart-body__item  ${status == 'OUT_OF_STOCK' || status == 'INACTIVE' ? 'disabled-item' : ''}"
+                                                <c:set var="productStatus" value="${cartItem.product.status}" />
+                                                <c:set var="shopStatus" value="${cartItem.product.shop.status}" />
+
+                                                <div class="row cart-body__item  ${productStatus == 'OUT_OF_STOCK' || shopStatus == 'INACTIVE' ? 'disabled-item' : ''}"
                                                     id="cartItemId${cartItem.cartItemId}"
                                                     data-cartitemid="${cartItem.cartItemId}"
                                                     data-userid="${cartItem.userId}">
@@ -67,9 +69,9 @@
                                                         <input class="form-check-input cursor-pointer cart-checkbox"
                                                             type="checkbox" ${cartItem.isChecked &&
                                                             cartItem.product.status !='OUT_OF_STOCK' &&
-                                                            cartItem.product.status !='INACTIVE' ? "checked" : "" }
-                                                            ${status=='OUT_OF_STOCK' || status=='INACTIVE' ? "disabled"
-                                                            : "" }>
+                                                            cartItem.product.shop.status !='INACTIVE' ? "checked" : "" }
+                                                            ${productStatus=='OUT_OF_STOCK' || shopStatus=='INACTIVE'
+                                                            ? "disabled" : "" }>
                                                         <a href="${ctx}/home?action=detail&id=${cartItem.product.productId}"
                                                             target="_blank">
                                                             <img src="${ctx}/assets/images/catalog/products/${cartItem.product.images[0].url}"
@@ -84,10 +86,10 @@
                                                                 <c:out value="${cartItem.product.title}" />
                                                             </h6>
                                                         </a>
-                                                        <c:if test="${status == 'OUT_OF_STOCK'}">
+                                                        <c:if test="${productStatus == 'OUT_OF_STOCK'}">
                                                             <span class="badge bg-danger">Hết hàng</span>
                                                         </c:if>
-                                                        <c:if test="${status == 'INACTIVE'}">
+                                                        <c:if test="${shopStatus == 'INACTIVE'}">
                                                             <span class="badge bg-secondary">Ngừng kinh doanh</span>
                                                         </c:if>
                                                     </div>
@@ -110,16 +112,16 @@
                                                         <div class="text-center">
                                                             <button class="btn btn-outline-secondary btn-sm minus"
                                                                 data-cartitemid="${cartItem.cartItemId}"
-                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
-                                                                ? "disabled" : "" }>
+                                                                ${productStatus=='OUT_OF_STOCK' ||
+                                                                shopStatus=='INACTIVE' ? "disabled" : "" }>
                                                                 -
                                                             </button>
                                                             <span class="mx-2 number">
                                                                 <c:out value="${cartItem.quantity}" />
                                                             </span>
                                                             <button class="btn btn-outline-secondary btn-sm plus"
-                                                                ${status=='OUT_OF_STOCK' || status=='INACTIVE'
-                                                                ? "disabled" : "" }>+</button>
+                                                                ${productStatus=='OUT_OF_STOCK' ||
+                                                                shopStatus=='INACTIVE' ? "disabled" : "" }>+</button>
                                                         </div>
                                                     </div>
 

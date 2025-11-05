@@ -1,10 +1,6 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +96,7 @@ public class ShopFlashSaleServlet extends HttpServlet {
                 try {
                     long shopId = shopDAO.getShopIdByUserId(user.getUserID());
                     long flashSaleId = Long.parseLong(request.getParameter("flashSaleId"));
-                    List<FlashSaleItem> items = flashSaleDAO.getFlashSaleItemsByFlashSaleIdAndShopId(flashSaleId,
-                            shopId);
+                    List<FlashSaleItem> items = flashSaleDAO.getFlashSaleItemsByFlashSaleIdAndShopId(flashSaleId, shopId);
                     request.setAttribute("items", items);
                     request.setAttribute("flashSaleId", flashSaleId);
                     request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItem.jsp")
@@ -113,62 +108,9 @@ public class ShopFlashSaleServlet extends HttpServlet {
                             .forward(request, response);
                 }
                 break;
-            case "getFlashsaleItemDetail":
-                try {
-                    long itemId = Long.parseLong(request.getParameter("itemId"));
-
-                    FlashSaleItem item = flashSaleDAO.getFlashSaleItemDetail(itemId);
-                    if (item == null) {
-                        request.setAttribute("errorMessage", "Không tìm thấy sản phẩm Flash Sale.");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp")
-                                .forward(request,
-                                        response);
-                        return;
-                    }
-
-                    List<String> revenueLabels = new ArrayList<>();
-                    List<Double> revenueValues = new ArrayList<>();
-
-                    Timestamp start = item.getStartAt();
-                    Timestamp end = "ACTIVE".equalsIgnoreCase(item.getApprovalStatus())
-                            ? new Timestamp(System.currentTimeMillis())
-                            : item.getEndAt();
-                    if (start == null || end == null) {
-                        request.setAttribute("errorMessage", "Thời gian Flash Sale không hợp lệ.");
-                        request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp")
-                                .forward(request,
-                                        response);
-                        return;
-                    }
-                    Map<LocalDate, Double> revenueByDate = flashSaleDAO.getRevenueByFlashSaleItem(itemId, start, end);
-
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
-                    for (Map.Entry<LocalDate, Double> entry : revenueByDate.entrySet()) {
-                        revenueLabels.add(entry.getKey().format(formatter));
-                        revenueValues.add(entry.getValue());
-                    }
-
-                    Gson gson = new Gson();
-                    request.setAttribute("revenueLabelsJson", gson.toJson(revenueLabels));
-                    request.setAttribute("revenueValuesJson", gson.toJson(revenueValues));
-                    request.setAttribute("item", item);
-
-                    request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp").forward(request,
-                            response);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    request.setAttribute("errorMessage",
-                            "Đã xảy ra lỗi khi tải chi tiết Flash Sale Item: " + e.getMessage());
-                    request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp")
-                            .forward(request,
-                                    response);
-                }
-                break;
             default:
                 request.setAttribute("errorMessage", "lỗi tải list Flashsale");
-                request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/shop/flashSale.jsp").forward(request, response);
                 break;
         }
 

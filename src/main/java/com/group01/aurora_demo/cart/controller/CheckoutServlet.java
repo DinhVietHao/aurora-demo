@@ -203,8 +203,6 @@ public class CheckoutServlet extends NotificationServlet {
                             .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
                             .sum();
 
-                    System.out.println(">>>>Check totalOrder=" + totalOrder);
-
                     String validation = this.voucherValidator.validate(voucher, totalOrder, null, user.getUserID());
                     if (validation != null) {
                         json.put("success", false);

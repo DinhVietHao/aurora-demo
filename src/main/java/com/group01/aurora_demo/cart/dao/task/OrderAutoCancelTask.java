@@ -18,6 +18,11 @@ public class OrderAutoCancelTask {
                     System.out
                             .println("Đã tự động hoàn tất " + completedCount + " đơn hàng không xác nhận sau 7 ngày.");
                 }
+                // Hủy đơn quá hạn thanh toán (chờ thanh toán quá 60 phút)
+                int pendingCancelled = orderShopDAO.autoCancelPendingPayments();
+                if (pendingCancelled > 0) {
+                    System.out.println("Đã tự động hủy " + pendingCancelled + " đơn CHỜ THANH TOÁN quá 60 phút.");
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
