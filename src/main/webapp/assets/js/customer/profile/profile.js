@@ -126,6 +126,86 @@ document.addEventListener("DOMContentLoaded", function () {
       action: "uploadAvatar",
     });
   }
+
+  const saveBtn = document.getElementById("saveFullNameBtn");
+  const fullNameInput = document.getElementById("fullNameInput");
+  const fullNameError = document.getElementById("fullNameError");
+  if (saveBtn && fullNameInput) {
+    saveBtn.addEventListener("click", function () {
+      const newName = fullNameInput.value.trim();
+      if (!newName) {
+        if (fullNameError) {
+          fullNameError.textContent = "Họ tên không được để trống.";
+          fullNameError.classList.remove("d-none");
+        }
+        return;
+      }
+      if (newName.length > 150) {
+        if (fullNameError) {
+          fullNameError.textContent = "Họ tên quá dài (tối đa 150 ký tự).";
+          fullNameError.classList.remove("d-none");
+        }
+        return;
+      }
+      // clear previous error
+      if (fullNameError) {
+        fullNameError.textContent = "";
+        fullNameError.classList.add("d-none");
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Đang lưu...";
+
+      // Gửi request
+      fetch("/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `action=updateFullName&fullName=${encodeURIComponent(newName)}`,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Lưu";
+          if (data.success) {
+            const sidebarName = document.getElementById("sidebarFullName");
+            if (sidebarName) sidebarName.textContent = data.fullName;
+
+            const headerName = document.getElementById("headerFullName");
+            if (headerName) headerName.textContent = data.fullName;
+
+            toast({
+              title: "Thành công!",
+              message: data.message,
+              type: "success",
+              duration: 3000,
+            });
+          } else {
+            if (fullNameError) {
+              fullNameError.textContent = data.message;
+              fullNameError.classList.remove("d-none");
+            } else {
+              toast({
+                title: "Thất bại!",
+                message: data.message || "Cập nhật thất bại.",
+                type: "error",
+                duration: 3000,
+              });
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          saveBtn.disabled = false;
+          saveBtn.textContent = "Lưu";
+          toast({
+            title: "Lỗi hệ thống",
+            message: "Không thể kết nối tới server.",
+            type: "error",
+            duration: 3000,
+          });
+        });
+    });
+  }
 });
 
 // ======== Change email of profile =========

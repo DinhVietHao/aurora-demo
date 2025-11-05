@@ -25,7 +25,6 @@ public class CheckoutTest {
     final String BASE_URL = "http://localhost:8080/home";
     final String USER_EMAIL = "dvhaoce190204@gmail.com";
     final String USER_PASSWORD = "Hao190204#";
-    final String SEARCH_KEYWORD = "Sherlock Holmes";
 
     // ----- Thông tin địa chỉ nhận hàng -----
     final String ADDR_FULL_NAME = "Đinh Việt Hào";
@@ -66,16 +65,46 @@ public class CheckoutTest {
             System.out.println("BƯỚC 1: Đăng nhập thành công.");
             Thread.sleep(1000);
 
-            // ----- Bước 2 & 3: Tìm kiếm và chọn sản phẩm -----
-            driver.findElement(By.name("keyword")).sendKeys(SEARCH_KEYWORD);
+            // ----- Bước 2: Tương tác với chatbot -----
+            System.out.println("BƯỚC 2: Bắt đầu tương tác với Chatbot.");
+            wait.until(ExpectedConditions.elementToBeClickable(By.id("chatbot-btn"))).click();
+            WebElement chatBox = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("chatbot-box")));
+            Thread.sleep(1500);
+            WebElement chatInput = chatBox.findElement(By.id("chatbot-input"));
+            chatInput.sendKeys("Tôi muốn đọc thể loại trinh thám");
+            Thread.sleep(1500);
+            chatBox.findElement(By.id("chatbot-send")).click();
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.cssSelector(".bubble.loading")));
+            Thread.sleep(1500);
+            WebElement lastBotMessage = driver
+                    .findElement(By.cssSelector("#chatbot-messages .message-bot:last-child .bubble"));
+            String botReply = lastBotMessage.getText();
+            System.out.println("Chatbot trả lời: " + botReply);
+            Thread.sleep(1500);
+
+            String extractedKeyword;
+            try {
+                extractedKeyword = botReply.split("'")[1].trim();
+            } catch (Exception e) {
+                System.out.println("Không thể trích xuất từ khóa, dùng từ khóa dự phòng 'Sherlock Holmes'.");
+                extractedKeyword = "Sherlock Holmes";
+            }
+            System.out.println("Đã trích xuất từ khóa: " + extractedKeyword);
+
+            chatBox.findElement(By.id("chatbot-close")).click();
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("chatbot-box")));
+            System.out.println("BƯỚC 2: Tương tác Chatbot hoàn tất.");
+
+            // ----- Bước 3 & 4: Tìm kiếm và chọn sản phẩm -----
+            driver.findElement(By.name("keyword")).sendKeys(extractedKeyword);
             Thread.sleep(1000);
             driver.findElement(By.cssSelector("div.header-search button")).click();
             Thread.sleep(1000);
             wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("div.product a"))).click();
-            System.out.println("BƯỚC 2 & 3: Tìm kiếm và chọn SP thành công.");
+            System.out.println("BƯỚC 3 & 4: Tìm kiếm và chọn SP thành công.");
             Thread.sleep(1000);
 
-            // ----- Bước 4: Xem chi tiết sách và thêm sản phẩm vào giỏ (book_detail.jsp)
+            // ----- Bước 5: Xem chi tiết sách và thêm sản phẩm vào giỏ (book_detail.jsp)
             WebElement addToCartButton = wait
                     .until(ExpectedConditions.visibilityOfElementLocated(By.id("add-to-cart")));
             ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
@@ -90,10 +119,10 @@ public class CheckoutTest {
             String toastClasses = toastElement.getAttribute("class");
             boolean isSuccess = toastClasses.contains("toast--success");
             Assertions.assertTrue(isSuccess, "Thêm vào giỏ hàng thất bại. Thông báo lỗi: " + toastMessage);
-            System.out.println("BƯỚC 4: Thêm vào giỏ hàng thành công.");
+            System.out.println("BƯỚC 5: Thêm vào giỏ hàng thành công.");
             wait.until(ExpectedConditions.invisibilityOf(toastElement));
 
-            // ----- Bước 5 & 6: Vào giỏ hàng & mua hàng (cart.jsp) -----
+            // ----- Bước 6 & 7: Vào giỏ hàng & mua hàng (cart.jsp) -----
             driver.findElement(By.className("header-cart")).click();
 
             WebElement firstCheckbox = wait.until(ExpectedConditions.elementToBeClickable(
@@ -107,16 +136,16 @@ public class CheckoutTest {
             Thread.sleep(1000);
 
             driver.findElement(By.id("cart-pay-button")).click();
-            System.out.println("BƯỚC 5 & 6: Vào giỏ hàng và nhấn 'Mua Hàng'.");
+            System.out.println("BƯỚC 6 & 7: Vào giỏ hàng và nhấn 'Mua Hàng'.");
 
-            // ----- Bước 7: Thanh toán (checkout.jsp) -----
+            // ----- Bước 8: Thanh toán (checkout.jsp) -----
             WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
             try {
                 WebElement addressModal = shortWait.until(
                         ExpectedConditions.visibilityOfElementLocated(By.id("addAddressModal")));
-                // Kịch bản 7A_1: "Chưa có địa chỉ"
-                System.out.println("BƯỚC 7A: Không tìm thấy địa chỉ. Bắt đầu điền modal 'Thêm địa chỉ'...");
+                // Kịch bản 8A_1: "Chưa có địa chỉ"
+                System.out.println("BƯỚC 8A: Không tìm thấy địa chỉ. Bắt đầu điền modal 'Thêm địa chỉ'...");
                 addressModal.findElement(By.id("fullName")).sendKeys(ADDR_FULL_NAME);
                 addressModal.findElement(By.id("phone")).sendKeys(ADDR_PHONE);
                 Thread.sleep(1000);
@@ -139,15 +168,15 @@ public class CheckoutTest {
 
                 // Nhấn "Hoàn thành" để lưu địa chỉ
                 addressModal.findElement(By.cssSelector("#form-create-address button[type='submit']")).click();
-                System.out.println("BƯỚC 7A_1: Đã điền và lưu địa chỉ mới.");
+                System.out.println("BƯỚC 8A_1: Đã điền và lưu địa chỉ mới.");
 
                 wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("addAddressModal")));
             } catch (Exception e) {
-                System.out.println("BƯỚC 7A_2: Đã có địa chỉ. Bỏ qua bước thêm địa chỉ.");
+                System.out.println("BƯỚC 8A_2: Đã có địa chỉ. Bỏ qua bước thêm địa chỉ.");
             }
 
-            // Kịch bản 7B: Áp dụng voucher
-            System.out.println("BƯỚC 7B: Áp dụng voucher...");
+            // Kịch bản 8B: Áp dụng voucher
+            System.out.println("BƯỚC 8B: Áp dụng voucher...");
             // Chờ modal địa chỉ đóng lại và nút voucher có thể click
             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("addAddressModal")));
             WebElement voucherButton = wait.until(
@@ -177,19 +206,19 @@ public class CheckoutTest {
             // Nhấn OK
             Thread.sleep(1000);
             voucherModal.findElement(By.id("confirmVoucher")).click();
-            System.out.println("BƯỚC 7B: Đã chọn voucher.");
+            System.out.println("BƯỚC 8B: Đã chọn voucher.");
 
-            // Kịch bản 7C: Đặt hàng
+            // Kịch bản 8C: Đặt hàng
             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("voucherModal")));
             WebElement placeOrderButton = wait.until(
                     ExpectedConditions.elementToBeClickable(By.id("btnPlaceOrder")));
             Thread.sleep(500); // Dừng 1s xem lại trang checkout
             placeOrderButton.click();
-            System.out.println("BƯỚC 7C: Đã nhấp 'Đặt hàng'.");
+            System.out.println("BƯỚC 8C: Đã nhấp 'Đặt hàng'.");
 
-            // ----- Bước 8: Chuyển hướng VNPay -----
+            // ----- Bước 9: Chuyển hướng VNPay -----
             wait.until(ExpectedConditions.urlContains("sandbox.vnpayment.vn"));
-            System.out.println("BƯỚC 8: Đã chuyển hướng đến VNPAY - Trang 1 (Chọn phương thức).");
+            System.out.println("BƯỚC 9.1: Đã chuyển hướng đến VNPAY - Trang 1 (Chọn phương thức).");
 
             // Nhấp vào "Thẻ nội địa"
             Thread.sleep(1000);
@@ -200,11 +229,11 @@ public class CheckoutTest {
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("accordionList2")));
             Thread.sleep(1000);
             driver.findElement(By.id("NCB")).click();
-            System.out.println("BƯỚC 8: Đã chọn ngân hàng NCB.");
+            System.out.println("BƯỚC 9.2: Đã chọn ngân hàng NCB.");
 
-            // ----- Bước 9: Điền thông tin thẻ thanh toán -----
+            // ----- Bước 10: Điền thông tin thẻ thanh toán -----
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("card_number_mask")));
-            System.out.println("BƯỚC 9: Đã chuyển đến VNPAY - Trang 2 (Điền thông tin thẻ).");
+            System.out.println("BƯỚC 10.1: Đã chuyển đến VNPAY - Trang 2 (Điền thông tin thẻ).");
 
             driver.findElement(By.id("card_number_mask")).sendKeys(VNP_CARD_NUMBER);
             Thread.sleep(1000);
@@ -220,20 +249,20 @@ public class CheckoutTest {
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("modalDKSD")));
             Thread.sleep(1000);
             driver.findElement(By.id("btnAgree")).click();
-            System.out.println("BƯỚC 9: Đã điền thông tin thẻ và đồng ý điều khoản.");
+            System.out.println("BƯỚC 10.2: Đã điền thông tin thẻ và đồng ý điều khoản.");
 
-            // ----- Bước 10: Xác thực OTP -----
+            // ----- Bước 11: Xác thực OTP -----
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("otpvalue")));
-            System.out.println("BƯỚC 10: Đã chuyển đến VNPAY - Trang 3 (Nhập OTP).");
+            System.out.println("BƯỚC 11.1: Đã chuyển đến VNPAY - Trang 3 (Nhập OTP).");
 
             driver.findElement(By.id("otpvalue")).sendKeys(VNP_OTP);
             Thread.sleep(1000);
             driver.findElement(By.id("btnConfirm")).click();
-            System.out.println("BƯỚC 10: Đã nhập OTP và nhấn 'Thanh toán'.");
+            System.out.println("BƯỚC 11.2: Đã nhập OTP và nhấn 'Thanh toán'.");
 
-            // ----- Bước 11: Xác nhận đơn đặt hàng thành công -----
+            // ----- Bước 12: Xác nhận đơn đặt hàng thành công -----
             wait.until(ExpectedConditions.urlContains("/order"));
-            System.out.println("BƯỚC 11: Đã quay về trang Quản lý đơn hàng.");
+            System.out.println("BƯỚC 12: Đã quay về trang Quản lý đơn hàng.");
 
             toastElement = wait.until(
                     ExpectedConditions.visibilityOfElementLocated(By.className("notify-toast")));
