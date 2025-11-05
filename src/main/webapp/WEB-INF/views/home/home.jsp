@@ -551,6 +551,19 @@
 
           <!-- Scripts (Bootstrap + validator + auth_form) -->
           <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+
+          <c:if test="${not empty sessionScope.toastMsg}">
+            <script>
+              toast({
+                title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Cảnh báo'}",
+                message: "${sessionScope.toastMsg}",
+                type: "${sessionScope.toastType}",
+                duration: 3000
+              });
+            </script>
+            <c:remove var="toastMsg" scope="session" />
+            <c:remove var="toastType" scope="session" />
+          </c:if>
         </body>
 
         </html>

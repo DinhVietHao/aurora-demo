@@ -356,8 +356,3 @@ h1 {
 .invalid-feedback {
   color: var(--color-three);
 }
-
-.custom-primary {
-  background-color: #154c3d;
-  color: white;
-}
