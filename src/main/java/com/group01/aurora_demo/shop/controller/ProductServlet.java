@@ -129,7 +129,7 @@ public class ProductServlet extends HttpServlet {
                             return;
                         }
                         String updateMode = "NONE";
-                        boolean isInOrder = productDAO.existsProductInActiveOrders(productId); 
+                        boolean isInOrder = productDAO.existsProductInActiveOrders(productId);
                         boolean isInFlashSale = flashSaleDAO.isProductInCurrentFlashSale(productId,
                                 LocalDateTime.now());
 
