@@ -11,6 +11,7 @@ import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.catalog.model.ProductImage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -1626,4 +1627,81 @@ public class ProductDAO {
         return false;
     }
 
+    public Map<String, Object> getFlashSaleProducts() {
+        Map<String, Object> result = new HashMap<>();
+        List<Map<String, Object>> products = new ArrayList<>();
+        String sql = """
+                SELECT TOP 12
+                    p.ProductID,
+                    p.Title,
+                    p.OriginalPrice,
+                    fsi.FlashPrice,
+                    fsi.FsStock,
+                    fsi.SoldCount,
+                    fs.StartAt,
+                    fs.EndAt,
+                    img.Url AS PrimaryImageUrl,
+                    pub.Name AS PublisherName,
+                    ISNULL(AVG(r.Rating), 0) AS AvgRating,
+                    CAST((fsi.SoldCount * 100.0 / fsi.FsStock) AS INT) AS SoldPercent
+                FROM FlashSales fs
+                JOIN FlashSaleItems fsi ON fs.FlashSaleID = fsi.FlashSaleID
+                JOIN Products p ON fsi.ProductID = p.ProductID
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                LEFT JOIN (
+                    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS Rating
+                    FROM OrderItems oi
+                    JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                    GROUP BY oi.ProductID
+                ) r ON r.ProductID = p.ProductID
+                WHERE fs.[Status] = 'ACTIVE'
+                  AND fsi.ApprovalStatus = 'APPROVED'
+                  AND p.[Status] = 'ACTIVE'
+                  AND fs.EndAt > SYSUTCDATETIME()
+                ORDER BY fsi.SoldCount DESC, p.SoldCount DESC
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            Timestamp endAt = null;
+            while (rs.next()) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("productId", rs.getLong("ProductID"));
+                item.put("title", rs.getString("Title"));
+                item.put("originalPrice", rs.getDouble("OriginalPrice"));
+                item.put("flashPrice", rs.getDouble("FlashPrice"));
+                item.put("fsStock", rs.getInt("FsStock"));
+                item.put("soldCount", rs.getLong("SoldCount"));
+                item.put("startAt", rs.getTimestamp("StartAt"));
+                item.put("endAt", rs.getTimestamp("EndAt"));
+                item.put("imageUrl", rs.getString("PrimaryImageUrl"));
+                item.put("publisherName", rs.getString("PublisherName"));
+                item.put("avgRating", rs.getDouble("AvgRating"));
+                item.put("soldPercent", rs.getInt("SoldPercent"));
+
+                double discountPercent = ((rs.getDouble("OriginalPrice") - rs.getDouble("FlashPrice"))
+                        / rs.getDouble("OriginalPrice")) * 100;
+                item.put("discountPercent", (int) discountPercent);
+
+                int remaining = rs.getInt("FsStock") - (int) rs.getLong("SoldCount");
+                item.put("remaining", Math.max(0, remaining));
+                products.add(item);
+
+                if (endAt == null) {
+                    endAt = rs.getTimestamp("EndAt");
+                }
+            }
+
+            result.put("products", products);
+            result.put("flashSaleEndAt", endAt);
+            result.put("currentServerTime", System.currentTimeMillis());
+        } catch (SQLException e) {
+            System.err.println("Error in getActiveFlashSaleProductsWithTime: " + e.getMessage());
+            result.put("products", new ArrayList<>());
+            result.put("flashSaleEndAt", null);
+            result.put("currentServerTime", System.currentTimeMillis());
+        }
+        return result;
+    }
 }

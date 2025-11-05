@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/home")
 public class HomeServlet extends NotificationServlet {
@@ -123,8 +124,13 @@ public class HomeServlet extends NotificationServlet {
 
             List<Product> latestProducts = productDAO.getLatestProducts(36);
 
-            request.setAttribute("suggestedProducts", suggestedProducts);
+            Map<String, Object> flashSaleData = productDAO.getFlashSaleProducts();
+
             request.setAttribute("latestProducts", latestProducts);
+            request.setAttribute("suggestedProducts", suggestedProducts);
+            request.setAttribute("flashSaleProducts", flashSaleData.get("products"));
+            request.setAttribute("flashSaleEndAt", flashSaleData.get("flashSaleEndAt"));
+            request.setAttribute("currentServerTime", flashSaleData.get("currentServerTime"));
             request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleHome\" function: " + e.getMessage());
