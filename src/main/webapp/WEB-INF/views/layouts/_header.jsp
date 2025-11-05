@@ -49,7 +49,9 @@
                                                 <button class="header-user dropdown-toggle" type="button"
                                                     data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="bi bi-person-circle me-1"></i>
-                                                    <c:out value="${sessionScope.AUTH_USER.fullName}" />
+                                                    <span id="headerFullName">
+                                                        <c:out value="${sessionScope.AUTH_USER.fullName}" />
+                                                    </span>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông

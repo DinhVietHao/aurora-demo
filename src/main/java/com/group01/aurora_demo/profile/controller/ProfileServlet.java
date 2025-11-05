@@ -29,7 +29,6 @@ public class ProfileServlet extends HttpServlet {
 
     private UserDAO userDAO = new UserDAO();
     private EmailService emailService = new EmailService();
-    private NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -86,6 +85,10 @@ public class ProfileServlet extends HttpServlet {
 
                 case "changeEmail":
                     handleChangeEmail(request, response, json, out, user, session);
+                    break;
+
+                case "updateFullName":
+                    handleUpdateFullName(request, response, session, out, json, user);
                     break;
 
                 default:
@@ -507,22 +510,44 @@ public class ProfileServlet extends HttpServlet {
         }
     }
 
-    private String formatTimeAgo(Timestamp createdAt) {
-        if (createdAt == null)
-            return "";
+    private void handleUpdateFullName(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+            PrintWriter out, JSONObject json, User user) {
+        String message = "";
+        boolean flag = true;
+        try {
+            String fullName = request.getParameter("fullName");
+            if (fullName == null)
+                fullName = "";
+            fullName = fullName.trim();
 
-        LocalDateTime created = createdAt.toLocalDateTime();
-        LocalDateTime now = LocalDateTime.now();
-        long minutes = ChronoUnit.MINUTES.between(created, now);
+            if (fullName.isEmpty()) {
+                flag = false;
+                message = "Họ tên không được để trống.";
+            }
 
-        if (minutes < 1)
-            return "vừa xong";
-        if (minutes < 60)
-            return minutes + " phút trước";
-        if (minutes < 1440)
-            return (minutes / 60) + " giờ trước";
-        if (minutes < 10080)
-            return (minutes / 1440) + " ngày trước";
-        return (minutes / 10080) + " tuần trước";
+            if (flag && fullName.length() > 150) {
+                flag = false;
+                message = "Họ tên quá dài (tối đa 150 ký tự).";
+            }
+
+            if (flag && userDAO.updateFullName(user.getId(), fullName)) {
+                user.setFullName(fullName);
+                json.put("fullName", fullName);
+                session.setAttribute("AUTH_USER", user);
+                session.setMaxInactiveInterval(60 * 60 * 2);
+                message = "Cập nhật họ tên thành công.";
+            } else if (flag) {
+                flag = false;
+                message = "Cập nhật họ tên thất bại.";
+            }
+        } catch (Exception e) {
+            System.out.println("[ERROR] ProfileServlet#handleUpdateFullName: " + e.getMessage());
+            flag = false;
+            message = "Lỗi hệ thống khi cập nhật họ tên.";
+        } finally {
+            json.put("success", flag);
+            json.put("message", message);
+            out.print(json.toString());
+        }
     }
 }

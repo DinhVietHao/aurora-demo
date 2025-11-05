@@ -44,11 +44,6 @@
                             <!-- sidebar profile -->
                             <ul class="nav mb-3 " id="profileTabs" role="tablist">
                                 <li class="nav-item mb-2">
-                                    <a class="nav-link text-dark" href="">
-                                        <i class="bi bi-bell me-2"></i> Thông báo
-                                    </a>
-                                </li>
-                                <li class="nav-item mb-2">
                                     <a class="nav-link text-dark " href="/profile">
                                         <i class="bi bi-person me-2"></i> Hồ sơ
                                     </a>
