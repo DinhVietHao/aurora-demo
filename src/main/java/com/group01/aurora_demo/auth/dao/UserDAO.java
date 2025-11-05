@@ -491,4 +491,17 @@ public class UserDAO {
         }
         return false;
     }
+
+    public boolean updateFullName(long userId, String fullName) {
+        String sql = "UPDATE Users SET FullName = ? WHERE UserID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, fullName);
+            ps.setLong(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ERROR] UserDAO#updateFullName: " + e.getMessage());
+            return false;
+        }
+    }
 }
