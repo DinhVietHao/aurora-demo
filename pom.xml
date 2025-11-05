@@ -104,6 +104,38 @@
       <artifactId>json</artifactId>
       <version>20240303</version>
     </dependency>
+
+    <!-- Selenium WebDriver for browser automation -->
+    <dependency>
+      <groupId>org.seleniumhq.selenium</groupId>
+      <artifactId>selenium-java</artifactId>
+      <version>4.21.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JUnit 5 API for writing test cases -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JUnit 5 Engine for running tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.10.2</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- WebDriverManager for automatic browser driver management -->
+    <dependency>
+      <groupId>io.github.bonigarcia</groupId>
+      <artifactId>webdrivermanager</artifactId>
+      <version>5.8.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
