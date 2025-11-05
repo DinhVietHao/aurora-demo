@@ -133,7 +133,7 @@ public class OrderShopDAO {
                 sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
             } else if (status.equalsIgnoreCase("returned")) {
                 sql.append(
-                        " AND (os.Status = 'RETURN_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURN_REJECTED') ");
+                        " AND (os.Status = 'RETURNED_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURNED_REJECTED') ");
             } else {
                 sql.append(" AND os.Status = ? ");
             }
@@ -1132,7 +1132,8 @@ public class OrderShopDAO {
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopID");
-                double finalAmount = rs.getDouble("FinalAmount");
+                long paymentId = rs.getLong("PaymentID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
                 Long voucherId = rs.getLong("VoucherID");
                 if (rs.wasNull())
                     voucherId = null;
@@ -1160,7 +1161,7 @@ public class OrderShopDAO {
 
                     // ✅ 4. Hoàn tiền lại cho khách (nếu có PaymentDAO)
                     PaymentDAO paymentDAO = new PaymentDAO();
-                    boolean refunded = paymentDAO.partialRefund(conn, orderShopId, finalAmount);
+                    boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
                     if (!refunded) {
                         System.err.println("Refund failed for OrderShopID=" + orderShopId);
                         conn.rollback();
