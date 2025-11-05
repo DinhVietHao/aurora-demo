@@ -773,7 +773,7 @@ public class OrderShopDAO {
     }
 
     public int countOrderShopByShop(Long shopId) {
-        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ?";
+        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ? AND [Status] NOT IN ('PENDING_PAYMENT')";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
