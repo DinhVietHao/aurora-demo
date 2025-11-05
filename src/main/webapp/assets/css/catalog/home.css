@@ -1114,3 +1114,97 @@
 .slide-in-right {
   animation: slideInRight 0.3s ease-out both;
 }
+
+/* Flash Sale Product Card */
+.product-card-link {
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.flash-sale-card {
+  border: 1px solid #fff3cd;
+  background: #fffaf0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.flash-sale-card:hover {
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+  transform: translateY(-4px);
+}
+
+.flash-sale-card .product-img {
+  position: relative;
+  overflow: hidden;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flash-sale-card .product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.flash-sale-card:hover .product-img img {
+  transform: scale(1.05);
+}
+
+.flash-sale-card .discount {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+  color: white;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  top: 8px;
+  right: 8px;
+  font-size: 0.8rem;
+  position: absolute;
+  z-index: 10;
+}
+
+.flash-sale-card .progress {
+  background-color: #e9ecef;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.flash-sale-card .progress-bar {
+  background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0 !important;
+  }
+}
+
+.flash-sale-card .badge.bg-danger {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .flash-sale-card .product-img {
+    height: 100px;
+  }
+  
+  .flash-sale-card .title {
+    font-size: 0.75rem;
+  }
+}
