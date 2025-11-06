@@ -154,31 +154,27 @@
 
                     <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
-
                     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                     <script>
                         const ctxChart = document.getElementById("revenueChart");
                         const noDataMsg = document.getElementById("noDataMessage");
 
-                        let labels = [];
-                        let data = [];
+                        // ✅ Lấy dữ liệu JSON từ server (EL)
+                        // const labels = ${ revenueLabelsJson != null ? revenueLabelsJson : "[]"};
+                        // const data = ${ revenueValuesJson != null ? revenueValuesJson : "[]"};
 
-                        try {
-                            labels = JSON.parse('${fn:escapeXml(revenueLabelsJson)}');
-                            data = JSON.parse('${fn:escapeXml(revenueValuesJson)}');
-                        } catch (e) {
-                            console.error("Lỗi parse dữ liệu biểu đồ:", e);
-                            labels = [];
-                            data = [];
-                        }
+                        console.log("Labels:", labels);
+                        console.log("Data:", data);
 
                         if (ctxChart && labels.length > 0 && data.length > 0) {
-                            // Có dữ liệu → hiển thị biểu đồ
                             ctxChart.style.display = "block";
                             noDataMsg.style.display = "none";
 
+                            // ✅ Nếu chỉ có 1 ngày → dùng biểu đồ cột, nhiều ngày → biểu đồ đường
+                            const chartType = data.length === 1 ? 'bar' : 'line';
+
                             new Chart(ctxChart, {
-                                type: 'line',
+                                type: chartType,
                                 data: {
                                     labels: labels,
                                     datasets: [{
@@ -186,7 +182,9 @@
                                         data: data,
                                         borderWidth: 2,
                                         borderColor: '#164e3f',
-                                        backgroundColor: 'rgba(22, 78, 63, 0.15)',
+                                        backgroundColor: chartType === 'bar'
+                                            ? 'rgba(22, 78, 63, 0.5)'
+                                            : 'rgba(22, 78, 63, 0.15)',
                                         fill: true,
                                         tension: 0.3,
                                         pointRadius: 4,
@@ -217,11 +215,11 @@
                                 }
                             });
                         } else {
-                            // Không có dữ liệu → hiển thị thông báo
                             ctxChart.style.display = "none";
                             noDataMsg.style.display = "block";
                         }
                     </script>
+
                 </body>
 
                 </html>

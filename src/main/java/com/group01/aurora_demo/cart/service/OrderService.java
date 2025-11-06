@@ -96,7 +96,7 @@ public class OrderService {
             payment.setAmount(summary.getFinalAmount());
             String transactionRef = "SYS-" + System.currentTimeMillis() + "-" + user.getUserID();
             payment.setTransactionRef(transactionRef);
-            payment.setStatus("PENDING");
+            payment.setStatus("PENDING_PAYMENT");
             long paymentId = this.paymentDAO.createPayment(conn, payment);
             if (paymentId == -1) {
                 conn.rollback();

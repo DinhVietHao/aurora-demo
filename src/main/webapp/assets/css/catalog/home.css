@@ -432,7 +432,7 @@
   box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.2s;
-  min-height: 370px;
+  min-height: 400px;
 }
 
 .product .product-card:hover {

@@ -197,18 +197,17 @@ public class OrderServlet extends NotificationServlet {
 
                     session.setAttribute("toastType", "success");
                     session.setAttribute("toastMsg",
-                            "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
+                            "Đơn hàng của bạn đã được tạo thành công");
                     resp.sendRedirect(req.getContextPath() + "/order?status=pending");
                     return;
                 }
-
                 boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPaymentByPaymentId(paymentId);
                 if (!rollbackSuccess) {
                     session.setAttribute("toastType", "error");
                     session.setAttribute("toastMsg", "Thanh toán không thành công. Có lỗi khi hoàn trả đơn.");
                 } else {
                     session.setAttribute("toastType", "error");
-                    session.setAttribute("toastMsg", "Thanh toán không thành công.");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công!");
                 }
                 resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
 
@@ -285,7 +284,6 @@ public class OrderServlet extends NotificationServlet {
                             systemVoucherShip,
                             shopVouchers);
                     if ("success".equalsIgnoreCase(result.getType())) {
-                        System.out.println("Check FinalAmount= " + result.getFinalAmount());
                         String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getTransactionRef(),
                                 result.getFinalAmount());
 
@@ -313,6 +311,29 @@ public class OrderServlet extends NotificationServlet {
                 out.print(json.toString());
                 break;
 
+            }
+            case "/repayment": {
+                try {
+                    Long paymentId = Long.parseLong(req.getParameter("paymentId"));
+                    Payment payment = paymentDAO.getPaymentById(paymentId);
+                    if (payment == null || !"PENDING_PAYMENT".equals(payment.getStatus())) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không thể thanh toán lại đơn hàng này!");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        return;
+                    }
+
+                    String paymentUrl = VNPayService.getPaymentUrl(req, resp, payment.getTransactionRef(),
+                            payment.getAmount());
+                    resp.sendRedirect(paymentUrl);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Lỗi hệ thống khi thanh toán lại!");
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                }
+                break;
             }
             case "/cancel": {
                 Connection conn = null;
