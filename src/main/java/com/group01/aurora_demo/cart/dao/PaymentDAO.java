@@ -70,6 +70,32 @@ public class PaymentDAO {
         return null;
     }
 
+    public Payment getPaymentById(long paymentId) {
+        String sql = "SELECT PaymentID, Amount, RefundedAmount, TransactionRef, Status FROM Payments WHERE PaymentID = ?";
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, paymentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Payment payment = new Payment();
+                    payment.setPaymentId(rs.getLong("PaymentID"));
+                    payment.setAmount(rs.getDouble("Amount"));
+                    payment.setRefundedAmount(rs.getDouble("RefundedAmount"));
+                    payment.setTransactionRef(rs.getString("TransactionRef"));
+                    payment.setStatus(rs.getString("Status"));
+                    return payment;
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean partialRefund(Connection conn, long paymentId, double refundAmount) throws SQLException {
         Payment payment = getPaymentById(conn, paymentId);
         if (payment == null)
@@ -78,9 +104,6 @@ public class PaymentDAO {
             return false;
 
         double newRefunded = payment.getRefundedAmount() + refundAmount;
-
-        System.out.println(">>>>>>>>>>>>>>Check newRefunded" + newRefunded);
-        System.out.println(">>>>>>>>>>>>>>Check getRefundedAmount" + payment.getRefundedAmount());
         if (newRefunded > payment.getAmount()) {
             return false;
         }

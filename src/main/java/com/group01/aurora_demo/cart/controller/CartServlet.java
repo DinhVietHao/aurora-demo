@@ -42,6 +42,8 @@ public class CartServlet extends NotificationServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
+            session.setAttribute("toastType", "warning");
+            session.setAttribute("toastMsg", "Vui lòng đăng nhập trước khi đặt hàng.");
             resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }

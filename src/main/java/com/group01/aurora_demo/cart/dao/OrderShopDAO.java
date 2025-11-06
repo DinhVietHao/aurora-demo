@@ -30,12 +30,14 @@ public class OrderShopDAO {
     private OrderItemDAO orderItemDAO;
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
+    private PaymentDAO paymentDAO;
 
     public OrderShopDAO() {
         this.voucherDAO = new VoucherDAO();
         this.orderItemDAO = new OrderItemDAO();
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
+        this.paymentDAO = new PaymentDAO();
 
     }
 
@@ -105,6 +107,7 @@ public class OrderShopDAO {
         StringBuilder sql = new StringBuilder("""
                 SELECT
                     os.OrderShopID,
+                    os.PaymentID,
                     s.Name AS ShopName,
                     s.ShopId,
                     os.Status AS ShopStatus,
@@ -130,7 +133,7 @@ public class OrderShopDAO {
                 sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
             } else if (status.equalsIgnoreCase("returned")) {
                 sql.append(
-                        " AND (os.Status = 'RETURN_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURN_REJECTED') ");
+                        " AND (os.Status = 'RETURNED_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURNED_REJECTED') ");
             } else {
                 sql.append(" AND os.Status = ? ");
             }
@@ -149,6 +152,7 @@ public class OrderShopDAO {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
                     orderShop.setShopName(rs.getString("ShopName"));
                     orderShop.setShopId(rs.getLong("ShopId"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
@@ -190,9 +194,9 @@ public class OrderShopDAO {
                         VoucherShopID, VoucherDiscountID, VoucherShipID,
                         Subtotal, ShopDiscount, SystemDiscount,
                         ShippingFee, SystemShippingDiscount, FinalAmount,
-                        Status, CreatedAt
+                        Status, CreatedAt, UpdatedAt
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -314,6 +318,39 @@ public class OrderShopDAO {
             e.printStackTrace();
             return 0;
         }
+    }
+
+    public int autoCancelPendingPayments() {
+        String sql = """
+                    SELECT PaymentID, TransactionRef
+                    FROM Payments
+                    WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1;
+                """;
+        int cancelledCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                long paymentId = rs.getLong("PaymentID");
+                String transactionRef = rs.getString("TransactionRef");
+
+                boolean rolledBack = rollbackFailedPaymentByPaymentId(paymentId);
+
+                if (rolledBack) {
+                    this.paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
+                    cancelledCount++;
+                    System.out.println("Tự động hủy Payment #" + paymentId + " do quá hạn thanh toán.");
+                } else {
+                    System.err.println("Không thể rollback Payment #" + paymentId);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return cancelledCount;
     }
 
     public boolean rollbackFailedPaymentByPaymentId(long paymentId) {
@@ -730,7 +767,7 @@ public class OrderShopDAO {
     }
 
     public int countOrderShopByShop(Long shopId) {
-        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ?";
+        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ? AND [Status] NOT IN ('PENDING_PAYMENT')";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
@@ -858,39 +895,60 @@ public class OrderShopDAO {
 
     public boolean updateOrderShopStatusByBR(long orderShopId, String newStatus) {
         String selectSql = """
-                SELECT
-                    os.VoucherShopId,
-                    os.VoucherDiscountId,
-                    os.VoucherShipId,
-                    os.FinalAmount
-                FROM OrderShops os
-                WHERE os.OrderShopId = ?
+                    SELECT
+                        os.VoucherShopId,
+                        os.VoucherDiscountId,
+                        os.VoucherShipId,
+                        os.FinalAmount,
+                        os.PaymentID
+                    FROM OrderShops os
+                    WHERE os.OrderShopId = ?
                 """;
 
         String updateOrderSql = """
-                UPDATE OrderShops
-                SET Status = ?,
-                    UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
-                WHERE OrderShopId = ?
+                    UPDATE OrderShops
+                    SET Status = ?,
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopId = ?
                 """;
 
-        String restoreStockSql = """
-                UPDATE p
-                SET p.Quantity = p.Quantity + oi.Quantity,
-                    p.Status = CASE
-                                   WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
-                                        AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
-                                   ELSE p.Status
-                               END
-                FROM Products p
-                JOIN OrderItems oi ON p.ProductID = oi.ProductID
-                WHERE oi.OrderShopId = ?
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        // 🔹 Kiểm tra sản phẩm có trong Flash Sale đang ACTIVE hay không
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        // 🔹 Cộng lại vào Flash Sale (nếu còn hoạt động)
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        // 🔹 Cộng lại vào Products (nếu Flash Sale đã kết thúc hoặc không có)
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
                 """;
 
         String restoreVoucherSql = """
-                UPDATE Vouchers
-                SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
-                WHERE VoucherID = ?
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
                 """;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -898,52 +956,104 @@ public class OrderShopDAO {
 
             conn.setAutoCommit(false);
 
-            // 🔹 Lấy thông tin voucher (nếu có)
+            // 🔹 1. Lấy thông tin đơn hàng
             psSelect.setLong(1, orderShopId);
             ResultSet rs = psSelect.executeQuery();
 
             Long voucherShopId = null;
             Long voucherDiscountId = null;
             Long voucherShipId = null;
+            Long paymentId = null;
             double shopFinalAmount = 0;
 
             if (rs.next()) {
                 voucherShopId = rs.getLong("VoucherShopId");
                 voucherDiscountId = rs.getLong("VoucherDiscountId");
                 voucherShipId = rs.getLong("VoucherShipId");
+                paymentId = rs.getLong("PaymentID");
                 shopFinalAmount = rs.getDouble("FinalAmount");
+            } else {
+                System.err.println("⚠️ Không tìm thấy đơn hàng #" + orderShopId);
+                return false;
             }
 
-            // 🔹 Cập nhật trạng thái đơn hàng
+            // 🔹 2. Cập nhật trạng thái đơn
             try (PreparedStatement psUpdateOrder = conn.prepareStatement(updateOrderSql)) {
                 psUpdateOrder.setString(1, newStatus);
                 psUpdateOrder.setLong(2, orderShopId);
                 psUpdateOrder.executeUpdate();
             }
 
-            // 🔹 Hoàn lại hàng tồn kho
-            try (PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
-                psRestoreStock.setLong(1, orderShopId);
-                psRestoreStock.executeUpdate();
+            // 🔹 3. Hoàn lại tồn kho theo logic Flash Sale
+            try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                psItems.setLong(1, orderShopId);
+
+                try (ResultSet rsItems = psItems.executeQuery()) {
+                    while (rsItems.next()) {
+                        long productId = rsItems.getLong("ProductID");
+                        int quantity = rsItems.getInt("Quantity");
+
+                        try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                            psCheckFS.setLong(1, productId);
+
+                            try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                if (rsFS.next()) {
+                                    // 🔸 Flash Sale ACTIVE → hoàn về FlashSaleItems
+                                    long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                    try (PreparedStatement psRestoreFS = conn
+                                            .prepareStatement(restoreFlashSaleStockSql)) {
+                                        psRestoreFS.setInt(1, quantity);
+                                        psRestoreFS.setLong(2, flashSaleItemId);
+                                        psRestoreFS.executeUpdate();
+                                    }
+
+                                    System.out.println("♻️ Hoàn " + quantity + " SP #" + productId
+                                            + " về FlashSaleItemID=" + flashSaleItemId);
+                                } else {
+                                    // 🔸 Flash Sale không ACTIVE → hoàn về Products
+                                    try (PreparedStatement psRestoreP = conn.prepareStatement(restoreProductStockSql)) {
+                                        psRestoreP.setInt(1, quantity);
+                                        psRestoreP.setInt(2, quantity);
+                                        psRestoreP.setLong(3, productId);
+                                        psRestoreP.executeUpdate();
+                                    }
+
+                                    System.out.println("🔙 Hoàn " + quantity + " SP #" + productId + " về kho thường.");
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            // 🔹 Hoàn lại voucher (nếu có)
+            // 🔹 4. Hoàn lại voucher (nếu có)
             try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
                 if (voucherShopId != null && voucherShopId > 0) {
                     psRestoreVoucher.setLong(1, voucherShopId);
                     psRestoreVoucher.executeUpdate();
                 }
+                if (voucherDiscountId != null && voucherDiscountId > 0) {
+                    psRestoreVoucher.setLong(1, voucherDiscountId);
+                    psRestoreVoucher.executeUpdate();
+                }
+                if (voucherShipId != null && voucherShipId > 0) {
+                    psRestoreVoucher.setLong(1, voucherShipId);
+                    psRestoreVoucher.executeUpdate();
+                }
             }
 
+            // 🔹 5. Hoàn tiền
             PaymentDAO paymentDAO = new PaymentDAO();
-            boolean refunded = paymentDAO.partialRefund(conn, orderShopId,
-                    shopFinalAmount);
+            boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
             if (!refunded) {
                 conn.rollback();
+                System.err.println("⚠️ Refund failed for OrderShopID=" + orderShopId);
                 return false;
             }
 
             conn.commit();
+            System.out.println("✅ Cập nhật đơn #" + orderShopId + " sang trạng thái " + newStatus + " thành công!");
             return true;
 
         } catch (SQLException e) {
@@ -954,67 +1064,119 @@ public class OrderShopDAO {
 
     public int cancelExpiredOrders() {
         String selectSql = """
-                SELECT os.OrderShopId, os.VoucherShopID, os.FinalAmount
-                FROM OrderShops os
-                WHERE os.Status = 'PENDING'
-                AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
-                        """;
-
-        String cancelOrderSql = """
-                UPDATE OrderShops
-                SET Status = 'CANCELLED',
-                    UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
-                    CancelReason = N'Hủy do quá hạn xác nhận đơn.'
-                WHERE OrderShopId = ?
+                    SELECT os.OrderShopId, os.PaymentID, os.VoucherShopID, os.FinalAmount
+                    FROM OrderShops os
+                    WHERE os.Status = 'PENDING'
+                    AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
                 """;
 
-        String restoreStockSql = """
-                UPDATE p
-                SET p.Quantity = p.Quantity + oi.Quantity,
-                    p.Status = CASE
-                                   WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
-                                        AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
-                                   ELSE p.Status
-                               END
-                FROM Products p
-                JOIN OrderItems oi ON p.ProductID = oi.ProductID
-                WHERE oi.OrderShopId = ?
+        String cancelOrderSql = """
+                    UPDATE OrderShops
+                    SET Status = 'CANCELLED',
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
+                        CancelReason = N'Hủy do quá hạn xác nhận đơn.'
+                    WHERE OrderShopId = ?
+                """;
+
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
                 """;
 
         String restoreVoucherSql = """
-                UPDATE Vouchers
-                SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
-                WHERE VoucherID = ?
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
                 """;
 
         int cancelledCount = 0;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(selectSql);
-                ResultSet rs = ps.executeQuery()) {
+                PreparedStatement psSelect = conn.prepareStatement(selectSql);
+                ResultSet rs = psSelect.executeQuery()) {
 
             conn.setAutoCommit(false);
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopId");
+                long paymentId = rs.getLong("PaymentID");
                 double shopFinalAmount = rs.getDouble("FinalAmount");
-                Long voucherId = rs.getLong("VoucherID");
+                Long voucherId = rs.getLong("VoucherShopID");
                 if (rs.wasNull())
                     voucherId = null;
 
-                // 🔹 Cập nhật trạng thái đơn
+                // 🔹 1. Hủy đơn hàng
                 try (PreparedStatement psCancel = conn.prepareStatement(cancelOrderSql)) {
                     psCancel.setLong(1, orderShopId);
                     psCancel.executeUpdate();
                 }
 
-                // 🔹 Khôi phục tồn kho
-                try (PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
-                    psRestoreStock.setLong(1, orderShopId);
-                    psRestoreStock.executeUpdate();
+                // 🔹 2. Xử lý từng sản phẩm trong đơn
+                try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                    psItems.setLong(1, orderShopId);
+
+                    try (ResultSet rsItems = psItems.executeQuery()) {
+                        while (rsItems.next()) {
+                            long productId = rsItems.getLong("ProductID");
+                            int quantity = rsItems.getInt("Quantity");
+
+                            // Kiểm tra xem sản phẩm có trong Flash Sale ACTIVE không
+                            try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                                psCheckFS.setLong(1, productId);
+
+                                try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                    if (rsFS.next()) {
+                                        // 🔸 Có Flash Sale ACTIVE → hoàn về FlashSaleItems
+                                        long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                        try (PreparedStatement psRestoreFS = conn
+                                                .prepareStatement(restoreFlashSaleStockSql)) {
+                                            psRestoreFS.setInt(1, quantity);
+                                            psRestoreFS.setLong(2, flashSaleItemId);
+                                            psRestoreFS.executeUpdate();
+                                        }
+                                    } else {
+                                        // 🔸 Không có → hoàn về Products
+                                        try (PreparedStatement psRestoreP = conn
+                                                .prepareStatement(restoreProductStockSql)) {
+                                            psRestoreP.setInt(1, quantity);
+                                            psRestoreP.setInt(2, quantity);
+                                            psRestoreP.setLong(3, productId);
+                                            psRestoreP.executeUpdate();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
-                // 🔹 Hoàn lại voucher (nếu có)
+                // 🔹 3. Hoàn voucher (nếu có)
                 if (voucherId != null && voucherId > 0) {
                     try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
                         psRestoreVoucher.setLong(1, voucherId);
@@ -1022,12 +1184,11 @@ public class OrderShopDAO {
                     }
                 }
 
-                // 🔹 Gọi hoàn tiền (nếu PaymentDAO hỗ trợ theo OrderShopId)
+                // 🔹 4. Hoàn tiền (nếu có Payment)
                 PaymentDAO paymentDAO = new PaymentDAO();
-                boolean refunded = paymentDAO.partialRefund(conn, orderShopId, shopFinalAmount);
-
+                boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
                 if (!refunded) {
-                    System.err.println("Partial refund failed for OrderShopID=" + orderShopId);
+                    System.err.println("⚠️ Partial refund failed for OrderShopID=" + orderShopId);
                 }
 
                 cancelledCount++;
@@ -1044,36 +1205,53 @@ public class OrderShopDAO {
 
     public int autoApproveReturnRequests() {
         String selectSql = """
-                SELECT OrderShopID, VoucherShopID, FinalAmount
-                FROM OrderShops
-                WHERE Status = 'RETURNED_REQUESTED'
-                  AND DATEDIFF(DAY, CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
+                    SELECT OrderShopID, VoucherShopID, FinalAmount, PaymentID
+                    FROM OrderShops
+                    WHERE Status = 'RETURNED_REQUESTED'
+                      AND DATEDIFF(DAY, CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
                 """;
 
         String updateStatusSql = """
-                UPDATE OrderShops
-                SET Status = 'RETURNED',
-                    UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
-                WHERE OrderShopID = ?
+                    UPDATE OrderShops
+                    SET Status = 'RETURNED',
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopID = ?
                 """;
 
-        String restoreStockSql = """
-                UPDATE p
-                SET p.Quantity = p.Quantity + oi.Quantity,
-                    p.Status = CASE
-                                   WHEN (p.Quantity = 0 OR p.Status = 'OUT_OF_STOCK')
-                                        AND (p.Quantity + oi.Quantity) > 0 THEN 'ACTIVE'
-                                   ELSE p.Status
-                               END
-                FROM Products p
-                JOIN OrderItems oi ON p.ProductID = oi.ProductID
-                WHERE oi.OrderShopId = ?
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
                 """;
 
         String restoreVoucherSql = """
-                UPDATE Vouchers
-                SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
-                WHERE VoucherID = ?
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
                 """;
 
         int autoApprovedCount = 0;
@@ -1086,22 +1264,62 @@ public class OrderShopDAO {
 
             while (rs.next()) {
                 long orderShopId = rs.getLong("OrderShopID");
-                double finalAmount = rs.getDouble("FinalAmount");
-                Long voucherId = rs.getLong("VoucherID");
+                long paymentId = rs.getLong("PaymentID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
+                Long voucherId = rs.getLong("VoucherShopID");
                 if (rs.wasNull())
                     voucherId = null;
 
                 try {
-                    // ✅ 1. Cập nhật trạng thái đơn
+                    // ✅ 1. Cập nhật trạng thái đơn hàng
                     try (PreparedStatement psUpdate = conn.prepareStatement(updateStatusSql)) {
                         psUpdate.setLong(1, orderShopId);
                         psUpdate.executeUpdate();
                     }
 
-                    // ✅ 2. Hoàn lại tồn kho
-                    try (PreparedStatement psRestoreStock = conn.prepareStatement(restoreStockSql)) {
-                        psRestoreStock.setLong(1, orderShopId);
-                        psRestoreStock.executeUpdate();
+                    // ✅ 2. Hoàn lại tồn kho (kiểm tra Flash Sale trước)
+                    try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                        psItems.setLong(1, orderShopId);
+
+                        try (ResultSet rsItems = psItems.executeQuery()) {
+                            while (rsItems.next()) {
+                                long productId = rsItems.getLong("ProductID");
+                                int quantity = rsItems.getInt("Quantity");
+
+                                try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                                    psCheckFS.setLong(1, productId);
+
+                                    try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                        if (rsFS.next()) {
+                                            // 🔸 Sản phẩm thuộc Flash Sale ACTIVE → hoàn về FlashSaleItems
+                                            long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                            try (PreparedStatement psRestoreFS = conn
+                                                    .prepareStatement(restoreFlashSaleStockSql)) {
+                                                psRestoreFS.setInt(1, quantity);
+                                                psRestoreFS.setLong(2, flashSaleItemId);
+                                                psRestoreFS.executeUpdate();
+                                            }
+
+                                            System.out.println("♻️ Hoàn " + quantity + " SP #" + productId
+                                                    + " về FlashSaleItemID=" + flashSaleItemId);
+                                        } else {
+                                            // 🔸 Không thuộc Flash Sale hoặc đã END → hoàn về Products
+                                            try (PreparedStatement psRestoreP = conn
+                                                    .prepareStatement(restoreProductStockSql)) {
+                                                psRestoreP.setInt(1, quantity);
+                                                psRestoreP.setInt(2, quantity);
+                                                psRestoreP.setLong(3, productId);
+                                                psRestoreP.executeUpdate();
+                                            }
+
+                                            System.out.println(
+                                                    "🔙 Hoàn " + quantity + " SP #" + productId + " về kho thường.");
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // ✅ 3. Khôi phục voucher (nếu có)
@@ -1112,11 +1330,11 @@ public class OrderShopDAO {
                         }
                     }
 
-                    // ✅ 4. Hoàn tiền lại cho khách (nếu có PaymentDAO)
+                    // ✅ 4. Hoàn tiền lại cho khách
                     PaymentDAO paymentDAO = new PaymentDAO();
-                    boolean refunded = paymentDAO.partialRefund(conn, orderShopId, finalAmount);
+                    boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
                     if (!refunded) {
-                        System.err.println("Refund failed for OrderShopID=" + orderShopId);
+                        System.err.println("⚠️ Refund failed for OrderShopID=" + orderShopId);
                         conn.rollback();
                         continue;
                     }
@@ -1137,5 +1355,4 @@ public class OrderShopDAO {
 
         return autoApprovedCount;
     }
-
 }
