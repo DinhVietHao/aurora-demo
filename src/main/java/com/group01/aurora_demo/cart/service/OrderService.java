@@ -21,7 +21,9 @@ import com.group01.aurora_demo.cart.model.Payment;
 import com.group01.aurora_demo.cart.utils.OrderShopUtils;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
@@ -38,7 +40,7 @@ public class OrderService {
     private VoucherValidator voucherValidator;
     private UserVoucherDAO userVoucherDAO;
     private ProductDAO productDAO;
-    private OrderShopUtils orderShopUtils;
+    private FlashSaleDAO flashSaleDAO;
 
     public OrderService() {
         this.orderShopDAO = new OrderShopDAO();
@@ -50,7 +52,7 @@ public class OrderService {
         this.voucherValidator = new VoucherValidator();
         this.userVoucherDAO = new UserVoucherDAO();
         this.productDAO = new ProductDAO();
-        this.orderShopUtils = new OrderShopUtils();
+        this.flashSaleDAO = new FlashSaleDAO();
     }
 
     public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
@@ -193,17 +195,53 @@ public class OrderService {
                     orderItem.setSubtotal(item.getQuantity() * item.getProduct().getSalePrice());
                     orderItem.setVatRate(0);
 
+                    FlashSaleItem flashItem = flashSaleDAO
+                            .getActiveFlashSaleItemByProduct(item.getProduct().getProductId());
+                    if (flashItem != null) {
+                        orderItem.setFlashSaleItemId(flashItem.getFlashSaleItemID());
+                        int remaining = flashItem.getFsStock() - flashItem.getSoldCount();
+
+                        if (remaining < item.getQuantity()) {
+                            conn.rollback();
+                            return new ServiceResponse("warning", "Hết hàng Flash Sale",
+                                    "Sản phẩm '" + item.getProduct().getTitle() + "' trong Flash Sale đã hết hàng.", "",
+                                    0.0);
+                        }
+
+                        if (flashItem.getPerUserLimit() != null) {
+                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
+                                    flashItem.getFlashSaleItemID());
+                            int remainingUserLimit = flashItem.getPerUserLimit() - purchasedBefore;
+                            if (item.getQuantity() > remainingUserLimit) {
+                                conn.rollback();
+                                return new ServiceResponse("warning", "Vượt giới hạn mua",
+                                        "Bạn chỉ được mua tối đa " + remainingUserLimit +
+                                                " sản phẩm Flash Sale '" + item.getProduct().getTitle()
+                                                + "'.",
+                                        "", 0.0);
+                            }
+                        }
+
+                        if (!flashSaleDAO.sellFsItem(conn, flashItem.getFlashSaleItemID(), item.getQuantity())) {
+                            conn.rollback();
+                            return new ServiceResponse("error", "Không thể cập nhật Flash Sale",
+                                    "Sản phẩm '" + item.getProduct().getTitle() + "' trong Flash Sale đã hết hàng.", "",
+                                    0.0);
+                        }
+                    } else {
+                        if (!productDAO.updateStock(conn, item.getProduct().getProductId(), item.getQuantity())) {
+                            conn.rollback();
+                            return new ServiceResponse("warning", "Sản phẩm hết hàng",
+                                    "Sản phẩm '" + item.getProduct().getTitle() + "' không đủ số lượng.", "", 0.0);
+                        }
+                    }
+
                     if (orderItemDAO.createOrderItem(conn, orderItem) == -1) {
                         conn.rollback();
                         return new ServiceResponse("error", "Lỗi hệ thống",
                                 "Đã xảy ra sự cố. Vui lòng thử lại sau.", "", 0.0);
                     }
 
-                    if (!productDAO.updateStock(conn, item.getProduct().getProductId(), item.getQuantity())) {
-                        conn.rollback();
-                        return new ServiceResponse("warning", "Sản phẩm hết hàng",
-                                "Sản phẩm '" + item.getProduct().getTitle() + "' không đủ số lượng.", "", 0.0);
-                    }
                 }
 
             }

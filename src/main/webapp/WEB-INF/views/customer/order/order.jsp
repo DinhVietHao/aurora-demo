@@ -127,69 +127,84 @@
                                                                             class="button-outline mx-2">
                                                                             Xem
                                                                             shop</a></span>
-                                                                    <div>
-                                                                        <span class="text-color">Trạng thái: </span>
-                                                                        <c:set var="badgeClass"
-                                                                            value="bg-secondary text-light" />
 
-                                                                        <c:choose>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'PENDING_PAYMENT'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-warning text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'PENDING'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-info text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'WAITING_SHIP'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-primary" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'SHIPPING'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-secondary" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'CONFIRM'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-info" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'COMPLETED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-success" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'CANCELLED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-danger" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED_REQUESTED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-warning text-dark" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-success" />
-                                                                            </c:when>
-                                                                            <c:when
-                                                                                test="${entry.value[0].shopStatus == 'RETURNED_REJECTED'}">
-                                                                                <c:set var="badgeClass"
-                                                                                    value="bg-danger" />
-                                                                            </c:when>
-                                                                        </c:choose>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="text-color small me-2">
+                                                                            <small class="text-muted">
+                                                                                <i class="bi bi-calendar3 me-1"></i>
+                                                                                Ngày đặt:
+                                                                                <fmt:formatDate
+                                                                                    value="${entry.value[0].createdAt}"
+                                                                                    pattern="dd-MM-yyyy" />
+                                                                            </small>
+                                                                        </div>
 
-                                                                        <span class="badge ${badgeClass}">
-                                                                            ${entry.value[0].vietnameseStatus}
-                                                                        </span>
+                                                                        <div><span class="text-color">Trạng thái:
+                                                                            </span>
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-secondary text-light" />
+
+                                                                            <c:choose>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'PENDING_PAYMENT'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-warning text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'PENDING'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-info text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'WAITING_SHIP'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-primary" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'SHIPPING'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-secondary" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'CONFIRM'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-info" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'COMPLETED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-success" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'CANCELLED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-danger" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED_REQUESTED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-warning text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-success" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED_REJECTED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-danger" />
+                                                                                </c:when>
+                                                                            </c:choose>
+
+                                                                            <span class="badge ${badgeClass}">
+                                                                                ${entry.value[0].vietnameseStatus}
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
+
                                                                 </div>
+
                                                                 <c:forEach var="orderShop" items="${entry.value}">
                                                                     <a href="/order/detail?id=${orderShop.orderShopId}">
                                                                         <div class="order-card__body">

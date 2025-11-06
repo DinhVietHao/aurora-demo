@@ -12,8 +12,8 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 public class PaymentDAO {
     public long createPayment(Connection conn, Payment payment) throws SQLException {
         String sql = """
-                    INSERT INTO Payments(Amount, TransactionRef, Status)
-                    VALUES (?, ?, ?)
+                    INSERT INTO Payments(Amount, TransactionRef, Status, createdAt, UpdatedAt)
+                    VALUES (?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -32,7 +32,7 @@ public class PaymentDAO {
     }
 
     public boolean updatePaymentStatusById(long paymentId, String newStatus, String transactionNo) {
-        String sql = "UPDATE Payments SET Status = ?, TransactionRef = ?, CreatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE PaymentID = ?";
+        String sql = "UPDATE Payments SET Status = ?, TransactionRef = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE PaymentID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
