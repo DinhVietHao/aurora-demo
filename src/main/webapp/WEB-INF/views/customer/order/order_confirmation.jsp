@@ -51,7 +51,7 @@
                                             style="border:1px solid #eee; border-collapse:collapse; margin-top:16px;">
                                             <tr>
                                                 <td style="padding:16px; font-size:14px; color:#000;">
-                                                    <strong>Mã đơn hàng:</strong> #${orderShops[0].groupOrderCode}<br>
+                                                    <strong>Mã đơn hàng:</strong> #AURORA${orderShops[0].paymentId}<br>
                                                     <strong>Ngày đặt:</strong>
                                                     <fmt:formatDate value="${orderShops[0].createdAt}"
                                                         pattern="dd/MM/yyyy" />

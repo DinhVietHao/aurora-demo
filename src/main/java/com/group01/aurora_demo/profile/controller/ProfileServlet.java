@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
-
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.dao.UserDAO;
 import jakarta.servlet.http.HttpServletResponse;

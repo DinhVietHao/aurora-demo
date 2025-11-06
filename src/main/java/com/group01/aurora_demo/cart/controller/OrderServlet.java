@@ -32,7 +32,9 @@ import com.group01.aurora_demo.cart.service.OrderService;
 import com.group01.aurora_demo.cart.service.VNPayService;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.catalog.controller.NotificationServlet;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.common.service.EmailService;
@@ -62,6 +64,7 @@ public class OrderServlet extends NotificationServlet {
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
     private EmailService emailService;
+    private FlashSaleDAO flashSaleDAO;
 
     public OrderServlet() {
         this.orderService = new OrderService();
@@ -74,6 +77,7 @@ public class OrderServlet extends NotificationServlet {
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
         this.emailService = new EmailService();
+        this.flashSaleDAO = new FlashSaleDAO();
     }
 
     @Override
@@ -204,10 +208,10 @@ public class OrderServlet extends NotificationServlet {
                 boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPaymentByPaymentId(paymentId);
                 if (!rollbackSuccess) {
                     session.setAttribute("toastType", "error");
-                    session.setAttribute("toastMsg", "Thanh toán không thành công. Có lỗi khi hoàn trả đơn.");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công!. Có lỗi khi hoàn trả đơn.");
                 } else {
                     session.setAttribute("toastType", "error");
-                    session.setAttribute("toastMsg", "Thanh toán không thành công!");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công! Đơn hàng của bạn đã bị hủy.");
                 }
                 resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
 
@@ -362,7 +366,11 @@ public class OrderServlet extends NotificationServlet {
 
                     List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShop.getOrderShopId());
                     for (OrderItem item : items) {
-                        productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                        if (item.getFlashSaleItemId() != null) {
+                            flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                        } else {
+                            productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                        }
                     }
 
                     List<OrderShop> activeShop = orderShopDAO.getActiveShopsByPaymentId(conn,
@@ -488,9 +496,38 @@ public class OrderServlet extends NotificationServlet {
                             continue;
                         }
 
-                        if (product.getQuantity() == null || product.getQuantity() <= 0) {
-                            errors.add("Sản phẩm '" + product.getTitle() + "' đã hết hàng.");
-                            continue;
+                        FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(item.getProductId());
+                        if (flashItem != null) {
+                            int remainingStock = flashItem.getFsStock() - flashItem.getSoldCount();
+                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
+                                    flashItem.getFlashSaleItemID());
+
+                            if (flashItem.getPerUserLimit() != null
+                                    && purchasedBefore + item.getQuantity() > flashItem.getPerUserLimit()) {
+                                int limit = flashItem.getPerUserLimit();
+                                int remaining = Math.max(0, limit - purchasedBefore);
+                                if (remaining > 0) {
+                                    errors.add("Sản phẩm '" + product.getTitle()
+                                            + "' trong Flash Sale chỉ còn giới hạn " + remaining
+                                            + " sản phẩm có thể mua.");
+                                } else {
+                                    errors.add("Bạn đã đạt giới hạn mua cho sản phẩm '" + product.getTitle()
+                                            + "' trong Flash Sale.");
+                                }
+                                continue;
+                            }
+
+                            if (remainingStock < item.getQuantity()) {
+                                errors.add("Sản phẩm '" + product.getTitle()
+                                        + "' trong Flash Sale không đủ số lượng để mua lại.");
+                                continue;
+                            }
+                        } else {
+
+                            if (product.getQuantity() == null || product.getQuantity() <= 0) {
+                                errors.add("Sản phẩm '" + product.getTitle() + "' đã hết hàng.");
+                                continue;
+                            }
                         }
 
                         CartItem existingItem = cartItemDAO.getCartItem(user.getId(), item.getProductId());

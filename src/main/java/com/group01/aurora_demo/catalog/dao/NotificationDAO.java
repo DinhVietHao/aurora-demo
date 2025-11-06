@@ -105,14 +105,22 @@ public class NotificationDAO {
                 String link = "#";
                 switch (n.getType()) {
                     case "ORDER_SHIPPING":
+                        link = "/order?status=shipping";
+                        break;
                     case "ORDER_CANCELLED":
+                        link = "/order?status=cancelled";
+                        break;
                     case "ORDER_CONFIRM":
+                        link = "/order?status=pending";
+                        break;
                     case "ORDER_RETURNED":
+                        link = "/order?status=returned";
+                        break;
                     case "ORDER_RETURNED_REJECTED":
-                        link = "/order/shop?orderId=" + n.getReferenceID();
+                        link = "/order?status=returned";
                         break;
                     default:
-                        link = "#";
+                        link = "/order";
                         break;
                 }
                 n.setLink(link);

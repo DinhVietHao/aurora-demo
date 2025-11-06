@@ -49,7 +49,7 @@ public class OrderItemDAO {
     }
 
     public List<OrderItem> getItemsByOrderShopId(Connection conn, Long orderShopId) {
-        String sql = "SELECT ProductID, Quantity FROM OrderItems WHERE OrderShopID = ?";
+        String sql = "SELECT OrderItemID, ProductID, Quantity, FlashSaleItemID FROM OrderItems WHERE OrderShopID = ?";
         List<OrderItem> items = new ArrayList<>();
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -59,8 +59,13 @@ public class OrderItemDAO {
 
                 while (rs.next()) {
                     OrderItem item = new OrderItem();
+                    item.setOrderItemId(rs.getLong("OrderItemID"));
                     item.setProductId(rs.getLong("ProductID"));
                     item.setQuantity(rs.getInt("Quantity"));
+                    long flashSaleId = rs.getLong("FlashSaleItemID");
+                    if (!rs.wasNull()) {
+                        item.setFlashSaleItemId(flashSaleId);
+                    }
                     items.add(item);
                 }
             }
@@ -100,6 +105,7 @@ public class OrderItemDAO {
         String sql = """
                 SELECT
                     os.OrderShopID,
+                    os.PaymentID,
                     s.Name AS ShopName,
                     os.Status AS ShopStatus,
                     os.UpdatedAt,
@@ -134,6 +140,7 @@ public class OrderItemDAO {
                 while (rs.next()) {
                     OrderShopDTO order = new OrderShopDTO();
                     order.setOrderShopId(rs.getLong("OrderShopID"));
+                    order.setPaymentId(rs.getLong("PaymentID"));
                     order.setShopName(rs.getString("ShopName"));
                     order.setShopStatus(rs.getString("ShopStatus"));
                     order.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
