@@ -416,3 +416,98 @@ BEGIN
         );
 END;
 GO
+
+-----------------------------------------------------------
+-- TRIGGER 1️⃣: Khi Flash Sale thay đổi trạng thái
+-----------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_UpdateProductSalePrice_OnFlashSaleStatusChange
+ON FlashSales
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------
+    -- 🔹 Khi Flash Sale bắt đầu → áp dụng giá Flash
+    -------------------------------------------------------
+    UPDATE p
+    SET 
+        p.PreFlashSalePrice = 
+            CASE 
+                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
+                ELSE p.PreFlashSalePrice 
+            END,
+        p.SalePrice = fsi.FlashPrice
+    FROM Products p
+        INNER JOIN FlashSaleItems fsi
+        ON p.ProductID = fsi.ProductID
+            AND fsi.ApprovalStatus = 'APPROVED' -- ✅ chỉ sản phẩm đã duyệt
+        INNER JOIN inserted i
+        ON fsi.FlashSaleID = i.FlashSaleID
+        INNER JOIN deleted d
+        ON i.FlashSaleID = d.FlashSaleID
+    WHERE i.Status = 'ACTIVE'
+        AND d.Status <> 'ACTIVE';
+    -- ✅ chỉ chạy khi thay đổi trạng thái
+
+    -------------------------------------------------------
+    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc
+    -------------------------------------------------------
+    UPDATE p
+    SET 
+        p.SalePrice = 
+            CASE 
+                WHEN p.PreFlashSalePrice IS NOT NULL THEN p.PreFlashSalePrice 
+                ELSE p.SalePrice 
+            END,
+        p.PreFlashSalePrice = NULL
+    FROM Products p
+        INNER JOIN FlashSaleItems fsi
+        ON p.ProductID = fsi.ProductID
+            AND fsi.ApprovalStatus = 'APPROVED'
+        INNER JOIN inserted i
+        ON fsi.FlashSaleID = i.FlashSaleID
+        INNER JOIN deleted d
+        ON i.FlashSaleID = d.FlashSaleID
+    WHERE i.Status = 'ENDED'
+        AND d.Status <> 'ENDED';
+-- ✅ chỉ chạy khi chuyển sang ENDED
+END;
+GO
+
+
+-----------------------------------------------------------
+-- TRIGGER 2️⃣: Khi sản phẩm được duyệt (APPROVED)
+-----------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_ApplyFlashPrice_OnItemApproved
+ON FlashSaleItems
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------
+    -- 🔹 Khi một sản phẩm được duyệt và Flash Sale đang ACTIVE
+    -------------------------------------------------------
+    UPDATE p
+    SET 
+        p.PreFlashSalePrice = 
+            CASE 
+                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
+                ELSE p.PreFlashSalePrice 
+            END,
+        p.SalePrice = i.FlashPrice
+    FROM Products p
+        INNER JOIN inserted i
+        ON p.ProductID = i.ProductID
+        INNER JOIN deleted d
+        ON i.FlashSaleItemID = d.FlashSaleItemID
+        INNER JOIN FlashSales fs
+        ON fs.FlashSaleID = i.FlashSaleID
+    WHERE i.ApprovalStatus = 'APPROVED'
+        AND d.ApprovalStatus <> 'APPROVED'
+        AND fs.Status = 'ACTIVE';
+-- ✅ chỉ áp dụng khi Flash Sale đang hoạt động
+END;
+GO
+

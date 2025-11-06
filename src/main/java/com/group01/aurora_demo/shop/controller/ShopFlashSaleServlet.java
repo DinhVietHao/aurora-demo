@@ -130,7 +130,7 @@ public class ShopFlashSaleServlet extends HttpServlet {
                     List<Double> revenueValues = new ArrayList<>();
 
                     Timestamp start = item.getStartAt();
-                    Timestamp end = "ACTIVE".equalsIgnoreCase(item.getApprovalStatus())
+                    Timestamp end = "APPROVED".equalsIgnoreCase(item.getApprovalStatus())
                             ? new Timestamp(System.currentTimeMillis())
                             : item.getEndAt();
                     if (start == null || end == null) {
@@ -147,6 +147,7 @@ public class ShopFlashSaleServlet extends HttpServlet {
                         revenueLabels.add(entry.getKey().format(formatter));
                         revenueValues.add(entry.getValue());
                     }
+                    System.out.println("hihiihih---------------------------------------" + revenueByDate);
 
                     Gson gson = new Gson();
                     request.setAttribute("revenueLabelsJson", gson.toJson(revenueLabels));
