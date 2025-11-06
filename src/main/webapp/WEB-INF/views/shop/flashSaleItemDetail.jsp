@@ -160,8 +160,8 @@
                         const noDataMsg = document.getElementById("noDataMessage");
 
                         // ✅ Lấy dữ liệu JSON từ server (EL)
-                        const labels = ${ revenueLabelsJson != null ? revenueLabelsJson : "[]"};
-                        const data = ${ revenueValuesJson != null ? revenueValuesJson : "[]"};
+                        // const labels = ${ revenueLabelsJson != null ? revenueLabelsJson : "[]"};
+                        // const data = ${ revenueValuesJson != null ? revenueValuesJson : "[]"};
 
                         console.log("Labels:", labels);
                         console.log("Data:", data);

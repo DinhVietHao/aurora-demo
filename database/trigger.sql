@@ -418,7 +418,7 @@ END;
 GO
 
 -----------------------------------------------------------
--- TRIGGER 1️⃣: Khi Flash Sale thay đổi trạng thái
+-- TRIGGER: Khi Flash Sale thay đổi trạng thái
 -----------------------------------------------------------
 CREATE OR ALTER TRIGGER trg_UpdateProductSalePrice_OnFlashSaleStatusChange
 ON FlashSales
@@ -439,20 +439,36 @@ BEGIN
             END,
         p.SalePrice = fsi.FlashPrice
     FROM Products p
-        INNER JOIN FlashSaleItems fsi
-        ON p.ProductID = fsi.ProductID
-            AND fsi.ApprovalStatus = 'APPROVED' -- ✅ chỉ sản phẩm đã duyệt
-        INNER JOIN inserted i
-        ON fsi.FlashSaleID = i.FlashSaleID
-        INNER JOIN deleted d
-        ON i.FlashSaleID = d.FlashSaleID
-    WHERE i.Status = 'ACTIVE'
+        INNER JOIN FlashSaleItems fsi ON p.ProductID = fsi.ProductID
+            AND fsi.ApprovalStatus = 'APPROVED'
+        INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
+        INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
+    WHERE 
+        i.Status = 'ACTIVE'
         AND d.Status <> 'ACTIVE';
-    -- ✅ chỉ chạy khi thay đổi trạng thái
 
     -------------------------------------------------------
-    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc
+    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc & hoàn hàng tồn
     -------------------------------------------------------
+
+    -- Tạo bảng tạm lưu lại các item sẽ xử lý (tránh mất fsStock do reset sớm)
+    DECLARE @ToRestore TABLE (ProductID BIGINT,
+        FlashSaleItemID BIGINT,
+        fsStock INT);
+
+    INSERT INTO @ToRestore
+        (ProductID, FlashSaleItemID, fsStock)
+    SELECT fsi.ProductID, fsi.FlashSaleItemID, fsi.fsStock
+    FROM FlashSaleItems fsi
+        INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
+        INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
+    WHERE 
+        i.Status = 'ENDED'
+        AND d.Status <> 'ENDED'
+        AND fsi.fsStock > 0
+        AND fsi.ApprovalStatus = 'APPROVED';
+
+    -- ✅ Cập nhật giá & hoàn kho
     UPDATE p
     SET 
         p.SalePrice = 
@@ -460,20 +476,19 @@ BEGIN
                 WHEN p.PreFlashSalePrice IS NOT NULL THEN p.PreFlashSalePrice 
                 ELSE p.SalePrice 
             END,
-        p.PreFlashSalePrice = NULL
+        p.PreFlashSalePrice = NULL,
+        p.Quantity = p.Quantity + t.fsStock
     FROM Products p
-        INNER JOIN FlashSaleItems fsi
-        ON p.ProductID = fsi.ProductID
-            AND fsi.ApprovalStatus = 'APPROVED'
-        INNER JOIN inserted i
-        ON fsi.FlashSaleID = i.FlashSaleID
-        INNER JOIN deleted d
-        ON i.FlashSaleID = d.FlashSaleID
-    WHERE i.Status = 'ENDED'
-        AND d.Status <> 'ENDED';
--- ✅ chỉ chạy khi chuyển sang ENDED
+        INNER JOIN @ToRestore t ON p.ProductID = t.ProductID;
+
+    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0
+    UPDATE fsi
+    SET fsi.fsStock = 0
+    FROM FlashSaleItems fsi
+        INNER JOIN @ToRestore t ON fsi.FlashSaleItemID = t.FlashSaleItemID;
 END;
 GO
+
 
 
 -----------------------------------------------------------
@@ -508,6 +523,62 @@ BEGIN
         AND d.ApprovalStatus <> 'APPROVED'
         AND fs.Status = 'ACTIVE';
 -- ✅ chỉ áp dụng khi Flash Sale đang hoạt động
+END;
+GO
+
+-----------------------------------------------------------
+-- TRIGGER 3️⃣: Theo dõi biến động số lượng fsStock
+-----------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_UpdatePrice_OnStockChange
+ON FlashSaleItems
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------
+    -- 🔹 1. Khi fsStock giảm xuống 0 → khôi phục giá gốc
+    -------------------------------------------------------
+    UPDATE p
+    SET 
+        p.SalePrice = 
+            CASE 
+                WHEN p.PreFlashSalePrice IS NOT NULL THEN p.PreFlashSalePrice 
+                ELSE p.SalePrice 
+            END,
+        p.PreFlashSalePrice = NULL
+    FROM Products p
+        INNER JOIN inserted i ON p.ProductID = i.ProductID
+        INNER JOIN deleted d ON i.FlashSaleItemID = d.FlashSaleItemID
+        INNER JOIN FlashSales fs ON fs.FlashSaleID = i.FlashSaleID
+    WHERE 
+        i.fsStock = 0 -- ✅ mới cập nhật thành 0
+        AND d.fsStock > 0 -- ✅ trước đó vẫn còn hàng
+        AND i.ApprovalStatus = 'APPROVED'
+        AND fs.Status = 'ACTIVE';
+    -- ✅ chỉ khi Flash Sale đang hoạt động
+
+    -------------------------------------------------------
+    -- 🔹 2. Khi fsStock tăng lại > 0 → áp dụng giá flash
+    -------------------------------------------------------
+    UPDATE p
+    SET 
+        p.PreFlashSalePrice = 
+            CASE 
+                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
+                ELSE p.PreFlashSalePrice 
+            END,
+        p.SalePrice = i.FlashPrice
+    FROM Products p
+        INNER JOIN inserted i ON p.ProductID = i.ProductID
+        INNER JOIN deleted d ON i.FlashSaleItemID = d.FlashSaleItemID
+        INNER JOIN FlashSales fs ON fs.FlashSaleID = i.FlashSaleID
+    WHERE 
+        i.fsStock > 0 -- ✅ có hàng trở lại
+        AND d.fsStock = 0 -- ✅ trước đó hết hàng
+        AND i.ApprovalStatus = 'APPROVED'
+        AND fs.Status = 'ACTIVE';
+-- ✅ chỉ khi Flash Sale đang hoạt động
 END;
 GO
 
