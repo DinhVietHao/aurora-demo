@@ -42,16 +42,25 @@ public class ChatbotServlet extends HttpServlet {
                 context.append(d.getTitle()).append(": ").append(d.getContent()).append("\n");
             }
 
-            String prompt = """
-                    Bạn là AuroraBot, trợ lý AI của website Aurora.
-                    Dựa vào thông tin dưới đây, hãy trả lời ngắn gọn, thân thiện, và giúp người dùng mua sách.
+            String prompt = String.format(
+                    """
+                                Bạn là AuroraBot - Trợ lý AI chuyên nghiệp và thân thiện của website bán sách trực tuyến - Aurora.
+                                Thông tin ngữ cảnh từ cơ sở dữ liệu:
+                                %s
 
-                    Thông tin có sẵn:
-                    %s
+                                Quy tắc khi đối thoại với khách hàng:
+                                1. CHỈ SỬ DỤNG thông tin từ phần THÔNG TIN NGỮ CẢNH ở trên
+                                2. Nếu KHÔNG CÓ thông tin chính xác, hãy trả lời: "Hiện tôi chưa có thông tin chính xác về vấn đề này. Bạn có thể tìm kiếm trực tiếp trên website hoặc liên hệ hỗ trợ viên."
+                                3. KHÔNG ĐƯỢC BỊA RA thông tin không có trong ngữ cảnh
+                                4. Đối với câu hỏi về SÁCH, cung cấp đầy đủ: tên, giá, tác giả, thể loại, đánh giá trung bình, đã bán được bao nhiêu quyển
+                                5. Đối với VOUCHER: mã, điều kiện áp dụng, thời hạn, shop áp dụng
+                                6. Giữ câu trả lời TỰ NHIÊN, THÂN THIỆN nhưng CHUYÊN NGHIỆP
+                                7. Ưu tiên thông tin MỚI NHẤT và CÓ ĐỘ LIÊN QUAN CAO
 
-                    Câu hỏi của người dùng:
-                    %s
-                    """.formatted(context.toString(), userMessage);
+                                Câu hỏi của người dùng: %s
+                                TRẢ LỜI (ngắn gọn, hữu ích, dựa trên ngữ cảnh, không bịa thông tin)
+                            """,
+                    context.toString(), userMessage);
 
             String reply = callGeminiAPI(prompt);
 

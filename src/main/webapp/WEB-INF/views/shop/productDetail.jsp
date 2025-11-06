@@ -32,12 +32,10 @@
 
                                 <div class="row g-2 mb-3">
                                     <c:forEach var="img" items="${product.images}" varStatus="s">
-                                        <c:if test="${!s.first}">
-                                            <div class="col-3">
-                                                <img src="http://localhost:8080/assets/images/catalog/products/${img.url}"
-                                                    class="img-fluid border thumbnail" />
-                                            </div>
-                                        </c:if>
+                                        <div class="col-3">
+                                            <img src="http://localhost:8080/assets/images/catalog/products/${img.url}"
+                                                class="img-fluid border thumbnail" />
+                                        </div>
                                     </c:forEach>
                                 </div>
                             </div>

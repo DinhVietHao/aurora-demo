@@ -527,7 +527,6 @@ public class OrderShopDAO {
         String sql = """
                 SELECT
                     os.OrderShopID,
-                    os.GroupOrderCode,
                     os.UserID,
                     os.ShopID,
                     os.Status AS ShopStatus,
@@ -574,7 +573,6 @@ public class OrderShopDAO {
                     if (os == null) {
                         os = new OrderShop();
                         os.setOrderShopId(orderShopId);
-                        // os.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         os.setUserId(rs.getLong("UserID"));
                         os.setShopId(rs.getLong("ShopID"));
                         os.setStatus(rs.getString("ShopStatus"));
@@ -630,7 +628,6 @@ public class OrderShopDAO {
         String sql = """
                 SELECT
                     os.OrderShopID,
-                    os.GroupOrderCode,
                     os.UserID,
                     os.ShopID,
                     os.Address,
@@ -648,10 +645,8 @@ public class OrderShopDAO {
                     os.UpdatedAt,
                     os.CancelReason,
                     os.ReturnReason,
-
                     u.FullName AS CustomerName,
                     u.Email AS CustomerEmail,
-
                     oi.OrderItemID,
                     oi.ProductID,
                     oi.Quantity,
@@ -684,7 +679,6 @@ public class OrderShopDAO {
                     if (orderShop == null) {
                         orderShop = new OrderShop();
                         orderShop.setOrderShopId(rs.getLong("OrderShopID"));
-                        // orderShop.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         orderShop.setUserId(rs.getLong("UserID"));
                         orderShop.setShopId(rs.getLong("ShopID"));
                         orderShop.setAddress(rs.getString("Address"));
@@ -793,7 +787,6 @@ public class OrderShopDAO {
         String sql = """
                 SELECT
                     os.OrderShopID,
-                    os.GroupOrderCode,
                     os.ShopID,
                     os.UserID,
                     os.Status AS ShopStatus,
@@ -849,7 +842,6 @@ public class OrderShopDAO {
                     if (os == null) {
                         os = new OrderShop();
                         os.setOrderShopId(orderShopId);
-                        // os.setGroupOrderCode(rs.getString("GroupOrderCode"));
                         os.setShopId(rs.getLong("ShopID"));
                         os.setUserId(rs.getLong("UserID"));
                         os.setStatus(rs.getString("ShopStatus"));

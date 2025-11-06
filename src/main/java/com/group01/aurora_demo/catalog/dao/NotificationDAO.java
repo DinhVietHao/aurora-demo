@@ -60,6 +60,12 @@ public class NotificationDAO {
                     case "VOUCHER_EXPIRED":
                         link = "/shop/voucher?action=detail&voucherID=" + n.getReferenceID();
                         break;
+                    case "PRODUCT_ACTIVE":
+                        link = "/shop/product?action=detail&productId=" + n.getReferenceID();
+                        break;
+                    case "PRODUCT_REJECTED":
+                        link = "/shop/product?action=detail&productId=" + n.getReferenceID();
+                        break;
                 }
                 n.setLink(link);
                 list.add(n);

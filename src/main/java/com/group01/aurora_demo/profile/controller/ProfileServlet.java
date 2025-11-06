@@ -1,9 +1,6 @@
 package com.group01.aurora_demo.profile.controller;
 
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-
 import java.io.PrintWriter;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -14,7 +11,6 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
-import com.group01.aurora_demo.catalog.dao.NotificationDAO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.dao.UserDAO;
