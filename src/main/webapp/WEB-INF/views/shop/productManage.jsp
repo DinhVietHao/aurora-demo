@@ -1036,14 +1036,9 @@
                                             <div class="col-md-6">
                                                 <label for="isbn" class="form-label">Mã ISBN <span
                                                         class="text-danger">*</span></label>
-                                                <<<<<<< HEAD <input type="text" class="form-control" id="isbnUpdate"
-                                                    name="ISBN"=======<<<<<<< HEAD <input type="text"
-                                                    class="form-control" id="isbnUpdate" name="ISBN"=======<input
-                                                    type="text" class="form-control" id="isbnUpdate" name="isbn">>>>>>>
-                                                    6a13786814f123593cf52f52fe60d13c593aa470
-                                                    >>>>>>> 204ea9a4367b8d6b5e7b7c5bc8e778a3c44f38f4
+                                                <input type="text" class="form-control" id="isbnUpdate" name="ISBN"
                                                     placeholder="VD: 9786042109443" required>
-                                                    <div class="form-text">Mã số của sách.</div>
+                                                <div class="form-text">Mã số của sách.</div>
                                             </div>
                                         </div>
 

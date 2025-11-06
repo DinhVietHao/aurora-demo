@@ -97,16 +97,26 @@ CREATE TABLE Products
     Description NVARCHAR(MAX) NULL,
     OriginalPrice DECIMAL(12,2) NOT NULL,
     SalePrice DECIMAL(12,2) NOT NULL,
+    PreFlashSalePrice DECIMAL(12,2) NULL,
     SoldCount BIGINT NOT NULL DEFAULT 0,
     Quantity INT NOT NULL,
     PublisherID BIGINT NULL,
-    [Status] NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    [Status] NVARCHAR
+    (20) NOT NULL DEFAULT 'ACTIVE',
     PublishedDate DATE NULL,
-    Weight DECIMAL(10,2) NOT NULL,
-    RejectReason NVARCHAR(255) NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_Products_Shop      FOREIGN KEY (ShopID)      REFERENCES Shops(ShopID),
-    CONSTRAINT FK_Products_Publisher FOREIGN KEY (PublisherID) REFERENCES Publishers(PublisherID)
+    Weight DECIMAL
+    (10,2) NOT NULL,
+    RejectReason NVARCHAR
+    (255) NULL,
+    CreatedAt DATETIME2
+    (6) NOT NULL DEFAULT SYSUTCDATETIME
+    (),
+    CONSTRAINT FK_Products_Shop      FOREIGN KEY
+    (ShopID)      REFERENCES Shops
+    (ShopID),
+    CONSTRAINT FK_Products_Publisher FOREIGN KEY
+    (PublisherID) REFERENCES Publishers
+    (PublisherID)
 );
 
 CREATE TABLE ProductCategory
