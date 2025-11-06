@@ -21,8 +21,10 @@
               <div id="carouselExample" class="carousel slide banner-book" data-bs-ride="carousel">
                 <div class="carousel-inner">
                   <div class="carousel-item active">
-                    <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100 banner-image"
-                      alt="..." />
+                    <video class="d-block w-100" autoplay muted loop playsinline>
+                      <source src="${ctx}/assets/videos/banner/banner-video.mp4" type="video/mp4" />
+                      Trình duyệt của bạn không hỗ trợ video.
+                    </video>
                     <div class="container">
                       <div class="row align-items-center banner-content">
                         <div class="col-lg-6 col-md-12 text-white px-4">
