@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,8 +167,7 @@ public class ShopFlashSaleServlet extends HttpServlet {
                 break;
             default:
                 request.setAttribute("errorMessage", "lỗi tải list Flashsale");
-                request.getRequestDispatcher("/WEB-INF/views/shop/flashSaleItemDetail.jsp")
-                        .forward(request, response);
+                request.getRequestDispatcher("/WEB-INF/views/shop/flashSale.jsp").forward(request, response);
                 break;
         }
 

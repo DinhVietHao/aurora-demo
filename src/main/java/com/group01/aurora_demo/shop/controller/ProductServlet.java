@@ -98,10 +98,6 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("errorMessage",
                     "Không thể chuyển trạng thái ngừng bán, vì sản phẩm đang nằm trong flash sale hoặc đang trong đơn hàng");
         }
-        if ("change_status_success_pending".equals(message)) {
-            request.setAttribute("successMessage",
-                    "Chuyển trạng thái đăng bán sản phẩm thành công.");
-        }
         ShopDAO shopDAO = new ShopDAO();
         ProductDAO productDAO = new ProductDAO();
         FlashSaleDAO flashSaleDAO = new FlashSaleDAO();
@@ -134,8 +130,7 @@ public class ProductServlet extends HttpServlet {
                                 LocalDateTime.now());
 
                         if ("PENDING".equalsIgnoreCase(product.getStatus())
-                                || "INACTIVE".equalsIgnoreCase(product.getStatus())
-                                || "REJECTED".equalsIgnoreCase(product.getStatus())) {
+                                || "INACTIVE".equalsIgnoreCase(product.getStatus())) {
                             updateMode = "FULL";
                         } else if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
                             if (!isInFlashSale) {
@@ -389,7 +384,7 @@ public class ProductServlet extends HttpServlet {
                         if (updateStatus) {
                             response.sendRedirect(
                                     request.getContextPath()
-                                            + "/shop/product?action=view&message=change_status_success_pending");
+                                            + "/shop/product?action=view&message=change_status_success");
                         } else {
                             response.sendRedirect(
                                     request.getContextPath()

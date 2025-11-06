@@ -1462,7 +1462,32 @@
   text-align: center;
 }
 
+.flash-sale-card .price {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #d32f2f;
+  margin-bottom: 0.3rem;
+}
+
+.flash-sale-card .price .text-muted {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.flash-sale-card .author {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.3rem;
+}
+
 /* Responsive */
+@media (max-width: 992px) {
+  .flash-sale-card .product-img {
+    height: 120px;
+  }
+}
+
 @media (max-width: 768px) {
   .progress-flame {
     width: 24px;

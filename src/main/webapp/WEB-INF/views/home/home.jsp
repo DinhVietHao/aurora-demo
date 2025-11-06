@@ -240,7 +240,7 @@
                 </div>
 
                 <!-- Carousel -->
-                <div id="flashSaleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+                <div id="flashSaleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="1500">
                   <div class="carousel-inner">
                     <c:set var="chunkSize" value="6" />
                     <c:forEach var="i" begin="0" end="${fn:length(flashSaleProducts) - 1}" step="${chunkSize}"
@@ -482,19 +482,17 @@
 
           <script>
             document.addEventListener("DOMContentLoaded", function () {
+              // Timer countdown
               const timerData = document.getElementById("flashSaleTimerData");
               if (!timerData) return;
 
               const endAtStr = timerData.getAttribute("data-end-at");
               const serverTimestampMs = parseInt(timerData.getAttribute("data-server-time"));
 
-              // Parse ngày giờ kết thúc (UTC)
               const endAtDate = new Date(endAtStr + " UTC");
               const flashSaleEndTime = endAtDate.getTime();
-
-              // Tính time offset: chênh lệch giữa thời gian server và client
               const clientTimeNow = Date.now();
-              const timeOffset = serverTimestampMs - clientTimeNow; // (server - client)
+              const timeOffset = serverTimestampMs - clientTimeNow;
 
               const timerDisplay = {
                 days: document.querySelector('.flash-sale-time-days'),
@@ -504,7 +502,6 @@
               };
 
               function updateCountdown() {
-                // Lấy thời gian hiện tại của client + offset từ server
                 const now = Date.now() + timeOffset;
                 const distance = flashSaleEndTime - now;
 
@@ -515,12 +512,8 @@
                   timerDisplay.minutes.textContent = '00';
                   timerDisplay.seconds.textContent = '00';
 
-                  // Làm mờ Flash Sale section
-                  const flashSaleContainer = document.getElementById('flashSaleContainer');
-                  if (flashSaleContainer) {
-                    flashSaleContainer.style.opacity = '0.5';
-                    flashSaleContainer.style.pointerEvents = 'none';
-                  }
+                  const carousel = document.getElementById('flashSaleCarousel');
+                  if (carousel) carousel.style.opacity = '0.5';
                   return;
                 }
 
@@ -535,33 +528,34 @@
                 timerDisplay.seconds.textContent = String(seconds).padStart(2, '0');
               }
 
-              // Update ngay lập tức lần đầu
               updateCountdown();
-
-              // Update mỗi giây
               setInterval(updateCountdown, 1000);
 
-              // ===== Animation progress bar =====
-              const progressBars = document.querySelectorAll('.flash-sale-card .progress-bar');
-              progressBars.forEach(bar => {
-                const width = bar.style.width;
-                bar.style.width = '0';
-                setTimeout(() => {
-                  bar.style.transition = 'width 0.6s ease-out';
-                  bar.style.width = width;
-                }, 100);
-              });
+              // Progress bar animation
+              setTimeout(() => {
+                const progressBars = document.querySelectorAll('.flash-sale-card .progress-bar');
+                progressBars.forEach(bar => {
+                  const width = bar.style.width;
+                  bar.style.width = '0';
+                  setTimeout(() => {
+                    bar.style.transition = 'width 0.6s ease-out';
+                    bar.style.width = width;
+                  }, 50);
+                });
+              }, 200);
 
-              // ===== Hover effect cho card =====
+              // Hover Effects
               const cards = document.querySelectorAll('.product-card-link');
               cards.forEach(card => {
                 card.addEventListener('mouseenter', function () {
-                  this.querySelector('.product-card').style.transform = 'translateY(-4px)';
-                  this.querySelector('.product-card').style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
+                  const productCard = this.querySelector('.product-card');
+                  productCard.style.transform = 'translateY(-4px)';
+                  productCard.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
                 });
                 card.addEventListener('mouseleave', function () {
-                  this.querySelector('.product-card').style.transform = 'none';
-                  this.querySelector('.product-card').style.boxShadow = 'none';
+                  const productCard = this.querySelector('.product-card');
+                  productCard.style.transform = 'none';
+                  productCard.style.boxShadow = 'none';
                 });
               });
             });
