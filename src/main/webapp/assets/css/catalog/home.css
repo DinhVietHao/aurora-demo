@@ -226,7 +226,17 @@
 
 .banner-book img {
   border-radius: 10px;
-  height: 500px;
+  height: 425px;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: -webkit-optimize-contrast;
+  /* tăng độ nét cho webkit */
+  image-rendering: crisp-edges;
+}
+
+.banner-book video {
+  border-radius: 10px;
+  height: 425px;
   object-fit: cover;
   object-position: center;
   image-rendering: -webkit-optimize-contrast;
@@ -1493,6 +1503,13 @@
     width: 24px;
     height: 24px;
   }
+<<<<<<< HEAD
+
+  .flash-sale-card .title {
+    font-size: 0.75rem;
+  }
+}
+=======
   
   .progress-text {
     font-size: 0.75rem;
@@ -1546,3 +1563,4 @@
   }
 }
 /* --- End Flash Sale ---*/
+>>>>>>> ab448c961d5d8718ed651fa0953b1b3bd3a302e5
