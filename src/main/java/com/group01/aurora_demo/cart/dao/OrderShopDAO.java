@@ -19,6 +19,7 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -31,6 +32,7 @@ public class OrderShopDAO {
     private ProductDAO productDAO;
     private UserVoucherDAO userVoucherDAO;
     private PaymentDAO paymentDAO;
+    private FlashSaleDAO flashSaleDAO;
 
     public OrderShopDAO() {
         this.voucherDAO = new VoucherDAO();
@@ -38,6 +40,7 @@ public class OrderShopDAO {
         this.productDAO = new ProductDAO();
         this.userVoucherDAO = new UserVoucherDAO();
         this.paymentDAO = new PaymentDAO();
+        this.flashSaleDAO = new FlashSaleDAO();
 
     }
 
@@ -46,6 +49,7 @@ public class OrderShopDAO {
         String sql = """
                     SELECT
                         os.OrderShopID,
+                        os.PaymentID,
                         os.Subtotal,
                         os.ShippingFee,
                         os.ShopDiscount,
@@ -76,6 +80,7 @@ public class OrderShopDAO {
                 while (rs.next()) {
                     OrderShopDTO orderShop = new OrderShopDTO();
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
                     orderShop.setCreatedAt(rs.getTimestamp("CreatedAt"));
                     orderShop.setSubtotal(rs.getDouble("Subtotal"));
                     // --- Shop info ---
@@ -111,6 +116,7 @@ public class OrderShopDAO {
                     s.Name AS ShopName,
                     s.ShopId,
                     os.Status AS ShopStatus,
+                    os.CreatedAt,
                     os.UpdatedAt,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
@@ -156,6 +162,7 @@ public class OrderShopDAO {
                     orderShop.setShopName(rs.getString("ShopName"));
                     orderShop.setShopId(rs.getLong("ShopId"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
+                    orderShop.setCreatedAt(rs.getDate("CreatedAt"));
                     orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                     orderShop.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 
@@ -324,7 +331,8 @@ public class OrderShopDAO {
         String sql = """
                     SELECT PaymentID, TransactionRef
                     FROM Payments
-                    WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1;
+                    WHERE Status = 'PENDING_PAYMENT'
+                      AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1;
                 """;
         int cancelledCount = 0;
 
@@ -332,25 +340,104 @@ public class OrderShopDAO {
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
 
+            conn.setAutoCommit(false);
+
             while (rs.next()) {
                 long paymentId = rs.getLong("PaymentID");
                 String transactionRef = rs.getString("TransactionRef");
 
-                boolean rolledBack = rollbackFailedPaymentByPaymentId(paymentId);
+                try {
+                    List<OrderShop> orderShops = getPendingOrdersByPaymentId(conn, paymentId);
 
-                if (rolledBack) {
-                    this.paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
+                    for (OrderShop orderShop : orderShops) {
+
+                        cancelOrderShop(conn, orderShop.getOrderShopId(), "Quá thời hạn thanh toán");
+
+                        if (orderShop.getVoucherShopId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
+                        }
+
+                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShop.getOrderShopId());
+                        for (OrderItem item : items) {
+                            if (item.getFlashSaleItemId() != null) {
+                                flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                            } else {
+                                productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                            }
+                        }
+
+                        List<OrderShop> activeShop = getActiveShopsByPaymentId(conn, paymentId);
+                        if (activeShop.isEmpty()) {
+                            if (orderShop.getVoucherDiscountId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                            }
+                            if (orderShop.getVoucherShipId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                            }
+                        }
+                    }
+
+                    paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
                     cancelledCount++;
                     System.out.println("Tự động hủy Payment #" + paymentId + " do quá hạn thanh toán.");
-                } else {
-                    System.err.println("Không thể rollback Payment #" + paymentId);
+
+                } catch (SQLException ex) {
+                    conn.rollback();
+                    System.err.println("Rollback thất bại cho Payment #" + paymentId);
+                    ex.printStackTrace();
                 }
             }
+
+            conn.commit();
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return cancelledCount;
+    }
+
+    public List<OrderShop> getPendingOrdersByPaymentId(Connection conn, long paymentId) throws SQLException {
+        List<OrderShop> list = new ArrayList<>();
+
+        String sql = """
+                    SELECT
+                        OrderShopID,
+                        UserID,
+                        PaymentID,
+                        VoucherShopID,
+                        VoucherDiscountID,
+                        VoucherShipID,
+                        Status
+                    FROM OrderShops
+                    WHERE PaymentID = ? AND Status = 'PENDING_PAYMENT';
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, paymentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderShop orderShop = new OrderShop();
+                    orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setUserId(rs.getLong("UserID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
+                    orderShop.setVoucherShopId((Long) rs.getObject("VoucherShopID"));
+                    orderShop.setVoucherDiscountId((Long) rs.getObject("VoucherDiscountID"));
+                    orderShop.setVoucherShipId((Long) rs.getObject("VoucherShipID"));
+                    orderShop.setStatus(rs.getString("Status"));
+                    list.add(orderShop);
+                }
+            }
+        }
+
+        return list;
     }
 
     public boolean rollbackFailedPaymentByPaymentId(long paymentId) {
@@ -383,7 +470,12 @@ public class OrderShopDAO {
 
                         List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShopId);
                         for (OrderItem item : items) {
-                            productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                            if (item.getFlashSaleItemId() != null) {
+                                flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                            } else {
+                                productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                            }
+
                         }
 
                         List<OrderShop> activeShop = getActiveShopsByPaymentId(conn,
@@ -1184,9 +1276,10 @@ public class OrderShopDAO {
                     }
                 }
 
-                // 🔹 4. Hoàn tiền (nếu có Payment)
+                // 🔹 Gọi hoàn tiền (nếu PaymentDAO hỗ trợ theo paymentId)
                 PaymentDAO paymentDAO = new PaymentDAO();
                 boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
+
                 if (!refunded) {
                     System.err.println("⚠️ Partial refund failed for OrderShopID=" + orderShopId);
                 }

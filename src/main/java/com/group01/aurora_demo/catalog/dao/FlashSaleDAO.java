@@ -231,4 +231,98 @@ public class FlashSaleDAO {
         return revenueMap;
     }
 
+    public FlashSaleItem getActiveFlashSaleItemByProduct(long productId) {
+        String sql = """
+                    SELECT
+                        fsi.FlashSaleItemID,
+                        fsi.FsStock,
+                        fsi.SoldCount,
+                        fsi.PerUserLimit
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ?
+                      AND fs.Status = 'ACTIVE' AND fsi.FsStock > 0
+                      AND GETDATE() BETWEEN fs.StartAt AND fs.EndAt
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, productId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    FlashSaleItem fsi = new FlashSaleItem();
+                    fsi.setFlashSaleItemID(rs.getLong("FlashSaleItemID"));
+                    fsi.setFsStock(rs.getInt("FsStock"));
+                    fsi.setSoldCount(rs.getInt("SoldCount"));
+                    fsi.setPerUserLimit((Integer) rs.getObject("PerUserLimit"));
+                    return fsi;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public boolean sellFsItem(Connection conn, long flashSaleItemId, int quantity) {
+        String sql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock - ?,
+                        SoldCount = SoldCount + ?
+                    WHERE FlashSaleItemID = ? AND FsStock >= ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setLong(3, flashSaleItemId);
+            ps.setInt(4, quantity);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean restoreFsItem(Connection conn, long flashSaleItemId, int quantity) {
+        String sql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?,
+                        SoldCount = CASE WHEN SoldCount - ? < 0 THEN 0 ELSE SoldCount - ? END
+                    WHERE FlashSaleItemID = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, quantity);
+            ps.setInt(3, quantity);
+            ps.setLong(4, flashSaleItemId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int getUserPurchaseCountInFlashSale(long userId, long flashSaleItemId) throws SQLException {
+        String sql = """
+                    SELECT COALESCE(SUM(oi.Quantity), 0)
+                    FROM OrderItems oi
+                    JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
+                    WHERE os.UserID = ?
+                      AND oi.FlashSaleItemID = ?
+                      AND os.Status NOT IN ('CANCELLED')
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setLong(2, flashSaleItemId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
 }

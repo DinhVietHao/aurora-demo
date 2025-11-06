@@ -1631,35 +1631,35 @@ public class ProductDAO {
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> products = new ArrayList<>();
         String sql = """
-                SELECT TOP 12
-                    p.ProductID,
-                    p.Title,
-                    p.OriginalPrice,
-                    fsi.FlashPrice,
-                    fsi.FsStock,
-                    fsi.SoldCount,
-                    fs.StartAt,
-                    fs.EndAt,
-                    img.Url AS PrimaryImageUrl,
-                    pub.Name AS PublisherName,
-                    ISNULL(AVG(r.Rating), 0) AS AvgRating,
-                    CAST((fsi.SoldCount * 100.0 / fsi.FsStock) AS INT) AS SoldPercent
-                FROM FlashSales fs
-                JOIN FlashSaleItems fsi ON fs.FlashSaleID = fsi.FlashSaleID
-                JOIN Products p ON fsi.ProductID = p.ProductID
-                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                LEFT JOIN (
-                    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS Rating
-                    FROM OrderItems oi
-                    JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
-                    GROUP BY oi.ProductID
-                ) r ON r.ProductID = p.ProductID
-                WHERE fs.[Status] = 'ACTIVE'
-                  AND fsi.ApprovalStatus = 'APPROVED'
-                  AND p.[Status] = 'ACTIVE'
-                  AND fs.EndAt > SYSUTCDATETIME()
-                ORDER BY fsi.SoldCount DESC, p.SoldCount DESC
+                    SELECT
+                        p.ProductID,
+                        p.Title,
+                        p.OriginalPrice,
+                        fsi.FlashPrice,
+                        fsi.FsStock,
+                        fsi.SoldCount,
+                        fs.StartAt,
+                        fs.EndAt,
+                        img.Url AS PrimaryImageUrl,
+                        pub.Name AS PublisherName,
+                        ISNULL(r.Rating, 0) AS AvgRating,
+                        CAST((fsi.SoldCount * 100.0 / NULLIF(fsi.FsStock, 0)) AS INT) AS SoldPercent
+                    FROM FlashSales fs
+                    JOIN FlashSaleItems fsi ON fs.FlashSaleID = fsi.FlashSaleID
+                    JOIN Products p ON fsi.ProductID = p.ProductID
+                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
+                    LEFT JOIN (
+                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS Rating
+                        FROM OrderItems oi
+                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
+                        GROUP BY oi.ProductID
+                    ) r ON r.ProductID = p.ProductID
+                    WHERE fs.[Status] = 'ACTIVE'
+                    AND fsi.ApprovalStatus = 'APPROVED'
+                    AND p.[Status] = 'ACTIVE'
+                    AND fs.EndAt > SYSUTCDATETIME()
+                    ORDER BY fsi.SoldCount DESC, p.SoldCount DESC;
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);

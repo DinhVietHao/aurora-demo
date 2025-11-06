@@ -108,7 +108,10 @@
             <!-- Gợi ý cho bạn -->
             <c:if test="${not empty suggestedProducts}">
               <div class="suggest container">
-                <h5 class="suggest-title"><i class="bi bi-lightbulb"></i> Gợi ý cho bạn</h5>
+                <div class="suggest-title">
+                  <img src="${ctx}/assets/images/branding/light-animation.gif" alt="Lighting icon" />
+                  <h5>Gợi ý cho bạn</h5>
+                </div>
 
                 <div id="bookSuggest" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
                   <div class="carousel-inner">
@@ -197,105 +200,149 @@
               </div>
             </c:if>
 
-            <!-- FLASH SALES -->
+            <!-- FLASH SALE -->
             <c:if test="${not empty flashSaleProducts}">
-              <div class="container my-4 flash-sale">
-                <div class="text-center mb-4">
-                  <h4 class="flash-sale-title">🔥 Flash Sale 🔥</h4>
-                  <p class="text-danger fw-bold">
-                    <i class="bi bi-clock"></i> Ends in:
-                    <span class="flash-sale-time-hours">00</span>h
-                    <span class="flash-sale-time-minutes">00</span>m
-                    <span class="flash-sale-time-seconds">00</span>s
-                  </p>
+              <div class="flash-sale container my-4">
+                <!-- Header -->
+                <div class="flash-sale-header">
+                  <div class="flash-sale-header-content">
+                    <div class="flash-sale-icon">
+                      <img src="${ctx}/assets/images/branding/flash-sale.png" alt="Logo Flash Sale"
+                        style="height:100px; width:auto;">
+                    </div>
+                    <div class="flash-sale-info">
+                      <h2 class="flash-sale-title">FLASH SALE</h2>
+                      <p class="flash-sale-subtitle">Giảm giá sốc - Hàng cháy</p>
+                    </div>
+                    <div class="timer-display-new">
+                      <div class="timer-block">
+                        <span class="timer-value flash-sale-time-days">00</span>
+                        <span class="timer-unit">Ngày</span>
+                      </div>
+                      <div class="timer-block">
+                        <span class="timer-value flash-sale-time-hours">00</span>
+                        <span class="timer-unit">Giờ</span>
+                      </div>
+                      <div class="timer-block">
+                        <span class="timer-value flash-sale-time-minutes">00</span>
+                        <span class="timer-unit">Phút</span>
+                      </div>
+                      <div class="timer-block">
+                        <span class="timer-value flash-sale-time-seconds">00</span>
+                        <span class="timer-unit">Giây</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Hidden data attributes để JS lấy thời gian từ server -->
+                <!-- Hidden data for JS -->
                 <div id="flashSaleTimerData"
                   data-end-at="<fmt:formatDate value='${flashSaleEndAt}' pattern='yyyy-MM-dd HH:mm:ss' timeZone='UTC'/>"
-                  data-server-time="${currentServerTime}" style="display: none;">
+                  data-server-time="${currentServerTime}" style="display:none;">
                 </div>
 
-                <div class="row g-3 product" id="flashSaleContainer">
-                  <c:forEach var="item" items="${flashSaleProducts}">
-                    <!-- Card là link sang trang detail, click được toàn bộ card -->
-                    <a href="${ctx}/home?action=detail&id=${item.productId}"
-                      class="col-6 col-md-4 col-lg-2 product-card-link" style="text-decoration: none; color: inherit;">
-                      <div class="product-card position-relative flash-sale-card">
+                <!-- Carousel -->
+                <div id="flashSaleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="1500">
+                  <div class="carousel-inner">
+                    <c:set var="chunkSize" value="6" />
+                    <c:forEach var="i" begin="0" end="${fn:length(flashSaleProducts) - 1}" step="${chunkSize}"
+                      varStatus="loop">
+                      <div class="carousel-item ${loop.first ? 'active' : ''}">
+                        <div class="row g-3">
+                          <c:forEach var="j" begin="${i}" end="${i + chunkSize - 1}">
+                            <c:if test="${j < fn:length(flashSaleProducts)}">
+                              <c:set var="item" value="${flashSaleProducts[j]}" />
+                              <div class="col-6 col-md-4 col-lg-2">
+                                <a href="${ctx}/home?action=detail&id=${item.productId}"
+                                  class="product-card-link flash-sale-product-link">
+                                  <div class="product-card flash-sale-card">
 
-                        <!-- Badge "Sắp cháy hàng" nếu sold > 80% -->
-                        <c:if test="${item.soldPercent >= 80}">
-                          <div class="position-absolute top-0 end-0 p-2">
-                            <span class="badge bg-danger" style="font-size: 0.75rem;">
-                              Sắp hết hàng!
-                            </span>
-                          </div>
-                        </c:if>
+                                    <!-- Product Image -->
+                                    <div class="product-img flash-sale-img">
+                                      <div class="discount-badge">
+                                        <div class="discount-value">${item.discountPercent}%</div>
+                                        <div class="discount-label">OFF</div>
+                                      </div>
+                                      <img src="http://localhost:8080/assets/images/catalog/products/${item.imageUrl}"
+                                        alt="${item.title}" />
+                                    </div>
 
-                        <!-- Product Image & Discount Badge -->
-                        <div class="product-img">
-                          <span class="discount">-${item.discountPercent}%</span>
-                          <img src="http://localhost:8080/assets/images/catalog/products/${item.imageUrl}"
-                            alt="${item.title}" />
-                        </div>
+                                    <!-- Body -->
+                                    <div class="product-body flash-sale-body">
+                                      <small class="author">${item.publisherName}</small>
+                                      <p class="title">${item.title}</p>
 
-                        <!-- Product Body -->
-                        <div class="product-body">
-                          <h6 class="price">
-                            <fmt:formatNumber value="${item.flashPrice}" type="currency" currencySymbol="đ"
-                              maxFractionDigits="0" />
-                            <span class="text-muted text-decoration-line-through ms-2" style="font-size: 0.85rem;">
-                              <fmt:formatNumber value="${item.originalPrice}" type="currency" currencySymbol="đ"
-                                maxFractionDigits="0" />
-                            </span>
-                          </h6>
-                          <small class="author">${item.publisherName}</small>
-                          <p class="title" style="font-size: 0.9rem;">${item.title}</p>
+                                      <div class="price-section">
+                                        <div class="flash-price">
+                                          <fmt:formatNumber value="${item.flashPrice}" type="currency"
+                                            currencySymbol="đ" maxFractionDigits="0" />
+                                        </div>
+                                        <div class="original-price">
+                                          <fmt:formatNumber value="${item.originalPrice}" type="currency"
+                                            currencySymbol="đ" maxFractionDigits="0" />
+                                        </div>
+                                      </div>
 
-                          <!-- Rating -->
-                          <div class="rating mb-2">
-                            <c:forEach begin="1" end="5" var="k">
-                              <c:choose>
-                                <c:when test="${k <= item.avgRating}">
-                                  <i class="bi bi-star-fill text-warning small"></i>
-                                </c:when>
-                                <c:when test="${k - item.avgRating <= 0.5}">
-                                  <i class="bi bi-star-half text-warning small"></i>
-                                </c:when>
-                                <c:otherwise>
-                                  <i class="bi bi-star text-warning small"></i>
-                                </c:otherwise>
-                              </c:choose>
-                            </c:forEach>
-                          </div>
+                                      <div class="rating">
+                                        <c:forEach begin="1" end="5" var="k">
+                                          <c:choose>
+                                            <c:when test="${k <= item.avgRating}">
+                                              <i class="bi bi-star-fill text-warning small"></i>
+                                            </c:when>
+                                            <c:when test="${k - item.avgRating <= 0.5}">
+                                              <i class="bi bi-star-half text-warning small"></i>
+                                            </c:when>
+                                            <c:otherwise>
+                                              <i class="bi bi-star text-warning small"></i>
+                                            </c:otherwise>
+                                          </c:choose>
+                                        </c:forEach>
+                                      </div>
 
-                          <!-- Progress Bar - Stock Status -->
-                          <div class="mb-2">
-                            <div class="progress" style="height: 6px;">
-                              <div class="progress-bar bg-danger" role="progressbar" style="width: ${item.soldPercent}%"
-                                data-product-id="${item.productId}" data-sold-count="${item.soldCount}"
-                                data-fs-stock="${item.fsStock}">
+                                      <div class="progress-container">
+                                        <div class="progress-wrapper">
+                                          <c:if test="${item.remaining <= 5 && item.remaining > 0}">
+                                            <div class="progress-flame">
+                                              <img
+                                                src="https://em-content.zobj.net/source/animated-noto-color-emoji/427/fire_1f525.gif"
+                                                alt="Fire" class="flame-gif" />
+                                            </div>
+                                          </c:if>
+                                          <div class="progress">
+                                            <div class="progress-bar" style="width: ${item.soldPercent}%"></div>
+                                          </div>
+                                          <div class="progress-text">
+                                            <c:choose>
+                                              <c:when test="${item.remaining == 0}">HẾT HÀNG</c:when>
+                                              <c:when test="${item.remaining == 1}">CHỈ CÒN 1</c:when>
+                                              <c:when test="${item.remaining <= 5}">CHỈ CÒN ${item.remaining}</c:when>
+                                              <c:otherwise>CÒN ${item.remaining}</c:otherwise>
+                                            </c:choose>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </a>
                               </div>
-                            </div>
-                            <small class="text-muted d-block mt-1">
-                              Đã bán: <strong>${item.soldCount}/${item.fsStock}</strong>
-                              <c:if test="${item.remaining > 0}">
-                                • Còn <strong>${item.remaining}</strong> sản phẩm
-                              </c:if>
-                              <c:if test="${item.remaining == 0}">
-                                • <span class="text-danger"><strong>Hết hàng</strong></span>
-                              </c:if>
-                            </small>
-                          </div>
-
-                          <!-- Click để xem chi tiết sản phẩm -->
-                          <div class="text-center pt-2">
-                            <small class="text-primary">Nhấp để xem chi tiết →</small>
-                          </div>
+                            </c:if>
+                          </c:forEach>
                         </div>
                       </div>
-                    </a>
-                  </c:forEach>
+                    </c:forEach>
+                  </div>
+
+                  <!-- Navigation buttons -->
+                  <c:if test="${fn:length(flashSaleProducts) > 6}">
+                    <button class="carousel-control-prev" type="button" data-bs-target="#flashSaleCarousel"
+                      data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#flashSaleCarousel"
+                      data-bs-slide="next">
+                      <span class="carousel-control-next-icon"></span>
+                    </button>
+                  </c:if>
                 </div>
               </div>
             </c:if>
@@ -303,7 +350,10 @@
             <c:if test="${not empty latestProducts}">
               <!-- Tủ sách mới (expandable) -->
               <div class="featured-bookcase container">
-                <h5 class="featured-bookcase-title"><i class="bi bi-clock"></i> Tủ sách mới</h5>
+                <div class="featured-bookcase-title">
+                  <img src="${ctx}/assets/images/branding/timer-animation.gif" alt="Timer icon" />
+                  <h5>Tủ sách mới</h5>
+                </div>
                 <div class="row g-3 product" id="latestProductsContainer">
                   <c:set var="productsPerRow" value="6" />
                   <c:set var="maxRows" value="6" />
@@ -434,82 +484,80 @@
 
           <script>
             document.addEventListener("DOMContentLoaded", function () {
+              // Timer countdown
               const timerData = document.getElementById("flashSaleTimerData");
               if (!timerData) return;
 
               const endAtStr = timerData.getAttribute("data-end-at");
               const serverTimestampMs = parseInt(timerData.getAttribute("data-server-time"));
 
-              // Parse ngày giờ kết thúc (UTC)
               const endAtDate = new Date(endAtStr + " UTC");
               const flashSaleEndTime = endAtDate.getTime();
-
-              // Tính time offset: chênh lệch giữa thời gian server và client
               const clientTimeNow = Date.now();
-              const timeOffset = serverTimestampMs - clientTimeNow; // (server - client)
+              const timeOffset = serverTimestampMs - clientTimeNow;
 
               const timerDisplay = {
+                days: document.querySelector('.flash-sale-time-days'),
                 hours: document.querySelector('.flash-sale-time-hours'),
                 minutes: document.querySelector('.flash-sale-time-minutes'),
                 seconds: document.querySelector('.flash-sale-time-seconds')
               };
 
               function updateCountdown() {
-                // Lấy thời gian hiện tại của client + offset từ server
                 const now = Date.now() + timeOffset;
                 const distance = flashSaleEndTime - now;
 
                 if (distance < 0) {
                   // Flash sale hết hạn
+                  timerDisplay.days.textContent = '00';
                   timerDisplay.hours.textContent = '00';
                   timerDisplay.minutes.textContent = '00';
                   timerDisplay.seconds.textContent = '00';
 
-                  // Làm mờ Flash Sale section
-                  const flashSaleContainer = document.getElementById('flashSaleContainer');
-                  if (flashSaleContainer) {
-                    flashSaleContainer.style.opacity = '0.5';
-                    flashSaleContainer.style.pointerEvents = 'none';
-                  }
+                  const carousel = document.getElementById('flashSaleCarousel');
+                  if (carousel) carousel.style.opacity = '0.5';
                   return;
                 }
 
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                 const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
+                timerDisplay.days.textContent = String(days).padStart(2, '0');
                 timerDisplay.hours.textContent = String(hours).padStart(2, '0');
                 timerDisplay.minutes.textContent = String(minutes).padStart(2, '0');
                 timerDisplay.seconds.textContent = String(seconds).padStart(2, '0');
               }
 
-              // Update ngay lập tức lần đầu
               updateCountdown();
-
-              // Update mỗi giây
               setInterval(updateCountdown, 1000);
 
-              // ===== Animation progress bar =====
-              const progressBars = document.querySelectorAll('.flash-sale-card .progress-bar');
-              progressBars.forEach(bar => {
-                const width = bar.style.width;
-                bar.style.width = '0';
-                setTimeout(() => {
-                  bar.style.transition = 'width 0.6s ease-out';
-                  bar.style.width = width;
-                }, 100);
-              });
+              // Progress bar animation
+              setTimeout(() => {
+                const progressBars = document.querySelectorAll('.flash-sale-card .progress-bar');
+                progressBars.forEach(bar => {
+                  const width = bar.style.width;
+                  bar.style.width = '0';
+                  setTimeout(() => {
+                    bar.style.transition = 'width 0.6s ease-out';
+                    bar.style.width = width;
+                  }, 50);
+                });
+              }, 200);
 
-              // ===== Hover effect cho card =====
+              // Hover Effects
               const cards = document.querySelectorAll('.product-card-link');
               cards.forEach(card => {
                 card.addEventListener('mouseenter', function () {
-                  this.querySelector('.product-card').style.transform = 'translateY(-4px)';
-                  this.querySelector('.product-card').style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
+                  const productCard = this.querySelector('.product-card');
+                  productCard.style.transform = 'translateY(-4px)';
+                  productCard.style.boxShadow = '0 4px 12px rgba(255, 193, 7, 0.3)';
                 });
                 card.addEventListener('mouseleave', function () {
-                  this.querySelector('.product-card').style.transform = 'none';
-                  this.querySelector('.product-card').style.boxShadow = 'none';
+                  const productCard = this.querySelector('.product-card');
+                  productCard.style.transform = 'none';
+                  productCard.style.boxShadow = 'none';
                 });
               });
             });
