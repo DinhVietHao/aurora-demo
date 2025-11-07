@@ -57,6 +57,14 @@ addToCartBtn.addEventListener("click", () => {
         if (cartCountBadge) {
           cartCountBadge.innerText = data.cartCount;
         }
+
+        if (data.check === "flashsale_exceeded") {
+          const modalEl = document.getElementById("flashSaleModal");
+          const flashSaleModal = new bootstrap.Modal(modalEl);
+          document.getElementById("flashSaleMessage").textContent =
+            data.messageModal;
+          flashSaleModal.show();
+        }
       } else {
         toast({
           title: data.title,

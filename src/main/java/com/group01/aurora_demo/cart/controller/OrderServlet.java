@@ -496,38 +496,9 @@ public class OrderServlet extends NotificationServlet {
                             continue;
                         }
 
-                        FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(item.getProductId());
-                        if (flashItem != null) {
-                            int remainingStock = flashItem.getFsStock() - flashItem.getSoldCount();
-                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
-                                    flashItem.getFlashSaleItemID());
-
-                            if (flashItem.getPerUserLimit() != null
-                                    && purchasedBefore + item.getQuantity() > flashItem.getPerUserLimit()) {
-                                int limit = flashItem.getPerUserLimit();
-                                int remaining = Math.max(0, limit - purchasedBefore);
-                                if (remaining > 0) {
-                                    errors.add("Sản phẩm '" + product.getTitle()
-                                            + "' trong Flash Sale chỉ còn giới hạn " + remaining
-                                            + " sản phẩm có thể mua.");
-                                } else {
-                                    errors.add("Bạn đã đạt giới hạn mua cho sản phẩm '" + product.getTitle()
-                                            + "' trong Flash Sale.");
-                                }
-                                continue;
-                            }
-
-                            if (remainingStock < item.getQuantity()) {
-                                errors.add("Sản phẩm '" + product.getTitle()
-                                        + "' trong Flash Sale không đủ số lượng để mua lại.");
-                                continue;
-                            }
-                        } else {
-
-                            if (product.getQuantity() == null || product.getQuantity() <= 0) {
-                                errors.add("Sản phẩm '" + product.getTitle() + "' đã hết hàng.");
-                                continue;
-                            }
+                        if (product.getQuantity() == null || product.getQuantity() <= 0) {
+                            errors.add("Sản phẩm '" + product.getTitle() + "' đã hết hàng.");
+                            continue;
                         }
 
                         CartItem existingItem = cartItemDAO.getCartItem(user.getId(), item.getProductId());

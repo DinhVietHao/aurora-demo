@@ -1321,6 +1321,63 @@ public class ProductDAO {
         return product;
     }
 
+    public Product getProductWithEffectivePrice(long productId, int requestedQuantity) {
+        Product product = null;
+
+        String sql = """
+                SELECT
+                    p.ProductID,
+                    p.ShopID,
+                    p.Title,
+                    p.OriginalPrice,
+                    p.SalePrice,
+                    p.Quantity,
+                    p.SoldCount,
+                    p.Status,
+                    fsi.FlashPrice,
+                    fsi.FsStock,
+                    fs.Status AS FlashStatus
+                FROM Products p
+                LEFT JOIN FlashSaleItems fsi ON fsi.ProductID = p.ProductID
+                LEFT JOIN FlashSales fs ON fs.FlashSaleID = fsi.FlashSaleID
+                WHERE p.ProductID = ?
+                  AND (fs.Status = 'ACTIVE' OR fs.Status IS NULL)
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    product = new Product();
+                    product.setProductId(rs.getLong("ProductID"));
+                    product.setShopId(rs.getLong("ShopID"));
+                    product.setTitle(rs.getString("Title"));
+                    product.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    product.setSalePrice(rs.getDouble("SalePrice"));
+                    product.setQuantity(rs.getInt("Quantity"));
+                    product.setSoldCount(rs.getLong("SoldCount"));
+                    product.setStatus(rs.getString("Status"));
+
+                    String flashStatus = rs.getString("FlashStatus");
+                    if ("ACTIVE".equalsIgnoreCase(flashStatus)) {
+                        double flashPrice = rs.getDouble("FlashPrice");
+                        if (!rs.wasNull()) {
+                            int fsStock = rs.getInt("FsStock");
+                            if (requestedQuantity <= fsStock) {
+                                product.setSalePrice(flashPrice);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return product;
+    }
+
     public boolean updateProduct(Product product) throws SQLException {
         String updateProductSql = """
                 UPDATE Products

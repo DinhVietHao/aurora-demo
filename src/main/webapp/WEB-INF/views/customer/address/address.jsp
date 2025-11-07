@@ -178,6 +178,7 @@
                         rules: [
                             Validator.isRequired('#fullName', 'Vui lòng nhập họ tên'),
                             Validator.isRequired('#phone', 'Vui lòng nhập số điện thoại'),
+                            Validator.isPhone('#phone', 'Số điện thoại không hợp lệ'),
                             Validator.isRequired('#addProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
                             Validator.isRequired('#addDistrict', 'Vui lòng chọn Quận/Huyện'),
                             Validator.isRequired('#addWard', 'Vui lòng chọn Phường/Xã'),
@@ -217,6 +218,7 @@
                         rules: [
                             Validator.isRequired('#updateFullname', 'Vui lòng nhập tên đầy đủ'),
                             Validator.isRequired('#updatePhone', 'Vui lòng nhập số điện thoại'),
+                            Validator.isPhone('#updatePhone', 'Số điện thoại không hợp lệ'),
                             Validator.isRequired('#updateProvince', 'Vui lòng chọn Tỉnh/Thành phố'),
                             Validator.isRequired('#updateDistrict', 'Vui lòng chọn Quận/Huyện'),
                             Validator.isRequired('#updateWard', 'Vui lòng chọn Phường/Xã'),
