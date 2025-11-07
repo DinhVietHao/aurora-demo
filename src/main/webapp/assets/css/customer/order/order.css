@@ -219,3 +219,31 @@
   font-size: 25px;
   color: var(--color-three);
 }
+
+.rating-stars {
+  display: inline-block;
+  direction: rtl;
+}
+
+.rating-stars input[type="radio"] {
+  display: none;
+}
+
+.rating-stars label {
+  font-size: 2rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 0 0.1em;
+}
+
+.rating-stars:not(:hover) input[type="radio"]:checked ~ label,
+.rating-stars:hover input[type="radio"]:hover ~ label,
+.rating-stars input[type="radio"]:checked ~ label,
+.rating-stars input[type="radio"]:hover ~ label {
+  color: #fcc800;
+}
+
+.rating-stars input[type="radio"]:hover ~ label {
+  color: #fcc800;
+}

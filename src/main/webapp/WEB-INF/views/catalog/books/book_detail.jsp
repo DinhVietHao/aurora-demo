@@ -364,6 +364,19 @@
                                 <i class="fa fa-ellipsis-h"></i>
                               </button>
                               <ul class="dropdown-menu dropdown-menu-end">
+                                <c:if
+                                  test="${not empty sessionScope.AUTH_USER && sessionScope.AUTH_USER.id == review.user.id}">
+                                  <li>
+                                    <a class="dropdown-item btn-open-edit-review" href="#" data-bs-toggle="modal"
+                                      data-bs-target="#editReviewModal" data-review-id="${review.reviewId}"
+                                      data-rating="${review.rating}" data-comment="${review.comment}">
+                                      Sửa
+                                    </a>
+                                  </li>
+                                  <li>
+                                    <hr class="dropdown-divider">
+                                  </li>
+                                </c:if>
                                 <li>
                                   <a class="dropdown-item" href="#" data-bs-toggle="modal"
                                     data-bs-target="#reportModal">Báo cáo</a>
@@ -528,6 +541,65 @@
             <jsp:include page="/WEB-INF/views/catalog/books/partials/_intro_carousel.jsp">
               <jsp:param name="carouselId" value="bookIntroduction" />
             </jsp:include>
+          </div>
+        </div>
+
+        <!-- Modal edit review -->
+        <div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-3 shadow">
+              <form id="editReviewForm" enctype="multipart/form-data">
+                <div class="modal-header">
+                  <h5 class="modal-title fw-bold" id="editReviewModalLabel">Chỉnh sửa Đánh Giá</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+
+                <div class="modal-body">
+                  <input type="hidden" name="reviewId" id="editReviewId" value="">
+                  <div class="mb-3">
+                    <label class="fw-semibold">Chất lượng sản phẩm</label>
+                    <div class="rating-stars-edit">
+                      <input type="radio" name="rating" id="edit-rating-5" value="5" required>
+                      <label for="edit-rating-5"><i class="bi bi-star-fill"></i></label>
+
+                      <input type="radio" name="rating" id="edit-rating-4" value="4">
+                      <label for="edit-rating-4"><i class="bi bi-star-fill"></i></label>
+
+                      <input type="radio" name="rating" id="edit-rating-3" value="3">
+                      <label for="edit-rating-3"><i class="bi bi-star-fill"></i></label>
+
+                      <input type="radio" name="rating" id="edit-rating-2" value="2">
+                      <label for="edit-rating-2"><i class="bi bi-star-fill"></i></label>
+
+                      <input type="radio" name="rating" id="edit-rating-1" value="1">
+                      <label for="edit-rating-1"><i class="bi bi-star-fill"></i></label>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="fw-semibold" for="editReviewComment">Nội dung đánh giá</label>
+                    <textarea class="form-control" name="comment" id="editReviewComment" rows="3"
+                      placeholder="Hãy chia sẻ trải nghiệm của bạn..."></textarea>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="editReviewImages" class="button-four me-2">
+                      <i class="bi bi-camera"></i> Thay thế Ảnh (Tối đa 5 ảnh)
+                    </label>
+                    <small class="text-muted">(Nếu không chọn, ảnh cũ sẽ được giữ lại)</small>
+                    <input type="file" id="editReviewImages" name="reviewImages" style="display: none;" multiple
+                      accept="image/png, image/jpeg, image/gif, image/webp">
+                    <div id="editPreviewImages" class="d-flex flex-wrap mt-2 gap-2">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal-footer">
+                  <button type="button" class="button-five" data-bs-dismiss="modal">Trở lại</button>
+                  <button type="submit" class="button-four" id="submitEditReviewBtn">Lưu thay đổi</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
