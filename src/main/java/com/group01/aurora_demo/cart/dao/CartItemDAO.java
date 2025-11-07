@@ -196,6 +196,7 @@ public class CartItemDAO {
      */
     public List<CartItem> getCartItemsByUserId(long userId) {
         List<CartItem> cartItems = new ArrayList<>();
+
         String sql = """
                 SELECT
                      ci.CartItemID,
@@ -208,19 +209,36 @@ public class CartItemDAO {
                      p.OriginalPrice,
                      p.SalePrice,
                      p.Status AS ProductStatus,
-                	 s.ShopID,
+                     s.ShopID,
                      s.Name AS ShopName,
                      s.Status AS ShopStatus,
-                     img.Url AS ImageUrl
+                     img.Url AS ImageUrl,
+                     afsi.FlashPrice,
+                     afsi.FsStock,
+                     afsi.FlashSaleID,
+                     afsi.Status AS FlashStatus
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
-                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID
-                AND img.IsPrimary = 1
-                WHERE ci.UserID = ? ORDER BY ci.CreatedAt DESC
+                LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN (
+                    SELECT
+                        fsi.ProductID,
+                        fsi.FlashPrice,
+                        fsi.FsStock,
+                        fs.FlashSaleID,
+                        fs.Status
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fs.FlashSaleID = fsi.FlashSaleID
+                    WHERE fs.Status = 'ACTIVE'
+                ) AS afsi ON afsi.ProductID = p.ProductID
+                WHERE ci.UserID = ?
+                ORDER BY ci.CreatedAt DESC
                 """;
+
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -231,7 +249,7 @@ public class CartItemDAO {
                     cartItem.setSubtotal(rs.getDouble("Subtotal"));
                     cartItem.setIsChecked(rs.getBoolean("IsChecked"));
 
-                    // Mapping thông tin sản phẩm
+                    // Product
                     Product product = new Product();
                     product.setProductId(rs.getLong("ProductID"));
                     product.setTitle(rs.getString("Title"));
@@ -239,24 +257,42 @@ public class CartItemDAO {
                     product.setSalePrice(rs.getDouble("SalePrice"));
                     product.setStatus(rs.getString("ProductStatus"));
 
+                    // Shop
                     Shop shop = new Shop();
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setName(rs.getString("ShopName"));
                     shop.setStatus(rs.getString("ShopStatus"));
                     product.setShop(shop);
 
-                    // Lấy ảnh chính của sản phẩm
-                    ProductImage productImages = new ProductImage();
-                    productImages.setUrl(rs.getString("ImageUrl"));
-                    product.setImages(List.of(productImages));
+                    // Image
+                    String imageUrl = rs.getString("ImageUrl");
+                    if (imageUrl != null) {
+                        ProductImage img = new ProductImage();
+                        img.setUrl(imageUrl);
+                        product.setImages(List.of(img));
+                    }
+
+                    // FlashSale
+                    String flashStatus = rs.getString("FlashStatus");
+                    if ("ACTIVE".equalsIgnoreCase(flashStatus)) {
+                        double flashPrice = rs.getDouble("FlashPrice");
+                        if (!rs.wasNull()) {
+                            int fsStock = rs.getInt("FsStock");
+                            if (cartItem.getQuantity() <= fsStock) {
+                                product.setSalePrice(flashPrice);
+                            }
+                        }
+                    }
 
                     cartItem.setProduct(product);
                     cartItems.add(cartItem);
                 }
             }
+
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
+
         return cartItems;
     }
 
@@ -278,11 +314,26 @@ public class CartItemDAO {
                 	 s.ShopID,
                      s.Name AS ShopName,
                      s.PickupAddressID,
-                     img.Url AS ImageUrl
+                     img.Url AS ImageUrl,
+                     afsi.FlashPrice,
+                     afsi.FsStock,
+                     afsi.FlashSaleID,
+                     afsi.Status AS FlashStatus
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN (
+                    SELECT
+                        fsi.ProductID,
+                        fsi.FlashPrice,
+                        fsi.FsStock,
+                        fs.FlashSaleID,
+                        fs.Status
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fs.FlashSaleID = fsi.FlashSaleID
+                    WHERE fs.Status = 'ACTIVE'
+                ) AS afsi ON afsi.ProductID = p.ProductID
                 WHERE ci.UserID = ? AND ci.IsChecked = 1
                 AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 ORDER BY ci.CreatedAt DESC
@@ -328,6 +379,17 @@ public class CartItemDAO {
                     productImages.setUrl(rs.getString("ImageUrl"));
                     product.setImages(List.of(productImages));
 
+                    // FlashSale
+                    String flashStatus = rs.getString("FlashStatus");
+                    if ("ACTIVE".equalsIgnoreCase(flashStatus)) {
+                        double flashPrice = rs.getDouble("FlashPrice");
+                        if (!rs.wasNull()) {
+                            int fsStock = rs.getInt("FsStock");
+                            if (cartItem.getQuantity() <= fsStock) {
+                                product.setSalePrice(flashPrice);
+                            }
+                        }
+                    }
                     cartItem.setProduct(product);
                     cartItems.add(cartItem);
                 }
@@ -355,11 +417,26 @@ public class CartItemDAO {
                      p.Weight,
                 	 s.ShopID,
                      s.Name AS ShopName,
-                     img.Url AS ImageUrl
+                     img.Url AS ImageUrl,
+                     afsi.FlashPrice,
+                     afsi.FsStock,
+                     afsi.FlashSaleID,
+                     afsi.Status AS FlashStatus
                 FROM CartItems ci
                 JOIN Products p ON ci.ProductID = p.ProductID
                 JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
+                LEFT JOIN (
+                    SELECT
+                        fsi.ProductID,
+                        fsi.FlashPrice,
+                        fsi.FsStock,
+                        fs.FlashSaleID,
+                        fs.Status
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fs.FlashSaleID = fsi.FlashSaleID
+                    WHERE fs.Status = 'ACTIVE'
+                ) AS afsi ON afsi.ProductID = p.ProductID
                 WHERE ci.UserID = ? AND s.ShopID = ? AND ci.IsChecked = 1
                 AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 ORDER BY ci.CreatedAt DESC
@@ -399,6 +476,17 @@ public class CartItemDAO {
                     productImages.setUrl(rs.getString("ImageUrl"));
                     product.setImages(List.of(productImages));
 
+                    // FlashSale
+                    String flashStatus = rs.getString("FlashStatus");
+                    if ("ACTIVE".equalsIgnoreCase(flashStatus)) {
+                        double flashPrice = rs.getDouble("FlashPrice");
+                        if (!rs.wasNull()) {
+                            int fsStock = rs.getInt("FsStock");
+                            if (cartItem.getQuantity() <= fsStock) {
+                                product.setSalePrice(flashPrice);
+                            }
+                        }
+                    }
                     cartItem.setProduct(product);
                     cartItems.add(cartItem);
                 }

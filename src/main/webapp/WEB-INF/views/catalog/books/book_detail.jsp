@@ -544,6 +544,23 @@
           </div>
         </div>
 
+        <div class="modal fade" id="flashSaleModal" tabindex="-1" aria-labelledby="flashSaleModalLabel"
+          aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="flashSaleModalLabel">Vượt số lượng Flash Sale</h5>
+              </div>
+              <div class="modal-body">
+                <p id="flashSaleMessage"></p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="button-four w-100" data-bs-dismiss="modal">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Modal edit review -->
         <div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel"
           aria-hidden="true">

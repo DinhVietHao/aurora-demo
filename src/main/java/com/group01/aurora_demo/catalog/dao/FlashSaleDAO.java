@@ -64,22 +64,24 @@ public class FlashSaleDAO {
 
     public boolean insertFlashSaleItem(long flashSaleId, long shopId, long productId,
             double flashPrice, int fsStock,
-            Integer perUserLimit, String approvalStatus) {
-        String sql = "INSERT INTO FlashSaleItems (FlashSaleID, ProductID, ShopID, FlashPrice, FsStock, PerUserLimit, ApprovalStatus) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String approvalStatus) {
+        String sql = """
+                    INSERT INTO FlashSaleItems (FlashSaleID, ProductID, ShopID, FlashPrice, FsStock, ApprovalStatus)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """;
+
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, flashSaleId);
             ps.setLong(2, productId);
             ps.setLong(3, shopId);
             ps.setDouble(4, flashPrice);
             ps.setInt(5, fsStock);
-            if (perUserLimit != null)
-                ps.setInt(6, perUserLimit);
-            else
-                ps.setNull(6, java.sql.Types.INTEGER);
-            ps.setString(7, approvalStatus);
+            ps.setString(6, approvalStatus);
+
             return ps.executeUpdate() > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -108,7 +110,7 @@ public class FlashSaleDAO {
 
         String sql = """
                     SELECT fsi.FlashSaleItemID, fsi.ProductID, p.Title, p.OriginalPrice,
-                           fsi.FlashPrice, fsi.FsStock, fsi.PerUserLimit, fsi.ApprovalStatus,
+                           fsi.FlashPrice, fsi.FsStock, fsi.ApprovalStatus,
                            img.Url AS ImageUrl
                     FROM FlashSaleItems fsi
                     JOIN Products p ON fsi.ProductID = p.ProductID
@@ -133,7 +135,6 @@ public class FlashSaleDAO {
                     item.setOriginalPrice(rs.getDouble("OriginalPrice"));
                     item.setFlashPrice(rs.getDouble("FlashPrice"));
                     item.setFsStock(rs.getInt("FsStock"));
-                    item.setPerUserLimit(rs.getInt("PerUserLimit"));
                     item.setApprovalStatus(rs.getString("ApprovalStatus"));
                     item.setImageUrl(rs.getString("ImageUrl"));
                     list.add(item);
@@ -156,7 +157,6 @@ public class FlashSaleDAO {
                     fsi.FlashPrice,
                     fsi.FsStock,
                     fsi.SoldCount,
-                    fsi.PerUserLimit,
                     fsi.ApprovalStatus,
                     pi.Url AS ImageUrl
                 FROM FlashSaleItems fsi
@@ -185,7 +185,6 @@ public class FlashSaleDAO {
                     item.setFlashPrice(rs.getDouble("FlashPrice"));
                     item.setFsStock(rs.getInt("FsStock"));
                     item.setSoldCount(rs.getInt("SoldCount"));
-                    item.setPerUserLimit(rs.getInt("PerUserLimit"));
                     item.setApprovalStatus(rs.getString("ApprovalStatus"));
                     item.setImageUrl(rs.getString("ImageUrl"));
                     return item;
@@ -235,9 +234,9 @@ public class FlashSaleDAO {
         String sql = """
                     SELECT
                         fsi.FlashSaleItemID,
+                        fsi.FlashPrice,
                         fsi.FsStock,
                         fsi.SoldCount,
-                        fsi.PerUserLimit
                     FROM FlashSaleItems fsi
                     JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
                     WHERE fsi.ProductID = ?
@@ -254,9 +253,9 @@ public class FlashSaleDAO {
                 if (rs.next()) {
                     FlashSaleItem fsi = new FlashSaleItem();
                     fsi.setFlashSaleItemID(rs.getLong("FlashSaleItemID"));
+                    fsi.setFlashPrice(rs.getDouble("FlashPrice"));
                     fsi.setFsStock(rs.getInt("FsStock"));
                     fsi.setSoldCount(rs.getInt("SoldCount"));
-                    fsi.setPerUserLimit((Integer) rs.getObject("PerUserLimit"));
                     return fsi;
                 }
             }

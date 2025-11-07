@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.cart.utils.CurrencyFormatter;
 import com.group01.aurora_demo.catalog.controller.NotificationServlet;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
@@ -119,45 +120,14 @@ public class CartServlet extends NotificationServlet {
                     int newQuantity = currentQty + 1;
 
                     if (flashItem != null) {
-                        int remainingFlashStock = flashItem.getFsStock() - flashItem.getSoldCount();
-                        if (remainingFlashStock <= 0) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Hết hàng Flash Sale");
-                            json.put("message",
-                                    "Sản phẩm '" + product.getTitle() + "' trong chương trình Flash Sale đã hết hàng.");
-                            out.print(json.toString());
-                            break;
-                        }
-
-                        Integer perUserLimit = flashItem.getPerUserLimit();
-                        if (perUserLimit != null) {
-                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
-                                    flashItem.getFlashSaleItemID());
-                            int totalQuantity = newQuantity + purchasedBefore;
-
-                            if (totalQuantity > perUserLimit) {
-                                int remaining = perUserLimit - purchasedBefore;
-                                json.put("success", false);
-                                json.put("type", "warning");
-                                json.put("title", "Vượt giới hạn mua");
-                                String msg = remaining > 0
-                                        ? "Bạn chỉ được mua tối đa " + remaining + " sản phẩm Flash Sale này."
-                                        : "Bạn đã đạt giới hạn mua cho sản phẩm Flash Sale này.";
-                                json.put("message",
-                                        msg);
-                                out.print(json.toString());
-                                break;
-                            }
-                        }
-
-                        if (newQuantity > remainingFlashStock) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Không đủ hàng");
-                            json.put("message", "Số lượng bạn thêm vượt quá số hàng còn lại trong Flash Sale.");
-                            out.print(json.toString());
-                            break;
+                        int remainingFlashStock = flashItem.getFsStock();
+                        if (currentQty <= remainingFlashStock && newQuantity > remainingFlashStock) {
+                            json.put("success", true);
+                            json.put("check", "flashsale_exceeded");
+                            json.put("titleModal", "Vượt số lượng Flash Sale");
+                            json.put("messageModal", "Giá bán này vượt số lượng mua tối đa chỉ " + remainingFlashStock
+                                    + " sản phẩm, giá bán sẽ thay đổi thành "
+                                    + CurrencyFormatter.format(product.getSalePrice()));
                         }
                     } else {
                         if (newQuantity > product.getQuantity()) {
@@ -214,7 +184,7 @@ public class CartServlet extends NotificationServlet {
 
                     FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
                     if (flashItem != null) {
-                        int available = flashItem.getFsStock() - flashItem.getSoldCount();
+                        int available = flashItem.getFsStock();
                         if (available <= 0) {
                             json.put("success", false);
                             json.put("type", "warning");
@@ -223,21 +193,8 @@ public class CartServlet extends NotificationServlet {
                             out.print(json.toString());
                             return;
                         }
-
-                        Integer perUserLimit = flashItem.getPerUserLimit();
-                        if (perUserLimit != null) {
-                            int bought = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
-                                    flashItem.getFlashSaleItemID());
-                            if (bought >= perUserLimit) {
-                                json.put("success", false);
-                                json.put("type", "warning");
-                                json.put("title", "Vượt giới hạn mua");
-                                json.put("message", "Bạn đã đạt giới hạn mua cho sản phẩm Flash Sale này.");
-                                out.print(json.toString());
-                                return;
-                            }
-                        }
                     }
+
                     this.cartItemDAO.updateAllChecked(user.getId(), false);
 
                     CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
@@ -309,48 +266,23 @@ public class CartServlet extends NotificationServlet {
                         out.print(json.toString());
                         break;
                     }
-                    Product product = productDAO.getBasicProductById(cartItem.getProductId());
+                    Product product = productDAO.getProductWithEffectivePrice(cartItem.getProductId(), quantity);
                     if (!isProductAvailable(product, json))
                         return;
                     FlashSaleItem flashSaleItem = flashSaleDAO
                             .getActiveFlashSaleItemByProduct(product.getProductId());
-
+                    ;
                     if (flashSaleItem != null) {
-                        int availableFlashStock = flashSaleItem.getFsStock() - flashSaleItem.getSoldCount();
-                        if (availableFlashStock <= 0) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Hết hàng Flash Sale");
-                            json.put("message", "Sản phẩm '" + product.getTitle() + "' trong Flash Sale đã hết hàng.");
-                            out.print(json.toString());
-                            break;
-                        }
+                        int availableFlashStock = flashSaleItem.getFsStock();
 
-                        Integer perUserLimit = flashSaleItem.getPerUserLimit();
-                        if (perUserLimit != null) {
-                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
-                                    flashSaleItem.getFlashSaleItemID());
-                            int totalQuantity = quantity + purchasedBefore;
-
-                            if (totalQuantity > perUserLimit) {
-                                int remaining = perUserLimit - purchasedBefore;
-                                json.put("success", false);
-                                json.put("type", "warning");
-                                json.put("title", "Vượt giới hạn mua");
-                                json.put("message",
-                                        "Bạn chỉ được mua tối đa " + remaining + " sản phẩm Flash Sale này.");
-                                out.print(json.toString());
-                                break;
-                            }
-                        }
-
-                        if (quantity > availableFlashStock) {
-                            json.put("success", false);
-                            json.put("type", "warning");
-                            json.put("title", "Không đủ hàng Flash Sale");
-                            json.put("message", "Chỉ còn " + availableFlashStock + " sản phẩm Flash Sale trong kho.");
-                            out.print(json.toString());
-                            break;
+                        if (cartItem.getQuantity() <= availableFlashStock && quantity > availableFlashStock) {
+                            json.put("success", true);
+                            json.put("check", "flashsale_exceeded");
+                            json.put("title", "Vượt số lượng Flash Sale");
+                            json.put("message", "Giá bán này vượt số lượng mua tối đa chỉ " + availableFlashStock
+                                    + " sản phẩm, giá bán sẽ thay đổi thành "
+                                    + CurrencyFormatter.format(product.getSalePrice()));
+                            json.put("salePrice", product.getSalePrice());
                         }
                     } else {
                         if (quantity > product.getQuantity()) {
@@ -377,8 +309,7 @@ public class CartServlet extends NotificationServlet {
 
                     json.put("success", true);
                     json.put("type", "success");
-                    json.put("title", "Thành công");
-                    json.put("message", "Cập nhật số lượng thành công.");
+                    json.put("salePrice", product.getSalePrice());
 
                 } catch (Exception e) {
                     e.printStackTrace();

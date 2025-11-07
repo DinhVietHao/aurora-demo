@@ -474,13 +474,29 @@
                     </c:choose>
                 </div>
 
+                <div class="modal fade" id="flashSaleModal" tabindex="-1" aria-labelledby="flashSaleModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="flashSaleModalLabel">Vượt số lượng Flash Sale</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p id="flashSaleMessage"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="button-four w-100" data-bs-dismiss="modal">OK</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <!-- JS riêng trang Cart -->
-                <script src="<c:url value='/assets/js/customer/cart/cart.js'/>"></script>
+                <script src="<c:url value='/assets/js/customer/cart/cart.js?v=1.0.1'/>"></script>
             </body>
 
             </html>

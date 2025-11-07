@@ -198,13 +198,11 @@ public class ShopFlashSaleServlet extends HttpServlet {
                     long shopId = Long.parseLong(request.getParameter("flashsaleShopId"));
                     int fsStock = Integer.parseInt(request.getParameter("flashsaleQuantityInput"));
                     double flashPrice = Double.parseDouble(request.getParameter("flashsalePriceInput"));
-                    String perUserLimitStr = request.getParameter("flashsaleLimitInput");
-                    int perUserLimit = Integer.parseInt(perUserLimitStr);
 
                     boolean reduceQuantity = productDAO.reduceQuantityProduct(productId, fsStock);
                     if (reduceQuantity) {
                         boolean success = flashSaleDAO.insertFlashSaleItem(
-                                flashSaleId, shopId, productId, flashPrice, fsStock, perUserLimit, "PENDING");
+                                flashSaleId, shopId, productId, flashPrice, fsStock, "PENDING");
                         if (success) {
                             response.sendRedirect(
                                     request.getContextPath()
