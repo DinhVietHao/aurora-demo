@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.catalog.controller;
 
-import com.group01.aurora_demo.catalog.model.ReviewImage;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.catalog.dao.ReviewDAO;
@@ -13,11 +12,9 @@ import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
-import java.time.LocalDateTime;
 import jakarta.servlet.http.*;
 import java.util.ArrayList;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -194,12 +191,6 @@ public class HomeServlet extends NotificationServlet {
 
                 int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
 
-                if (reviews.isEmpty()) {
-                    reviews = createMockReviews();
-                    totalReviews = reviews.size();
-                    totalReviewPages = 1;
-                }
-
                 request.setAttribute("reviews", reviews);
                 request.setAttribute("currentPage", 1);
                 request.setAttribute("totalReviews", totalReviews);
@@ -314,67 +305,4 @@ public class HomeServlet extends NotificationServlet {
         request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
     }
 
-    private List<Review> createMockReviews() {
-        List<Review> mockReviews = new ArrayList<>();
-
-        // Review 1
-        Review r1 = new Review();
-        r1.setReviewId(1L);
-        r1.setRating(5);
-        r1.setComment("Sách rất hay, nội dung bổ ích và hấp dẫn. Giao hàng nhanh, đóng gói cẩn thận!");
-        r1.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(5)));
-
-        User u1 = new User();
-        u1.setFullName("Nguyễn Văn A");
-        u1.setAvatarUrl(null);
-        r1.setUser(u1);
-
-        List<ReviewImage> imgs1 = new ArrayList<>();
-        ReviewImage img1 = new ReviewImage();
-        img1.setUrl("review-example-1.jpg");
-        imgs1.add(img1);
-
-        ReviewImage img2 = new ReviewImage();
-        img2.setUrl("review-example-2.jpg");
-        imgs1.add(img2);
-
-        ReviewImage img3 = new ReviewImage();
-        img3.setUrl("review-example-3.jpg");
-        imgs1.add(img3);
-        r1.setImages(imgs1);
-
-        mockReviews.add(r1);
-
-        // Review 2
-        Review r2 = new Review();
-        r2.setReviewId(2L);
-        r2.setRating(4);
-        r2.setComment("Chất lượng sách tốt, giá hợp lý. Nhưng hơi lâu mới nhận được hàng.");
-        r2.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(3)));
-
-        User u2 = new User();
-        u2.setFullName("Trần Thị B");
-        u2.setAvatarUrl(null);
-        r2.setUser(u2);
-        r2.setImages(new ArrayList<>());
-
-        mockReviews.add(r2);
-
-        // Review 3
-        Review r3 = new Review();
-        r3.setReviewId(3L);
-        r3.setRating(5);
-        r3.setComment("Tuyệt vời! Đây là cuốn sách hay nhất tôi từng đọc. Cảm ơn shop!");
-        r3.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(2)));
-
-        User u3 = new User();
-        u3.setFullName("Lê Văn C");
-        u3.setAvatarUrl(null);
-        r3.setUser(u3);
-        r3.setImages(new ArrayList<>());
-
-        mockReviews.add(r3);
-
-        return mockReviews;
-    }
 }

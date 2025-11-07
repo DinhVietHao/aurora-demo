@@ -24,12 +24,14 @@ public class OrderShopDTO {
     private String imageUrl;
 
     // ----------- OrderItem ------------
+    private long orderItemId;
     private int quantity;
     private double originalPrice;
     private double salePrice;
     private double subtotal;
 
     private boolean canReturn;
+    private boolean isReviewed;
 
     public long getOrderShopId() {
         return orderShopId;
@@ -145,6 +147,22 @@ public class OrderShopDTO {
 
     public double getSubtotal() {
         return subtotal;
+    }
+
+    public long getOrderItemId() {
+        return orderItemId;
+    }
+
+    public void setOrderItemId(long orderItemId) {
+        this.orderItemId = orderItemId;
+    }
+
+    public boolean getIsReviewed() {
+        return isReviewed;
+    }
+
+    public void setIsReviewed(boolean isReviewed) {
+        this.isReviewed = isReviewed;
     }
 
     public void setSubtotal(double subtotal) {
