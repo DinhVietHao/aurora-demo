@@ -54,7 +54,7 @@
                                         <div class="card-body">
                                             <div class="row g-4 align-items-center">
                                                 <div class="col-md-3 text-center">
-                                                    <img src="http://localhost:8080/assets/images/catalog/products/${item.imageUrl}"
+                                                    <img src="${ctx}/assets/images/catalog/products/${item.imageUrl}"
                                                         alt="${item.title}" class="rounded border"
                                                         style="width: 180px; height: 180px; object-fit: cover;">
                                                 </div>
@@ -80,17 +80,11 @@
                                                     </div>
 
                                                     <div class="row mb-2">
-                                                        <div class="col-md-4"><strong>Số lượng:</strong> ${item.fsStock}
+                                                        <div class="col-md-6">
+                                                            <strong>Số lượng:</strong> ${item.fsStock}
                                                         </div>
-                                                        <div class="col-md-4"><strong>Đã bán:</strong> ${item.soldCount}
-                                                        </div>
-                                                        <div class="col-md-4"><strong>Giới hạn/người:</strong>
-                                                            <c:choose>
-                                                                <c:when test="${item.perUserLimit > 0}">
-                                                                    ${item.perUserLimit}
-                                                                </c:when>
-                                                                <c:otherwise>∞</c:otherwise>
-                                                            </c:choose>
+                                                        <div class="col-md-6">
+                                                            <strong>Đã bán:</strong> ${item.soldCount}
                                                         </div>
                                                     </div>
 
@@ -159,9 +153,9 @@
                         const ctxChart = document.getElementById("revenueChart");
                         const noDataMsg = document.getElementById("noDataMessage");
 
-                        // ✅ Lấy dữ liệu JSON từ server (EL)
-                        // const labels = ${ revenueLabelsJson != null ? revenueLabelsJson : "[]"};
-                        // const data = ${ revenueValuesJson != null ? revenueValuesJson : "[]"};
+                        // ✅ Giả sử backend render sẵn JSON labels và data
+                        // const labels = ${revenueLabelsJson != null ? revenueLabelsJson : "[]"};
+                        // const data = ${revenueValuesJson != null ? revenueValuesJson : "[]"};
 
                         console.log("Labels:", labels);
                         console.log("Data:", data);
@@ -170,7 +164,6 @@
                             ctxChart.style.display = "block";
                             noDataMsg.style.display = "none";
 
-                            // ✅ Nếu chỉ có 1 ngày → dùng biểu đồ cột, nhiều ngày → biểu đồ đường
                             const chartType = data.length === 1 ? 'bar' : 'line';
 
                             new Chart(ctxChart, {
@@ -219,7 +212,6 @@
                             noDataMsg.style.display = "block";
                         }
                     </script>
-
                 </body>
 
                 </html>

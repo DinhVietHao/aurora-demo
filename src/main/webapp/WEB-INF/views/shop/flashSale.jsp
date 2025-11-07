@@ -119,15 +119,13 @@
                         </div>
                     </div>
 
-                    <!-- 🔹 Modal đăng ký Flash Sale -->
-
+                    <!-- Modal đăng ký Flash Sale -->
                     <div class="modal fade" id="flashsaleRegisterModal" tabindex="-1">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content shadow-lg border-0">
                                 <div class="modal-header text-white" style="background-color: #154C3D">
                                     <h5 class="modal-title fw-semibold">
-                                        <i class="bi bi-lightning-charge-fill me-2"></i> Đăng ký tham gia
-                                        Flash Sale
+                                        <i class="bi bi-lightning-charge-fill me-2"></i> Đăng ký tham gia Flash Sale
                                     </h5>
                                     <button type="button" class="btn-close btn-close-white"
                                         data-bs-dismiss="modal"></button>
@@ -170,26 +168,15 @@
 
                                         <!-- Thông tin đăng ký -->
                                         <div class="row g-3">
-                                            <div class="mb-3 col-4">
+                                            <div class="mb-3 col-6">
                                                 <label class="form-label">Số lượng đăng ký</label>
                                                 <input type="number" id="flashsaleQuantityInput"
                                                     name="flashsaleQuantityInput" class="form-control" />
                                             </div>
-                                            <div class="mb-3 col-4">
+                                            <div class="mb-3 col-6">
                                                 <label class="form-label">Giá Flash Sale (VND)</label>
                                                 <input type="number" id="flashsalePriceInput" name="flashsalePriceInput"
                                                     class="form-control" />
-                                            </div>
-                                            <div class="mb-3 col-4">
-                                                <label class="form-label">
-                                                    Giới hạn mỗi người mua
-                                                    <i class="bi bi-question-circle ms-1 text-muted"
-                                                        title="Số lượng tối đa mà mỗi khách hàng được mua trong Flash Sale này"></i>
-                                                </label>
-
-                                                <input type="number" min="1" step="1" id="flashsaleLimitInput"
-                                                    name="flashsaleLimitInput" class="form-control"
-                                                    placeholder="(tuỳ chọn)" />
                                             </div>
                                         </div>
 
@@ -247,16 +234,15 @@
                                                 <p class="mb-1"><strong>Giá Flash Sale:</strong>
                                                     <span id="confirmFlashPrice" class="text-danger fw-bold"></span>
                                                 </p>
-                                                <p class="mb-1"><strong>Số lượng đăng ký:</strong> <span
-                                                        id="confirmQuantity"></span></p>
-                                                <p class="mb-1"><strong>Giới hạn mỗi người:</strong> <span
-                                                        id="confirmLimit"></span></p>
-                                                <p class="mb-0"><strong>Thời gian Flash Sale:</strong> <span
-                                                        id="confirmFlashTime" class="fst-italic text-muted"></span></p>
+                                                <p class="mb-1"><strong>Số lượng đăng ký:</strong>
+                                                    <span id="confirmQuantity"></span>
+                                                </p>
+                                                <p class="mb-0"><strong>Thời gian Flash Sale:</strong>
+                                                    <span id="confirmFlashTime" class="fst-italic text-muted"></span>
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
-
 
                                     <div class="alert alert-warning d-flex align-items-center mt-3 mb-0">
                                         <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>

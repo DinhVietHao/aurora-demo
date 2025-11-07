@@ -71,8 +71,7 @@
                                                         class="row fw-bold border-bottom pb-2 mb-3 text-center text-md-start">
                                                         <div class="col-md-5">Sản phẩm</div>
                                                         <div class="col-md-2">Giá Flash Sale</div>
-                                                        <div class="col-md-1">Số lượng</div>
-                                                        <div class="col-md-1">Giới hạn/người</div>
+                                                        <div class="col-md-2">Số lượng</div>
                                                         <div class="col-md-2">Trạng thái</div>
                                                         <div class="col-md-1">Thao tác</div>
                                                     </div>
@@ -88,36 +87,28 @@
                                                                     style="width: 80px; height: 80px; object-fit: cover;">
                                                                 <div>
                                                                     <h6 class="fw-semibold mb-1 text-truncate"
-                                                                        style="max-width: 350px;">${item.title}</h6>
+                                                                        style="max-width: 350px;">
+                                                                        ${item.title}
+                                                                    </h6>
                                                                     <small class="text-muted">ID:
                                                                         ${item.productID}</small>
                                                                 </div>
                                                             </div>
 
                                                             <!-- Giá Flash Sale -->
-                                                            <div class="col-md-2 text-danger fw-semibold">
+                                                            <div
+                                                                class="col-md-2 text-danger fw-semibold text-center text-md-start">
                                                                 <fmt:formatNumber value="${item.flashPrice}"
                                                                     type="number" pattern="#,##0" /> VND
                                                             </div>
 
                                                             <!-- Số lượng -->
-                                                            <div class="col-md-1">${item.fsStock}</div>
-
-                                                            <!-- Giới hạn/người -->
-                                                            <div class="col-md-1">
-                                                                <c:choose>
-                                                                    <c:when
-                                                                        test="${item.perUserLimit != null && item.perUserLimit > 0}">
-                                                                        ${item.perUserLimit}
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <small class="text-muted">∞</small>
-                                                                    </c:otherwise>
-                                                                </c:choose>
+                                                            <div class="col-md-2 text-start" style="padding-left: 2%;">
+                                                                ${item.fsStock}
                                                             </div>
 
                                                             <!-- Trạng thái -->
-                                                            <div class="col-md-2">
+                                                            <div class="col-md-2 text-center text-md-start">
                                                                 <c:choose>
                                                                     <c:when test="${item.approvalStatus == 'PENDING'}">
                                                                         <span
@@ -140,10 +131,10 @@
                                                             </div>
 
                                                             <!-- Thao tác -->
-                                                            <div class="col-md-1">
+                                                            <div class="col-md-1 mt-2 text-start">
                                                                 <a href="${ctx}/shop/flashSale?action=getFlashsaleItemDetail&itemId=${item.flashSaleItemID}"
                                                                     class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                                                    Xem
+                                                                    Xem chi tiết
                                                                 </a>
                                                             </div>
                                                         </div>
