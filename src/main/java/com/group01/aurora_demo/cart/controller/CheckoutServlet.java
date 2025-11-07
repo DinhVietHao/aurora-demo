@@ -139,9 +139,14 @@ public class CheckoutServlet extends NotificationServlet {
                             systemVoucherShipCode,
                             shopVouchers);
 
+                    double totalDiscount = summary.getShopDiscount() + summary.getSystemDiscount();
+                    if (totalDiscount > summary.getTotalProduct()) {
+                        totalDiscount = summary.getTotalProduct();
+                    }
+
                     json.put("success", true);
                     json.put("totalProduct", summary.getTotalProduct());
-                    json.put("totalDiscount", summary.getShopDiscount() + summary.getSystemDiscount());
+                    json.put("totalDiscount", totalDiscount);
                     json.put("totalShippingFee", summary.getTotalShippingFee());
                     json.put("shipDiscount", summary.getSystemShippingDiscount());
                     json.put("finalAmount", summary.getFinalAmount());

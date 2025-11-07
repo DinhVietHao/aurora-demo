@@ -60,9 +60,11 @@ function calculateDiscount(total) {
     if (type === "PERCENT") {
       let percent = parseInt(selectedDiscount.dataset.discount) || 0;
       let max = parseInt(selectedDiscount.dataset.max) || 0;
-      return Math.min((total * percent) / 100, max);
+      let discountAmount = (total * percent) / 100;
+      return Math.min(discountAmount, max, total);
     } else {
-      return parseInt(selectedDiscount.dataset.discount) || 0;
+      let fixedDiscount = parseInt(selectedDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
     }
   }
   return 0;
@@ -196,9 +198,11 @@ function calculateShopDiscount(total, shopId) {
     if (type === "PERCENT") {
       let percent = parseInt(selectedShopDiscount.dataset.discount) || 0;
       let max = parseInt(selectedShopDiscount.dataset.max) || 0;
-      return Math.min((total * percent) / 100, max);
+      let discountAmount = (total * percent) / 100;
+      return Math.min(discountAmount, max, total);
     } else {
-      return parseInt(selectedShopDiscount.dataset.discount) || 0;
+      let fixedDiscount = parseInt(selectedShopDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
     }
   }
   return 0;
