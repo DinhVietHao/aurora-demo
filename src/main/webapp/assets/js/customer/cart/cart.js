@@ -66,9 +66,11 @@ function calculateDiscount(total) {
     if (type === "PERCENT") {
       let percent = parseInt(selectedDiscount.dataset.discount) || 0;
       let max = parseInt(selectedDiscount.dataset.max) || 0;
-      return Math.min((total * percent) / 100, max);
+      let discountAmount = (total * percent) / 100;
+      return Math.min(discountAmount, max, total);
     } else {
-      return parseInt(selectedDiscount.dataset.discount) || 0;
+      let fixedDiscount = parseInt(selectedDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
     }
   }
   return 0;
@@ -201,6 +203,8 @@ minusBtn.forEach((btn) => {
         .then((data) => {
           if (data.success) {
             number.textContent = quantity;
+            const priceElement = row.querySelector(".unit-price");
+            priceElement.textContent = formatCurrency(data.salePrice);
             updateCartSummary();
           } else {
             toast({
@@ -241,7 +245,17 @@ plusBtn.forEach((btn) => {
       .then((data) => {
         if (data.success) {
           number.textContent = quantity;
+          const priceElement = row.querySelector(".unit-price");
+          priceElement.textContent = formatCurrency(data.salePrice);
           updateCartSummary();
+
+          if (data.check === "flashsale_exceeded") {
+            const modalEl = document.getElementById("flashSaleModal");
+            const flashSaleModal = new bootstrap.Modal(modalEl);
+            document.getElementById("flashSaleMessage").textContent =
+              data.message;
+            flashSaleModal.show();
+          }
         } else {
           toast({
             title: data.title,
@@ -368,9 +382,11 @@ function calculateShopDiscount(total, shopId) {
     if (type === "PERCENT") {
       let percent = parseInt(selectedShopDiscount.dataset.discount) || 0;
       let max = parseInt(selectedShopDiscount.dataset.max) || 0;
-      return Math.min((total * percent) / 100, max);
+      let discountAmount = (total * percent) / 100;
+      return Math.min(discountAmount, max, total);
     } else {
-      return parseInt(selectedShopDiscount.dataset.discount) || 0;
+      let fixedDiscount = parseInt(selectedShopDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
     }
   }
   return 0;

@@ -197,35 +197,26 @@ public class OrderService {
 
                     FlashSaleItem flashItem = flashSaleDAO
                             .getActiveFlashSaleItemByProduct(item.getProduct().getProductId());
-                    if (flashItem != null) {
-                        orderItem.setFlashSaleItemId(flashItem.getFlashSaleItemID());
-                        int remaining = flashItem.getFsStock() - flashItem.getSoldCount();
 
-                        if (remaining < item.getQuantity()) {
+                    double flashPrice = flashItem != null ? flashItem.getFlashPrice() : 0.0;
+                    double salePrice = orderItem.getSalePrice();
+                    boolean isFlashSale = flashItem != null && Math.abs(salePrice - flashPrice) < 0.0001;
+
+                    if (isFlashSale) {
+                        orderItem.setFlashSaleItemId(flashItem.getFlashSaleItemID());
+                        if (flashItem.getFsStock() < item.getQuantity()) {
                             conn.rollback();
                             return new ServiceResponse("warning", "Hết hàng Flash Sale",
                                     "Sản phẩm '" + item.getProduct().getTitle() + "' trong Flash Sale đã hết hàng.", "",
                                     0.0);
                         }
 
-                        if (flashItem.getPerUserLimit() != null) {
-                            int purchasedBefore = flashSaleDAO.getUserPurchaseCountInFlashSale(user.getId(),
-                                    flashItem.getFlashSaleItemID());
-                            int remainingUserLimit = flashItem.getPerUserLimit() - purchasedBefore;
-                            if (item.getQuantity() > remainingUserLimit) {
-                                conn.rollback();
-                                return new ServiceResponse("warning", "Vượt giới hạn mua",
-                                        "Bạn chỉ được mua tối đa " + remainingUserLimit +
-                                                " sản phẩm Flash Sale '" + item.getProduct().getTitle()
-                                                + "'.",
-                                        "", 0.0);
-                            }
-                        }
-
                         if (!flashSaleDAO.sellFsItem(conn, flashItem.getFlashSaleItemID(), item.getQuantity())) {
                             conn.rollback();
                             return new ServiceResponse("error", "Không thể cập nhật Flash Sale",
-                                    "Sản phẩm '" + item.getProduct().getTitle() + "' trong Flash Sale đã hết hàng.", "",
+                                    "Không thể cập nhật số lượng Flash Sale cho sản phẩm '"
+                                            + item.getProduct().getTitle() + "'.",
+                                    "",
                                     0.0);
                         }
                     } else {

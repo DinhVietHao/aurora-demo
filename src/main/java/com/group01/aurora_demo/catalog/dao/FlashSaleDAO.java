@@ -235,6 +235,7 @@ public class FlashSaleDAO {
         String sql = """
                     SELECT
                         fsi.FlashSaleItemID,
+                        fsi.FlashPrice,
                         fsi.FsStock,
                         fsi.SoldCount,
                         fsi.PerUserLimit
@@ -254,6 +255,7 @@ public class FlashSaleDAO {
                 if (rs.next()) {
                     FlashSaleItem fsi = new FlashSaleItem();
                     fsi.setFlashSaleItemID(rs.getLong("FlashSaleItemID"));
+                    fsi.setFlashPrice(rs.getDouble("FlashPrice"));
                     fsi.setFsStock(rs.getInt("FsStock"));
                     fsi.setSoldCount(rs.getInt("SoldCount"));
                     fsi.setPerUserLimit((Integer) rs.getObject("PerUserLimit"));
