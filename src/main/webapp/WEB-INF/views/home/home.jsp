@@ -41,38 +41,22 @@
                     </div>
                   </div>
                   <div class="carousel-item">
-                    <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100" alt="..." />
-                    <div class="container">
-                      <div class="row align-items-center banner-content">
-                        <div class="col-lg-6 col-md-12 text-white">
-                          <h1 class="fw-bold">Nhà sách Book Zone</h1>
-                          <h1 class="banner-title">Sách hay mê ly</h1>
-                          <p>
-                            Khám phá hàng ngàn cuốn sách thuộc mọi thể loại. Từ những cuốn sách bán chạy
-                            nhất đến những viên ngọc ẩn, hãy tìm cuốn sách hoàn hảo của bạn với mức giá
-                            không thể cạnh tranh hơn.
-                          </p>
-                          <a href="${ctx}/book" class="button">Mua ngay</a>
-                        </div>
-                      </div>
-                    </div>
+                    <img src="${ctx}/assets/images/catalog/banners/banner-1.png" class="d-block w-100" alt="..." />
                   </div>
                   <div class="carousel-item">
-                    <img src="${ctx}/assets/images/catalog/banners/banner-book.png" class="d-block w-100" alt="..." />
-                    <div class="container">
-                      <div class="row align-items-center banner-content">
-                        <div class="col-lg-6 col-md-12 text-white">
-                          <h1 class="fw-bold">Nhà sách Book Zone</h1>
-                          <h1 class="banner-title">Sách hay mê ly</h1>
-                          <p>
-                            Khám phá hàng ngàn cuốn sách thuộc mọi thể loại. Từ những cuốn sách bán chạy
-                            nhất đến những viên ngọc ẩn, hãy tìm cuốn sách hoàn hảo của bạn với mức giá
-                            không thể cạnh tranh hơn.
-                          </p>
-                          <a href="${ctx}/book" class="button">Mua ngay</a>
-                        </div>
-                      </div>
-                    </div>
+                    <img src="${ctx}/assets/images/catalog/banners/banner-2.png" class="d-block w-100" alt="..." />
+                  </div>
+                  <div class="carousel-item">
+                    <img src="${ctx}/assets/images/catalog/banners/banner-3.jpg" class="d-block w-100" alt="..." />
+                  </div>
+                  <div class="carousel-item">
+                    <img src="${ctx}/assets/images/catalog/banners/banner-4.jpg" class="d-block w-100" alt="..." />
+                  </div>
+                  <div class="carousel-item">
+                    <img src="${ctx}/assets/images/catalog/banners/banner-5.jpg" class="d-block w-100" alt="..." />
+                  </div>
+                  <div class="carousel-item">
+                    <img src="${ctx}/assets/images/catalog/banners/banner-6.jpg" class="d-block w-100" alt="..." />
                   </div>
                 </div>
 

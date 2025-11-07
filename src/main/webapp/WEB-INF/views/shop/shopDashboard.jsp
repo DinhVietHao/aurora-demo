@@ -67,15 +67,17 @@
                                         <div class="col-xl-3 col-md-6">
                                             <div class="card stats-card stats-card-warning mb-4">
                                                 <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon">
-                                                            <i class="bi bi-cart-check"></i>
+                                                    <a href="/shop/orders?status=COMPLETED">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon">
+                                                                <i class="bi bi-cart-check"></i>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <div class="stats-label">Tổng đơn hàng</div>
+                                                                <div class="stats-value">${shop.totalOrders}</div>
+                                                            </div>
                                                         </div>
-                                                        <div class="ms-3">
-                                                            <div class="stats-label">Tổng đơn hàng</div>
-                                                            <div class="stats-value">${shop.totalOrders}</div>
-                                                        </div>
-                                                    </div>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -83,15 +85,17 @@
                                         <div class="col-xl-3 col-md-6">
                                             <div class="card stats-card stats-card-success mb-4">
                                                 <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon">
-                                                            <i class="bi bi-people"></i>
+                                                    <a href="/shop/product?action=view">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon">
+                                                                <i class="bi bi-people"></i>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <div class="stats-label">Sản phẩm đang bán</div>
+                                                                <div class="stats-value">${shop.totalProducts}</div>
+                                                            </div>
                                                         </div>
-                                                        <div class="ms-3">
-                                                            <div class="stats-label">Sản phẩm đang bán</div>
-                                                            <div class="stats-value">${shop.totalProducts}</div>
-                                                        </div>
-                                                    </div>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

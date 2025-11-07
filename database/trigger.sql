@@ -444,31 +444,35 @@ BEGIN
         INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
         INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
     WHERE 
-        i.Status = 'ACTIVE'
-        AND d.Status <> 'ACTIVE';
+        i.[Status] = 'ACTIVE'
+        AND d.[Status] <> 'ACTIVE';
 
     -------------------------------------------------------
-    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc & hoàn hàng tồn
+    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc, hoàn hàng tồn,
+    --    và cộng dồn SoldCount từ FlashSaleItems vào Products.SoldCount
     -------------------------------------------------------
 
     -- Tạo bảng tạm lưu lại các item sẽ xử lý (tránh mất fsStock do reset sớm)
-    DECLARE @ToRestore TABLE (ProductID BIGINT,
+    DECLARE @ToRestore TABLE (
+        ProductID BIGINT,
         FlashSaleItemID BIGINT,
-        fsStock INT);
+        fsStock INT,
+        soldCount BIGINT
+    );
 
     INSERT INTO @ToRestore
-        (ProductID, FlashSaleItemID, fsStock)
-    SELECT fsi.ProductID, fsi.FlashSaleItemID, fsi.fsStock
+        (ProductID, FlashSaleItemID, fsStock, soldCount)
+    SELECT fsi.ProductID, fsi.FlashSaleItemID, fsi.fsStock, fsi.SoldCount
     FROM FlashSaleItems fsi
         INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
         INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
     WHERE 
-        i.Status = 'ENDED'
-        AND d.Status <> 'ENDED'
+        i.[Status] = 'ENDED'
+        AND d.[Status] <> 'ENDED'
         AND fsi.fsStock > 0
         AND fsi.ApprovalStatus = 'APPROVED';
 
-    -- ✅ Cập nhật giá & hoàn kho
+    -- ✅ Cập nhật giá, hoàn kho, và cộng dồn soldCount vào products
     UPDATE p
     SET 
         p.SalePrice = 
@@ -477,17 +481,19 @@ BEGIN
                 ELSE p.SalePrice 
             END,
         p.PreFlashSalePrice = NULL,
-        p.Quantity = p.Quantity + t.fsStock
+        p.Quantity = p.Quantity + t.fsStock,
+        p.SoldCount = p.SoldCount + t.soldCount
     FROM Products p
         INNER JOIN @ToRestore t ON p.ProductID = t.ProductID;
 
-    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0
+    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0 (giữ SoldCount trong FlashSaleItems để làm lịch sử)
     UPDATE fsi
     SET fsi.fsStock = 0
     FROM FlashSaleItems fsi
         INNER JOIN @ToRestore t ON fsi.FlashSaleItemID = t.FlashSaleItemID;
 END;
 GO
+
 
 
 
@@ -582,3 +588,11 @@ BEGIN
 END;
 GO
 
+DROP TRIGGER IF EXISTS trg_UpdateProductSalePrice_OnFlashSaleStatusChange;
+GO
+
+DROP TRIGGER IF EXISTS trg_ApplyFlashPrice_OnItemApproved;
+GO
+
+DROP TRIGGER IF EXISTS trg_UpdatePrice_OnStockChange;
+GO
