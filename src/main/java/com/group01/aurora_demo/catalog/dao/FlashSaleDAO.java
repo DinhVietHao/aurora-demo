@@ -236,7 +236,7 @@ public class FlashSaleDAO {
                         fsi.FlashSaleItemID,
                         fsi.FlashPrice,
                         fsi.FsStock,
-                        fsi.SoldCount,
+                        fsi.SoldCount
                     FROM FlashSaleItems fsi
                     JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
                     WHERE fsi.ProductID = ?
@@ -301,26 +301,6 @@ public class FlashSaleDAO {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
-        }
-    }
-
-    public int getUserPurchaseCountInFlashSale(long userId, long flashSaleItemId) throws SQLException {
-        String sql = """
-                    SELECT COALESCE(SUM(oi.Quantity), 0)
-                    FROM OrderItems oi
-                    JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID
-                    WHERE os.UserID = ?
-                      AND oi.FlashSaleItemID = ?
-                      AND os.Status NOT IN ('CANCELLED')
-                """;
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, userId);
-            ps.setLong(2, flashSaleItemId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? rs.getInt(1) : 0;
-            }
         }
     }
 

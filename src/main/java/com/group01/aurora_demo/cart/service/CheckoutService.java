@@ -75,12 +75,16 @@ public class CheckoutService {
             }
         }
 
+        double remainingAfterShopDiscount = Math.max(0, totalProduct - shopDiscount);
         if (systemVoucherDiscount != null && !systemVoucherDiscount.isEmpty()) {
             Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherDiscount, false);
             if (voucher != null && !"SHIPPING".equalsIgnoreCase(voucher.getDiscountType())) {
-                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
+                String validation = voucherValidator.validate(voucher, remainingAfterShopDiscount, null, userId);
                 if (validation == null) {
-                    systemDiscount = voucherValidator.calculateDiscount(voucher, totalProduct);
+                    systemDiscount = voucherValidator.calculateDiscount(voucher, remainingAfterShopDiscount);
+                    if (voucher.getMaxAmount() > 0) {
+                        systemDiscount = Math.min(systemDiscount, voucher.getMaxAmount());
+                    }
                 }
 
             }
@@ -98,11 +102,11 @@ public class CheckoutService {
                 String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
                 if (validation == null) {
                     systemShippingDiscount = Math.min(voucher.getValue(), totalShippingFee);
+
                 }
             }
 
         }
-
         double finalAmount = Math.max(0,
                 totalProduct + totalShippingFee - shopDiscount - systemDiscount - systemShippingDiscount);
 

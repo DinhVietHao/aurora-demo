@@ -91,9 +91,11 @@ public class OrderService {
             Map<Long, List<CartItem>> groupByShop = cartItems.stream()
                     .collect(Collectors.groupingBy(ci -> ci.getProduct().getShop().getShopId()));
 
+            // Tính phí ship từng shop
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
+            // Khởi tạo thanh toán
             Payment payment = new Payment();
             payment.setAmount(summary.getFinalAmount());
             String transactionRef = "SYS-" + System.currentTimeMillis() + "-" + user.getUserID();
@@ -106,6 +108,9 @@ public class OrderService {
                         "Không thể khởi tạo giao dịch thanh toán. Vui lòng thử lại.", "", 0.0);
             }
 
+            // --- Tổng tiền sản phẩm (sau shop discount để chia hệ thống)
+            double totalAfterShopDiscount = 0.0;
+            Map<Long, Double> shopAfterShopDiscountMap = new HashMap<>();
             for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
                 long shopId = entry.getKey();
                 List<CartItem> items = entry.getValue();
@@ -114,8 +119,8 @@ public class OrderService {
                         .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity()).sum();
 
                 double shopDiscount = 0;
-                Long shopVoucherId = null;
 
+                // --- Áp dụng SHOP VOUCHER
                 if (shopVouchers != null && shopVouchers.containsKey(shopId)) {
                     String shopVoucherCode = shopVouchers.get(shopId);
                     if (shopVoucherCode != null && !shopVoucherCode.isEmpty()) {
@@ -125,10 +130,6 @@ public class OrderService {
                             return new ServiceResponse("warning", "Mã giảm giá không hợp lệ",
                                     "Mã shop #" + shopVoucherCode + " đã hết hạn hoặc không tồn tại.", "", 0.0);
                         }
-                        if (shopVoucher != null) {
-                            shopVoucherCache.put(shopId, shopVoucher);
-                        }
-
                         String validation = voucherValidator.validate(shopVoucher, shopSubtotal, shopId,
                                 user.getUserID());
                         if (validation != null) {
@@ -146,28 +147,62 @@ public class OrderService {
                             }
                         }
                         shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
-                        shopVoucherId = shopVoucher.getVoucherID();
+                        shopVoucherCache.put(shopId, shopVoucher);
                     }
+
                 }
+                double afterShopDiscount = Math.max(0, shopSubtotal - shopDiscount);
+                totalAfterShopDiscount += afterShopDiscount;
+                shopAfterShopDiscountMap.put(shopId, afterShopDiscount);
+            }
+
+            // Áp dụng SYSTEM VOUCHER (voucherDiscount)
+            double systemDiscount = summary.getSystemDiscount();
+            // Áp dụng SYSTEM SHIPPING VOUCHER (voucherShip)
+            double systemShippingDiscount = summary.getSystemShippingDiscount();
+
+            // Tạo đơn hàng từng shop
+            for (Map.Entry<Long, List<CartItem>> entry : groupByShop.entrySet()) {
+                long shopId = entry.getKey();
+                List<CartItem> items = entry.getValue();
+
+                double shopSubtotal = items.stream()
+                        .mapToDouble(ci -> ci.getProduct().getSalePrice() * ci.getQuantity())
+                        .sum();
+
+                double shopDiscount = Math.max(0, shopSubtotal - shopAfterShopDiscountMap.get(shopId));
 
                 double shopShippingFee = shopShippingFees.getOrDefault(shopId, 0.0);
+                double afterShopDiscount = shopAfterShopDiscountMap.get(shopId);
 
-                double systemDiscountAllocated = (summary.getTotalProduct() > 0)
-                        ? (shopSubtotal / summary.getTotalProduct()) * summary.getSystemDiscount()
-                        : 0.0;
+                // Phân bổ system discount theo tỷ lệ giá trị hàng
+                double systemDiscountAllocated = 0.0;
+                if (totalAfterShopDiscount > 0) {
+                    double ratio = afterShopDiscount / totalAfterShopDiscount;
+                    systemDiscountAllocated = ratio * systemDiscount;
+                    systemDiscountAllocated = Math.min(afterShopDiscount, systemDiscountAllocated);
+                }
 
-                double systemShippingDiscountAllocated = (summary.getTotalShippingFee() > 0)
-                        ? (shopShippingFee / summary.getTotalShippingFee()) * summary.getSystemShippingDiscount()
-                        : 0.0;
-                double finalAmount = shopSubtotal - shopDiscount - systemDiscountAllocated
-                        + shopShippingFee - systemShippingDiscountAllocated;
+                // Phân bổ voucher ship theo tỷ lệ phí vận chuyển
+                double systemShippingDiscountAllocated = 0.0;
+                if (summary.getTotalShippingFee() > 0) {
+                    double ratio = shopShippingFee / summary.getTotalShippingFee();
+                    systemShippingDiscountAllocated = ratio * systemShippingDiscount;
+                }
+
+                double finalAmount = Math.max(0,
+                        afterShopDiscount
+                                - systemDiscountAllocated
+                                + shopShippingFee
+                                - systemShippingDiscountAllocated);
 
                 OrderShop orderShop = new OrderShop();
                 orderShop.setUserId(user.getId());
                 orderShop.setShopId(shopId);
                 orderShop.setPaymentId(paymentId);
                 orderShop.setAddress(fullAddress);
-                orderShop.setVoucherShopId(shopVoucherId);
+                orderShop.setVoucherShopId(
+                        shopVoucherCache.get(shopId) != null ? shopVoucherCache.get(shopId).getVoucherID() : null);
                 orderShop.setVoucherDiscountId(voucherDiscount != null ? voucherDiscount.getVoucherID() : null);
                 orderShop.setVoucherShipId(voucherShip != null ? voucherShip.getVoucherID() : null);
                 orderShop.setSubtotal(shopSubtotal);

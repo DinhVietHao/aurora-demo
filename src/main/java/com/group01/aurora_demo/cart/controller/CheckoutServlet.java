@@ -73,7 +73,7 @@ public class CheckoutServlet extends NotificationServlet {
                 ShopCartDTO shopCartDTO = new ShopCartDTO();
                 shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                 shopCartDTO.setItems(entry.getValue());
-                shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey()));
+                shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey(), user.getUserID()));
                 return shopCartDTO;
             }).toList();
 
@@ -88,7 +88,7 @@ public class CheckoutServlet extends NotificationServlet {
                 }
             }
             req.setAttribute("shopCarts", shopCarts);
-            req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
+            req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers(user.getUserID()));
             req.setAttribute("addresses", addressList);
             req.setAttribute("address", selectedAddress);
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);
@@ -139,9 +139,14 @@ public class CheckoutServlet extends NotificationServlet {
                             systemVoucherShipCode,
                             shopVouchers);
 
+                    double totalDiscount = summary.getShopDiscount() + summary.getSystemDiscount();
+                    if (totalDiscount > summary.getTotalProduct()) {
+                        totalDiscount = summary.getTotalProduct();
+                    }
+
                     json.put("success", true);
                     json.put("totalProduct", summary.getTotalProduct());
-                    json.put("totalDiscount", summary.getShopDiscount() + summary.getSystemDiscount());
+                    json.put("totalDiscount", totalDiscount);
                     json.put("totalShippingFee", summary.getTotalShippingFee());
                     json.put("shipDiscount", summary.getSystemShippingDiscount());
                     json.put("finalAmount", summary.getFinalAmount());

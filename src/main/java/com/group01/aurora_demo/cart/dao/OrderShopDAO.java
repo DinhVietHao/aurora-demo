@@ -521,6 +521,7 @@ public class OrderShopDAO {
         String sql = """
                 SELECT
                     OrderShopID,
+                    UserID,
                     ShopID,
                     PaymentID,
                     Status,
@@ -543,6 +544,7 @@ public class OrderShopDAO {
                 if (rs.next()) {
                     OrderShop shop = new OrderShop();
                     shop.setOrderShopId(rs.getLong("OrderShopID"));
+                    shop.setUserId(rs.getLong("UserID"));
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setPaymentId(rs.getLong("PaymentID"));
                     shop.setStatus(rs.getString("Status"));
