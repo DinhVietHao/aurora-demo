@@ -73,7 +73,7 @@ public class CheckoutServlet extends NotificationServlet {
                 ShopCartDTO shopCartDTO = new ShopCartDTO();
                 shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                 shopCartDTO.setItems(entry.getValue());
-                shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey()));
+                shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey(), user.getUserID()));
                 return shopCartDTO;
             }).toList();
 
@@ -88,7 +88,7 @@ public class CheckoutServlet extends NotificationServlet {
                 }
             }
             req.setAttribute("shopCarts", shopCarts);
-            req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
+            req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers(user.getUserID()));
             req.setAttribute("addresses", addressList);
             req.setAttribute("address", selectedAddress);
             req.setAttribute("selectedAddressId", selectedAddress != null ? selectedAddress.getAddressId() : null);

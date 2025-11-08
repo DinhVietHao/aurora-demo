@@ -14,7 +14,7 @@ import com.group01.aurora_demo.shop.model.Voucher;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class VoucherDAO {
-    public List<Voucher> getActiveVouchersByShopId(long shopId) {
+    public List<Voucher> getActiveVouchersByShopId(long shopId, long userId) {
         List<Voucher> listVouchersShop = new ArrayList<>();
         String sql = """
                       SELECT
@@ -37,10 +37,20 @@ public class VoucherDAO {
                             AND ShopID = ?
                             AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
                             AND Status = 'ACTIVE'
+                            AND (
+                                PerUserLimit IS NULL
+                                 OR (
+                                    SELECT COUNT(*)
+                                    FROM UserVouchers uv
+                                    WHERE uv.VoucherID = Vouchers.VoucherID
+                                    AND uv.UserID = ? AND uv.Status = 'USED'
+                                ) <= PerUserLimit
+                            )
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setLong(1, shopId);
+            ps.setLong(2, userId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Voucher voucher = new Voucher();
@@ -66,7 +76,7 @@ public class VoucherDAO {
         return listVouchersShop;
     }
 
-    public List<Voucher> getActiveSystemVouchers() {
+    public List<Voucher> getActiveSystemVouchers(long userId) {
         List<Voucher> listVouchersSystem = new ArrayList<>();
         String sql = """
                     SELECT
@@ -86,9 +96,19 @@ public class VoucherDAO {
                     AND StartAt <= SYSUTCDATETIME() AND EndAt >= SYSUTCDATETIME()
                     AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
                     AND [Status] = 'ACTIVE'
+                    AND (
+                        PerUserLimit IS NULL
+                        OR (
+                            SELECT COUNT(*)
+                            FROM UserVouchers uv
+                            WHERE uv.VoucherID = Vouchers.VoucherID
+                            AND uv.UserID = ? AND uv.Status = 'USED'
+                        ) <= PerUserLimit
+                    )
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
             PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, userId);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 Voucher voucher = new Voucher();

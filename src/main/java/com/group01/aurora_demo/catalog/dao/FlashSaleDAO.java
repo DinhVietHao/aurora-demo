@@ -236,7 +236,7 @@ public class FlashSaleDAO {
                         fsi.FlashSaleItemID,
                         fsi.FlashPrice,
                         fsi.FsStock,
-                        fsi.SoldCount,
+                        fsi.SoldCount
                     FROM FlashSaleItems fsi
                     JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
                     WHERE fsi.ProductID = ?
