@@ -69,12 +69,13 @@
                                                 <div class="card-body">
                                                     <a href="/shop/orders?status=COMPLETED">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon">
+                                                            <div class="stats-icon" style="color: white">
                                                                 <i class="bi bi-cart-check"></i>
                                                             </div>
                                                             <div class="ms-3">
-                                                                <div class="stats-label">Tổng đơn hàng</div>
-                                                                <div class="stats-value">${shop.totalOrders}</div>
+                                                                <div class="stats-label text-light">Tổng đơn hàng</div>
+                                                                <div class="stats-value text-light">${shop.totalOrders}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </a>
@@ -87,12 +88,14 @@
                                                 <div class="card-body">
                                                     <a href="/shop/product?action=view">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon">
+                                                            <div class="stats-icon" style="color: white">
                                                                 <i class="bi bi-people"></i>
                                                             </div>
                                                             <div class="ms-3">
-                                                                <div class="stats-label">Sản phẩm đang bán</div>
-                                                                <div class="stats-value">${shop.totalProducts}</div>
+                                                                <div class="stats-label text-light">Sản phẩm đang bán
+                                                                </div>
+                                                                <div class="stats-value text-light">
+                                                                    ${shop.totalProducts}</div>
                                                             </div>
                                                         </div>
                                                     </a>

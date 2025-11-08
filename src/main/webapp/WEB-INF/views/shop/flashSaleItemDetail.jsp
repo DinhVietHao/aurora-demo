@@ -110,8 +110,11 @@
 
                                                     <!-- Thanh tiến độ -->
                                                     <div class="mt-3">
+                                                        <c:set var="totalStock"
+                                                            value="${item.soldCount + item.fsStock}" />
                                                         <c:set var="progress"
-                                                            value="${(item.soldCount * 100.0) / (item.fsStock > 0 ? item.fsStock : 1)}" />
+                                                            value="${(item.soldCount * 100.0) / (totalStock > 0 ? totalStock : 1)}" />
+
                                                         <div class="progress" style="height: 20px; position: relative;">
                                                             <div class="progress-bar bg-success" role="progressbar"
                                                                 style="width: ${progress}%; transition: width 0.6s;">
