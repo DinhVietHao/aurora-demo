@@ -21,6 +21,7 @@ import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.OrderItemVATInfo;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
@@ -1472,6 +1473,37 @@ public class OrderShopDAO {
         }
 
         return autoApprovedCount;
+    }
+
+    public double getTotalVATByOrderShopId(long orderShopId) {
+        double totalVAT = 0.0;
+
+        String sql = """
+                SELECT
+                    SUM(oi.Subtotal * ISNULL(v.VATRate, 0) / 100.0) AS VatAmount
+                FROM OrderItems oi
+                JOIN ProductCategory pc ON oi.ProductID = pc.ProductID AND pc.IsPrimary = 1
+                JOIN Category c ON pc.CategoryID = c.CategoryID
+                JOIN VAT v ON c.VATCode = v.VATCode
+                WHERE oi.OrderShopID = ?
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    totalVAT = rs.getDouble("VatAmount");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return totalVAT;
     }
 
 }

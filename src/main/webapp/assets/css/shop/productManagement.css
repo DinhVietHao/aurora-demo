@@ -361,3 +361,11 @@ h1 {
   background-color: #154c3d;
   color: white;
 }
+
+input[name="CategoryIDs"].main-category {
+  accent-color: #28a745;
+}
+
+.border-danger {
+  border-color: #dc3545 !important;
+}

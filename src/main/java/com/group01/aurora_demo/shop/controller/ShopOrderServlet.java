@@ -1,11 +1,16 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.model.OrderItemVATInfo;
 import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 
@@ -55,10 +60,69 @@ public class ShopOrderServlet extends HttpServlet {
                             OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
                             if (orderShop == null) {
                                 request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
+                                request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
+                                        response);
+                                break;
                             }
+
                             request.setAttribute("phone", orderShop.getAddress().split("-")[0].trim());
                             request.setAttribute("address", orderShop.getAddress().split("-")[1].trim());
                             request.setAttribute("orderShop", orderShop);
+
+                            if ("COMPLETED".equalsIgnoreCase(orderShop.getStatus())) {
+                                Date completedDate = orderShop.getUpdatedAt();
+                                if (completedDate != null) {
+                                    // 🔹 Chuyển Date -> LocalDateTime
+                                    LocalDateTime completedAt = completedDate.toInstant()
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDateTime();
+
+                                    LocalDateTime now = LocalDateTime.now();
+                                    long hoursPassed = ChronoUnit.HOURS.between(completedAt, now);
+                                    long remainHours = 168 - hoursPassed;
+
+                                    double totalPrice = orderShop.getSubtotal();
+                                    double shipFee = orderShop.getShippingFee();
+                                    double voucherShop = orderShop.getShopDiscount();
+                                    double systemVoucher = orderShop.getSystemDiscount();
+                                    double systemShippingFee = orderShop.getSystemShippingDiscount();
+                                    double platformFee = 3000;
+                                    double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
+
+                                    if (hoursPassed >= 168) {
+                                        double receivedAmount = totalPrice + shipFee - voucherShop - platformFee
+                                                - totalVAT + systemShippingFee + systemVoucher;
+                                        if (receivedAmount < 0)
+                                            receivedAmount = 0;
+
+                                        request.setAttribute("receivedAmount", receivedAmount);
+                                        request.setAttribute("isReceived", true);
+                                    } else {
+                                        long remainDays = remainHours / 24;
+                                        long remainH = remainHours % 24;
+
+                                        request.setAttribute("remainDays", remainDays);
+                                        request.setAttribute("remainHours", remainH);
+                                        request.setAttribute("isReceived", false);
+                                    }
+                                    request.setAttribute("systemVoucher", systemVoucher);
+                                    request.setAttribute("systemShippingFee", systemShippingFee);
+                                    request.setAttribute("totalPrice", totalPrice);
+                                    request.setAttribute("shipFee", shipFee);
+                                    request.setAttribute("voucherShop", voucherShop);
+                                    request.setAttribute("platformFee", platformFee);
+                                    request.setAttribute("totalVAT", totalVAT);
+                                    LocalDateTime expectedReceiveAt = completedAt.plusDays(7);
+                                    request.setAttribute("completedAt", completedAt);
+                                    request.setAttribute("expectedReceiveAt", expectedReceiveAt);
+
+                                } else {
+                                    request.setAttribute("isReceived", false);
+                                }
+                            } else {
+                                request.setAttribute("isReceived", false);
+                            }
+
                             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
                                     response);
                             break;
