@@ -84,14 +84,12 @@ public class ShopOrderServlet extends HttpServlet {
                                     double totalPrice = orderShop.getSubtotal();
                                     double shipFee = orderShop.getShippingFee();
                                     double voucherShop = orderShop.getShopDiscount();
-                                    double systemVoucher = orderShop.getSystemDiscount();
-                                    double systemShippingFee = orderShop.getSystemShippingDiscount();
                                     double platformFee = 3000;
                                     double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
 
                                     if (hoursPassed >= 168) {
                                         double receivedAmount = totalPrice + shipFee - voucherShop - platformFee
-                                                - totalVAT + systemShippingFee + systemVoucher;
+                                                - totalVAT;
                                         if (receivedAmount < 0)
                                             receivedAmount = 0;
 
@@ -105,8 +103,6 @@ public class ShopOrderServlet extends HttpServlet {
                                         request.setAttribute("remainHours", remainH);
                                         request.setAttribute("isReceived", false);
                                     }
-                                    request.setAttribute("systemVoucher", systemVoucher);
-                                    request.setAttribute("systemShippingFee", systemShippingFee);
                                     request.setAttribute("totalPrice", totalPrice);
                                     request.setAttribute("shipFee", shipFee);
                                     request.setAttribute("voucherShop", voucherShop);

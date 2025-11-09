@@ -88,14 +88,6 @@
                                                         <p><strong>Phí VAT trừ:</strong> -
                                                             <fmt:formatNumber value="${totalVAT}" pattern="#,##0" /> ₫
                                                         </p>
-                                                        <p><strong>Voucher hệ thống:</strong> +
-                                                            <fmt:formatNumber value="${systemVoucher}"
-                                                                pattern="#,##0" /> ₫
-                                                        </p>
-                                                        <p><strong>Voucher vận chuyển hệ thống:</strong> +
-                                                            <fmt:formatNumber value="${systemShippingFee}"
-                                                                pattern="#,##0" /> ₫
-                                                        </p>
                                                         <p><strong>Phí vận chuyển:</strong> +
                                                             <fmt:formatNumber value="${shipFee}" pattern="#,##0" /> ₫
                                                         </p>

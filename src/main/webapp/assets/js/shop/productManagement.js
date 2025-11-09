@@ -670,39 +670,33 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("🟢 [DEBUG] Click update, productId =", id);
 
       fetch(`/shop/product?action=getProduct&id=${id}`)
-        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((r) => {
+          console.log("🟢 [DEBUG] Fetch response status =", r.status);
+          return r.ok ? r.json() : Promise.reject(`Fetch error ${r.status}`);
+        })
         .then((data) => {
+          console.log("🟢 [DEBUG] Raw JSON data:", data);
           const { product, updateMode } = data || {};
+
           if (!product) {
-            console.error("⚠ Không tìm thấy dữ liệu sản phẩm!");
+            console.warn("⚠️ [DEBUG] product is null/undefined in response");
+            alert("Không tìm thấy sản phẩm!");
             return;
           }
 
-          // Populate modal
+          console.log("🟢 [DEBUG] Calling populateUpdateModal...");
           populateUpdateModal(product);
 
-          // Đồng bộ thể loại chính
-          const mainCat = product.categories?.find((c) => c.isPrimary == 1);
-          if (mainCat && window.setMainCategoryForModal) {
-            window.setMainCategoryForModal(
-              "#updateProductModal",
-              mainCat.categoryId
-            );
-          }
-
-          // Xử lý chế độ chỉnh sửa
+          console.log(
+            "🟢 [DEBUG] Calling handleUpdateMode, mode =",
+            updateMode
+          );
           handleUpdateMode(updateMode);
           const hiddenMode = document.getElementById("updateMode");
           if (hiddenMode) hiddenMode.value = updateMode || "";
-
-          // ✅ Chỉ hiển thị modal sau khi dữ liệu đã nạp xong
-          const modal = new bootstrap.Modal(
-            document.getElementById("updateProductModal")
-          );
-          modal.show();
         })
         .catch((err) => {
-          console.error("❌ Lỗi khi tải sản phẩm:", err);
+          console.error("❌ [DEBUG] Fetch or JSON parse failed:", err);
         });
     })
   );
