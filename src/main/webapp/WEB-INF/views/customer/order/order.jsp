@@ -113,8 +113,9 @@
                                                         </span>
                                                         <input type="text" class="form-control rounded-pill"
                                                             placeholder="Tìm đơn hàng theo mã đơn hàng, nhà bán hoặc tên sản phẩm">
-                                                        <button class="btn btn-light btn-sm rounded-pill">Tìm
-                                                            kiếm</button>
+                                                        <button class="btn btn-light btn-sm rounded-pill">
+                                                            Tìm kiếm
+                                                        </button>
                                                     </div>
 
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
@@ -125,8 +126,9 @@
                                                                             ${entry.value[0].shopName}</strong>
                                                                         <a href="${ctx}/home?action=view-shop&shopId=${entry.value[0].shopId}"
                                                                             class="button-outline mx-2">
-                                                                            Xem
-                                                                            shop</a></span>
+                                                                            Xem shop
+                                                                        </a>
+                                                                    </span>
 
                                                                     <div class="d-flex align-items-center">
                                                                         <div class="text-color small me-2">
@@ -206,41 +208,49 @@
                                                                 </div>
 
                                                                 <c:forEach var="orderShop" items="${entry.value}">
-                                                                    <a href="/order/detail?id=${orderShop.orderShopId}">
-                                                                        <div class="order-card__body">
-                                                                            <div class="col-2 text-center">
-                                                                                <img class="order-card__image"
-                                                                                    src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
-                                                                                    alt="Ảnh sảm phẩm">
-                                                                            </div>
-                                                                            <div class="col-10">
-                                                                                <h6>${orderShop.productName}</h6>
-                                                                                <div
-                                                                                    class="d-flex justify-content-between">
-                                                                                    <p class="text-color">Số lượng:
-                                                                                        ${orderShop.quantity}
-                                                                                    </p>
-                                                                                    <div>
-                                                                                        <c:if
-                                                                                            test="${orderShop.originalPrice != orderShop.salePrice}">
-                                                                                            <span
-                                                                                                class="text-decoration-line-through text-color">
-                                                                                                <fmt:formatNumber
-                                                                                                    value="${orderShop.originalPrice}"
-                                                                                                    type="currency" />
-                                                                                            </span>
-                                                                                        </c:if>
+                                                                    <div class="order-card__body row"
+                                                                        data-order-id="${orderShop.orderShopId}">
+                                                                        <div class="col-2 text-center">
+                                                                            <img class="order-card__image"
+                                                                                src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
+                                                                                alt="Ảnh sản phẩm">
+                                                                        </div>
+
+                                                                        <div class="col-10">
+                                                                            <h6>${orderShop.productName}</h6>
+                                                                            <div class="d-flex justify-content-between">
+                                                                                <p class="text-color">Số lượng:
+                                                                                    ${orderShop.quantity}</p>
+                                                                                <div>
+                                                                                    <c:if
+                                                                                        test="${orderShop.originalPrice != orderShop.salePrice}">
                                                                                         <span
-                                                                                            class="fw-bold text-danger">
+                                                                                            class="text-decoration-line-through text-color">
                                                                                             <fmt:formatNumber
-                                                                                                value="${orderShop.salePrice}"
+                                                                                                value="${orderShop.originalPrice}"
                                                                                                 type="currency" />
                                                                                         </span>
-                                                                                    </div>
+                                                                                    </c:if>
+                                                                                    <span class="fw-bold text-danger">
+                                                                                        <fmt:formatNumber
+                                                                                            value="${orderShop.salePrice}"
+                                                                                            type="currency" />
+                                                                                    </span>
                                                                                 </div>
                                                                             </div>
+
+                                                                            <c:if
+                                                                                test="${entry.value[0].shopStatus == 'COMPLETED' && !orderShop.isReviewed}">
+                                                                                <button type="button"
+                                                                                    class="button-five btn-open-review mt-2"
+                                                                                    data-order-item-id="${orderShop.orderItemId}"
+                                                                                    data-product-name="${orderShop.productName}"
+                                                                                    data-product-image="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}">
+                                                                                    Viết đánh giá
+                                                                                </button>
+                                                                            </c:if>
                                                                         </div>
-                                                                    </a>
+                                                                    </div>
                                                                 </c:forEach>
 
                                                                 <div class="text-end">
@@ -258,31 +268,26 @@
                                                                             data-bs-toggle="modal"
                                                                             data-bs-target="#cancelOrderModal"
                                                                             data-order-shop-id="${entry.value[0].orderShopId}">
-                                                                            Hủy
-                                                                            đơn</button>
+                                                                            Hủy đơn
+                                                                        </button>
                                                                     </c:if>
+
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus  == 'CANCELLED'}">
                                                                         <button class="button-four btnRepurchase"
                                                                             data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
-                                                                            lại</button>
+                                                                            Mua lại
+                                                                        </button>
                                                                     </c:if>
-
 
                                                                     <c:if
                                                                         test="${entry.value[0].shopStatus == 'COMPLETED'}">
                                                                         <button class="button-four btnRepurchase"
                                                                             data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
-                                                                            lại</button>
-                                                                        <button class="button-five"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#ratingModal">
-                                                                            Đánh giá
-                                                                            shop</button>
+                                                                            Mua lại
+                                                                        </button>
                                                                     </c:if>
 
                                                                     <c:if
@@ -290,8 +295,8 @@
                                                                         <button class="button-four btnRepurchase"
                                                                             data-order-shop-id="${entry.value[0].orderShopId}"><i
                                                                                 class="bi bi-arrow-repeat me-1"></i>
-                                                                            Mua
-                                                                            lại</button>
+                                                                            Mua lại
+                                                                        </button>
                                                                     </c:if>
 
                                                                     <c:if
@@ -309,9 +314,9 @@
                                                                         <button class="button-four btn-confirm-order"
                                                                             data-bs-toggle="modal"
                                                                             data-bs-target="#confirmOrderModal"
-                                                                            data-order-shop-id="${entry.value[0].orderShopId}">Đã
-                                                                            nhận
-                                                                            hàng</button>
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Đã nhận hàng
+                                                                        </button>
                                                                     </c:if>
 
                                                                     <c:if
@@ -320,10 +325,9 @@
                                                                             <input type="hidden" name="paymentId"
                                                                                 value="${entry.value[0].paymentId}" />
                                                                             <button class="button-four">
-                                                                                Thanh toán
-                                                                                lại</button>
+                                                                                Thanh toán lại
+                                                                            </button>
                                                                         </form>
-
                                                                     </c:if>
                                                                 </div>
                                                             </div>
@@ -445,40 +449,63 @@
                     aria-hidden="true">
                     <div class="modal-dialog modal-lg modal-dialog-centered">
                         <div class="modal-content rounded-3 shadow">
-                            <div class="modal-header">
-                                <h5 class="modal-title fw-bold" id="ratingModalLabel">Đánh Giá Sản Phẩm</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Đóng"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="d-flex mb-3">
-                                    <img src="./assets/images/product-1.png" class="rounded border me-3" alt="Sản phẩm">
-                                    <div>
-                                        <p class="mb-1 fw-semibold">Sách Gặp Chính Mình - Phương pháp sống tỉnh thức -
-                                            Cẩm nang tâm
-                                            linh thực dụng</p>
-                                        <small class="text-muted">Phân loại: Bìa mềm</small>
+
+                            <form id="reviewForm">
+
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold" id="ratingModalLabel">Đánh Giá Sản Phẩm</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <input type="hidden" name="orderItemId" id="reviewOrderItemId" value="">
+
+                                    <div class="d-flex mb-3">
+                                        <img id="reviewProductImage" src="" class="rounded border me-3" alt="Sản phẩm"
+                                            style="width: 80px; height: 80px; object-fit: contain;">
+                                        <div>
+                                            <p class="mb-1 fw-semibold" id="reviewProductName">[Tên sản phẩm]</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="fw-semibold">Chất lượng sản phẩm</label>
+                                        <div class="rating-stars">
+                                            <input type="radio" name="rating" id="rating-5" value="5" required><label
+                                                for="rating-5"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-4" value="4"><label
+                                                for="rating-4"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-3" value="3"><label
+                                                for="rating-3"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-2" value="2"><label
+                                                for="rating-2"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-1" value="1"><label
+                                                for="rating-1"><i class="bi bi-star-fill"></i></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="fw-semibold" for="reviewComment">Nội dung đánh giá</label>
+                                        <textarea class="form-control" name="comment" id="reviewComment" rows="3"
+                                            placeholder="Hãy chia sẻ trải nghiệm của bạn..."></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="reviewImages" class="button-four me-2">
+                                            <i class="bi bi-camera"></i> Thêm Hình ảnh (Tối đa 5 ảnh)
+                                        </label>
+                                        <input type="file" id="reviewImages" name="reviewImages" style="display: none;"
+                                            multiple accept="image/png, image/jpeg, image/gif, image/webp">
+                                        <div id="previewImages" class="d-flex flex-wrap mt-2 gap-2"></div>
                                     </div>
                                 </div>
 
-                                <div class="mb-3">
-                                    <label class="fw-semibold">Nội dung đánh giá</label>
-                                    <textarea class="form-control" rows="3"
-                                        placeholder="Hãy chia sẻ trải nghiệm của bạn về sản phẩm này với những người mua khác nhé."></textarea>
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Trở lại</button>
+                                    <button type="submit" class="button-four" id="submitReviewBtn">Hoàn thành</button>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="fileInput" class="button-four me-2">
-                                        <i class="bi bi-camera"></i> Thêm Hình ảnh
-                                    </label>
-                                    <input type="file" id="fileInput" style="display: none;" multiple>
-                                    <div id="previewImages" class="d-flex flex-wrap mt-2 gap-2"></div>
-
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="button-five" data-bs-dismiss="modal">Trở lại</button>
-                                <button type="button" class="button-four">Hoàn thành</button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>

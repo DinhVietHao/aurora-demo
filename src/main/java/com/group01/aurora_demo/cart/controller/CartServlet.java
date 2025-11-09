@@ -71,12 +71,12 @@ public class CartServlet extends NotificationServlet {
                     ShopCartDTO shopCartDTO = new ShopCartDTO();
                     shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                     shopCartDTO.setItems(entry.getValue());
-                    shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey()));
+                    shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey(), user.getUserID()));
                     return shopCartDTO;
                 }).toList();
 
                 req.setAttribute("shopCarts", shopCarts);
-                req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
+                req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers(user.getUserID()));
             }
             req.getRequestDispatcher("/WEB-INF/views/customer/cart/cart.jsp").forward(req, resp);
         }

@@ -283,7 +283,6 @@ CREATE TABLE OrderItems
     CONSTRAINT FK_OrderItems_Flash     FOREIGN KEY (FlashSaleItemID) REFERENCES FlashSaleItems(FlashSaleItemID)
 );
 
-
 CREATE TABLE FlashSales
 (
     FlashSaleID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -293,8 +292,6 @@ CREATE TABLE FlashSales
     [Status] NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
-
-
 
 CREATE TABLE FlashSaleItems
 (
@@ -311,8 +308,6 @@ CREATE TABLE FlashSaleItems
     CONSTRAINT FK_FSI_FlashSale FOREIGN KEY (FlashSaleID) REFERENCES FlashSales(FlashSaleID),
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
 );
-
-
 
 CREATE TABLE Reviews
 (

@@ -10,7 +10,6 @@ public class FlashSaleItem {
     private double originalPrice;
     private double flashPrice;
     private int fsStock;
-    private Integer perUserLimit;
     private String approvalStatus;
     private String imageUrl;
     private Product product;
@@ -88,14 +87,6 @@ public class FlashSaleItem {
 
     public void setFsStock(int fsStock) {
         this.fsStock = fsStock;
-    }
-
-    public Integer getPerUserLimit() {
-        return perUserLimit;
-    }
-
-    public void setPerUserLimit(Integer perUserLimit) {
-        this.perUserLimit = perUserLimit;
     }
 
     public String getApprovalStatus() {

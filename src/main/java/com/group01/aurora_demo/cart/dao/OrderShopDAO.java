@@ -126,7 +126,13 @@ public class OrderShopDAO {
                     oi.Quantity,
                     oi.OriginalPrice,
                     oi.SalePrice,
-                    oi.Subtotal
+                    oi.Subtotal,
+                    oi.OrderItemID,
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM Reviews r WHERE r.OrderItemID = oi.OrderItemID)
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT)
+                    END AS IsReviewed
                 FROM OrderShops os
                 JOIN Shops s ON os.ShopID = s.ShopID
                 JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
@@ -175,6 +181,8 @@ public class OrderShopDAO {
                     orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
                     orderShop.setSalePrice(rs.getDouble("SalePrice"));
                     orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                    orderShop.setOrderItemId(rs.getLong("OrderItemID"));
+                    orderShop.setIsReviewed(rs.getBoolean("IsReviewed"));
 
                     boolean canReturn = false;
                     if (orderShop.getUpdatedAt() != null && "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())) {
@@ -189,7 +197,7 @@ public class OrderShopDAO {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error in getOrderShopsByOrderId: " + e.getMessage());
+            System.out.println("Error in getOrderShopsByStatus: " + e.getMessage());
         }
 
         return orderShops;
@@ -514,6 +522,7 @@ public class OrderShopDAO {
         String sql = """
                 SELECT
                     OrderShopID,
+                    UserID,
                     ShopID,
                     PaymentID,
                     Status,
@@ -536,6 +545,7 @@ public class OrderShopDAO {
                 if (rs.next()) {
                     OrderShop shop = new OrderShop();
                     shop.setOrderShopId(rs.getLong("OrderShopID"));
+                    shop.setUserId(rs.getLong("UserID"));
                     shop.setShopId(rs.getLong("ShopID"));
                     shop.setPaymentId(rs.getLong("PaymentID"));
                     shop.setStatus(rs.getString("Status"));
