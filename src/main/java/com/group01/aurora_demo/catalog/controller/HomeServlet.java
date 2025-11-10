@@ -29,43 +29,13 @@ public class HomeServlet extends NotificationServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        setFilterAttributes(request);
         request.setCharacterEncoding("UTF-8");
-
-        String savedEmail = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("remember_account".equals(c.getName())) {
-                    savedEmail = c.getValue();
-                    break;
-                }
-            }
-        }
-
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
-
-        if (user == null && savedEmail != null && !savedEmail.isEmpty()) {
-            user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
-            if (user != null) {
-                session.setAttribute("AUTH_USER", user);
-                session.setMaxInactiveInterval(60 * 60 * 2);
-
-                try {
-                    CartItemDAO cartItemDAO = new CartItemDAO();
-                    int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
-                    session.setAttribute("cartCount", cartCount);
-                } catch (Exception e) {
-                    session.setAttribute("cartCount", 0);
-                }
-            }
-        }
-
+        setFilterAttributes(request);
+        autoLoginFromCookie(request);
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
         switch (action) {
             case "home":
-                handleHome(request, response, user);
+                handleHome(request, response);
                 break;
 
             case "bookstore":
@@ -90,6 +60,43 @@ public class HomeServlet extends NotificationServlet {
         }
     }
 
+    private void autoLoginFromCookie(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("AUTH_USER");
+        if (user == null) {
+            String savedEmail = getCookieValue(request, "remember_account");
+            if (savedEmail != null && !savedEmail.isEmpty()) {
+                try {
+                    UserDAO userDAO = new UserDAO();
+                    user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
+                    if (user != null) {
+                        session.setAttribute("AUTH_USER", user);
+                        session.setMaxInactiveInterval(60 * 60 * 2);
+
+                        CartItemDAO cartItemDAO = new CartItemDAO();
+                        int cartCount = cartItemDAO.getDistinctItemCount(user.getUserID());
+                        session.setAttribute("cartCount", cartCount);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Auto-login failed: " + e.getMessage());
+                    session.setAttribute("cartCount", 0);
+                }
+            }
+        }
+    }
+
+    private String getCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (name.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
     private void setFilterAttributes(HttpServletRequest request) {
         request.setAttribute("categories", productDAO.getCategories());
         request.setAttribute("authors", productDAO.getAuthors());
@@ -111,23 +118,36 @@ public class HomeServlet extends NotificationServlet {
         return page;
     }
 
-    private void handleHome(HttpServletRequest request, HttpServletResponse response, User user) {
+    private void handleHome(HttpServletRequest request, HttpServletResponse response) {
         try {
-            List<Product> suggestedProducts = (user != null)
-                    ? productDAO.getSuggestedProductsForCustomer(user.getId())
-                    : productDAO.getSuggestedProductsForGuest();
-            if (suggestedProducts.isEmpty())
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("AUTH_USER");
+
+            List<Product> suggestedProducts;
+            if (user != null) {
+                suggestedProducts = productDAO.getSuggestedProductsForCustomer(user.getUserID());
+                if (suggestedProducts == null || suggestedProducts.isEmpty()) {
+                    suggestedProducts = productDAO.getSuggestedProductsForGuest();
+                }
+            } else {
                 suggestedProducts = productDAO.getSuggestedProductsForGuest();
+            }
 
             List<Product> latestProducts = productDAO.getLatestProducts(36);
 
             Map<String, Object> flashSaleData = productDAO.getFlashSaleProducts();
 
-            request.setAttribute("latestProducts", latestProducts);
-            request.setAttribute("suggestedProducts", suggestedProducts);
-            request.setAttribute("flashSaleProducts", flashSaleData.get("products"));
-            request.setAttribute("flashSaleEndAt", flashSaleData.get("flashSaleEndAt"));
-            request.setAttribute("currentServerTime", flashSaleData.get("currentServerTime"));
+            request.setAttribute("suggestedProducts", suggestedProducts != null ? suggestedProducts : List.of());
+            request.setAttribute("latestProducts", latestProducts != null ? latestProducts : List.of());
+
+            if (flashSaleData != null) {
+                request.setAttribute("flashSaleProducts", flashSaleData.get("products"));
+                request.setAttribute("flashSaleEndAt", flashSaleData.get("flashSaleEndAt"));
+                request.setAttribute("currentServerTime", flashSaleData.get("currentServerTime"));
+            } else {
+                request.setAttribute("flashSaleProducts", List.of());
+            }
+
             request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleHome\" function: " + e.getMessage());
