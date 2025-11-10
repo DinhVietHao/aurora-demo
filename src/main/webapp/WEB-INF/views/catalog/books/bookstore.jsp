@@ -133,8 +133,15 @@
                                     <jsp:include page="/WEB-INF/views/layouts/_pagination.jsp">
                                         <jsp:param name="page" value="${page}" />
                                         <jsp:param name="totalPages" value="${totalPages}" />
-                                        <jsp:param name="baseUrl"
-                                            value="${ctx}/home?action=${param.action}&keyword=${param.keyword}&category=${param.category}&author=${param.author}&publisher=${param.publisher}&language=${param.language}&minPrice=${param.minPrice}&maxPrice=${param.maxPrice}" />
+                                        <jsp:param name="currentAction" value="${param.action}" />
+                                        <jsp:param name="currentSort" value="${param.sort}" />
+                                        <jsp:param name="keyword" value="${param.keyword}" />
+                                        <jsp:param name="category" value="${param.category}" />
+                                        <jsp:param name="author" value="${param.author}" />
+                                        <jsp:param name="publisher" value="${param.publisher}" />
+                                        <jsp:param name="language" value="${param.language}" />
+                                        <jsp:param name="minPrice" value="${param.minPrice}" />
+                                        <jsp:param name="maxPrice" value="${param.maxPrice}" />
                                     </jsp:include>
                                 </c:if>
 
