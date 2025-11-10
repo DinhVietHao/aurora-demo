@@ -512,7 +512,7 @@
                 <!--End Modal product reviews -->
 
                 <!-- Link Javascript of Order -->
-                <script src="${ctx}/assets/js/customer/order/order.js"></script>
+                <script src="${ctx}/assets/js/customer/order/order.js?v=1.0.1"></script>
                 <!-- Include scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 

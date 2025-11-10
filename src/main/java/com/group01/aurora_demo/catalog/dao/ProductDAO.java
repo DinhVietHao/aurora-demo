@@ -930,8 +930,8 @@ public class ProductDAO {
                 """;
 
         String sqlInsertCategory = """
-                INSERT INTO ProductCategory (ProductID, CategoryID)
-                VALUES (?, ?)
+                INSERT INTO ProductCategory (ProductID, CategoryID, IsPrimary)
+                VALUES (?, ?, ?)
                 """;
 
         String sqlInsertAuthor = """
@@ -1012,6 +1012,7 @@ public class ProductDAO {
                     for (Category c : product.getCategories()) {
                         ps.setLong(1, productId);
                         ps.setLong(2, c.getCategoryId());
+                        ps.setBoolean(3, c.isPrimary());
                         ps.executeUpdate();
                     }
                 }

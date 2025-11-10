@@ -1,3 +1,12 @@
+.card.border-success {
+  border-left: 5px solid #198754 !important;
+}
+
+.alert-success strong,
+.alert-warning strong {
+  font-size: 1.1rem;
+}
+
 /* Order Details Styles */
 .modal-dialog.modal-dialog-centered {
   position: relative;

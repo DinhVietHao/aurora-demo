@@ -10,10 +10,11 @@ import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
 public class CategoryDAO {
+
     public List<Category> getCategoriesByProductId(long productId) throws SQLException {
         List<Category> categories = new ArrayList<>();
         String sql = """
-                SELECT c.CategoryID, c.Name
+                SELECT c.CategoryID, c.Name, pc.IsPrimary
                 FROM ProductCategory pc
                 JOIN Category c ON pc.CategoryID = c.CategoryID
                 WHERE pc.ProductID = ?
@@ -27,6 +28,7 @@ public class CategoryDAO {
                     Category category = new Category();
                     category.setCategoryId(rs.getLong("CategoryID"));
                     category.setName(rs.getString("Name"));
+                    category.setPrimary(rs.getBoolean("IsPrimary"));
                     categories.add(category);
                 }
             }
@@ -61,12 +63,13 @@ public class CategoryDAO {
         }
     }
 
-    public void addCategoryToProduct(long productId, long categoryId) throws SQLException {
-        String sql = "INSERT INTO ProductCategory (ProductID, CategoryID) VALUES (?, ?)";
+    public void addCategoryToProduct(long productId, long categoryId, boolean isPrimary) throws SQLException {
+        String sql = "INSERT INTO ProductCategory (ProductID, CategoryID, IsPrimary) VALUES (?, ?, ?)";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setLong(1, productId);
             ps.setLong(2, categoryId);
+            ps.setBoolean(3, isPrimary);
             ps.executeUpdate();
         }
     }
