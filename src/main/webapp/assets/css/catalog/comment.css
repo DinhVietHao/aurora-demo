@@ -100,15 +100,40 @@
     transition: all 0.2s ease-in-out;
     margin: 5px;
     padding: 5px;
-
 }
 
 .comment .comment-image-real img:hover {
     transform: scale(1.05);
     border-color: var(--color-one);
-
 }
 
 .comment .comment-image-real img.active {
     border-color: var(--color-one);
+}
+
+.comment-filter button.button-outline {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 4px;
+  border: 1px solid #007bff;
+  border-radius: 20px;
+  color: #007bff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.comment-filter button.button-outline:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.comment-filter button.button-outline.active {
+  background-color: #007bff;
+  color: white;
 }
