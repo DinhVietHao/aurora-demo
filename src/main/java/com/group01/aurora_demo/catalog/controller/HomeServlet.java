@@ -200,6 +200,10 @@ public class HomeServlet extends NotificationServlet {
                     request.setAttribute("shop", shop);
                 }
 
+                // Load Flash Sale info
+                Map<String, Object> flashSaleInfo = productDAO.getFlashSaleInfoForProduct(id);
+                request.setAttribute("flashSaleInfo", flashSaleInfo);
+
                 // Load reviews
                 int reviewsPerPage = 10;
                 ReviewDAO reviewDAO = new ReviewDAO();

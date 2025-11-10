@@ -1759,4 +1759,65 @@ public class ProductDAO {
         }
         return result;
     }
+
+    public Map<String, Object> getFlashSaleInfoForProduct(long productId) {
+        Map<String, Object> flashSaleInfo = new HashMap<>();
+        String sql = """
+                    SELECT
+                        fs.FlashSaleID,
+                        fs.Name AS FlashSaleName,
+                        fs.StartAt,
+                        fs.EndAt,
+                        fsi.FlashPrice,
+                        fsi.FsStock,
+                        fsi.SoldCount,
+                        p.OriginalPrice,
+                        p.SalePrice
+                    FROM Products p
+                    INNER JOIN FlashSaleItems fsi ON p.ProductID = fsi.ProductID
+                    INNER JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE p.ProductID = ?
+                      AND fs.Status = 'ACTIVE'
+                      AND fsi.ApprovalStatus = 'APPROVED'
+                      AND fs.EndAt > SYSUTCDATETIME()
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ps.setLong(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                flashSaleInfo.put("isFlashSale", true);
+                flashSaleInfo.put("flashSaleId", rs.getLong("FlashSaleID"));
+                flashSaleInfo.put("flashSaleName", rs.getString("FlashSaleName"));
+                flashSaleInfo.put("startAt", rs.getTimestamp("StartAt"));
+                flashSaleInfo.put("endAt", rs.getTimestamp("EndAt"));
+                flashSaleInfo.put("flashPrice", rs.getDouble("FlashPrice"));
+                flashSaleInfo.put("fsStock", rs.getInt("FsStock"));
+                flashSaleInfo.put("soldCount", rs.getInt("SoldCount"));
+                flashSaleInfo.put("originalPrice", rs.getDouble("OriginalPrice"));
+                flashSaleInfo.put("salePrice", rs.getDouble("SalePrice"));
+
+                // Calculate discount percent
+                double originalPrice = rs.getDouble("OriginalPrice");
+                double flashPrice = rs.getDouble("FlashPrice");
+                int discountPercent = (int) (((originalPrice - flashPrice) / originalPrice) * 100);
+                flashSaleInfo.put("discountPercent", discountPercent);
+
+                // Calculate sold percent
+                int fsStock = rs.getInt("FsStock");
+                int soldCount = rs.getInt("SoldCount");
+                int soldPercent = fsStock > 0 ? (soldCount * 100 / fsStock) : 0;
+                flashSaleInfo.put("soldPercent", soldPercent);
+
+                // Current server time
+                flashSaleInfo.put("currentServerTime", System.currentTimeMillis());
+            } else {
+                flashSaleInfo.put("isFlashSale", false);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getFlashSaleInfoForProduct: " + e.getMessage());
+            flashSaleInfo.put("isFlashSale", false);
+        }
+        return flashSaleInfo;
+    }
 }

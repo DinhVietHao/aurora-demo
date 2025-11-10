@@ -117,7 +117,7 @@ public class ReviewDAO {
                 review.setCreatedAt(rs.getTimestamp("CreatedAt"));
 
                 User user = new User();
-                user.setId(rs.getLong("UserID"));
+                user.setUserID(rs.getLong("UserID"));
                 user.setFullName(rs.getString("FullName"));
                 user.setAvatarUrl(rs.getString("AvatarUrl"));
                 review.setUser(user);
