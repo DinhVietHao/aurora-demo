@@ -77,6 +77,10 @@ public class VoucherServlet extends HttpServlet {
             request.setAttribute("errorMessage",
                     "Không thể cập nhật voucher voucher đã được dùng hết!");
         }
+        if ("expired".equals(error)) {
+            request.setAttribute("errorMessage",
+                    "Voucher đã hết hạn và đã được sử dụng, Không thể cập nhật!");
+        }
 
         try {
             VoucherDAO voucherDAO = new VoucherDAO();
@@ -98,7 +102,7 @@ public class VoucherServlet extends HttpServlet {
                         Voucher voucher = voucherDAO.getVoucherByVoucherID(voucherId);
                         List<VoucherUsageHistory> history = voucherUsageHistoryDAO.getVoucherUsageHistory(voucherId);
                         Map<String, Object> statstic = voucherDAO.getVoucherStats(voucherId);
-                        
+
                         if (voucher == null) {
                             request.setAttribute("errorMessage", "Không tìm thấy voucher.");
                             request.getRequestDispatcher("/WEB-INF/views/shop/voucherDetail.jsp")
@@ -132,34 +136,18 @@ public class VoucherServlet extends HttpServlet {
                         }
 
                         int usageCount = voucherDAO.getUsageCount(voucherId);
-                        Integer usageLimit = voucher.getUsageLimit();
+                        String status = voucher.getStatus();
+                        boolean usedInOrders = voucher.isUsedInOrders();
+                        int usageLimit = voucher.getUsageLimit();
 
                         boolean disableAll = false;
                         boolean restrictToDescription = false;
-
-                        LocalDateTime now = LocalDateTime.now();
-                        LocalDateTime startAt = voucher.getStartAt().toLocalDateTime();
-                        LocalDateTime endAt = voucher.getEndAt().toLocalDateTime();
-
-                        String status;
-
-                        if (now.isBefore(startAt)) {
-                            status = "UPCOMING";
-                        } else if (now.isAfter(endAt)) {
-                            status = "EXPIRED";
-                        } else if (usageLimit != null && usageCount >= usageLimit) {
-                            status = "OUT_OF_STOCK";
-                        } else {
-                            status = "ACTIVE";
-                        }
-
-                        voucher.setStatus(status);
 
                         switch (status) {
                             case "UPCOMING":
                                 break;
                             case "ACTIVE":
-                                if (usageCount > 0) {
+                                if (usageCount > 0 || usedInOrders) {
                                     disableAll = true;
                                     request.setAttribute("errorMessage",
                                             "Voucher đang hoạt động và đã có người sử dụng. Không thể cập nhật.");
@@ -173,10 +161,14 @@ public class VoucherServlet extends HttpServlet {
                                 break;
 
                             case "EXPIRED":
-                                if (usageCount > 0) {
+                                if ((usageCount < usageLimit)) {
                                     restrictToDescription = true;
                                     request.setAttribute("errorMessage",
                                             "Voucher đã hết hạn, chỉ được phép chỉnh sửa \"mô tả\" và \"ngày kết thúc\".");
+                                } else {
+                                    disableAll = true;
+                                    request.setAttribute("errorMessage",
+                                            "Voucher đã hết hạn và đã được sử dụng, Không thể cập nhật.");
                                 }
                                 break;
                             default:
@@ -184,6 +176,8 @@ public class VoucherServlet extends HttpServlet {
                                 break;
                         }
 
+                        System.out.println("restrictToDescription========================> " + restrictToDescription);
+                        System.out.println("disableAll========================> " + disableAll);
                         request.setAttribute("voucher", voucher);
                         request.setAttribute("usageCount", usageCount);
                         request.setAttribute("restrictToDescription", restrictToDescription);
@@ -315,6 +309,7 @@ public class VoucherServlet extends HttpServlet {
                         }
 
                         int usageCount = voucherDAO.getUsageCount(voucherId);
+                        int usageLimit = voucher.getUsageLimit();
                         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
                         LocalDateTime endAt = LocalDateTime.parse(request.getParameter("endDate"), formatter);
                         LocalDateTime now = LocalDateTime.now();
@@ -360,7 +355,14 @@ public class VoucherServlet extends HttpServlet {
                                 return;
 
                             case "EXPIRED":
-                                allowPartialUpdate = true;
+                                if (usageCount < usageLimit) {
+                                    allowPartialUpdate = true;
+                                } else {
+                                    response.sendRedirect(
+                                            request.getContextPath()
+                                                    + "/shop/voucher?action=view&error=expired");
+                                }
+
                                 break;
                         }
                         if (allowFullUpdate) {

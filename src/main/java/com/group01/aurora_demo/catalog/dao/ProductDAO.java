@@ -40,7 +40,7 @@ public class ProductDAO {
 
     public List<Product> getSuggestedProductsForCustomer(Long userId) {
         String sql = """
-                SELECT TOP 10
+                SELECT
                     p.ProductID,
                     p.Title,
                     p.SalePrice,
@@ -58,11 +58,10 @@ public class ProductDAO {
                 WHERE pc.CategoryID IN (
                     -- Thể loại từ lịch sử mua (hoàn thành)
                     SELECT DISTINCT pc2.CategoryID
-                    FROM Orders o
-                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    FROM OrderShops os
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                     JOIN ProductCategory pc2 ON oi.ProductID = pc2.ProductID
-                    WHERE o.UserID = ? AND o.OrderStatus IN (N'SUCCESS')
+                    WHERE os.UserID = ? AND os.Status = N'SUCCESS'
                     UNION
                     -- Thể loại từ giỏ hàng
                     SELECT DISTINCT pc3.CategoryID
@@ -74,10 +73,9 @@ public class ProductDAO {
                 AND p.ProductID NOT IN (
                     -- Loại trừ sản phẩm đã mua
                     SELECT oi.ProductID
-                    FROM Orders o
-                    JOIN OrderShops os ON o.OrderID = os.OrderID
+                    FROM OrderShops os
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
-                    WHERE o.UserID = ?
+                    WHERE os.UserID = ?
                     UNION
                     -- Loại trừ sản phẩm trong giỏ
                     SELECT ci.ProductID
@@ -85,7 +83,7 @@ public class ProductDAO {
                     WHERE ci.UserID = ?
                 )
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
-                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
+                ORDER BY p.SoldCount DESC, AvgRating DESC;
                     """;
         List<Product> products = new ArrayList<>();
         try (Connection conn = DataSourceProvider.get().getConnection()) {
@@ -106,7 +104,7 @@ public class ProductDAO {
 
     public List<Product> getSuggestedProductsForGuest() {
         String sql = """
-                SELECT TOP 10
+                SELECT
                     p.ProductID,
                     p.Title,
                     p.SalePrice,
@@ -123,7 +121,7 @@ public class ProductDAO {
                 WHERE p.Status = 'ACTIVE'
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
                          p.SoldCount, img.Url, pub.Name
-                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
+                ORDER BY p.SoldCount DESC, AvgRating DESC;
                 """;
         List<Product> products = new ArrayList<>();
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -159,7 +157,6 @@ public class ProductDAO {
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
                 ORDER BY MAX(p.CreatedAt) DESC
                     """;
-
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, limit);
@@ -930,8 +927,8 @@ public class ProductDAO {
                 """;
 
         String sqlInsertCategory = """
-                INSERT INTO ProductCategory (ProductID, CategoryID)
-                VALUES (?, ?)
+                INSERT INTO ProductCategory (ProductID, CategoryID, IsPrimary)
+                VALUES (?, ?, ?)
                 """;
 
         String sqlInsertAuthor = """
@@ -1012,6 +1009,7 @@ public class ProductDAO {
                     for (Category c : product.getCategories()) {
                         ps.setLong(1, productId);
                         ps.setLong(2, c.getCategoryId());
+                        ps.setBoolean(3, c.isPrimary());
                         ps.executeUpdate();
                     }
                 }

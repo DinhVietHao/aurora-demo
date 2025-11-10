@@ -432,6 +432,7 @@
                                 <div class="modal-body">
                                     <form id="addProductForm" action="/shop/product?action=create" method="POST"
                                         enctype="multipart/form-data">
+                                        <input type="hidden" name="PrimaryCategoryID" id="PrimaryCategoryID">
                                         <!-- Thông tin cơ bản -->
                                         <div class="row">
                                             <div class="col-12">
@@ -651,6 +652,8 @@
                                                                     name="CategoryIDs" value="1" id="cat1">
                                                                 <label class="form-check-label" for="cat1">Tiểu
                                                                     thuyết</label>
+                                                                <span class="primary-label text-success fw-bold"
+                                                                    style="display:none;">(Thể loại chính)</span>
                                                             </div>
                                                             <div class="form-check">
                                                                 <input class="form-check-input" type="checkbox"
@@ -856,8 +859,10 @@
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="updateProductModalLabel">Update sách mới</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
+                                    <div class="d-flex justify-content-end">
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
                                 </div>
                                 <div class="modal-body">
                                     <form id="updateProductForm" action="/shop/product?action=update" method="POST"
@@ -865,6 +870,8 @@
                                         <input type="hidden" id="updateMode" name="updateMode">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">
+                                        <input type="hidden" name="PrimaryCategoryIDUpdate"
+                                            id="PrimaryCategoryIDUpdate">
                                         <div class="row">
                                             <div class="col-12">
                                                 <h6 class="text-muted mb-3">Thông tin cơ bản</h6>
@@ -1284,8 +1291,8 @@
 
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.2"></script>
                     <script>
                         function setDeactivateModal(productId, productName) {
                             document.getElementById('deactivateProductId').value = productId;

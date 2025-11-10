@@ -697,7 +697,6 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch((err) => {
           console.error("❌ [DEBUG] Fetch or JSON parse failed:", err);
-          alert("Không thể tải thông tin sản phẩm!");
         });
     })
   );
@@ -745,15 +744,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Categories
-    $$('#updateProductModal input[name="CategoryIDs"]').forEach(
-      (cb) => (cb.checked = false)
+    const updateCategoryCheckboxes = $$(
+      '#updateProductModal input[name="CategoryIDs"]'
     );
+    updateCategoryCheckboxes.forEach((cb) => {
+      cb.checked = false; // reset tất cả checkbox
+      // Xóa nhãn thể loại chính nếu còn
+      const label = document.querySelector(
+        `#updateProductModal label[for="${cb.id}"]`
+      );
+      const existingSpan = label.querySelector(".primary-label");
+      if (existingSpan) existingSpan.remove();
+    });
+
     if (product.categories) {
       product.categories.forEach((cat) => {
         const cb = document.querySelector(
           `#updateProductModal input[name="CategoryIDs"][value="${cat.categoryId}"]`
         );
-        if (cb) cb.checked = true;
+        if (cb) {
+          cb.checked = true;
+
+          // Nếu là thể loại chính thì thêm nhãn
+          if (cat.isPrimary == 1) {
+            const label = document.querySelector(
+              `#updateProductModal label[for="${cb.id}"]`
+            );
+            const note = document.createElement("span");
+            note.textContent = " (Thể loại chính)";
+            note.classList.add("text-success", "fw-bold", "primary-label");
+            label.appendChild(note);
+            cb.classList.add("main-category");
+          }
+        }
       });
     }
 
@@ -772,6 +795,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     const fi = document.getElementById("productImagesUpdate");
     if (fi) fi.value = "";
+
+    const mainCat = product.categories?.find((c) => c.isPrimary == 1);
+    if (mainCat && window.setMainCategoryForModal) {
+      window.setMainCategoryForModal("#updateProductModal", mainCat.categoryId);
+    }
   }
 
   function handleUpdateMode(mode) {
