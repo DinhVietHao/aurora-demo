@@ -143,28 +143,34 @@
                             <div class="card-body">
                                 <h5 class="card-title">Trạng thái hiện tại: 
                                     <c:choose>
-                                        <c:when test="${shop.status == 'APPROVED'}">
+                                        <c:when test="${shop.status == 'Đang hoạt động'}">
+                                            <span class="badge bg-success">Đang hoạt động</span>
+                                        </c:when>
+                                        <c:when test="${shop.status == 'Đã duyệt'}">
                                             <span class="badge bg-success">Đã duyệt</span>
                                         </c:when>
-                                        <c:when test="${shop.status == 'PENDING'}">
+                                        <c:when test="${shop.status == 'Chờ duyệt'}">
                                             <span class="badge bg-warning text-dark">Chờ duyệt</span>
                                         </c:when>
-                                        <c:when test="${shop.status == 'REJECTED'}">
+                                        <c:when test="${shop.status == 'Đã từ chối'}">
                                             <span class="badge bg-danger">Đã từ chối</span>
                                         </c:when>
-                                        <c:when test="${shop.status == 'SUSPENDED'}">
+                                        <c:when test="${shop.status == 'Tạm ngưng'}">
                                             <span class="badge bg-secondary">Tạm ngưng</span>
                                         </c:when>
-                                        <c:when test="${shop.status == 'BANNED'}">
+                                        <c:when test="${shop.status == 'Cấm vĩnh viễn'}">
                                             <span class="badge bg-dark">Cấm vĩnh viễn</span>
                                         </c:when>
+                                        <c:otherwise>
+                                            <span class="badge bg-secondary">${shop.status}</span>
+                                        </c:otherwise>
                                     </c:choose>
                                 </h5>
                                 
                                 <div class="row mt-3">
                                     <!-- Action Buttons -->
                                     <div class="col-md-12 d-flex gap-2 mb-3 flex-wrap">
-                                        <c:if test="${shop.status == 'PENDING' || shop.status == 'REJECTED'}">
+                                        <c:if test="${shop.status == 'Chờ duyệt' || shop.status == 'Đã từ chối'}">
                                             <form action="<c:url value='/admin/shops/approval'/>" method="post" style="display:inline;">
                                                 <input type="hidden" name="id" value="${shop.shopId}">
                                                 <input type="hidden" name="action" value="approve">
@@ -174,13 +180,13 @@
                                             </form>
                                         </c:if>
                                         
-                                        <c:if test="${shop.status == 'PENDING'}">
+                                        <c:if test="${shop.status == 'Chờ duyệt'}">
                                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
                                                 <i class="bi bi-x-circle me-1"></i>Từ chối
                                             </button>
                                         </c:if>
                                         
-                                        <c:if test="${shop.status == 'APPROVED'}">
+                                        <c:if test="${shop.status == 'Đã duyệt' || shop.status == 'Đang hoạt động'}">
                                             <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#suspendModal">
                                                 <i class="bi bi-pause-circle me-1"></i>Tạm ngưng
                                             </button>
@@ -189,7 +195,7 @@
                                             </button>
                                         </c:if>
                                         
-                                        <c:if test="${shop.status == 'SUSPENDED'}">
+                                        <c:if test="${shop.status == 'Tạm ngưng'}">
                                             <form action="<c:url value='/admin/shops/approval'/>" method="post" style="display:inline;">
                                                 <input type="hidden" name="id" value="${shop.shopId}">
                                                 <input type="hidden" name="action" value="unsuspend">
@@ -204,7 +210,7 @@
                                     </div>
                                     
                                     <!-- Reason display if rejected/suspended/banned -->
-                                    <c:if test="${not empty shop.rejectReason && (shop.status == 'REJECTED' || shop.status == 'SUSPENDED' || shop.status == 'BANNED')}">
+                                    <c:if test="${not empty shop.rejectReason && (shop.status == 'Đã từ chối' || shop.status == 'Tạm ngưng' || shop.status == 'Cấm vĩnh viễn')}">
                                         <div class="col-12">
                                             <div class="alert alert-secondary">
                                                 <h6>Lý do:</h6>

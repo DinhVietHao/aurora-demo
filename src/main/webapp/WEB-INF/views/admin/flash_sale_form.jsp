@@ -44,8 +44,26 @@
                                     <select name="status" class="form-select">
                                         <c:forEach items="${statuses}" var="st">
                                             <c:choose>
-                                                <c:when test="${fs != null && st == fs.status}"><option value="${st}" selected="selected">${st}</option></c:when>
-                                                <c:otherwise><option value="${st}">${st}</option></c:otherwise>
+                                                <c:when test="${fs != null && st == fs.status}">
+                                                    <option value="${st}" selected="selected">
+                                                        <c:choose>
+                                                            <c:when test="${st == 'ACTIVE'}">Đang hoạt động</c:when>
+                                                            <c:when test="${st == 'SCHEDULED'}">Đã lên lịch</c:when>
+                                                            <c:when test="${st == 'ENDED'}">Đã kết thúc</c:when>
+                                                            <c:otherwise>${st}</c:otherwise>
+                                                        </c:choose>
+                                                    </option>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <option value="${st}">
+                                                        <c:choose>
+                                                            <c:when test="${st == 'ACTIVE'}">Đang hoạt động</c:when>
+                                                            <c:when test="${st == 'SCHEDULED'}">Đã lên lịch</c:when>
+                                                            <c:when test="${st == 'ENDED'}">Đã kết thúc</c:when>
+                                                            <c:otherwise>${st}</c:otherwise>
+                                                        </c:choose>
+                                                    </option>
+                                                </c:otherwise>
                                             </c:choose>
                                         </c:forEach>
                                     </select>

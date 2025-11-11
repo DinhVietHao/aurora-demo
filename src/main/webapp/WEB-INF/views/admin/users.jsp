@@ -24,6 +24,24 @@
                     </button>
                 </div>
 
+                <!-- Success/Error Messages -->
+                <c:if test="${param.success != null}">
+                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                        <c:choose>
+                            <c:when test="${param.success == 'updated'}">Cập nhật người dùng thành công!</c:when>
+                            <c:otherwise>Thao tác thành công!</c:otherwise>
+                        </c:choose>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </c:if>
+
+                <c:if test="${param.error != null}">
+                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                        ${param.error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </c:if>
+
                 <div class="card mt-4">
                     <div class="card-header">
                         <div class="row">
@@ -45,7 +63,7 @@
                                     <select name="role" class="form-select" style="width: auto;">
                                         <option value="" ${role == '' ? 'selected' : ''}>Tất cả vai trò</option>
                                         <option value="CUSTOMER" ${role == 'CUSTOMER' ? 'selected' : ''}>Khách hàng</option>
-                                        <option value="SHOP_OWNER" ${role == 'SHOP_OWNER' ? 'selected' : ''}>Chủ shop</option>
+                                        <option value="SELLER" ${role == 'SELLER' ? 'selected' : ''}>Người bán</option>
                                         <option value="ADMIN" ${role == 'ADMIN' ? 'selected' : ''}>Quản trị viên</option>
                                     </select>
                                 </form>
@@ -83,13 +101,9 @@
                                     <td>${u.authProvider}</td>
                                     <td>${u.createdAt}</td>
                                     <td>
-                                        <form method="post" action="<c:url value='/admin/users'/>">
-                                            <input type="hidden" name="action" value="toggle-status">
-                                            <input type="hidden" name="id" value="${u.userID}">
-                                            <button type="submit" class="btn btn-sm ${u.status == 'active' ? 'btn-danger' : 'btn-success'}">
-                                                ${u.status == 'active' ? '<i class="bi bi-lock"></i> Khóa' : '<i class="bi bi-unlock"></i> Mở khóa'}
-                                            </button>
-                                        </form>
+                                        <a href="<c:url value='/admin/users?action=edit&id=${u.userID}'/>" class="btn btn-sm btn-primary">
+                                            <i class="bi bi-pencil"></i> Sửa
+                                        </a>
                                     </td>
                                 </tr>
                             </c:forEach>

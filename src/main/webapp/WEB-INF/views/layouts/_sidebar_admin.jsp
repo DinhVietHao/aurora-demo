@@ -36,10 +36,10 @@
                     </nav>
                 </div>
                 
-                <a class="nav-link" href="<c:url value='/admin/orders'/>">
+                <!-- <a class="nav-link" href="<c:url value='/admin/orders'/>">
                     <div class="sb-nav-link-icon"><i class="bi bi-cart3"></i></div>
                     Đơn hàng
-                </a>
+                </a> -->
                 
                 <a class="nav-link" href="<c:url value='/admin/vouchers'/>">
                     <div class="sb-nav-link-icon"><i class="bi bi-ticket-perforated"></i></div>
@@ -54,6 +54,22 @@
                 <a class="nav-link" href="<c:url value='/admin/flash-sales'/>">
                     <div class="sb-nav-link-icon"><i class="bi bi-lightning-charge"></i></div>
                     Flash sales
+                </a>
+
+                <div class="sb-sidenav-menu-heading">Hệ thống</div>
+                <a class="nav-link" href="<c:url value='/admin/category-management'/>">
+                    <div class="sb-nav-link-icon"><i class="bi bi-folder"></i></div>
+                    Danh mục
+                </a>
+
+                <a class="nav-link" href="<c:url value='/admin/vat-management'/>">
+                    <div class="sb-nav-link-icon"><i class="bi bi-percent"></i></div>
+                    VAT
+                </a>
+
+                <a class="nav-link" href="<c:url value='/admin/setting-management'/>">
+                    <div class="sb-nav-link-icon"><i class="bi bi-gear"></i></div>
+                    Cài đặt
                 </a>
             </div>
         </div>

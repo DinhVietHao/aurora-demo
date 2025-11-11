@@ -58,9 +58,9 @@ public class ShopApprovalServlet extends HttpServlet {
     }
     
     private void handleApprove(long shopId, HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
-        // Update shop status to APPROVED
+        // Update shop status - Lưu bằng tiếng Việt theo database
         String nullReason = null;
-        dao.updateStatus(shopId, "APPROVED", nullReason);
+        dao.updateStatus(shopId, "Đã duyệt", nullReason);
         addSuccessMessage(req, "Đã duyệt cửa hàng thành công");
         redirectToDetail(shopId, resp, req);
     }
@@ -74,8 +74,8 @@ public class ShopApprovalServlet extends HttpServlet {
             return;
         }
         
-        // Update shop status to REJECTED with reason
-        dao.updateStatus(shopId, "REJECTED", rejectReason);
+        // Update shop status - Lưu bằng tiếng Việt theo database
+        dao.updateStatus(shopId, "Đã từ chối", rejectReason);
         addSuccessMessage(req, "Đã từ chối cửa hàng");
         redirectToDetail(shopId, resp, req);
     }
@@ -89,16 +89,16 @@ public class ShopApprovalServlet extends HttpServlet {
             return;
         }
         
-        // Update shop status to SUSPENDED with reason
-        dao.updateStatus(shopId, "SUSPENDED", suspendReason);
+        // Update shop status - Lưu bằng tiếng Việt theo database
+        dao.updateStatus(shopId, "Tạm ngưng", suspendReason);
         addSuccessMessage(req, "Đã tạm ngưng hoạt động cửa hàng");
         redirectToDetail(shopId, resp, req);
     }
     
     private void handleUnsuspend(long shopId, HttpServletRequest req, HttpServletResponse resp) throws SQLException, IOException {
-        // Update shop status back to APPROVED
+        // Update shop status back - Lưu bằng tiếng Việt theo database
         String nullReason = null;
-        dao.updateStatus(shopId, "APPROVED", nullReason);
+        dao.updateStatus(shopId, "Đã duyệt", nullReason);
         addSuccessMessage(req, "Đã kích hoạt lại cửa hàng");
         redirectToDetail(shopId, resp, req);
     }
@@ -112,8 +112,8 @@ public class ShopApprovalServlet extends HttpServlet {
             return;
         }
         
-        // Update shop status to BANNED with reason
-        dao.updateStatus(shopId, "BANNED", banReason);
+        // Update shop status - Lưu bằng tiếng Việt theo database
+        dao.updateStatus(shopId, "Cấm vĩnh viễn", banReason);
         addSuccessMessage(req, "Đã cấm vĩnh viễn cửa hàng");
         redirectToDetail(shopId, resp, req);
     }

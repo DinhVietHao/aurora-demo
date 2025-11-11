@@ -39,8 +39,12 @@
                                 <option value="">Tất cả trạng thái</option>
                                 <c:forEach items="${statuses}" var="st">
                                     <c:choose>
-                                        <c:when test="${st == status}"><option value="${st}" selected="selected">${st}</option></c:when>
-                                        <c:otherwise><option value="${st}">${st}</option></c:otherwise>
+                                        <c:when test="${st == status}">
+                                            <option value="${st}" selected="selected">${st}</option>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <option value="${st}">${st}</option>
+                                        </c:otherwise>
                                     </c:choose>
                                 </c:forEach>
                             </select>
@@ -128,17 +132,23 @@
                                     </td>
                                     <td>
                                         <c:choose>
-                                            <c:when test="${shop.status == 'APPROVED'}">
-                                                <span class="badge bg-success">${shop.status}</span>
+                                            <c:when test="${shop.status == 'Đang hoạt động'}">
+                                                <span class="badge bg-success">Đang hoạt động</span>
                                             </c:when>
-                                            <c:when test="${shop.status == 'PENDING'}">
-                                                <span class="badge bg-warning text-dark">${shop.status}</span>
+                                            <c:when test="${shop.status == 'Đã duyệt'}">
+                                                <span class="badge bg-success">Đã duyệt</span>
                                             </c:when>
-                                            <c:when test="${shop.status == 'SUSPENDED'}">
-                                                <span class="badge bg-danger">${shop.status}</span>
+                                            <c:when test="${shop.status == 'Chờ duyệt'}">
+                                                <span class="badge bg-warning text-dark">Chờ duyệt</span>
                                             </c:when>
-                                            <c:when test="${shop.status == 'BANNED'}">
-                                                <span class="badge bg-dark">${shop.status}</span>
+                                            <c:when test="${shop.status == 'Tạm ngưng'}">
+                                                <span class="badge bg-danger">Tạm ngưng</span>
+                                            </c:when>
+                                            <c:when test="${shop.status == 'Cấm vĩnh viễn'}">
+                                                <span class="badge bg-dark">Cấm vĩnh viễn</span>
+                                            </c:when>
+                                            <c:when test="${shop.status == 'Đã từ chối'}">
+                                                <span class="badge bg-secondary">Đã từ chối</span>
                                             </c:when>
                                             <c:otherwise>
                                                 <span class="badge bg-secondary">${shop.status}</span>
@@ -157,7 +167,7 @@
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             
-                                            <c:if test="${shop.status == 'PENDING'}">
+                                            <c:if test="${shop.status == 'Chờ duyệt'}">
                                                 <form action="<c:url value='/admin/shops/approval'/>" method="post" style="display:inline;">
                                                     <input type="hidden" name="id" value="${shop.shopId}">
                                                     <input type="hidden" name="action" value="approve">

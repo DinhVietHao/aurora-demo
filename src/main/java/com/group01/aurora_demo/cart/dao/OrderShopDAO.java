@@ -27,7 +27,7 @@ public class OrderShopDAO {
                     os.OrderShopID,
                     s.Name AS ShopName,
                     os.Status AS ShopStatus,
-                    os.UpdateAt,
+                    os.UpdatedAt,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
                     p.Title AS ProductName,
@@ -43,7 +43,7 @@ public class OrderShopDAO {
                 JOIN ProductImages img ON p.ProductID = img.ProductID
                 WHERE os.OrderID = ?
                   AND img.IsPrimary = 1
-                ORDER BY os.UpdateAt DESC
+                ORDER BY os.UpdatedAt DESC
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -91,27 +91,25 @@ public class OrderShopDAO {
     }
 
     public long createOrderShop(Connection conn, OrderShop orderShop) {
+        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
+        // This method needs refactoring to use the correct voucher columns.
         String sql = """
-                    INSERT INTO OrderShops(OrderID, ShopID, VoucherID, Subtotal,
+                    INSERT INTO OrderShops(OrderID, ShopID, Subtotal,
                                            Discount, SystemVoucherDiscount, SystemShippingDiscount, ShippingFee, FinalAmount, [Status], CreatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setLong(1, orderShop.getOrderId());
             ps.setLong(2, orderShop.getShopId());
-            if (orderShop.getVoucherId() != null)
-                ps.setLong(3, orderShop.getVoucherId());
-            else
-                ps.setNull(3, Types.BIGINT);
 
-            ps.setDouble(4, orderShop.getSubtotal());
-            ps.setDouble(5, orderShop.getDiscount());
-            ps.setDouble(6, orderShop.getSystemVoucherDiscount());
-            ps.setDouble(7, orderShop.getSystemShippingDiscount());
-            ps.setDouble(8, orderShop.getShippingFee());
-            ps.setDouble(9, orderShop.getFinalAmount());
-            ps.setString(10, orderShop.getStatus());
+            ps.setDouble(3, orderShop.getSubtotal());
+            ps.setDouble(4, orderShop.getDiscount());
+            ps.setDouble(5, orderShop.getSystemVoucherDiscount());
+            ps.setDouble(6, orderShop.getSystemShippingDiscount());
+            ps.setDouble(7, orderShop.getShippingFee());
+            ps.setDouble(8, orderShop.getFinalAmount());
+            ps.setString(9, orderShop.getStatus());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -125,7 +123,7 @@ public class OrderShopDAO {
     }
 
     public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderShopId = ?";
+        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderShopId = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
@@ -138,7 +136,7 @@ public class OrderShopDAO {
     }
 
     public boolean updateOrderShopStatusByOrderId(long orderId, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ?, UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderID = ?";
+        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
@@ -171,7 +169,7 @@ public class OrderShopDAO {
                     UPDATE OrderShops
                     SET Status = 'RETURNED_REQUESTED',
                         ReturnReason = ?,
-                        UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
                     WHERE OrderShopID = ?
                 """;
 
@@ -190,9 +188,9 @@ public class OrderShopDAO {
         String sql = """
                     UPDATE OrderShops
                     SET Status = 'COMPLETED',
-                        UpdateAt = SYSUTCDATETIME()
+                        UpdatedAt = SYSUTCDATETIME()
                     WHERE Status = 'CONFIRM'
-                      AND UpdateAt <= DATEADD(DAY, -7, SYSUTCDATETIME())
+                      AND UpdatedAt <= DATEADD(DAY, -7, SYSUTCDATETIME())
                 """;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -207,7 +205,7 @@ public class OrderShopDAO {
     }
 
     public int autoCancelPendingPaymentOrders() {
-        String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdateAt, GETDATE()) >= 1";
+        String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1";
         int count = 0;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -268,10 +266,11 @@ public class OrderShopDAO {
     }
 
     public List<OrderShop> getActiveShopsByOrderId(Connection conn, long orderId) throws SQLException {
+        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
         String sql = """
                 SELECT
                     OrderShopID, OrderID, ShopID, Subtotal, ShippingFee,
-                    Discount, FinalAmount, Status, VoucherID
+                    Discount, FinalAmount, Status, VoucherShopID
                 FROM OrderShops
                 WHERE OrderID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
                 """;
@@ -290,7 +289,7 @@ public class OrderShopDAO {
                     s.setDiscount(rs.getDouble("Discount"));
                     s.setFinalAmount(rs.getDouble("FinalAmount"));
                     s.setStatus(rs.getString("Status"));
-                    s.setVoucherId(rs.getLong("VoucherID"));
+                    s.setVoucherId(rs.getLong("VoucherShopID")); // Using VoucherShopID as primary voucher
                     list.add(s);
                 }
             }
@@ -299,16 +298,17 @@ public class OrderShopDAO {
     }
 
     public boolean update(Connection conn, OrderShop shop) throws SQLException {
+        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
+        // This method needs refactoring to use the correct voucher columns.
         String sql = """
                 UPDATE OrderShops
                 SET
                     Status = ?,
                     CancelReason = ?,
                     FinalAmount = ?,
-                    UpdateAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
+                    UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
                     Discount = ?,
-                    ShippingFee = ?,
-                    VoucherID = ?
+                    ShippingFee = ?
                 WHERE OrderShopID = ?
                 """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -318,12 +318,7 @@ public class OrderShopDAO {
             ps.setDouble(3, shop.getFinalAmount());
             ps.setDouble(4, shop.getDiscount());
             ps.setDouble(5, shop.getShippingFee());
-            if (shop.getVoucherId() != null) {
-                ps.setLong(6, shop.getVoucherId());
-            } else {
-                ps.setNull(6, Types.BIGINT);
-            }
-            ps.setLong(7, shop.getOrderShopId());
+            ps.setLong(6, shop.getOrderShopId());
 
             return ps.executeUpdate() > 0;
         }

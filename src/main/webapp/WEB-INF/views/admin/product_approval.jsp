@@ -73,7 +73,15 @@
                                 <form method="get" action="<c:url value='/admin/products/approval'/>" class="d-flex">
                                     <select name="status" class="form-select form-select-sm me-2" style="width: auto">
                                         <c:forEach items="${statuses}" var="s">
-                                            <option value="${s}" ${s eq status ? 'selected' : ''}>${s}</option>
+                                            <option value="${s}" ${s eq status ? 'selected' : ''}>
+                                                <c:choose>
+                                                    <c:when test="${s == 'ACTIVE'}">Đang hoạt động</c:when>
+                                                    <c:when test="${s == 'PENDING'}">Chờ duyệt</c:when>
+                                                    <c:when test="${s == 'REJECTED'}">Đã từ chối</c:when>
+                                                    <c:when test="${s == 'INACTIVE'}">Không hoạt động</c:when>
+                                                    <c:otherwise>${s}</c:otherwise>
+                                                </c:choose>
+                                            </option>
                                         </c:forEach>
                                     </select>
                                     <button type="submit" class="btn btn-sm btn-primary">Lọc</button>
@@ -152,7 +160,23 @@
                                                     </td>
                                                     <td>${product.shopId}</td>
                                                     <td>
-                                                        <span class="badge badge-${product.status.toLowerCase()}">${product.status}</span>
+                                                        <c:choose>
+                                                            <c:when test="${product.status == 'ACTIVE'}">
+                                                                <span class="badge badge-active">Đang hoạt động</span>
+                                                            </c:when>
+                                                            <c:when test="${product.status == 'PENDING'}">
+                                                                <span class="badge badge-pending">Chờ duyệt</span>
+                                                            </c:when>
+                                                            <c:when test="${product.status == 'REJECTED'}">
+                                                                <span class="badge badge-rejected">Đã từ chối</span>
+                                                            </c:when>
+                                                            <c:when test="${product.status == 'INACTIVE'}">
+                                                                <span class="badge bg-secondary">Không hoạt động</span>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="badge bg-secondary">${product.status}</span>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                         <c:if test="${not empty product.rejectReason}">
                                                             <div class="text-danger small mt-1">${product.rejectReason}</div>
                                                         </c:if>

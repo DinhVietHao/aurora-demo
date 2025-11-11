@@ -66,10 +66,10 @@
                                                 <strong>Trạng thái:</strong>
                                                 <c:choose>
                                                     <c:when test="${fs.status == 'ACTIVE'}">
-                                                        <span class="badge bg-success">Đang diễn ra</span>
+                                                        <span class="badge bg-success">Đang hoạt động</span>
                                                     </c:when>
                                                     <c:when test="${fs.status == 'SCHEDULED'}">
-                                                        <span class="badge bg-warning">Đã lên lịch</span>
+                                                        <span class="badge bg-warning text-dark">Đã lên lịch</span>
                                                     </c:when>
                                                     <c:when test="${fs.status == 'ENDED'}">
                                                         <span class="badge bg-secondary">Đã kết thúc</span>

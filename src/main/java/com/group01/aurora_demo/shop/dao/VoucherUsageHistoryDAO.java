@@ -25,7 +25,7 @@ public class VoucherUsageHistoryDAO {
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
                 JOIN Users u ON o.UserID = u.UserID
-                WHERE os.VoucherID = ?
+                WHERE (os.VoucherShopID = ? OR os.VoucherDiscountID = ? OR os.VoucherShipID = ?)
                 AND os.Status NOT IN ('CANCELLED', 'RETURNED')
                 ORDER BY os.CreatedAt DESC;
                                 """;
@@ -34,6 +34,8 @@ public class VoucherUsageHistoryDAO {
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, voucherID);
+            ps.setLong(2, voucherID);
+            ps.setLong(3, voucherID);
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {

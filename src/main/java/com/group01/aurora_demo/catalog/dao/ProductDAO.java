@@ -603,8 +603,8 @@ public class ProductDAO {
         List<Product> products = new ArrayList<>();
 
         String sql = "SELECT p.ProductID, p.ShopID, p.Title, p.Description, "
-                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, "
-                + "p.CategoryID, p.PublishedDate, "
+                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity, "
+                + "p.PublishedDate, "
                 + "i.Url AS PrimaryImageUrl, "
                 + "pub.PublisherID, pub.Name AS PublisherName, "
                 + "a.AuthorID, a.AuthorName "
@@ -703,8 +703,8 @@ public class ProductDAO {
 
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT DISTINCT p.ProductID, p.ShopID, p.Title, p.Description, "
-                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Stock, p.IsBundle, "
-                + "p.CategoryID, p.PublishedDate, "
+                + "p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity, "
+                + "p.PublishedDate, "
                 + "i.Url AS PrimaryImageUrl, "
                 + "pub.PublisherID, pub.Name AS PublisherName, "
                 + "a.AuthorID, a.AuthorName "
@@ -1610,5 +1610,25 @@ public class ProductDAO {
             System.err.println("Error in \"getBestsellerByShopId\" of viewShop feature: " + e.getMessage());
         }
         return products;
+    }
+
+    /**
+     * Get the count of products created in the last n days
+     */
+    public int getProductCountLastDays(int days) {
+        String sql = "SELECT COUNT(*) FROM Products WHERE CreatedAt >= DATEADD(DAY, -?, GETDATE())";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error in getProductCountLastDays: " + e.getMessage());
+        }
+        return 0;
     }
 }

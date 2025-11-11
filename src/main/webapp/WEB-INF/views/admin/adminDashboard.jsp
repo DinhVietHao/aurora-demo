@@ -173,9 +173,6 @@
                                             <div class="small text-muted">Đơn hàng mới</div>
                                         </div>
                                     </div>
-                                    <div class="mt-4">
-                                        <a href="<c:url value='/admin/orders'/>" class="btn btn-sm btn-outline-primary">Quản lý đơn hàng</a>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -191,29 +188,85 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-4 text-center border-end">
+                                        <div class="col-6 text-center border-end">
                                             <div class="display-6">${totalProducts}</div>
                                             <div class="small text-muted">Tổng sản phẩm</div>
                                         </div>
-                                        <div class="col-4 text-center border-end">
+                                        <div class="col-6 text-center">
                                             <div class="display-6">${lowStockProducts}</div>
                                             <div class="small text-muted">Sắp hết hàng</div>
                                         </div>
-                                        <div class="col-4 text-center">
-                                            <div class="display-6 text-success">
-                                                <i class="bi bi-plus-circle"></i>
-                                            </div>
-                                            <div class="small text-muted">Thêm sản phẩm</div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4">
-                                        <a href="<c:url value='/admin/products'/>" class="btn btn-sm btn-outline-success">Quản lý sản phẩm</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Platform Revenue Statistics -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-cash-coin me-1"></i>
+                                        Thống kê thu nhập sàn
+                                    </div>
+                                    <div class="small text-muted">Tổng hợp từ phí sàn và thuế bán hàng</div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th class="text-center">Số shop hoạt động</th>
+                                                    <th class="text-center">Phí sàn/tháng/shop</th>
+                                                    <th class="text-center">Tổng phí sàn tháng</th>
+                                                    <th class="text-center">Tổng thuế từ bán hàng</th>
+                                                    <th class="text-center">Tổng thu nhập sàn</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td class="text-center">
+                                                        <span class="badge bg-primary fs-6">${platformRevenue.activeShopCount}</span>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <fmt:formatNumber value="${platformRevenue.monthlyFeePerShop}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <fmt:formatNumber value="${platformRevenue.totalMonthlyFees}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <fmt:formatNumber value="${platformRevenue.totalTaxRevenue}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </td>
+                                                    <td class="text-end fw-bold text-success">
+                                                        <fmt:formatNumber value="${platformRevenue.grandTotalRevenue}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="alert alert-info mb-0">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    <strong>Lưu ý:</strong> Phí sàn được tính theo số shop đang hoạt động. Thuế được tính từ các đơn hàng đã hoàn thành.
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="alert alert-success mb-0">
+                                                    <i class="bi bi-calculator me-2"></i>
+                                                    <strong>Công thức:</strong> Thu nhập sàn = Phí sàn tháng + Thuế bán hàng
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Charts and Activity Row -->
                     <div class="row">
                         <div class="col-xl-8">
@@ -299,9 +352,152 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Shop Tax Details Section -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card mb-4">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-receipt me-1"></i>
+                                        Chi tiết thuế từng Shop (30 ngày gần nhất)
+                                    </div>
+                                    <span class="badge bg-info">
+                                        <fmt:formatNumber value="${shopTaxDetails.size()}" type="number"/> shops
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover table-striped">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Shop ID</th>
+                                                    <th>Tên Shop</th>
+                                                    <th class="text-center">Số đơn</th>
+                                                    <th class="text-end">Tổng tiền hàng</th>
+                                                    <th class="text-end">Doanh thu</th>
+                                                    <th class="text-end">Thuế (5%)</th>
+                                                    <th class="text-end">Shop nhận</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:choose>
+                                                    <c:when test="${not empty shopTaxDetails}">
+                                                        <c:forEach var="shop" items="${shopTaxDetails}">
+                                                            <tr>
+                                                                <td><strong>#${shop.shopId}</strong></td>
+                                                                <td>
+                                                                    <a href="<c:url value='/admin/shops/detail?id=${shop.shopId}'/>"
+                                                                       class="text-decoration-none">
+                                                                        ${shop.shopName}
+                                                                    </a>
+                                                                </td>
+                                                                <td class="text-center">
+                                                                    <span class="badge bg-primary">${shop.totalOrders}</span>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <fmt:formatNumber value="${shop.totalSubtotal}"
+                                                                                    type="currency"
+                                                                                    currencySymbol="đ"
+                                                                                    maxFractionDigits="0"/>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <strong>
+                                                                        <fmt:formatNumber value="${shop.totalRevenue}"
+                                                                                        type="currency"
+                                                                                        currencySymbol="đ"
+                                                                                        maxFractionDigits="0"/>
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-end text-danger">
+                                                                    <strong>
+                                                                        <fmt:formatNumber value="${shop.totalTax}"
+                                                                                        type="currency"
+                                                                                        currencySymbol="đ"
+                                                                                        maxFractionDigits="0"/>
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-end text-success">
+                                                                    <strong>
+                                                                        <fmt:formatNumber value="${shop.shopEarnings}"
+                                                                                        type="currency"
+                                                                                        currencySymbol="đ"
+                                                                                        maxFractionDigits="0"/>
+                                                                    </strong>
+                                                                </td>
+                                                            </tr>
+                                                        </c:forEach>
+                                                        <!-- Total Row -->
+                                                        <tr class="table-secondary fw-bold">
+                                                            <td colspan="2" class="text-end">TỔNG CỘNG:</td>
+                                                            <td class="text-center">
+                                                                <c:set var="totalOrders" value="0"/>
+                                                                <c:forEach var="shop" items="${shopTaxDetails}">
+                                                                    <c:set var="totalOrders" value="${totalOrders + shop.totalOrders}"/>
+                                                                </c:forEach>
+                                                                <span class="badge bg-primary">${totalOrders}</span>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                <c:set var="grandSubtotal" value="0"/>
+                                                                <c:forEach var="shop" items="${shopTaxDetails}">
+                                                                    <c:set var="grandSubtotal" value="${grandSubtotal + shop.totalSubtotal}"/>
+                                                                </c:forEach>
+                                                                <fmt:formatNumber value="${grandSubtotal}"
+                                                                                type="currency"
+                                                                                currencySymbol="đ"
+                                                                                maxFractionDigits="0"/>
+                                                            </td>
+                                                            <td class="text-end">
+                                                                <c:set var="grandRevenue" value="0"/>
+                                                                <c:forEach var="shop" items="${shopTaxDetails}">
+                                                                    <c:set var="grandRevenue" value="${grandRevenue + shop.totalRevenue}"/>
+                                                                </c:forEach>
+                                                                <fmt:formatNumber value="${grandRevenue}"
+                                                                                type="currency"
+                                                                                currencySymbol="đ"
+                                                                                maxFractionDigits="0"/>
+                                                            </td>
+                                                            <td class="text-end text-danger">
+                                                                <c:set var="grandTax" value="0"/>
+                                                                <c:forEach var="shop" items="${shopTaxDetails}">
+                                                                    <c:set var="grandTax" value="${grandTax + shop.totalTax}"/>
+                                                                </c:forEach>
+                                                                <fmt:formatNumber value="${grandTax}"
+                                                                                type="currency"
+                                                                                currencySymbol="đ"
+                                                                                maxFractionDigits="0"/>
+                                                            </td>
+                                                            <td class="text-end text-success">
+                                                                <c:set var="grandEarnings" value="0"/>
+                                                                <c:forEach var="shop" items="${shopTaxDetails}">
+                                                                    <c:set var="grandEarnings" value="${grandEarnings + shop.shopEarnings}"/>
+                                                                </c:forEach>
+                                                                <fmt:formatNumber value="${grandEarnings}"
+                                                                                type="currency"
+                                                                                currencySymbol="đ"
+                                                                                maxFractionDigits="0"/>
+                                                            </td>
+                                                        </tr>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <tr>
+                                                            <td colspan="7" class="text-center text-muted py-4">
+                                                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                                                Không có dữ liệu thuế trong 30 ngày gần nhất
+                                                            </td>
+                                                        </tr>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
-            
+
             <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
         </div>
     </div>

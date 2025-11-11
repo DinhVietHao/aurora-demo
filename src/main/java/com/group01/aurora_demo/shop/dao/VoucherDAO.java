@@ -238,7 +238,7 @@ public class VoucherDAO {
                     SELECT v.*,
                            CASE
                                WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
-                                    OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                                    OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID OR os.VoucherDiscountID = v.VoucherID OR os.VoucherShipID = v.VoucherID)
                                THEN 1 ELSE 0
                            END AS UsedInOrders
                     FROM Vouchers v
@@ -347,7 +347,7 @@ public class VoucherDAO {
                 SELECT v.*,
                        CASE
                            WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID)
-                                OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID)
+                                OR EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID OR os.VoucherDiscountID = v.VoucherID OR os.VoucherShipID = v.VoucherID)
                            THEN 1 ELSE 0
                        END AS UsedInOrders
                 FROM Vouchers v
@@ -442,7 +442,7 @@ public class VoucherDAO {
                     SELECT v.VoucherID, v.Status, v.UsageCount,
                            CASE
                                WHEN EXISTS (SELECT 1 FROM Orders o WHERE o.VoucherDiscountID = v.VoucherID) THEN 1
-                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherID = v.VoucherID) THEN 1
+                               WHEN EXISTS (SELECT 1 FROM OrderShops os WHERE os.VoucherShopID = v.VoucherID OR os.VoucherDiscountID = v.VoucherID OR os.VoucherShipID = v.VoucherID) THEN 1
                                ELSE 0
                            END AS UsedInOrders
                     FROM Vouchers v
@@ -606,7 +606,7 @@ public class VoucherDAO {
                     AVG(os.Discount) AS AvgSaved
                 FROM OrderShops os
                 JOIN Orders o ON os.OrderID = o.OrderID
-                WHERE os.VoucherID = ?
+                WHERE (os.VoucherShopID = ? OR os.VoucherDiscountID = ? OR os.VoucherShipID = ?)
                   AND os.Status NOT IN ('CANCELLED', 'RETURNED')
                                 """;
 
@@ -616,6 +616,8 @@ public class VoucherDAO {
                 PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, voucherID);
+            ps.setLong(2, voucherID);
+            ps.setLong(3, voucherID);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {

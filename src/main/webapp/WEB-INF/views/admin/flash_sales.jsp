@@ -42,8 +42,26 @@
                                 <option value="">Tất cả trạng thái</option>
                                 <c:forEach items="${statuses}" var="st">
                                     <c:choose>
-                                        <c:when test="${st == status}"><option value="${st}" selected="selected">${st}</option></c:when>
-                                        <c:otherwise><option value="${st}">${st}</option></c:otherwise>
+                                        <c:when test="${st == status}">
+                                            <option value="${st}" selected="selected">
+                                                <c:choose>
+                                                    <c:when test="${st == 'ACTIVE'}">Đang hoạt động</c:when>
+                                                    <c:when test="${st == 'SCHEDULED'}">Đã lên lịch</c:when>
+                                                    <c:when test="${st == 'ENDED'}">Đã kết thúc</c:when>
+                                                    <c:otherwise>${st}</c:otherwise>
+                                                </c:choose>
+                                            </option>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <option value="${st}">
+                                                <c:choose>
+                                                    <c:when test="${st == 'ACTIVE'}">Đang hoạt động</c:when>
+                                                    <c:when test="${st == 'SCHEDULED'}">Đã lên lịch</c:when>
+                                                    <c:when test="${st == 'ENDED'}">Đã kết thúc</c:when>
+                                                    <c:otherwise>${st}</c:otherwise>
+                                                </c:choose>
+                                            </option>
+                                        </c:otherwise>
                                     </c:choose>
                                 </c:forEach>
                             </select>
@@ -88,7 +106,22 @@
                                         <small>${it.startAt}</small>
                                         <div class="text-muted">→ ${it.endAt}</div>
                                     </td>
-                                    <td><span class="badge bg-secondary">${it.status}</span></td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${it.status == 'ACTIVE'}">
+                                                <span class="badge bg-success">Đang hoạt động</span>
+                                            </c:when>
+                                            <c:when test="${it.status == 'SCHEDULED'}">
+                                                <span class="badge bg-warning text-dark">Đã lên lịch</span>
+                                            </c:when>
+                                            <c:when test="${it.status == 'ENDED'}">
+                                                <span class="badge bg-secondary">Đã kết thúc</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge bg-secondary">${it.status}</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                     <td>${it.createdAt}</td>
                                     <td>
                                         <c:url var="detailUrl" value="/admin/flash-sales/detail">
