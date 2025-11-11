@@ -186,6 +186,16 @@
                 </h6>
                 <h4 class="title">
                   <c:out value="${product.title}" />
+                  <c:choose>
+                    <c:when test="${flashSaleInfo.isFlashSale}">
+                      <img src="${ctx}/assets/images/branding/flash-sale-title.gif" alt="Flash Sale"
+                        class="flash-sale-title-badge" />
+                    </c:when>
+                    <c:otherwise>
+                      <img src="${ctx}/assets/images/branding/books.gif" alt="Books" class="flash-sale-title-badge"
+                        style="width: 12%; top: -118%;" />
+                    </c:otherwise>
+                  </c:choose>
                 </h4>
 
                 <div class="mb-2 rating">
@@ -210,14 +220,13 @@
 
                 <c:choose>
                   <c:when test="${flashSaleInfo.isFlashSale}">
-                    <div class="mb-3 flash-sale-notice">
+                    <div class="mb-3">
                       <img src="https://em-content.zobj.net/source/animated-noto-color-emoji/427/fire_1f525.gif"
-                        alt="Fire" class="flame-gif" style="width: 8%;" />
-                      <div>
-                        <strong>Sản phẩm đang trong Flash Sale!</strong>
-                        <br>
-                        <small>Xem giá ưu đãi tại banner phía trên ⬆️</small>
-                      </div>
+                        alt="Fire" class="fire-icon" />
+                      <span class="old-price-faded">
+                        <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
+                          groupingUsed="true" />
+                      </span>
                     </div>
                   </c:when>
 
