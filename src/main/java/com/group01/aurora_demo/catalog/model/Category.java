@@ -4,6 +4,15 @@ public class Category {
     private Long categoryId;
     private String name;
     private String vatCode;
+    private boolean isPrimary;
+
+    public boolean isPrimary() {
+        return isPrimary;
+    }
+
+    public void setPrimary(boolean isPrimary) {
+        this.isPrimary = isPrimary;
+    }
 
     public Category() {
     }

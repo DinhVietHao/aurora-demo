@@ -37,7 +37,7 @@
                                 </c:choose>
                                 <img id="avatarSidebar" src="${avatarPath}" alt="avatar"
                                     class="information-account__image">
-                                <p class="mt-2 fw-bold mb-0">${user.fullName}</p>
+                                <p id="sidebarFullName" class="mt-2 fw-bold mb-0">${user.fullName}</p>
                             </div>
 
                             <!-- sidebar profile -->
@@ -62,14 +62,6 @@
 
                         <div class="col-9 col-md-10 ">
                             <div class="tab-content" id="profileTabsContent">
-                                <!-- Thông báo
-                                <div class="tab-pane fade" id="notify" role="tabpanel" aria-labelledby="notify-tab">
-                                    <div class="text-center mt-5">
-                                        <img src="./assets/images/mascot_fail.svg" alt="">
-                                        <p class="text-muted mt-3">Chưa có thông báo</p>
-                                    </div>
-                                </div> -->
-
                                 <!-- Hồ sơ -->
                                 <div class="tab-pane fade show active" id="profile" role="tabpanel"
                                     aria-labelledby="profile-tab">
@@ -81,12 +73,14 @@
 
                                         <div class="row">
                                             <div class="col-md-8">
-                                                <form>
+                                                <form id="profileForm" onsubmit="return false;">
                                                     <div class="mb-3 row align-items-center">
                                                         <label class="col-sm-3 col-form-label">Tên:</label>
                                                         <div class="col-sm-9">
-                                                            <input type="text" class="form-control"
-                                                                value="${user.fullName}">
+                                                            <input id="fullNameInput" name="fullName" type="text"
+                                                                class="form-control" value="${user.fullName}">
+                                                            <small id="fullNameError"
+                                                                class="text-danger d-none"></small>
                                                         </div>
                                                     </div>
 
@@ -151,7 +145,8 @@
 
                                                     <div class="row">
                                                         <div class="col-sm-9">
-                                                            <button type="submit" class="button-four">Lưu</button>
+                                                            <button id="saveFullNameBtn" type="button"
+                                                                class="button-four">Lưu</button>
                                                         </div>
                                                     </div>
                                                 </form>

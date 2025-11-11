@@ -60,35 +60,47 @@
 
                                                     <c:choose>
                                                         <c:when test="${f.status eq 'ACTIVE'}">
-                                                            <span class="badge bg-success">Đang diễn
+                                                            <span class="badge fw-semibold bg-success">Đang diễn
                                                                 ra</span>
-                                                            <div class="mt-3 text-end">
+                                                            <div class="mt-3 text-end d-flex justify-content-end gap-2">
+                                                                <a href="/shop/flashSale?action=getFlashsaleItem&flashSaleId=${f.flashSaleID}"
+                                                                    class="btn btn-secondary fw-semibold btn-sm">
+                                                                    <i class="bi bi-eye me-1"></i> Xem danh sách
+                                                                </a>
                                                                 <button
-                                                                    class="btn btn-outline-success btn-sm btn-join-flashsale"
-                                                                    data-id="${f.flashSaleID}">
-                                                                    <i class="bi bi-plus-circle me-1"></i>
-                                                                    Tham gia
+                                                                    class="btn fw-semibold btn-sm text-white btn-join-flashsale"
+                                                                    data-id="${f.flashSaleID}"
+                                                                    style="background-color: #154C3D">
+                                                                    <i class="bi bi-plus-circle me-1"></i> Tham gia
                                                                 </button>
                                                             </div>
                                                         </c:when>
 
                                                         <c:when test="${f.status eq 'SCHEDULED'}">
-                                                            <span class="badge bg-warning text-dark">Sắp
+                                                            <span class="badge fw-semibold bg-warning text-dark">Sắp
                                                                 diễn ra</span>
-                                                            <div class="mt-3 text-end">
+                                                            <div class="mt-3 text-end d-flex justify-content-end gap-2">
+                                                                <a href="/shop/flashSale?action=getFlashsaleItem&flashSaleId=${f.flashSaleID}"
+                                                                    class="btn btn-secondary fw-semibold btn-sm">
+                                                                    <i class="bi bi-eye me-1"></i> Xem danh sách
+                                                                </a>
                                                                 <button
-                                                                    class="btn btn-outline-success btn-sm btn-join-flashsale"
-                                                                    data-id="${f.flashSaleID}">
-                                                                    <i class="bi bi-plus-circle me-1"></i>
-                                                                    Tham gia
+                                                                    class="btn btn-sm fw-semibold text-white btn-join-flashsale"
+                                                                    data-id="${f.flashSaleID}"
+                                                                    style="background-color: #154C3D">
+                                                                    <i class="bi bi-plus-circle me-1"></i> Tham gia
                                                                 </button>
                                                             </div>
                                                         </c:when>
 
                                                         <c:otherwise>
-                                                            <span class="badge bg-secondary">Đã kết
+                                                            <span class="badge fw-semibold bg-secondary">Đã kết
                                                                 thúc</span>
-                                                            <div class="mt-3 text-end">
+                                                            <div class="mt-3 text-end d-flex justify-content-end gap-2">
+                                                                <a href="/shop/flashSale?action=getFlashsaleItem&flashSaleId=${f.flashSaleID}"
+                                                                    class="btn btn-secondary fw-semibold btn-sm">
+                                                                    <i class="bi bi-eye me-1"></i> Xem danh sách
+                                                                </a>
                                                                 <button class="btn btn-outline-secondary btn-sm"
                                                                     disabled>
                                                                     <i class="bi bi-lock me-1"></i> Chưa mở
@@ -107,15 +119,12 @@
                         </div>
                     </div>
 
-
-
-                    <!-- 🔹 Modal đăng ký Flash Sale -->
-
+                    <!-- Modal đăng ký Flash Sale -->
                     <div class="modal fade" id="flashsaleRegisterModal" tabindex="-1">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content shadow-lg border-0">
-                                <div class="modal-header text-white bg-success">
-                                    <h5 class="modal-title">
+                                <div class="modal-header text-white" style="background-color: #154C3D">
+                                    <h5 class="modal-title fw-semibold">
                                         <i class="bi bi-lightning-charge-fill me-2"></i> Đăng ký tham gia Flash Sale
                                     </h5>
                                     <button type="button" class="btn-close btn-close-white"
@@ -125,16 +134,20 @@
                                 <div class="modal-body">
                                     <form id="flashsaleRegisterForm" action="/shop/flashSale" method="post">
                                         <!-- Hidden inputs -->
-                                        <input type="hidden" id="flashsaleProductSelect" name="productId" />
-                                        <input type="hidden" id="flashsaleShopId" name="shopId" />
+                                        <input type="hidden" name="action" value="registerFlashSale" />
+                                        <input type="hidden" id="flashsaleProductSelect"
+                                            name="flashsaleProductSelect" />
+                                        <input type="hidden" id="flashsaleShopId" name="flashsaleShopId" />
+                                        <input type="hidden" id="flashSaleId" name="flashSaleId" />
 
                                         <!-- Chọn sản phẩm -->
                                         <div class="mb-3 position-relative">
                                             <label class="form-label fw-bold">Chọn sản phẩm tham gia</label>
                                             <div class="dropdown">
                                                 <button
-                                                    class="btn btn-outline-secondary w-100 text-start d-flex justify-content-between align-items-center"
-                                                    type="button" id="dropdownProductBtn">
+                                                    class="btn w-100 text-start d-flex justify-content-between align-items-center btn-flashsale"
+                                                    type="button" id="dropdownProductBtn"
+                                                    style="border: 1px solid black;">
                                                     <span id="selectedProductText">-- Chọn sản phẩm --</span>
                                                     <i class="bi bi-chevron-down"></i>
                                                 </button>
@@ -157,12 +170,12 @@
                                         <div class="row g-3">
                                             <div class="mb-3 col-6">
                                                 <label class="form-label">Số lượng đăng ký</label>
-                                                <input type="number" id="flashsaleQuantityInput" name="quantity"
-                                                    class="form-control" />
+                                                <input type="number" id="flashsaleQuantityInput"
+                                                    name="flashsaleQuantityInput" class="form-control" />
                                             </div>
                                             <div class="mb-3 col-6">
                                                 <label class="form-label">Giá Flash Sale (VND)</label>
-                                                <input type="number" id="flashsalePriceInput" name="price"
+                                                <input type="number" id="flashsalePriceInput" name="flashsalePriceInput"
                                                     class="form-control" />
                                             </div>
                                         </div>
@@ -173,8 +186,8 @@
                                                 data-bs-dismiss="modal">
                                                 <i class="bi bi-x-circle me-1"></i> Hủy
                                             </button>
-                                            <button type="submit" class="btn btn-success"
-                                                id="flashsaleBtnSubmitRegister">
+                                            <button type="submit" class="btn btn-success text-white fw-semibold"
+                                                id="flashsaleBtnSubmitRegister" style="background-color: #154C3D">
                                                 <i class="bi bi-check-circle me-1"></i> Đăng ký
                                             </button>
                                         </div>
@@ -184,7 +197,79 @@
                         </div>
                     </div>
 
-                    <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+                    <!-- Modal xác nhận đăng ký Flash Sale -->
+                    <div class="modal fade" id="flashsaleConfirmModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow-lg rounded-4">
+
+                                <!-- Header -->
+                                <div class="modal-header bg-gradient text-white rounded-top-4"
+                                    style="background-color: #154C3D;">
+                                    <h5 class="modal-title fw-semibold d-flex align-items-center">
+                                        <i class="bi bi-lightning-charge-fill me-2 fs-5"></i>
+                                        Xác nhận đăng ký Flash Sale
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <!-- Body -->
+                                <div class="modal-body p-4">
+                                    <p class="text-muted mb-4">
+                                        Vui lòng kiểm tra lại thông tin đăng ký trước khi xác nhận.
+                                    </p>
+
+                                    <!-- Card hiển thị thông tin -->
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body d-flex align-items-start gap-3">
+                                            <img id="confirmProductImg"
+                                                src="/assets/images/catalog/products/no-image.jpg" alt="Ảnh sản phẩm"
+                                                class="rounded border flex-shrink-0"
+                                                style="width: 80px; height: 90px; object-fit: cover;" />
+
+                                            <div class="flex-grow-1">
+                                                <h6 id="confirmProductName" class="fw-semibold mb-2 text-truncate"
+                                                    style="max-width: 360px;"></h6>
+
+                                                <p class="mb-1"><strong>Giá Flash Sale:</strong>
+                                                    <span id="confirmFlashPrice" class="text-danger fw-bold"></span>
+                                                </p>
+                                                <p class="mb-1"><strong>Số lượng đăng ký:</strong>
+                                                    <span id="confirmQuantity"></span>
+                                                </p>
+                                                <p class="mb-0"><strong>Thời gian Flash Sale:</strong>
+                                                    <span id="confirmFlashTime" class="fst-italic text-muted"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="alert alert-warning d-flex align-items-center mt-3 mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                        <div>
+                                            Sau khi xác nhận, thông tin đăng ký sẽ được gửi lên hệ thống để duyệt.
+                                            Bạn không thể chỉnh sửa lại cho đến khi có phản hồi từ quản trị viên.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer -->
+                                <div class="modal-footer d-flex justify-content-between px-4 py-3 border-0">
+                                    <button type="button" class="btn btn-light border fw-semibold"
+                                        data-bs-dismiss="modal">
+                                        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại chỉnh sửa
+                                    </button>
+                                    <button type="button" class="btn fw-semibold px-4 text-white" id="confirmSubmitBtn"
+                                        style="background-color: #154C3D;">
+                                        <i class="bi bi-check-circle me-1"></i> Xác nhận đăng ký
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JS -->
+                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
                     <script src="${ctx}/assets/js/shop/flashSale.js?v=1.0.2"></script>
                 </body>
 

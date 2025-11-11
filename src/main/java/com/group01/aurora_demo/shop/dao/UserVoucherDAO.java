@@ -36,26 +36,36 @@ public class UserVoucherDAO {
         return 0;
     }
 
-    public boolean cancelUserVoucher(Connection conn, long voucherId, long userId) {
-        String sql = """
-                UPDATE UserVouchers
-                SET Status = 'CANCELLED'
-                WHERE UserVoucherID = (
+    public boolean restoreUserVoucher(Connection conn, long voucherId, long userId) {
+        String selectSql = """
                     SELECT TOP 1 UserVoucherID
                     FROM UserVouchers
-                    WHERE VoucherID = ? AND UserID = ?
+                    WHERE VoucherID = ? AND UserID = ? AND Status = 'USED'
                     ORDER BY UserVoucherID DESC
-                )
                 """;
 
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, voucherId);
-            ps.setLong(2, userId);
-            return ps.executeUpdate() > 0;
+        String updateSql = "UPDATE UserVouchers SET Status = 'ACTIVE' WHERE UserVoucherID = ?";
+
+        try (PreparedStatement selectPs = conn.prepareStatement(selectSql)) {
+            selectPs.setLong(1, voucherId);
+            selectPs.setLong(2, userId);
+
+            try (ResultSet rs = selectPs.executeQuery()) {
+                if (rs.next()) {
+                    long userVoucherId = rs.getLong("UserVoucherID");
+
+                    try (PreparedStatement updatePs = conn.prepareStatement(updateSql)) {
+                        updatePs.setLong(1, userVoucherId);
+                        int affectedRows = updatePs.executeUpdate();
+                        return affectedRows > 0;
+                    }
+                } else {
+                    return false;
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
     }
-
 }

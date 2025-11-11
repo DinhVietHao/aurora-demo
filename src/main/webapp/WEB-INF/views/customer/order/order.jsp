@@ -13,8 +13,8 @@
                 </jsp:include>
 
                 <!-- CSS riêng trang Cart -->
-                <link rel="stylesheet" href="./assets/css/customer/profile/information_account.css?v=1.0.1">
-                <link rel="stylesheet" href="./assets/css/customer/order/order.css?v=1.0.2">
+                <link rel="stylesheet" href="${ctx}/assets/css/customer/profile/information_account.css">
+                <link rel="stylesheet" href="${ctx}/assets/css/customer/order/order.css">
             </head>
 
             <body>
@@ -63,23 +63,45 @@
 
                         <div class="col-9 col-md-10 ">
                             <div class="tab-content" id="profileTabsContent">
-                                <!-- Thông báo -->
-                                <div class="tab-pane fade" id="notify" role="tabpanel" aria-labelledby="notify-tab">
-                                    <div class="text-center mt-5">
-                                        <img src="./assets/images/mascot_fail.svg" alt="">
-                                        <p class="text-muted mt-3">Chưa có thông báo</p>
-                                    </div>
-                                </div>
-
                                 <!-- Quản lý đơn hàng -->
                                 <div class="tab-pane fade show active order-management" id="order" role="tabpanel"
                                     aria-labelledby="order-tab">
                                     <div class="order-content">
+                                        <ul class="nav nav-tabs mb-3 order-tabs" id="orderTabs" role="tablist">
+                                            <li class="nav-item">
+                                                <a class="nav-link ${empty param.status ? 'active' : ''}"
+                                                    href="order">Tất cả</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'pending' ? 'active' : ''}"
+                                                    href="order?status=pending">Chờ xác nhận</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'shipping' ? 'active' : ''}"
+                                                    href="order?status=shipping">Vận chuyển</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'waiting_ship' ? 'active' : ''}"
+                                                    href="order?status=waiting_ship">Chờ giao hàng</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'completed' ? 'active' : ''}"
+                                                    href="order?status=completed">Hoàn thành</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'cancelled' ? 'active' : ''}"
+                                                    href="order?status=cancelled">Đã hủy</a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link ${param.status == 'returned' ? 'active' : ''}"
+                                                    href="order?status=returned">Trả hàng</a>
+                                            </li>
+                                        </ul>
                                         <div class="tab-content order-body">
                                             <c:choose>
-                                                <c:when test="${empty orders}">
+                                                <c:when test="${empty orderShops}">
                                                     <div class="text-center">
-                                                        <img src="./assets/images/common/empty-order.png" alt="">
+                                                        <img src="./assets/images/common/empty-order.png" alt="" />
                                                         <p class="text-muted">Chưa có đơn hàng</p>
                                                     </div>
                                                 </c:when>
@@ -91,142 +113,222 @@
                                                         </span>
                                                         <input type="text" class="form-control rounded-pill"
                                                             placeholder="Tìm đơn hàng theo mã đơn hàng, nhà bán hoặc tên sản phẩm">
-                                                        <button class="btn btn-light btn-sm rounded-pill">Tìm
-                                                            kiếm</button>
+                                                        <button class="btn btn-light btn-sm rounded-pill">
+                                                            Tìm kiếm
+                                                        </button>
                                                     </div>
 
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
-                                                        <c:forEach var="order" items="${orders}">
+                                                        <c:forEach var="entry" items="${orderShops}">
                                                             <div class="order-card">
-                                                                <div class="order-header">
-                                                                    <div
-                                                                        class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                                                                        <span class="order-id"><i
-                                                                                class="bi bi-receipt me-1">
-                                                                            </i>#${order.orderId}</span>
-                                                                        <span class="date-badge"><i
-                                                                                class="bi bi-calendar"></i>
-                                                                            <fmt:formatDate value="${order.createdAt}"
-                                                                                pattern="dd/MM/yyyy" />
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="row g-2">
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box">
-                                                                            <i class="bi bi-person-circle"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Người mua</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    ${order.customerName}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-address">
-                                                                            <i class="bi bi-geo-alt"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Địa chỉ giao hàng</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    ${order.address}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-total">
-                                                                            <i class="bi bi-wallet2"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Tổng tiền hàng</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.totalAmount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-truck"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Phí vận chuyển</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.totalShippingFee}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-ticket-perforated"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Voucher giảm giá:</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    -
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.discountAmount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-
-                                                                    </div>
-
-                                                                    <div class="col-md-4">
-                                                                        <div class="info-box bg-ship">
-                                                                            <i class="bi bi-truck"></i>
-                                                                            <div>
-                                                                                <div
-                                                                                    class="fw-semibold small text-muted">
-                                                                                    Voucher freeship:</div>
-                                                                                <div class="fw-medium text-dark">
-                                                                                    -
-                                                                                    <fmt:formatNumber
-                                                                                        value="${order.shippingDiscount}"
-                                                                                        type="currency"
-                                                                                        currencySymbol="₫"
-                                                                                        maxFractionDigits="0" />
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="section-title mt-3">
-                                                                        <a href="/order/shop?orderId=${order.orderId}"
-                                                                            class="btn btn-detail">
-                                                                            <i class="bi bi-eye"></i> Xem chi tiết
+                                                                <div class="order-card__header">
+                                                                    <span><strong><i class="bi bi-shop me-2"></i>
+                                                                            ${entry.value[0].shopName}</strong>
+                                                                        <a href="${ctx}/home?action=view-shop&shopId=${entry.value[0].shopId}"
+                                                                            class="button-outline mx-2">
+                                                                            Xem shop
                                                                         </a>
-                                                                        <div class="total-info">
-                                                                            <span>Tổng thanh toán:</span>
-                                                                            <span class="total">
-                                                                                <fmt:formatNumber
-                                                                                    value="${order.finalAmount}"
-                                                                                    type="currency" currencySymbol="₫"
-                                                                                    maxFractionDigits="0" />
+                                                                    </span>
+
+                                                                    <div class="d-flex align-items-center">
+                                                                        <div class="text-color small me-2">
+                                                                            <small class="text-muted">
+                                                                                <i class="bi bi-calendar3 me-1"></i>
+                                                                                Ngày đặt:
+                                                                                <fmt:formatDate
+                                                                                    value="${entry.value[0].createdAt}"
+                                                                                    pattern="dd-MM-yyyy" />
+                                                                            </small>
+                                                                        </div>
+
+                                                                        <div><span class="text-color">Trạng thái:
+                                                                            </span>
+                                                                            <c:set var="badgeClass"
+                                                                                value="bg-secondary text-light" />
+
+                                                                            <c:choose>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'PENDING_PAYMENT'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-warning text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'PENDING'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-info text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'WAITING_SHIP'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-primary" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'SHIPPING'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-secondary" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'CONFIRM'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-info" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'COMPLETED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-success" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'CANCELLED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-danger" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED_REQUESTED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-warning text-dark" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-success" />
+                                                                                </c:when>
+                                                                                <c:when
+                                                                                    test="${entry.value[0].shopStatus == 'RETURNED_REJECTED'}">
+                                                                                    <c:set var="badgeClass"
+                                                                                        value="bg-danger" />
+                                                                                </c:when>
+                                                                            </c:choose>
+
+                                                                            <span class="badge ${badgeClass}">
+                                                                                ${entry.value[0].vietnameseStatus}
                                                                             </span>
                                                                         </div>
                                                                     </div>
+
+                                                                </div>
+
+                                                                <c:forEach var="orderShop" items="${entry.value}">
+                                                                    <div class="order-card__body row"
+                                                                        data-order-id="${orderShop.orderShopId}">
+                                                                        <div class="col-2 text-center">
+                                                                            <img class="order-card__image"
+                                                                                src="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}"
+                                                                                alt="Ảnh sản phẩm">
+                                                                        </div>
+
+                                                                        <div class="col-10">
+                                                                            <h6>${orderShop.productName}</h6>
+                                                                            <div class="d-flex justify-content-between">
+                                                                                <p class="text-color">Số lượng:
+                                                                                    ${orderShop.quantity}</p>
+                                                                                <div>
+                                                                                    <c:if
+                                                                                        test="${orderShop.originalPrice != orderShop.salePrice}">
+                                                                                        <span
+                                                                                            class="text-decoration-line-through text-color">
+                                                                                            <fmt:formatNumber
+                                                                                                value="${orderShop.originalPrice}"
+                                                                                                type="currency" />
+                                                                                        </span>
+                                                                                    </c:if>
+                                                                                    <span class="fw-bold text-danger">
+                                                                                        <fmt:formatNumber
+                                                                                            value="${orderShop.salePrice}"
+                                                                                            type="currency" />
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <c:if
+                                                                                test="${entry.value[0].shopStatus == 'COMPLETED' && !orderShop.isReviewed}">
+                                                                                <button type="button"
+                                                                                    class="button-five btn-open-review mt-2"
+                                                                                    data-order-item-id="${orderShop.orderItemId}"
+                                                                                    data-product-name="${orderShop.productName}"
+                                                                                    data-product-image="${ctx}/assets/images/catalog/products/${orderShop.imageUrl}">
+                                                                                    Viết đánh giá
+                                                                                </button>
+                                                                            </c:if>
+                                                                        </div>
+                                                                    </div>
+                                                                </c:forEach>
+
+                                                                <div class="text-end">
+                                                                    <p class="text-color">Thành tiền: <span
+                                                                            class="order-card__price">
+                                                                            <fmt:formatNumber
+                                                                                value="${entry.value[0].shopFinalAmount}"
+                                                                                type="currency" />
+                                                                        </span></span>
+                                                                    </p>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING'}">
+                                                                        <button class="button-six btn-cancel-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#cancelOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Hủy đơn
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'CANCELLED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua lại
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus == 'COMPLETED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua lại
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus == 'RETURNED'}">
+                                                                        <button class="button-four btnRepurchase"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}"><i
+                                                                                class="bi bi-arrow-repeat me-1"></i>
+                                                                            Mua lại
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus == 'COMPLETED' && entry.value[0].canReturn}">
+                                                                        <button class="button-seven btn-return-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#returnOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Trả hàng
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'CONFIRM'}">
+                                                                        <button class="button-four btn-confirm-order"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmOrderModal"
+                                                                            data-order-shop-id="${entry.value[0].orderShopId}">
+                                                                            Đã nhận hàng
+                                                                        </button>
+                                                                    </c:if>
+
+                                                                    <c:if
+                                                                        test="${entry.value[0].shopStatus  == 'PENDING_PAYMENT'}">
+                                                                        <form action="/order/repayment" method="post">
+                                                                            <input type="hidden" name="paymentId"
+                                                                                value="${entry.value[0].paymentId}" />
+                                                                            <button class="button-four">
+                                                                                Thanh toán lại
+                                                                            </button>
+                                                                        </form>
+                                                                    </c:if>
                                                                 </div>
                                                             </div>
                                                         </c:forEach>
@@ -242,7 +344,7 @@
                 </div>
                 <!-- Footer & scripts chung -->
                 <jsp:include page="/WEB-INF/views/layouts/_footer.jsp" />
-                <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
+
 
                 <!-- Cancel Order Modal -->
                 <form id="cancelOrderForm" method="POST" action="/order/cancel">
@@ -342,12 +444,77 @@
                 </form>
                 <!--End Confirm Order Received Modal -->
 
+                <!-- Modal product reviews -->
+                <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content rounded-3 shadow">
+
+                            <form id="reviewForm">
+
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold" id="ratingModalLabel">Đánh Giá Sản Phẩm</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                        aria-label="Đóng"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <input type="hidden" name="orderItemId" id="reviewOrderItemId" value="">
+
+                                    <div class="d-flex mb-3">
+                                        <img id="reviewProductImage" src="" class="rounded border me-3" alt="Sản phẩm"
+                                            style="width: 80px; height: 80px; object-fit: contain;">
+                                        <div>
+                                            <p class="mb-1 fw-semibold" id="reviewProductName">[Tên sản phẩm]</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="fw-semibold">Chất lượng sản phẩm</label>
+                                        <div class="rating-stars">
+                                            <input type="radio" name="rating" id="rating-5" value="5" required><label
+                                                for="rating-5"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-4" value="4"><label
+                                                for="rating-4"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-3" value="3"><label
+                                                for="rating-3"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-2" value="2"><label
+                                                for="rating-2"><i class="bi bi-star-fill"></i></label>
+                                            <input type="radio" name="rating" id="rating-1" value="1"><label
+                                                for="rating-1"><i class="bi bi-star-fill"></i></label>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="fw-semibold" for="reviewComment">Nội dung đánh giá</label>
+                                        <textarea class="form-control" name="comment" id="reviewComment" rows="3"
+                                            placeholder="Hãy chia sẻ trải nghiệm của bạn..."></textarea>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="reviewImages" class="button-four me-2">
+                                            <i class="bi bi-camera"></i> Thêm Hình ảnh (Tối đa 5 ảnh)
+                                        </label>
+                                        <input type="file" id="reviewImages" name="reviewImages" style="display: none;"
+                                            multiple accept="image/png, image/jpeg, image/gif, image/webp">
+                                        <div id="previewImages" class="d-flex flex-wrap mt-2 gap-2"></div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="button-five" data-bs-dismiss="modal">Trở lại</button>
+                                    <button type="submit" class="button-four" id="submitReviewBtn">Hoàn thành</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <!--End Modal product reviews -->
+
                 <!-- Link Javascript of Order -->
-                <script src="./assets/js/customer/order/order.js"></script>
-
-                <!-- Link Javascript of Information Account -->
-                <script src="./assets/js/customer/profile/information_account.js"></script>
-
+                <script src="${ctx}/assets/js/customer/order/order.js?v=1.0.1"></script>
+                <!-- Include scripts chung -->
+                <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
                 <c:if test="${not empty sessionScope.toastMsg}">
                     <script>

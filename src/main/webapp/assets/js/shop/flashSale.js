@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // =====================================================
   joinButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
+      const flashSaleId = btn.dataset.id;
+      const flashSaleIdInput = document.getElementById("flashSaleId");
+      if (flashSaleIdInput) flashSaleIdInput.value = flashSaleId;
       if (registerModal) registerModal.show();
 
       fetch(`/shop/flashSale?action=getActiveProducts`)
@@ -48,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =====================================================
-  // 2️⃣ Render danh sách sản phẩm (bổ sung data-price)
+  // 2️⃣ Render danh sách sản phẩm
   // =====================================================
   function renderProducts(products = []) {
     if (!productList) return;
@@ -65,11 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
       li.type = "button";
       li.className =
         "list-group-item list-group-item-action d-flex align-items-center gap-3";
-      // Thêm data-price để validate sau này
       li.dataset.id = p.productId;
       li.dataset.name = p.productName || "";
       li.dataset.quantity = p.quantity || 0;
-      li.dataset.price = p.salePrice || p.price || 0; // ưu tiên salePrice, fallback price
+      li.dataset.price = p.salePrice || p.price || 0;
 
       const firstCategory =
         p.categoryNames?.split(",")[0]?.trim() || "Không phân loại";
@@ -90,7 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
       productList.appendChild(li);
     });
 
-    // Áp dụng filter nếu đã có từ khóa
     filterProducts();
   }
 
@@ -117,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
   searchInput?.addEventListener("input", filterProducts);
 
   // =====================================================
-  // 4️⃣ Chọn sản phẩm (cập nhật selectedProductQty / Price)
+  // 4️⃣ Chọn sản phẩm
   // =====================================================
   productList?.addEventListener("click", (e) => {
     const btn = e.target.closest(".list-group-item");
@@ -125,8 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     selectedProductId = btn.dataset.id;
     hiddenProductInput.value = selectedProductId;
-
-    // Cập nhật thông tin số lượng và giá của sản phẩm đã chọn
     selectedProductQty = Number(btn.dataset.quantity || 0);
     selectedProductPrice = Number(btn.dataset.price || 0);
 
@@ -146,8 +145,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="fw-semibold text-truncate">${name}</span>
           <small class="text-muted text-truncate">${price}</small>
         </div>
-        <small class="text-muted flex-shrink-0 ms-2">SL: ${quantity}</small>
       </div>
+      <div class="text-muted flex-shrink-0 ms-2">SL: ${quantity}</div>
     `;
 
     productList
@@ -156,37 +155,40 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.classList.add("active");
 
     // Ẩn dropdown
-    try {
-      const dd = bootstrap.Dropdown.getInstance(dropdownBtn);
-      if (dd) dd.hide();
-    } catch (err) {
-      // ignore
-    }
     dropdownMenu?.classList.remove("show");
 
-    // Khi chọn sản phẩm mới, xóa các lỗi cũ (nếu có)
     clearError(quantityInput);
     clearError(priceInput);
+    clearError(dropdownBtn);
     dropdownBtn?.classList.remove("is-invalid");
+
+    // 🧩 Kiểm tra sản phẩm đã trong Flash Sale chưa
+    const flashSaleId = document.getElementById("flashSaleId")?.value;
+    if (flashSaleId && selectedProductId) {
+      fetch(
+        `/shop/flashSale?action=checkProductInFlashSale&flashSaleId=${flashSaleId}&productId=${selectedProductId}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const confirmBtn = document.getElementById("confirmSubmitBtn");
+          if (data.exists) {
+            showError(
+              dropdownBtn,
+              data.message ||
+                "Sản phẩm này đã được đăng ký trong Flash Sale này."
+            );
+            if (confirmBtn) confirmBtn.disabled = true;
+          } else {
+            clearError(dropdownBtn);
+            if (confirmBtn) confirmBtn.disabled = false;
+          }
+        })
+        .catch((err) => console.error("Lỗi khi kiểm tra sản phẩm:", err));
+    }
   });
 
   // =====================================================
-  // 5️⃣ Toggle dropdown sản phẩm
-  // =====================================================
-  dropdownBtn?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dropdownMenu.classList.toggle("show");
-    if (dropdownMenu.classList.contains("show"))
-      setTimeout(() => searchInput?.focus(), 0);
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target))
-      dropdownMenu.classList.remove("show");
-  });
-
-  // =====================================================
-  // 6️⃣ Validation real-time + khi submit (theo rule mới)
+  // 5️⃣ Hiển thị lỗi / Xóa lỗi
   // =====================================================
   function showError(input, msg) {
     if (!input) return;
@@ -207,17 +209,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (feedback?.classList.contains("invalid-feedback")) feedback.remove();
   }
 
-  // Validate số lượng:
-  // - Nếu chưa chọn sản phẩm -> lỗi ("vui lòng chọn sản phẩm trước")
-  // - Nếu <= 0 -> lỗi
-  // - Nếu > selectedProductQty -> lỗi
+  // =====================================================
+  // 6️⃣ Toggle dropdown sản phẩm
+  // =====================================================
+  dropdownBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    dropdownMenu.classList.toggle("show");
+    if (dropdownMenu.classList.contains("show"))
+      setTimeout(() => searchInput?.focus(), 0);
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target))
+      dropdownMenu.classList.remove("show");
+  });
+
+  // =====================================================
+  // 7️⃣ Validation real-time + khi submit
+  // =====================================================
   function validateQuantity() {
-    // Nếu chưa chọn sản phẩm
     if (!hiddenProductInput.value) {
-      showError(
-        quantityInput,
-        "Vui lòng chọn sản phẩm trước khi nhập số lượng."
-      );
+      showError(quantityInput, "Vui lòng chọn sản phẩm trước.");
       return false;
     }
 
@@ -239,13 +251,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
-  // Validate giá:
-  // - Nếu chưa chọn sản phẩm -> lỗi
-  // - Nếu <= 1000 -> lỗi
-  // - Nếu >= selectedProductPrice -> lỗi (yêu cầu nhỏ hơn giá sản phẩm)
   function validatePrice() {
     if (!hiddenProductInput.value) {
-      showError(priceInput, "Vui lòng chọn sản phẩm trước khi nhập giá.");
+      showError(priceInput, "Vui lòng chọn sản phẩm trước.");
       return false;
     }
 
@@ -255,7 +263,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return false;
     }
 
-    // nếu không có giá sản phẩm (selectedProductPrice falsy), vẫn cho qua check này
     if (selectedProductPrice && !(value < selectedProductPrice)) {
       showError(
         priceInput,
@@ -268,20 +275,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
-  // Nếu người dùng gõ mà chưa chọn sản phẩm: vẫn sẽ bị bắt lỗi (theo yêu cầu)
   quantityInput?.addEventListener("blur", validateQuantity);
   quantityInput?.addEventListener("input", validateQuantity);
   priceInput?.addEventListener("blur", validatePrice);
   priceInput?.addEventListener("input", validatePrice);
 
+  // =====================================================
+  // 8️⃣ Xử lý submit form + hiển thị modal xác nhận
+  // =====================================================
   form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     let valid = true;
     dropdownBtn?.classList.remove("is-invalid");
 
-    // Nếu chưa chọn sản phẩm: mark dropdown và 2 ô nhập
     if (!hiddenProductInput.value) {
       dropdownBtn?.classList.add("is-invalid");
-      // hiển thị lỗi ở cả 2 ô để user thấy
       showError(quantityInput, "Vui lòng chọn sản phẩm trước khi đăng ký.");
       showError(priceInput, "Vui lòng chọn sản phẩm trước khi đăng ký.");
       valid = false;
@@ -291,10 +301,58 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!validatePrice()) valid = false;
 
     if (!valid) {
-      e.preventDefault();
-      e.stopPropagation();
-      // mở dropdown/modal nếu bị lỗi để user sửa nhanh (tùy ý)
       if (registerModal) registerModal.show();
+      return;
     }
+
+    // ✅ Nếu hợp lệ, mở modal xác nhận
+    const confirmModalEl = document.getElementById("flashsaleConfirmModal");
+    const confirmModal = new bootstrap.Modal(confirmModalEl);
+    if (registerModal) registerModal.hide();
+
+    const productName =
+      selectedText.querySelector(".fw-semibold")?.textContent || "Chưa chọn";
+    const flashPrice = priceInput.value || "-";
+    const qty = quantityInput.value || "-";
+    const flashTime =
+      document.querySelector(`#flashSaleId`)?.selectedOptions?.[0]
+        ?.textContent || "(Tự động theo Flash Sale)";
+
+    document.getElementById("confirmProductName").textContent = productName;
+    document.getElementById("confirmFlashPrice").textContent = `${Number(
+      flashPrice
+    ).toLocaleString()} VND`;
+    document.getElementById("confirmQuantity").textContent = qty;
+    document.getElementById("confirmFlashTime").textContent = flashTime;
+
+    const productImgInRegister = selectedText.querySelector("img");
+    const confirmProductImg = document.getElementById("confirmProductImg");
+    if (confirmProductImg) {
+      if (productImgInRegister) {
+        confirmProductImg.src = productImgInRegister.src;
+        confirmProductImg.alt = productName;
+      } else {
+        confirmProductImg.src = "/assets/images/catalog/products/no-image.jpg";
+        confirmProductImg.alt = "Không có ảnh sản phẩm";
+      }
+    }
+
+    confirmModal.show();
+
+    const confirmBtn = document.getElementById("confirmSubmitBtn");
+    confirmBtn.onclick = () => {
+      confirmModal.hide();
+      form.submit();
+    };
   });
+
+  const confirmModalEl = document.getElementById("flashsaleConfirmModal");
+  if (confirmModalEl) {
+    confirmModalEl.addEventListener("hidden.bs.modal", function () {
+      const registerModalEl = document.getElementById("flashsaleRegisterModal");
+      const registerModal =
+        bootstrap.Modal.getOrCreateInstance(registerModalEl);
+      setTimeout(() => registerModal.show(), 200);
+    });
+  }
 });

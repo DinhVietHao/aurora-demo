@@ -60,6 +60,12 @@ public class NotificationDAO {
                     case "VOUCHER_EXPIRED":
                         link = "/shop/voucher?action=detail&voucherID=" + n.getReferenceID();
                         break;
+                    case "PRODUCT_ACTIVE":
+                        link = "/shop/product?action=detail&productId=" + n.getReferenceID();
+                        break;
+                    case "PRODUCT_REJECTED":
+                        link = "/shop/product?action=detail&productId=" + n.getReferenceID();
+                        break;
                 }
                 n.setLink(link);
                 list.add(n);
@@ -99,14 +105,22 @@ public class NotificationDAO {
                 String link = "#";
                 switch (n.getType()) {
                     case "ORDER_SHIPPING":
+                        link = "/order?status=shipping";
+                        break;
                     case "ORDER_CANCELLED":
+                        link = "/order?status=cancelled";
+                        break;
                     case "ORDER_CONFIRM":
+                        link = "/order?status=pending";
+                        break;
                     case "ORDER_RETURNED":
+                        link = "/order?status=returned";
+                        break;
                     case "ORDER_RETURNED_REJECTED":
-                        link = "/order/shop?orderId=" + n.getReferenceID();
+                        link = "/order?status=returned";
                         break;
                     default:
-                        link = "#";
+                        link = "/order";
                         break;
                 }
                 n.setLink(link);

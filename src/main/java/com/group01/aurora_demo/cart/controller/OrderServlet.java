@@ -18,31 +18,31 @@
 // import org.json.JSONArray;
 // import org.json.JSONObject;
 
-// import com.group01.aurora_demo.auth.model.User;
-// import com.group01.aurora_demo.cart.dao.CartItemDAO;
-// import com.group01.aurora_demo.cart.dao.OrderDAO;
-// import com.group01.aurora_demo.cart.dao.OrderItemDAO;
-// import com.group01.aurora_demo.cart.dao.OrderShopDAO;
-// import com.group01.aurora_demo.cart.dao.PaymentDAO;
-// import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
-// import com.group01.aurora_demo.cart.model.CartItem;
-// import com.group01.aurora_demo.cart.model.Order;
-// import com.group01.aurora_demo.cart.model.OrderItem;
-// import com.group01.aurora_demo.cart.model.OrderShop;
-// import com.group01.aurora_demo.cart.model.Payment;
-// import com.group01.aurora_demo.cart.service.OrderService;
-// import com.group01.aurora_demo.cart.service.VNPayService;
-// import com.group01.aurora_demo.cart.utils.ServiceResponse;
-// import com.group01.aurora_demo.catalog.controller.NotificationServlet;
-// import com.group01.aurora_demo.catalog.dao.ProductDAO;
-// import com.group01.aurora_demo.catalog.model.Product;
-// import com.group01.aurora_demo.common.config.DataSourceProvider;
-// import com.group01.aurora_demo.common.service.EmailService;
-// import com.group01.aurora_demo.profile.dao.AddressDAO;
-// import com.group01.aurora_demo.profile.model.Address;
-// import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
-// import com.group01.aurora_demo.shop.dao.VoucherDAO;
-// import com.group01.aurora_demo.shop.model.Voucher;
+import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.cart.dao.CartItemDAO;
+import com.group01.aurora_demo.cart.dao.OrderItemDAO;
+import com.group01.aurora_demo.cart.dao.OrderShopDAO;
+import com.group01.aurora_demo.cart.dao.PaymentDAO;
+import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
+import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.cart.model.OrderItem;
+import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.cart.model.Payment;
+import com.group01.aurora_demo.cart.service.OrderService;
+import com.group01.aurora_demo.cart.service.VNPayService;
+import com.group01.aurora_demo.cart.utils.ServiceResponse;
+import com.group01.aurora_demo.catalog.controller.NotificationServlet;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.FlashSaleItem;
+import com.group01.aurora_demo.catalog.model.Product;
+import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.common.service.EmailService;
+import com.group01.aurora_demo.profile.dao.AddressDAO;
+import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
+import com.group01.aurora_demo.shop.dao.VoucherDAO;
+import com.group01.aurora_demo.shop.model.Voucher;
 
 // import jakarta.servlet.RequestDispatcher;
 // import jakarta.servlet.ServletException;
@@ -52,33 +52,33 @@
 // import jakarta.servlet.http.HttpServletResponseWrapper;
 // import jakarta.servlet.http.HttpSession;
 
-// @WebServlet("/order/*")
-// public class OrderServlet extends NotificationServlet {
-//     private OrderService orderService;
-//     private VoucherDAO voucherDAO;
-//     private OrderDAO orderDAO;
-//     private OrderShopDAO orderShopDAO;
-//     private PaymentDAO paymentDAO;
-//     private AddressDAO addressDAO;
-//     private CartItemDAO cartItemDAO;
-//     private OrderItemDAO orderItemDAO;
-//     private ProductDAO productDAO;
-//     private UserVoucherDAO userVoucherDAO;
-//     private EmailService emailService;
+@WebServlet("/order/*")
+public class OrderServlet extends NotificationServlet {
+    private OrderService orderService;
+    private VoucherDAO voucherDAO;
+    private OrderShopDAO orderShopDAO;
+    private PaymentDAO paymentDAO;
+    private AddressDAO addressDAO;
+    private CartItemDAO cartItemDAO;
+    private OrderItemDAO orderItemDAO;
+    private ProductDAO productDAO;
+    private UserVoucherDAO userVoucherDAO;
+    private EmailService emailService;
+    private FlashSaleDAO flashSaleDAO;
 
-//     public OrderServlet() {
-//         this.orderService = new OrderService();
-//         this.voucherDAO = new VoucherDAO();
-//         this.orderDAO = new OrderDAO();
-//         this.paymentDAO = new PaymentDAO();
-//         this.orderShopDAO = new OrderShopDAO();
-//         this.addressDAO = new AddressDAO();
-//         this.cartItemDAO = new CartItemDAO();
-//         this.orderItemDAO = new OrderItemDAO();
-//         this.productDAO = new ProductDAO();
-//         this.userVoucherDAO = new UserVoucherDAO();
-//         this.emailService = new EmailService();
-//     }
+    public OrderServlet() {
+        this.orderService = new OrderService();
+        this.voucherDAO = new VoucherDAO();
+        this.paymentDAO = new PaymentDAO();
+        this.orderShopDAO = new OrderShopDAO();
+        this.addressDAO = new AddressDAO();
+        this.cartItemDAO = new CartItemDAO();
+        this.orderItemDAO = new OrderItemDAO();
+        this.productDAO = new ProductDAO();
+        this.userVoucherDAO = new UserVoucherDAO();
+        this.emailService = new EmailService();
+        this.flashSaleDAO = new FlashSaleDAO();
+    }
 
 //     @Override
 //     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -94,80 +94,104 @@
 //         req.setAttribute("user", user);
 //         String path = req.getPathInfo();
 
-//         if (path == null || path.equals("/")) {
-//             try {
-//                 List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
-//                 req.setAttribute("orders", orders);
-//                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
-//             } catch (Exception e) {
-//                 e.printStackTrace();
-//             }
-//         } else if (path.equals("/shop")) {
-//             try {
-//                 long orderId = Long.parseLong(req.getParameter("orderId"));
+        if (path == null || path.equals("/")) {
+            try {
+                String status = req.getParameter("status");
+                List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByStatus(user.getUserID(), status);
 
-//                 List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
-//                 if (orderShops == null || orderShops.isEmpty()) {
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                     return;
-//                 }
-//                 Map<Long, List<OrderDTO>> grouped = orderShops.stream()
-//                         .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
-//                                 LinkedHashMap::new,
-//                                 Collectors.toList()));
-//                 req.setAttribute("orderShops", grouped);
+                Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
+                        .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
+                                LinkedHashMap::new,
+                                Collectors.toList()));
 
-//                 String filePathCancel = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
-//                 List<Map<String, String>> cancelReasons = loadCancelReasons(filePathCancel);
-//                 req.setAttribute("cancelReasons", cancelReasons);
+                req.setAttribute("orderShops", grouped);
+                String filePathCancel = getServletContext().getRealPath("/WEB-INF/config/cancel_reasons.json");
+                List<Map<String, String>> cancelReasons = loadCancelReasons(filePathCancel);
+                req.setAttribute("cancelReasons", cancelReasons);
 
 //                 String filePathReturn = getServletContext().getRealPath("/WEB-INF/config/return_reasons.json");
 //                 List<Map<String, String>> returnReasons = loadCancelReasons(filePathReturn);
 //                 req.setAttribute("returnReasons", returnReasons);
 
-//                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order-shop.jsp").forward(req, resp);
-//             } catch (Exception e) {
-//                 e.printStackTrace();
-//             }
-//         } else if (path.equals("/detail")) {
-//             try {
-//                 long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order.jsp").forward(req, resp);
 
-//                 List<OrderDTO> orderItems = this.orderItemDAO.getOrderItemsByOrderShopId(orderShopId);
-//                 if (orderItems == null || orderItems.isEmpty()) {
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                     return;
-//                 }
-//                 double shopSubtotal = orderItems.stream().mapToDouble(orderItem -> orderItem.getSubtotal()).sum();
-//                 req.setAttribute("orderItems", orderItems);
-//                 req.setAttribute("shopSubtotal", shopSubtotal);
-//                 req.getRequestDispatcher("/WEB-INF/views/customer/order/order-detail.jsp").forward(req, resp);
-//             } catch (Exception e) {
-//                 e.printStackTrace();
-//             }
-//         } else if (path.equals("/payment")) {
-//             String responseCode = req.getParameter("vnp_ResponseCode");
-//             String txnRef = req.getParameter("vnp_TxnRef");
-//             String transactionNo = req.getParameter("vnp_TransactionNo");
-//             try {
-//                 long orderId = Long.parseLong(txnRef);
-//                 if ("00".equals(responseCode)) {
-//                     this.orderDAO.updateOrderStatus(orderId, "PENDING");
-//                     this.orderShopDAO.updateOrderShopStatusByOrderId(orderId, "PENDING");
-//                     this.paymentDAO.updatePaymentStatus(orderId, "SUCCESS", transactionNo);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (path.equals("/detail")) {
+            try {
+                long orderShopId = Long.parseLong(req.getParameter("id"));
 
-//                     try {
+                List<OrderShopDTO> orderItems = this.orderItemDAO.getOrderItemsByOrderShopId(orderShopId);
+                if (orderItems == null || orderItems.isEmpty()) {
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                    return;
+                }
+                double shopSubtotal = orderItems.stream().mapToDouble(orderItem -> orderItem.getSubtotal()).sum();
+                req.setAttribute("orderItems", orderItems);
+                req.setAttribute("shopSubtotal", shopSubtotal);
+                req.getRequestDispatcher("/WEB-INF/views/customer/order/order-detail.jsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (path.equals("/payment")) {
+            String responseCode = req.getParameter("vnp_ResponseCode");
+            String txnRef = req.getParameter("vnp_TxnRef");
+            String transactionNo = req.getParameter("vnp_TransactionNo");
+            try {
+                Payment payment = this.paymentDAO.findByTransactionRef(txnRef);
+                if (payment == null) {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Giao dịch không hợp lệ.");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+                    return;
+                }
 
-//                         Order order = this.orderDAO.getOrderById(orderId);
-//                         List<OrderDTO> orderShops = this.orderShopDAO.getOrderShopsByOrderId(orderId);
-//                         req.setAttribute("order", order);
-//                         req.setAttribute("orderShops", orderShops);
+                long paymentId = payment.getPaymentId();
+
+                if ("00".equals(responseCode)) {
+                    this.paymentDAO.updatePaymentStatusById(paymentId, "SUCCESS", transactionNo);
+                    orderShopDAO.updateOrderShopStatusByPaymentId(paymentId, "PENDING");
+                    try {
+                        List<OrderShopDTO> orderShops = this.orderShopDAO.getOrderShopsByPaymentId(paymentId);
+
+                        Map<Long, List<OrderShopDTO>> grouped = orderShops.stream()
+                                .collect(Collectors.groupingBy(orderShop -> orderShop.getOrderShopId(),
+                                        LinkedHashMap::new,
+                                        Collectors.toList()));
+
+                        double totalItems = 0, totalShipping = 0, totalSystemDiscount = 0, totalShopDiscount = 0,
+                                totalShipDiscount = 0;
+
+                        for (Map.Entry<Long, List<OrderShopDTO>> entry : grouped.entrySet()) {
+                            List<OrderShopDTO> shopItems = entry.getValue();
+                            if (shopItems.isEmpty())
+                                continue;
+
+                            OrderShopDTO shop = shopItems.get(0);
+
+                            totalItems += shop.getSubtotal();
+                            totalShipping += shop.getShopShippingFee();
+                            totalSystemDiscount += shop.getSystemDiscount();
+                            totalShopDiscount += shop.getShopDiscount();
+                            totalShipDiscount += shop.getSystemShippingDiscount();
+                        }
+
+                        double totalVoucherDiscount = totalSystemDiscount + totalShopDiscount;
+                        double grandTotal = totalItems + totalShipping - totalVoucherDiscount - totalShipDiscount;
+
+                        req.setAttribute("orderShops", orderShops);
+                        req.setAttribute("totalItems", totalItems);
+                        req.setAttribute("totalShipping", totalShipping);
+                        req.setAttribute("totalVoucherDiscount", totalVoucherDiscount);
+                        req.setAttribute("totalShipDiscount", totalShipDiscount);
+                        req.setAttribute("grandTotal", grandTotal);
 
 //                         String html = renderJSPToString(req, resp,
 //                                 "/WEB-INF/views/customer/order/order_confirmation.jsp");
 
-//                         String subject = "Xác nhận đơn hàng #" + order.getOrderId() + " - Aurora";
-//                         this.emailService.sendHtml(user.getEmail(), subject, html);
+                        String subject = "Xác nhận đơn hàng #" + paymentId + " - Aurora";
+                        this.emailService.sendHtml(user.getEmail(), subject, html);
 
 //                         System.out.println("Email xác nhận đã gửi tới " + user.getEmail());
 //                     } catch (Exception mailEx) {
@@ -175,22 +199,28 @@
 //                         System.err.println("Gửi email xác nhận thất bại!");
 //                     }
 
-//                     session.setAttribute("toastType", "success");
-//                     session.setAttribute("toastMsg",
-//                             "Thanh toán thành công! Đơn hàng của bạn đang chờ xác nhận từ người bán.");
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                 } else {
-//                     this.paymentDAO.updatePaymentStatus(orderId, "FAILED", transactionNo);
-//                     session.setAttribute("toastType", "error");
-//                     session.setAttribute("toastMsg", "Thanh toán không thành công. Vui lòng thử lại.");
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                 }
-//             } catch (Exception e) {
-//                 e.printStackTrace();
-//                 resp.sendRedirect(req.getContextPath() + "/checkout");
-//             }
-//         }
-//     }
+                    session.setAttribute("toastType", "success");
+                    session.setAttribute("toastMsg",
+                            "Đơn hàng của bạn đã được tạo thành công");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=pending");
+                    return;
+                }
+                boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPaymentByPaymentId(paymentId);
+                if (!rollbackSuccess) {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công!. Có lỗi khi hoàn trả đơn.");
+                } else {
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Thanh toán không thành công! Đơn hàng của bạn đã bị hủy.");
+                }
+                resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                resp.sendRedirect(req.getContextPath() + "/checkout");
+            }
+        }
+    }
 
 //     @Override
 //     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -254,13 +284,12 @@
 //                         }
 //                     });
 
-//                     ServiceResponse result = this.orderService.createOrder(user, address, systemVoucherDiscount,
-//                             systemVoucherShip,
-//                             shopVouchers);
-//                     if ("success".equalsIgnoreCase(result.getType())) {
-//                         System.out.println("Check FinalAmount= " + result.getFinalAmount());
-//                         String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getOrderId(),
-//                                 result.getFinalAmount());
+                    ServiceResponse result = this.orderService.createOrder(user, address, systemVoucherDiscount,
+                            systemVoucherShip,
+                            shopVouchers);
+                    if ("success".equalsIgnoreCase(result.getType())) {
+                        String paymentUrl = VNPayService.getPaymentUrl(req, resp, result.getTransactionRef(),
+                                result.getFinalAmount());
 
 //                         int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
 //                         session.setAttribute("cartCount", cartCount);
@@ -286,112 +315,102 @@
 //                 out.print(json.toString());
 //                 break;
 
-//             }
-//             case "/repayment": {
-//                 try {
-//                     long orderId = Long.parseLong(req.getParameter("orderId"));
-//                     Order order = orderDAO.getOrderById(orderId);
+            }
+            case "/repayment": {
+                try {
+                    Long paymentId = Long.parseLong(req.getParameter("paymentId"));
+                    Payment payment = paymentDAO.getPaymentById(paymentId);
+                    if (payment == null || !"PENDING_PAYMENT".equals(payment.getStatus())) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không thể thanh toán lại đơn hàng này!");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        return;
+                    }
 
-//                     if (order == null) {
-//                         session.setAttribute("toastType", "error");
-//                         session.setAttribute("toastMsg", "Không tìm thấy đơn hàng cần thanh toán lại.");
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                         break;
-//                     }
+                    String paymentUrl = VNPayService.getPaymentUrl(req, resp, payment.getTransactionRef(),
+                            payment.getAmount());
+                    resp.sendRedirect(paymentUrl);
 
-//                     if (!"PENDING_PAYMENT".equals(order.getOrderStatus())) {
-//                         session.setAttribute("toastType", "warning");
-//                         session.setAttribute("toastMsg", "Đơn hàng này không thể thanh toán lại.");
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                         break;
-//                     }
-
-//                     String paymentUrl = VNPayService.getPaymentUrl(req, resp, orderId, order.getFinalAmount());
-//                     resp.sendRedirect(paymentUrl);
-
-//                 } catch (Exception e) {
-//                     e.printStackTrace();
-//                     session.setAttribute("toastType", "error");
-//                     session.setAttribute("toastMsg", "Không thể khởi tạo lại thanh toán. Vui lòng thử lại sau.");
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                 }
-//                 break;
-//             }
-//             case "/cancel": {
-//                 Connection conn = null;
-//                 try {
-//                     // --- Bắt đầu transaction ---
-//                     conn = DataSourceProvider.get().getConnection();
-//                     conn.setAutoCommit(false);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Lỗi hệ thống khi thanh toán lại!");
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                }
+                break;
+            }
+            case "/cancel": {
+                Connection conn = null;
+                try {
+                    // --- Bắt đầu transaction ---
+                    conn = DataSourceProvider.get().getConnection();
+                    conn.setAutoCommit(false);
 
 //                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
 //                     String cancelReason = req.getParameter("cancelReason");
 
-//                     OrderShop orderShop = orderShopDAO.findById(conn, orderShopId);
-//                     if (orderShop == null) {
-//                         session.setAttribute("toastType", "error");
-//                         session.setAttribute("toastMsg", "Không tìm thấy đơn hàng shop.");
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                         return;
-//                     }
+                    OrderShop orderShop = orderShopDAO.findByOrderShopId(conn, orderShopId);
+                    if (orderShop == null) {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không tìm thấy đơn hàng shop.");
+                        resp.sendRedirect(req.getContextPath() + "/order");
+                        return;
+                    }
 
-//                     Order order = orderDAO.finById(conn, orderShop.getOrderId());
-//                     if (order == null) {
-//                         session.setAttribute("toastType", "error");
-//                         session.setAttribute("toastMsg", "Không tìm thấy đơn hàng tổng.");
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                         return;
-//                     }
+                    orderShopDAO.cancelOrderShop(conn, orderShopId, cancelReason);
 
-//                     orderShop.setStatus("CANCELLED");
-//                     orderShop.setCancelReason(cancelReason);
-//                     orderShopDAO.update(conn, orderShop);
+                    if (orderShop.getVoucherShopId() != null) {
+                        userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(), orderShop.getUserId());
+                        voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
+                    }
 
-//                     if (orderShop.getVoucherId() != null) {
-//                         userVoucherDAO.cancelUserVoucher(conn, orderShop.getVoucherId(), order.getUserId());
-//                         voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherId());
-//                     }
+                    List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShop.getOrderShopId());
+                    for (OrderItem item : items) {
+                        if (item.getFlashSaleItemId() != null) {
+                            flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                        } else {
+                            productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                        }
+                    }
 
-//                     List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShop.getOrderShopId());
-//                     for (OrderItem item : items) {
-//                         productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
-//                     }
+                    List<OrderShop> activeShop = orderShopDAO.getActiveShopsByPaymentId(conn,
+                            orderShop.getPaymentId());
+                    Payment payment = paymentDAO.getPaymentById(conn, orderShop.getPaymentId());
 
-//                     List<OrderShop> activeShop = orderShopDAO.getActiveShopsByOrderId(conn, order.getOrderId());
-//                     Payment payment = paymentDAO.getPaymentByOrderId(conn, order.getOrderId());
-//                     if (activeShop.isEmpty()) {
-//                         order.setOrderStatus("CANCELLED");
-//                         if (order.getVoucherDiscountId() != null) {
-//                             userVoucherDAO.cancelUserVoucher(conn, order.getVoucherDiscountId(), order.getUserId());
-//                             voucherDAO.decreaseUsageCount(conn, order.getVoucherDiscountId());
-//                         }
-//                         if (order.getVoucherShipId() != null) {
-//                             userVoucherDAO.cancelUserVoucher(conn, order.getVoucherShipId(),
-//                                     order.getUserId());
-//                             voucherDAO.decreaseUsageCount(conn, order.getVoucherShipId());
-//                         }
-//                         if (payment != null) {
-//                             paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
-//                         }
-//                         orderDAO.update(conn, order);
-//                     } else {
-//                         if (payment != null) {
-//                             paymentDAO.partialRefund(conn, order.getOrderId(), orderShop.getFinalAmount());
-//                         }
-//                     }
+                    if (activeShop.isEmpty()) {
+                        if (orderShop.getVoucherDiscountId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                        }
+                        if (orderShop.getVoucherShipId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                        }
+                        if (payment != null) {
+                            paymentDAO.partialRefund(conn, orderShop.getPaymentId(),
+                                    orderShop.getFinalAmount());
+                        }
+                    } else {
+                        if (payment != null) {
+                            paymentDAO.partialRefund(conn, orderShop.getPaymentId(),
+                                    orderShop.getFinalAmount());
+                        }
+                    }
 
-//                     conn.commit();
-//                     session.setAttribute("toastType", "success");
-//                     session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
-//                     resp.sendRedirect(req.getContextPath() + "/order/shop?orderId=" + order.getOrderId());
-//                 } catch (Exception e) {
-//                     e.printStackTrace();
-//                     if (conn != null)
-//                         try {
-//                             conn.rollback();
-//                         } catch (SQLException ex) {
-//                             ex.printStackTrace();
-//                         }
+                    conn.commit();
+                    session.setAttribute("toastType", "success");
+                    session.setAttribute("toastMsg", "Đã hủy đơn hàng shop thành công.");
+                    resp.sendRedirect(req.getContextPath() + "/order?status=cancelled");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (conn != null)
+                        try {
+                            conn.rollback();
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
 
 //                     session.setAttribute("toastType", "error");
 //                     session.setAttribute("toastMsg", "Có lỗi xảy ra khi huỷ đơn hàng.");
@@ -411,20 +430,17 @@
 
 //                     boolean success = orderShopDAO.updateOrderShopStatus(orderShopId, "COMPLETED");
 
-//                     if (success) {
-//                         session.setAttribute("toastType", "success");
-//                         session.setAttribute("toastMsg", "Bạn đã xác nhận đã nhận hàng thành công.");
-//                     } else {
-//                         session.setAttribute("toastType", "error");
-//                         session.setAttribute("toastMsg", "Không thể xác nhận đơn hàng. Vui lòng thử lại.");
-//                     }
-
-//                     String referer = req.getHeader("Referer");
-//                     if (referer != null) {
-//                         resp.sendRedirect(referer);
-//                     } else {
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                     }
+                    if (success) {
+                        session.setAttribute("toastType", "success");
+                        session.setAttribute("toastMsg", "Bạn đã xác nhận đã nhận hàng thành công.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                        return;
+                    } else {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không thể xác nhận đơn hàng. Vui lòng thử lại.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=confirm");
+                        return;
+                    }
 
 //                 } catch (Exception e) {
 //                     e.printStackTrace();
@@ -441,33 +457,29 @@
 
 //                     boolean success = orderShopDAO.returnOrderShop(orderShopId, returnReason);
 
-//                     if (success) {
-//                         session.setAttribute("toastType", "success");
-//                         session.setAttribute("toastMsg", "Đã gửi yêu cầu trả hàng thành công.");
-//                     } else {
-//                         session.setAttribute("toastType", "error");
-//                         session.setAttribute("toastMsg", "Không thể trả hàng. Vui lòng thử lại.");
-//                     }
-
-//                     String referer = req.getHeader("Referer");
-//                     if (referer != null) {
-//                         resp.sendRedirect(referer);
-//                     } else {
-//                         resp.sendRedirect(req.getContextPath() + "/order");
-//                     }
-
-//                 } catch (Exception e) {
-//                     e.printStackTrace();
-//                     session.setAttribute("toastType", "error");
-//                     session.setAttribute("toastMsg", "Có lỗi xảy ra khi trả hàng.");
-//                     resp.sendRedirect(req.getContextPath() + "/order");
-//                 }
-//                 break;
-//             }
-//             case "/repurchase": {
-//                 try {
-//                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
-//                     List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(orderShopId);
+                    if (success) {
+                        session.setAttribute("toastType", "success");
+                        session.setAttribute("toastMsg", "Đã gửi yêu cầu trả hàng thành công.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=returned");
+                        return;
+                    } else {
+                        session.setAttribute("toastType", "error");
+                        session.setAttribute("toastMsg", "Không thể trả hàng. Vui lòng thử lại.");
+                        resp.sendRedirect(req.getContextPath() + "/order?status=completed");
+                        return;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    session.setAttribute("toastType", "error");
+                    session.setAttribute("toastMsg", "Có lỗi xảy ra khi trả hàng.");
+                    resp.sendRedirect(req.getContextPath() + "/order");
+                }
+                break;
+            }
+            case "/repurchase": {
+                try {
+                    Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
+                    List<OrderItem> items = orderItemDAO.getOrderItems(orderShopId);
 
 //                     List<String> errors = new ArrayList<>();
 

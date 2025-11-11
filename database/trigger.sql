@@ -1,8 +1,6 @@
 -- Trigger 
-DROP TRIGGER IF EXISTS trg_DeleteProductCascade;
-GO
 
-CREATE TRIGGER trg_DeleteProductCascade
+CREATE OR ALTER TRIGGER trg_DeleteProductCascade
 ON Products
 INSTEAD OF DELETE
 AS
@@ -14,7 +12,7 @@ BEGIN
         Reason NVARCHAR(255)
     );
 
-    -- 1️⃣ Kiểm tra sản phẩm đang tham gia Flash Sale
+    -- 1️⃣ Sản phẩm đang tham gia Flash Sale
     INSERT INTO @Blocked
         (ProductID, Reason)
     SELECT d.ProductID, N'Sản phẩm đang tham gia Flash Sale'
@@ -25,21 +23,20 @@ BEGIN
     WHERE f.ProductID = d.ProductID
     );
 
-    -- 2️⃣ Kiểm tra sản phẩm nằm trong các đơn hàng đang xử lý
+    -- 2️⃣ Sản phẩm nằm trong đơn hàng đang xử lý
     INSERT INTO @Blocked
         (ProductID, Reason)
     SELECT DISTINCT d.ProductID, N'Sản phẩm đang nằm trong đơn hàng đang xử lý'
     FROM deleted d
         JOIN OrderItems oi ON oi.ProductID = d.ProductID
         JOIN OrderShops os ON os.OrderShopID = oi.OrderShopID
-        JOIN Orders o ON o.OrderID = os.OrderID
     WHERE os.[Status] IN (
         N'PENDING', N'SHIPPING', N'WAITING_SHIP',
         N'CONFIRM', N'COMPLETED', N'CANCELLED',
         N'RETURNED', N'RETURNED_REJECTED', N'RETURNED_REQUESTED'
     );
 
-    -- 3️⃣ Kiểm tra sản phẩm có trạng thái không được phép xóa
+    -- 3️⃣ Kiểm tra trạng thái sản phẩm
     INSERT INTO @Blocked
         (ProductID, Reason)
     SELECT d.ProductID,
@@ -52,30 +49,31 @@ BEGIN
         JOIN Products p ON p.ProductID = d.ProductID
     WHERE p.Status IN (N'ACTIVE', N'INACTIVE', N'OUT_OF_STOCK');
 
-    -- 4️⃣ Kiểm tra sản phẩm PENDING nhưng đã có SoldCount > 0
+    -- 4️⃣ Sản phẩm PENDING nhưng đã có SoldCount > 0
     INSERT INTO @Blocked
         (ProductID, Reason)
-    SELECT d.ProductID, N'Sản phẩm đang ở trạng thái chờ duyệt (PENDING) nhưng đã được bán'
+    SELECT d.ProductID,
+        CASE p.Status
+        WHEN N'PENDING' THEN N'Sản phẩm đang ở trạng thái chờ duyệt (PENDING) nhưng đã được bán'
+        WHEN N'REJECTED' THEN N'Sản phẩm đã bị từ chối (REJECTED) nhưng vẫn có đơn hàng bán'
+    END
     FROM deleted d
         JOIN Products p ON p.ProductID = d.ProductID
-    WHERE p.Status = N'PENDING'
-        AND p.SoldCount > 0;
+    WHERE p.Status IN (N'PENDING', N'REJECTED') AND p.SoldCount > 0;
 
-    -- 5️⃣ Nếu có sản phẩm bị chặn xóa thì báo lỗi
+    -- 5️⃣ Nếu có sản phẩm bị chặn xóa → báo lỗi
     IF EXISTS (SELECT 1
     FROM @Blocked)
     BEGIN
         DECLARE @msg NVARCHAR(MAX) = N'Không thể xóa các sản phẩm sau do còn ràng buộc:' + CHAR(13);
-
         SELECT @msg = @msg + N'• ProductID: ' + CAST(ProductID AS NVARCHAR) + N' – ' + Reason + CHAR(13)
         FROM @Blocked;
-
         RAISERROR(@msg, 16, 1);
         ROLLBACK TRANSACTION;
         RETURN;
     END;
 
-    -- 6️⃣ Nếu hợp lệ → Xóa dữ liệu liên quan trước
+    -- 6️⃣ Xóa dữ liệu liên quan
     DELETE FROM BookDetails WHERE ProductID IN (SELECT ProductID
     FROM deleted);
     DELETE FROM BookAuthors WHERE ProductID IN (SELECT ProductID
@@ -101,8 +99,6 @@ BEGIN
 END;
 GO
 
-DROP TRIGGER IF EXISTS trg_OrderShopStatusNotification
-GO
 
 CREATE OR ALTER TRIGGER trg_OrderShopStatusNotification
 ON OrderShops
@@ -111,9 +107,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    ---------------------------------------------------
-    -- 1) Đơn hàng mới (Chỉ khi INSERT)
-    ---------------------------------------------------
+    -- 1️⃣ Đơn hàng mới (INSERT)
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -127,23 +121,10 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         LEFT JOIN deleted d ON d.OrderShopID = i.OrderShopID
-        JOIN Orders o ON o.OrderID = i.OrderID
-        LEFT JOIN Users u ON u.UserID = o.UserID
-    WHERE d.OrderShopID IS NULL
-        AND NOT EXISTS (
-            SELECT 1
-        FROM Notifications n
-        WHERE n.RecipientType = 'SELLER'
-            AND n.RecipientID = i.ShopID
-            AND n.Type = 'ORDER_NEW'
-            AND n.ReferenceType = 'ORDER'
-            AND n.ReferenceID = i.OrderShopID
-            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
-        );
+        LEFT JOIN Users u ON u.UserID = i.UserID
+    WHERE d.OrderShopID IS NULL;
 
-    ---------------------------------------------------
-    -- 2) Giao hàng thành công (Customer nhận)
-    ---------------------------------------------------
+    -- 2️⃣ Giao hàng thành công
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -157,23 +138,9 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.OrderShopID = i.OrderShopID
-        JOIN Orders o ON o.OrderID = i.OrderID
-    WHERE ((d.Status IS NULL OR d.Status <> i.Status))
-        AND i.Status IN ('COMPLETED')
-        AND NOT EXISTS (
-            SELECT 1
-        FROM Notifications n
-        WHERE n.RecipientType = 'SELLER'
-            AND n.RecipientID = o.UserID
-            AND n.Type = 'ORDER_DELIVERED'
-            AND n.ReferenceType = 'ORDER'
-            AND n.ReferenceID = i.OrderShopID
-            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
-        );
+    WHERE d.Status <> i.Status AND i.Status = 'COMPLETED';
 
-    ---------------------------------------------------
-    -- 3) Yêu cầu trả hàng (Seller nhận)
-    ---------------------------------------------------
+    -- 3️⃣ Yêu cầu trả hàng
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -187,19 +154,9 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.OrderShopID = i.OrderShopID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
-        AND i.Status IN ('RETURNED_REQUESTED')
-        AND NOT EXISTS (
-            SELECT 1
-        FROM Notifications n
-        WHERE n.RecipientType = 'SELLER'
-            AND n.RecipientID = i.ShopID
-            AND n.Type = 'RETURN_REQUESTED'
-            AND n.ReferenceType = 'ORDER'
-            AND n.ReferenceID = i.OrderShopID
-            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
-        );
+    WHERE d.Status <> i.Status AND i.Status = 'RETURNED_REQUESTED';
 
+    -- 4️⃣ Đơn hàng bị hủy
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -213,36 +170,27 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.OrderShopID = i.OrderShopID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
-        AND i.Status IN ('CANCELLED')
-        AND NOT EXISTS (
-            SELECT 1
-        FROM Notifications n
-        WHERE n.RecipientType = 'SELLER'
-            AND n.RecipientID = i.ShopID
-            AND n.Type = 'ORDER_CANCELLED'
-            AND n.ReferenceType = 'ORDER'
-            AND n.ReferenceID = i.OrderShopID
-            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
-        );
+    WHERE d.Status <> i.Status AND i.Status = 'CANCELLED';
 END;
 GO
 
 
 
----------------------------------------------------
--- TRIGGER 2: Hết hàng (Products)
----------------------------------------------------
-DROP TRIGGER IF EXISTS trg_ProductOutOfStockNotification
-GO
 
-CREATE OR ALTER TRIGGER trg_ProductOutOfStockNotification
+---------------------------------------------------
+-- TRIGGER 2:(Products)
+---------------------------------------------------
+
+CREATE OR ALTER TRIGGER trg_ProductNotifications
 ON Products
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    --------------------------------------------------------
+    -- 1️⃣  THÔNG BÁO: SẢN PHẨM HẾT HÀNG
+    --------------------------------------------------------
     INSERT INTO Notifications
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
@@ -255,18 +203,52 @@ BEGIN
         i.ProductID,
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
-        JOIN deleted d ON d.ProductID = i.ProductID
-    WHERE d.Quantity > 0 AND i.Quantity <= 0
-        AND NOT EXISTS (
-            SELECT 1
-        FROM Notifications n
-        WHERE n.Type = 'OUT_OF_STOCK'
-            AND n.ReferenceID = i.ProductID
-            AND n.RecipientID = i.ShopID
-            AND n.CreatedAt >= DATEADD(HOUR, 7, SYSDATETIME())
-        );
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
+    WHERE d.Quantity > 0 AND i.Quantity <= 0;
+
+
+    --------------------------------------------------------
+    -- 2️⃣  THÔNG BÁO: SẢN PHẨM ĐƯỢC DUYỆT (PENDING → ACTIVE)
+    --------------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'PRODUCT_ACTIVE',
+        N'Sản phẩm đã được duyệt',
+        CONCAT(N'Sản phẩm "', i.Title, N'" đã được duyệt và đang bán.'),
+        'PRODUCT',
+        i.ProductID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
+    WHERE i.Status = 'ACTIVE';
+
+
+    --------------------------------------------------------
+    -- 3️⃣  THÔNG BÁO: SẢN PHẨM BỊ TỪ CHỐI (PENDING → REJECTED)
+    --------------------------------------------------------
+    INSERT INTO Notifications
+        (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
+    SELECT
+        'SELLER',
+        i.ShopID,
+        'PRODUCT_REJECTED',
+        N'Sản phẩm bị từ chối',
+        CONCAT(N'Sản phẩm "', i.Title, N'" đã bị từ chối.'),
+        'PRODUCT',
+        i.ProductID,
+        DATEADD(HOUR, 7, SYSDATETIME())
+    FROM inserted i
+        INNER JOIN deleted d ON i.ProductID = d.ProductID
+    WHERE i.Status = 'REJECTED';
 END;
 GO
+
+
+
+
 
 
 ---------------------------------------------------
@@ -295,7 +277,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         LEFT JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'ACTIVE'
         AND NOT EXISTS (
             SELECT 1
@@ -324,7 +307,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'OUT_OF_STOCK'
         AND NOT EXISTS (
             SELECT 1
@@ -353,7 +337,8 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON d.VoucherID = i.VoucherID
-    WHERE (d.Status IS NULL OR d.Status <> i.Status)
+    WHERE i.IsShopVoucher = 1
+        AND (d.Status IS NULL OR d.Status <> i.Status)
         AND i.Status = 'EXPIRED'
         AND NOT EXISTS (
             SELECT 1
@@ -382,7 +367,7 @@ BEGIN
         (RecipientType, RecipientID, Type, Title, Message, ReferenceType, ReferenceID, CreatedAt)
     SELECT
         'CUSTOMER',
-        o.UserID,
+        i.UserID,
         CASE i.[Status]
             WHEN 'SHIPPING' THEN 'ORDER_SHIPPING'
             WHEN 'CANCELLED' THEN 'ORDER_CANCELLED'
@@ -409,7 +394,6 @@ BEGIN
         DATEADD(HOUR, 7, SYSDATETIME())
     FROM inserted i
         JOIN deleted d ON i.OrderShopID = d.OrderShopID
-        JOIN Orders o ON o.OrderID = i.OrderID
     WHERE 
         i.[Status] IN ('SHIPPING', 'CANCELLED', 'CONFIRM', 'RETURNED', 'RETURNED_REJECTED')
         AND ISNULL(d.[Status], '') <> i.[Status]
@@ -417,7 +401,7 @@ BEGIN
             SELECT 1
         FROM Notifications n
         WHERE n.RecipientType = 'CUSTOMER'
-            AND n.RecipientID = o.UserID
+            AND n.RecipientID = i.UserID
             AND n.ReferenceType = 'ORDER'
             AND n.ReferenceID = i.OrderShopID
             AND n.Type = 
@@ -432,3 +416,55 @@ BEGIN
         );
 END;
 GO
+
+-----------------------------------------------------------
+-- TRIGGER: Khi Flash Sale thay đổi trạng thái (chỉ xử lý khi kết thúc)
+-----------------------------------------------------------
+CREATE OR ALTER TRIGGER trg_UpdateProduct_OnFlashSaleEnd
+ON FlashSales
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -------------------------------------------------------
+    -- 🔹 Khi Flash Sale kết thúc → hoàn hàng tồn và cộng dồn SoldCount
+    -------------------------------------------------------
+
+    -- Tạo bảng tạm lưu lại các item cần xử lý
+    DECLARE @ToRestore TABLE (
+        ProductID BIGINT,
+        FlashSaleItemID BIGINT,
+        fsStock INT,
+        soldCount BIGINT
+    );
+
+    INSERT INTO @ToRestore
+        (ProductID, FlashSaleItemID, fsStock, soldCount)
+    SELECT fsi.ProductID, fsi.FlashSaleItemID, fsi.fsStock, fsi.SoldCount
+    FROM FlashSaleItems fsi
+        INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
+        INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
+    WHERE 
+        i.[Status] = 'ENDED'
+        AND d.[Status] <> 'ENDED'
+        AND fsi.fsStock > 0
+        AND fsi.ApprovalStatus = 'APPROVED';
+
+    -- ✅ Cập nhật sản phẩm: hoàn kho và cộng dồn soldCount
+    UPDATE p
+    SET 
+        p.Quantity = p.Quantity + t.fsStock,
+        p.SoldCount = p.SoldCount + t.soldCount
+    FROM Products p
+        INNER JOIN @ToRestore t ON p.ProductID = t.ProductID;
+
+    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0
+    UPDATE fsi
+    SET fsi.fsStock = 0
+    FROM FlashSaleItems fsi
+        INNER JOIN @ToRestore t ON fsi.FlashSaleItemID = t.FlashSaleItemID;
+END;
+GO
+
+ 

@@ -39,7 +39,7 @@ public class VNPayService {
     public static final String VNP_HASH_SECRET = "Y4HK96K60HBHQYBWOVPLWMJ63GMAIH3S";
     public static final String VNP_API_URL = "http://sandbox.vnpayment.vn/merchant_webapi/merchant.html"; // API
 
-    public static String getPaymentUrl(HttpServletRequest request, HttpServletResponse response, long orderId,
+    public static String getPaymentUrl(HttpServletRequest request, HttpServletResponse response, String transactionRef,
             double price)
             throws UnsupportedEncodingException {
         String vnp_Version = "2.1.0";
@@ -48,7 +48,7 @@ public class VNPayService {
         long amount = (long) (price * 100);
         String bankCode = request.getParameter("bankCode");
 
-        String vnp_TxnRef = String.valueOf(orderId);
+        String vnp_TxnRef = transactionRef;
         String vnp_IpAddr = getIpAddress(request);
         String vnp_TmnCode = VNP_TMN_CODE;
 

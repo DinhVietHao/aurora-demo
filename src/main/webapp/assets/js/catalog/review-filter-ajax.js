@@ -5,8 +5,8 @@ class ReviewFilterAjax {
       return;
     }
 
-    if (!contextPath) {
-      console.error("Context path is required");
+    if (contextPath === undefined || contextPath === null) {
+      console.error("Context path is undefined or null");
       return;
     }
 
@@ -17,26 +17,40 @@ class ReviewFilterAjax {
     this.currentFilter = { rating: "all", filter: "" };
     this.isLoading = false;
 
+    console.log("✅ ReviewFilterAjax initialized with:", {
+      productId: this.productId,
+      contextPath:
+        this.contextPath === "" ? "[root context]" : this.contextPath,
+    });
+
     this.initEventListeners();
   }
 
-  // Khởi tạo sự kiện filter
   initEventListeners() {
     const filterContainer = document.querySelector(".comment-filter");
-    if (!filterContainer) return;
+    if (!filterContainer) {
+      console.error("❌ Filter container not found");
+      return;
+    }
 
     filterContainer.addEventListener("click", (e) => {
-      if (
-        e.target.tagName === "A" &&
-        (e.target.dataset.rating || e.target.dataset.filter)
-      ) {
+      const target = e.target.closest(
+        "a[data-rating], a[data-filter], button[data-rating], button[data-filter]"
+      );
+
+      if (target) {
         e.preventDefault();
-        this.handleFilterClick(e.target);
+
+        if (this.isLoading) {
+          console.log("⏳ Already loading, ignoring click");
+          return;
+        }
+
+        this.handleFilterClick(target);
       }
     });
   }
 
-  // Xử lý khi bấm filter
   handleFilterClick(element) {
     const rating = element.dataset.rating;
     const filter = element.dataset.filter;
@@ -52,20 +66,22 @@ class ReviewFilterAjax {
     this.currentPage = 1;
 
     document
-      .querySelectorAll(".comment-filter a")
+      .querySelectorAll(".comment-filter a, .comment-filter button")
       .forEach((b) => b.classList.remove("active"));
     element.classList.add("active");
 
+    this.showLoading();
     this.fetchReviews();
   }
 
-  // Gọi API lấy danh sách review
   async fetchReviews() {
-    if (this.isLoading) return;
+    if (this.isLoading) {
+      console.log("⏳ Already loading, skipping fetch");
+      return;
+    }
 
     try {
       this.isLoading = true;
-      this.showLoading();
 
       const params = new URLSearchParams({
         productId: this.productId,
@@ -75,33 +91,37 @@ class ReviewFilterAjax {
         filter: this.currentFilter.filter,
       });
 
-      const response = await fetch(
-        `${this.contextPath}/api/reviews?${params.toString()}`
-      );
-      if (!response.ok)
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
+      const url = `${this.contextPath}/api/reviews?${params.toString()}`;
+      const response = await fetch(url);
       const data = await response.json();
+
+      if (!data || typeof data.success === "undefined") {
+        throw new Error("Invalid response format from server");
+      }
+
       if (data.success) {
         this.renderReviews(data.reviews);
         this.renderPagination(data.totalPages, data.totalReviews);
       } else {
-        throw new Error(data.error || "Unknown error");
+        throw new Error(data.message || "Unknown error from API");
       }
     } catch (error) {
-      console.error("Error fetching reviews:", error);
+      console.error("❌ Error fetching reviews:", error);
       this.showError(`Không thể tải đánh giá: ${error.message}`);
     } finally {
       this.isLoading = false;
     }
   }
 
-  // Render danh sách review
+  // Render reviews và modals
   renderReviews(reviews) {
     const container = document.getElementById("reviews-container");
-    if (!container) return;
+    if (!container) {
+      console.error("❌ Reviews container not found");
+      return;
+    }
 
-    if (reviews.length === 0) {
+    if (!reviews || reviews.length === 0) {
       container.innerHTML = `
         <div class="text-center py-5">
           <p class="text-muted">Không có đánh giá nào phù hợp với bộ lọc.</p>
@@ -110,16 +130,30 @@ class ReviewFilterAjax {
       return;
     }
 
-    container.innerHTML = reviews.map((r) => this.createReviewHTML(r)).join("");
+    // Render review bodies
+    container.innerHTML = reviews
+      .map((r) => this.createReviewBodyHTML(r))
+      .join("");
+
+    // Append modals to body
+    reviews.forEach((review) => {
+      if (review.images && review.images.length > 0) {
+        this.appendReviewModal(review);
+      }
+    });
   }
 
-  // Tạo HTML cho 1 review
-  createReviewHTML(review) {
+  // Create review body HTML (without modal)
+  createReviewBodyHTML(review) {
     const avatarUrl = review.user.avatarUrl
       ? `${this.contextPath}/assets/images/avatars/${review.user.avatarUrl}`
       : `${this.contextPath}/assets/images/common/avatar.png`;
 
-    const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+    const starsHtml = Array.from({ length: 5 }, (_, i) => {
+      return i < review.rating
+        ? '<i class="bi bi-star-fill small"></i>'
+        : '<i class="bi bi-star small"></i>';
+    }).join("");
 
     const imagesHtml =
       review.images && review.images.length > 0
@@ -127,11 +161,14 @@ class ReviewFilterAjax {
         <div class="d-flex gap-2 comment-review mt-2">
           ${review.images
             .map(
-              (img) => `
+              (img, index) => `
             <img src="${this.contextPath}/assets/images/reviews/${img.url}" 
                  class="review-image" 
                  alt="review image"
-                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;">
+                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+                 data-bs-toggle="modal" 
+                 data-bs-target="#reviewModal${review.reviewId}"
+                 data-bs-slide-to="${index}">
           `
             )
             .join("")}
@@ -156,7 +193,7 @@ class ReviewFilterAjax {
             )}</h6>
           </div>
           <small class="text-muted">${this.formatDate(review.createdAt)}</small>
-          <div class="text-warning my-1">${stars}</div>
+          <div class="text-warning my-1">${starsHtml}</div>
           <p class="mb-1">${this.escapeHtml(review.comment)}</p>
           ${imagesHtml}
         </div>
@@ -164,7 +201,68 @@ class ReviewFilterAjax {
     `;
   }
 
-  // Render phân trang
+  // Append modal to document body
+  appendReviewModal(review) {
+    const oldModal = document.getElementById(`reviewModal${review.reviewId}`);
+    if (oldModal) {
+      oldModal.remove();
+    }
+
+    const modalHtml = `
+      <div class="modal fade" id="reviewModal${review.reviewId}" tabindex="-1" 
+           aria-labelledby="reviewModalLabel${
+             review.reviewId
+           }" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-body">
+              <div class="d-flex justify-content-end">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" 
+                        aria-label="Close"></button>
+              </div>
+              <div id="reviewCarousel${
+                review.reviewId
+              }" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-inner">
+                  ${review.images
+                    .map(
+                      (img, index) => `
+                    <div class="carousel-item ${index === 0 ? "active" : ""}">
+                      <img src="${this.contextPath}/assets/images/reviews/${
+                        img.url
+                      }" 
+                           class="d-block w-100" alt="ảnh review"
+                           style="max-height: 80vh; object-fit: contain;">
+                    </div>
+                  `
+                    )
+                    .join("")}
+                </div>
+                ${
+                  review.images.length > 1
+                    ? `
+                <button class="carousel-control-prev" type="button" 
+                        data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" 
+                        data-bs-target="#reviewCarousel${review.reviewId}" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+                `
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML("beforeend", modalHtml);
+  }
+
   renderPagination(totalPages, totalReviews) {
     const container = document.getElementById("pagination-container");
     if (!container) return;
@@ -175,12 +273,12 @@ class ReviewFilterAjax {
     }
 
     let html =
-      '<nav class="mt-4"><ul class="pagination justify-content-center">';
+      '<nav class="mt-4" aria-label="Review pagination"><ul class="pagination justify-content-center">';
 
     if (this.currentPage > 1) {
       html += `<li class="page-item"><a class="page-link" href="#" data-page="${
         this.currentPage - 1
-      }">‹</a></li>`;
+      }" aria-label="Previous">‹</a></li>`;
     }
 
     if (totalPages <= 7) {
@@ -194,9 +292,10 @@ class ReviewFilterAjax {
       html += `<li class="page-item ${this.currentPage === 1 ? "active" : ""}">
         <a class="page-link" href="#" data-page="1">1</a></li>`;
 
-      if (this.currentPage > 3)
+      if (this.currentPage > 3) {
         html +=
           '<li class="page-item disabled"><span class="page-link">...</span></li>';
+      }
 
       for (
         let i = Math.max(2, this.currentPage - 1);
@@ -209,9 +308,10 @@ class ReviewFilterAjax {
           <a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
       }
 
-      if (this.currentPage < totalPages - 2)
+      if (this.currentPage < totalPages - 2) {
         html +=
           '<li class="page-item disabled"><span class="page-link">...</span></li>';
+      }
 
       html += `<li class="page-item ${
         this.currentPage === totalPages ? "active" : ""
@@ -222,7 +322,7 @@ class ReviewFilterAjax {
     if (this.currentPage < totalPages) {
       html += `<li class="page-item"><a class="page-link" href="#" data-page="${
         this.currentPage + 1
-      }">›</a></li>`;
+      }" aria-label="Next">›</a></li>`;
     }
 
     html += "</ul></nav>";
@@ -230,13 +330,14 @@ class ReviewFilterAjax {
     this.attachPaginationListeners();
   }
 
-  // Gắn sự kiện chuyển trang
   attachPaginationListeners() {
     const container = document.getElementById("pagination-container");
     if (!container) return;
 
     const oldListener = container._paginationListener;
-    if (oldListener) container.removeEventListener("click", oldListener);
+    if (oldListener) {
+      container.removeEventListener("click", oldListener);
+    }
 
     const newListener = (e) => {
       const target = e.target.closest("a[data-page]");
@@ -257,12 +358,10 @@ class ReviewFilterAjax {
         }
       }
     };
-
     container.addEventListener("click", newListener);
     container._paginationListener = newListener;
   }
 
-  // Hiển thị loading
   showLoading() {
     const container = document.getElementById("reviews-container");
     if (container) {
@@ -277,7 +376,6 @@ class ReviewFilterAjax {
     }
   }
 
-  // Hiển thị lỗi
   showError(message) {
     const container = document.getElementById("reviews-container");
     if (container) {
@@ -291,7 +389,6 @@ class ReviewFilterAjax {
     }
   }
 
-  // Escape HTML
   escapeHtml(text) {
     if (!text) return "";
     const div = document.createElement("div");
@@ -299,7 +396,6 @@ class ReviewFilterAjax {
     return div.innerHTML;
   }
 
-  // Định dạng ngày theo vi-VN
   formatDate(timestamp) {
     try {
       const date = new Date(timestamp);
@@ -316,16 +412,25 @@ class ReviewFilterAjax {
   }
 }
 
-// Khởi tạo class khi DOM sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
   const productIdElement = document.getElementById("product-id");
   const contextPathElement = document.getElementById("context-path");
-
-  if (!productIdElement || !contextPathElement) return;
+  if (!productIdElement || !contextPathElement) {
+    console.error("❌ Missing product-id or context-path elements");
+    return;
+  }
 
   const productId = productIdElement.value;
   const contextPath = contextPathElement.value;
-  if (!productId || !contextPath) return;
+  if (!productId) {
+    console.error("❌ Invalid productId value:", productId);
+    return;
+  }
+
+  console.log("✅ Initializing with:", {
+    productId,
+    contextPath: contextPath === "" ? "[root context]" : contextPath,
+  });
 
   new ReviewFilterAjax(productId, contextPath);
 });

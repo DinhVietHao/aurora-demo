@@ -67,15 +67,18 @@
                                         <div class="col-xl-3 col-md-6">
                                             <div class="card stats-card stats-card-warning mb-4">
                                                 <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon">
-                                                            <i class="bi bi-cart-check"></i>
+                                                    <a href="/shop/orders?status=COMPLETED">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon" style="color: white">
+                                                                <i class="bi bi-cart-check"></i>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <div class="stats-label text-light">Tổng đơn hàng</div>
+                                                                <div class="stats-value text-light">${shop.totalOrders}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div class="ms-3">
-                                                            <div class="stats-label">Tổng đơn hàng</div>
-                                                            <div class="stats-value">${shop.totalOrders}</div>
-                                                        </div>
-                                                    </div>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -83,15 +86,19 @@
                                         <div class="col-xl-3 col-md-6">
                                             <div class="card stats-card stats-card-success mb-4">
                                                 <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon">
-                                                            <i class="bi bi-people"></i>
+                                                    <a href="/shop/product?action=view">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon" style="color: white">
+                                                                <i class="bi bi-people"></i>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <div class="stats-label text-light">Sản phẩm đang bán
+                                                                </div>
+                                                                <div class="stats-value text-light">
+                                                                    ${shop.totalProducts}</div>
+                                                            </div>
                                                         </div>
-                                                        <div class="ms-3">
-                                                            <div class="stats-label">Sản phẩm đang bán</div>
-                                                            <div class="stats-value">${shop.totalProducts}</div>
-                                                        </div>
-                                                    </div>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -170,7 +177,7 @@
                                                             <c:set var="iconClass">
                                                                 <c:choose>
                                                                     <c:when test="${n.type == 'ORDER_NEW'}">
-                                                                        activity-icon-success</c:when>
+                                                                        activity-icon-warning</c:when>
                                                                     <c:when test="${n.type == 'ORDER_DELIVERED'}">
                                                                         activity-icon-primary</c:when>
                                                                     <c:when test="${n.type == 'OUT_OF_STOCK'}">
@@ -186,6 +193,11 @@
                                                                         activity-icon-warning</c:when>
                                                                     <c:when test="${n.type == 'VOUCHER_EXPIRED'}">
                                                                         activity-icon-secondary</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_REJECTED'}">
+                                                                        activity-icon-danger
+                                                                    </c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_ACTIVE'}">
+                                                                        activity-icon-success</c:when>
                                                                     <c:otherwise>activity-icon-secondary
                                                                     </c:otherwise>
                                                                 </c:choose>
@@ -199,8 +211,7 @@
                                                                         bi-box-seam</c:when>
                                                                     <c:when test="${n.type == 'OUT_OF_STOCK'}">bi
                                                                         bi-exclamation-triangle</c:when>
-                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">
-                                                                        bi
+                                                                    <c:when test="${n.type == 'RETURN_REQUESTED'}">bi
                                                                         bi-arrow-return-left</c:when>
                                                                     <c:when test="${n.type == 'ORDER_CANCELLED'}">bi
                                                                         bi-x-circle</c:when>
@@ -210,9 +221,14 @@
                                                                         bi bi-exclamation-triangle</c:when>
                                                                     <c:when test="${n.type == 'VOUCHER_EXPIRED'}">bi
                                                                         bi-calendar-x</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_ACTIVE'}">bi
+                                                                        bi-award</c:when>
+                                                                    <c:when test="${n.type == 'PRODUCT_REJECTED'}">bi
+                                                                        bi-slash-circle</c:when>
                                                                     <c:otherwise>bi bi-bell</c:otherwise>
                                                                 </c:choose>
                                                             </c:set>
+
 
                                                             <!-- Form bao quanh thông báo -->
                                                             <a href="${ctx}${n.link}"
@@ -272,8 +288,8 @@
                                         datasets: [{
                                             label: 'Doanh thu (₫)',
                                             data: revenueValues,
-                                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                                            borderColor: 'rgba(54, 162, 235, 1)',
+                                            backgroundColor: '#164e3f',
+                                            borderColor: '#164e3f',
                                             borderWidth: 1
                                         }]
                                     },

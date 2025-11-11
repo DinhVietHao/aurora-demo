@@ -4,14 +4,14 @@ public class ServiceResponse {
     private String type;
     private String title;
     private String message;
-    private long orderId;
+    private String transactionRef;
     private double finalAmount;
 
-    public ServiceResponse(String type, String title, String message, long orderId, double finalAmount) {
+    public ServiceResponse(String type, String title, String message, String transactionRef, double finalAmount) {
         this.type = type;
         this.title = title;
         this.message = message;
-        this.orderId = orderId;
+        this.transactionRef = transactionRef;
         this.finalAmount = finalAmount;
     }
 
@@ -39,12 +39,12 @@ public class ServiceResponse {
         this.message = message;
     }
 
-    public long getOrderId() {
-        return orderId;
+    public String getTransactionRef() {
+        return transactionRef;
     }
 
-    public void setOrderId(long orderId) {
-        this.orderId = orderId;
+    public void setTransactionRef(String transactionRef) {
+        this.transactionRef = transactionRef;
     }
 
     public double getFinalAmount() {

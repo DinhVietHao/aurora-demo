@@ -1,14 +1,18 @@
 // package com.group01.aurora_demo.shop.controller;
 
-// import java.io.IOException;
-// import java.util.*;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
-// import com.group01.aurora_demo.auth.model.User;
-// import com.group01.aurora_demo.cart.dao.OrderDAO;
-// import com.group01.aurora_demo.cart.dao.OrderShopDAO;
-// import com.group01.aurora_demo.cart.model.OrderShop;
-// import com.group01.aurora_demo.common.service.EmailService;
-// import com.group01.aurora_demo.shop.dao.ShopDAO;
+import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.cart.dao.OrderShopDAO;
+import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.model.OrderItemVATInfo;
+import com.group01.aurora_demo.common.service.EmailService;
+import com.group01.aurora_demo.shop.dao.ShopDAO;
 
 // import jakarta.servlet.ServletException;
 // import jakarta.servlet.annotation.WebServlet;
@@ -17,9 +21,8 @@
 // @WebServlet("/shop/orders")
 // public class ShopOrderServlet extends HttpServlet {
 
-//     private final OrderDAO orderDAO = new OrderDAO();
-//     private final ShopDAO shopDAO = new ShopDAO();
-//     private final OrderShopDAO orderShopDAO = new OrderShopDAO();
+    private final ShopDAO shopDAO = new ShopDAO();
+    private final OrderShopDAO orderShopDAO = new OrderShopDAO();
 
 //     @Override
 //     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,109 +34,166 @@
 //         HttpSession session = request.getSession();
 //         User user = (User) session.getAttribute("AUTH_USER");
 
-//         if (user == null) {
-//             response.sendRedirect("/home");
-//             return;
-//         }
-//         String status = Optional.ofNullable(request.getParameter("status")).orElse("ALL");
-//         String action = request.getParameter("action");
-//         try {
-//             Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
-//             Map<String, Integer> orderCounts = orderDAO.getOrderCountsByShopId(shopId);
-//             request.setAttribute("orderCountAll", orderDAO.countOrdersByShop(shopId));
-//             request.setAttribute("orderCountPending", orderCounts.getOrDefault("PENDING", 0));
-//             request.setAttribute("orderCountShipping", orderCounts.getOrDefault("SHIPPING", 0));
-//             request.setAttribute("orderCountWaiting", orderCounts.getOrDefault("WAITING_SHIP", 0));
-//             request.setAttribute("orderCountConfirm", orderCounts.getOrDefault("CONFIRM", 0));
-//             request.setAttribute("orderCountCompleted", orderCounts.getOrDefault("COMPLETED", 0));
-//             request.setAttribute("orderCountCancelled", orderCounts.getOrDefault("CANCELLED", 0));
-//             request.setAttribute("orderCountReturned", orderCounts.getOrDefault("RETURNED_GROUP", 0));
+        if (user == null) {
+            response.sendRedirect("/home");
+            return;
+        }
+        String status = Optional.ofNullable(request.getParameter("status")).orElse("ALL");
+        String action = request.getParameter("action");
+        try {
+            Long shopId = shopDAO.getShopIdByUserId(user.getUserID());
+            Map<String, Integer> orderCounts = orderShopDAO.getOrderShopCountsByShopId(shopId);
+            request.setAttribute("orderCountAll", orderShopDAO.countOrderShopByShop(shopId));
+            request.setAttribute("orderCountPending", orderCounts.getOrDefault("PENDING", 0));
+            request.setAttribute("orderCountShipping", orderCounts.getOrDefault("SHIPPING", 0));
+            request.setAttribute("orderCountWaiting", orderCounts.getOrDefault("WAITING_SHIP", 0));
+            request.setAttribute("orderCountConfirm", orderCounts.getOrDefault("CONFIRM", 0));
+            request.setAttribute("orderCountCompleted", orderCounts.getOrDefault("COMPLETED", 0));
+            request.setAttribute("orderCountCancelled", orderCounts.getOrDefault("CANCELLED", 0));
+            request.setAttribute("orderCountReturned", orderCounts.getOrDefault("RETURNED_GROUP", 0));
 
-//             if (action != null) {
-//                 try {
-//                     switch (action) {
-//                         case "detail":
-//                             Long orderShopId = Long.parseLong(request.getParameter("orderShopId"));
-//                             OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
-//                             if (orderShop == null) {
-//                                 request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
-//                             }
-//                             request.setAttribute("orderShop", orderShop);
-//                             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
-//                                     response);
-//                             break;
-//                     }
-//                 } catch (Exception e) {
-//                     e.printStackTrace();
-//                     request.setAttribute("errorMessage", "Lỗi tải đơn hàng: " + e.getMessage());
-//                     request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                 }
+            if (action != null) {
+                try {
+                    switch (action) {
+                        case "detail":
+                            Long orderShopId = Long.parseLong(request.getParameter("orderShopId"));
+                            OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
+                            if (orderShop == null) {
+                                request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
+                                request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
+                                        response);
+                                break;
+                            }
+
+                            request.setAttribute("phone", orderShop.getAddress().split("-")[0].trim());
+                            request.setAttribute("address", orderShop.getAddress().split("-")[1].trim());
+                            request.setAttribute("orderShop", orderShop);
+
+                            if ("COMPLETED".equalsIgnoreCase(orderShop.getStatus())) {
+                                Date completedDate = orderShop.getUpdatedAt();
+                                if (completedDate != null) {
+                                    // 🔹 Chuyển Date -> LocalDateTime
+                                    LocalDateTime completedAt = completedDate.toInstant()
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDateTime();
+
+                                    LocalDateTime now = LocalDateTime.now();
+                                    long hoursPassed = ChronoUnit.HOURS.between(completedAt, now);
+                                    long remainHours = 168 - hoursPassed;
+
+                                    double totalPrice = orderShop.getSubtotal();
+                                    double shipFee = orderShop.getShippingFee();
+                                    double voucherShop = orderShop.getShopDiscount();
+                                    double platformFee = 3000;
+                                    double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
+
+                                    if (hoursPassed >= 168) {
+                                        double receivedAmount = totalPrice + shipFee - voucherShop - platformFee
+                                                - totalVAT;
+                                        if (receivedAmount < 0)
+                                            receivedAmount = 0;
+
+                                        request.setAttribute("receivedAmount", receivedAmount);
+                                        request.setAttribute("isReceived", true);
+                                    } else {
+                                        long remainDays = remainHours / 24;
+                                        long remainH = remainHours % 24;
+
+                                        request.setAttribute("remainDays", remainDays);
+                                        request.setAttribute("remainHours", remainH);
+                                        request.setAttribute("isReceived", false);
+                                    }
+                                    request.setAttribute("totalPrice", totalPrice);
+                                    request.setAttribute("shipFee", shipFee);
+                                    request.setAttribute("voucherShop", voucherShop);
+                                    request.setAttribute("platformFee", platformFee);
+                                    request.setAttribute("totalVAT", totalVAT);
+                                    LocalDateTime expectedReceiveAt = completedAt.plusDays(7);
+                                    request.setAttribute("completedAt", completedAt);
+                                    request.setAttribute("expectedReceiveAt", expectedReceiveAt);
+
+                                } else {
+                                    request.setAttribute("isReceived", false);
+                                }
+                            } else {
+                                request.setAttribute("isReceived", false);
+                            }
+
+                            request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
+                                    response);
+                            break;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    request.setAttribute("errorMessage", "Lỗi tải đơn hàng: " + e.getMessage());
+                    request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                }
 
 //             }
 
-//             try {
-//                 List<OrderShop> orderShops = new ArrayList<>();
-//                 switch (status.toUpperCase()) {
-//                     case "ALL":
-//                         orderShops = orderDAO.getOrdersByShopId(shopId);
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("pageTitle", "Tất cả đơn hàng");
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "PENDING":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "PENDING");
-//                         request.setAttribute("pageTitle", "chờ xác nhận");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "SHIPPING":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "SHIPPING");
-//                         request.setAttribute("pageTitle", "giao cho đơn vận chuyển");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "WAITING_SHIP":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "WAITING_SHIP");
-//                         request.setAttribute("pageTitle", "Đơn hàng đang giao");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "CONFIRM":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "CONFIRM");
-//                         request.setAttribute("pageTitle", "Đơn hàng chờ xác nhận của khách hàng");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "COMPLETED":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "COMPLETED");
-//                         request.setAttribute("pageTitle", "hoàn thành");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "CANCELLED":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "CANCELLED");
-//                         request.setAttribute("pageTitle", "đã hủy");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     case "RETURNED":
-//                         orderShops = orderDAO.getOrdersByShopIdAndStatus(shopId, "RETURNED");
-//                         request.setAttribute("pageTitle", "hoàn đơn hàng");
-//                         request.setAttribute("orderShops", orderShops);
-//                         request.setAttribute("status", status);
-//                         request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
-//                         break;
-//                     default:
-//                         request.setAttribute("pageTitle", "Tất cả đơn hàng");
-//                         break;
-//                 }
+            try {
+                List<OrderShop> orderShops = new ArrayList<>();
+                switch (status.toUpperCase()) {
+                    case "ALL":
+                        orderShops = orderShopDAO.getOrderShopByShopId(shopId);
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("pageTitle", "Tất cả đơn hàng");
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "PENDING":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "PENDING");
+                        request.setAttribute("pageTitle", "chờ xác nhận");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "SHIPPING":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "SHIPPING");
+                        request.setAttribute("pageTitle", "giao cho đơn vận chuyển");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "WAITING_SHIP":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "WAITING_SHIP");
+                        request.setAttribute("pageTitle", "Đơn hàng đang giao");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "CONFIRM":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "CONFIRM");
+                        request.setAttribute("pageTitle", "Đơn hàng chờ xác nhận của khách hàng");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "COMPLETED":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "COMPLETED");
+                        request.setAttribute("pageTitle", "hoàn thành");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "CANCELLED":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "CANCELLED");
+                        request.setAttribute("pageTitle", "đã hủy");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    case "RETURNED":
+                        orderShops = orderShopDAO.getOrderShopByShopIdAndStatus(shopId, "RETURNED");
+                        request.setAttribute("pageTitle", "hoàn đơn hàng");
+                        request.setAttribute("orderShops", orderShops);
+                        request.setAttribute("status", status);
+                        request.getRequestDispatcher("/WEB-INF/views/shop/orderManage.jsp").forward(request, response);
+                        break;
+                    default:
+                        request.setAttribute("pageTitle", "Tất cả đơn hàng");
+                        break;
+                }
 
 //             } catch (Exception e) {
 //                 e.printStackTrace();
@@ -170,12 +230,12 @@
 //                     long orderShopId = Long.parseLong(request.getParameter("orderShopId"));
 //                     String newStatus = request.getParameter("newStatus");
 
-//                     boolean updated = false;
-//                     if ("RETURNED".equals(newStatus)) {
-//                         updated = orderDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
-//                     } else {
-//                         updated = orderShopDAO.updateOrderShopStatus(orderShopId, newStatus);
-//                     }
+                    boolean updated = false;
+                    if ("RETURNED".equals(newStatus)) {
+                        updated = orderShopDAO.updateOrderShopStatusByBR(orderShopId, newStatus);
+                    } else {
+                        updated = orderShopDAO.updateOrderShopStatus(orderShopId, newStatus);
+                    }
 
 //                     if (updated) {
 
@@ -186,13 +246,13 @@
 //                         boolean shouldSendEmail = notifiableStatuses
 //                                 .contains(newStatus != null ? newStatus.toUpperCase() : "");
 
-//                         if (shouldSendEmail) {
-//                             try {
-//                                 EmailService emailService = new EmailService();
-//                                 OrderShop orderShop = orderDAO.getOrderShopDetail(orderShopId);
+                        if (shouldSendEmail) {
+                            try {
+                                EmailService emailService = new EmailService();
+                                OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
 
-//                                 String customerEmail = orderShop.getUser().getEmail();
-//                                 String customerName = orderShop.getCustomerName();
+                                String customerEmail = orderShop.getUser().getEmail();
+                                String customerName = orderShop.getUser().getFullName();
 
 //                                 String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
 //                                 String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);

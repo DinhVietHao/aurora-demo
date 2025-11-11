@@ -16,8 +16,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
 import com.group01.aurora_demo.cart.model.CartItem;
+import com.group01.aurora_demo.cart.utils.CurrencyFormatter;
 import com.group01.aurora_demo.catalog.controller.NotificationServlet;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.cart.dao.CartItemDAO;
 import com.group01.aurora_demo.cart.dao.dto.ShopCartDTO;
@@ -27,11 +30,13 @@ public class CartServlet extends NotificationServlet {
     private CartItemDAO cartItemDAO;
     private VoucherDAO voucherDAO;
     private ProductDAO productDAO;
+    private FlashSaleDAO flashSaleDAO;
 
     public CartServlet() {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.productDAO = new ProductDAO();
+        this.flashSaleDAO = new FlashSaleDAO();
     }
 
     @Override
@@ -42,6 +47,8 @@ public class CartServlet extends NotificationServlet {
         User user = (User) session.getAttribute("AUTH_USER");
 
         if (user == null) {
+            session.setAttribute("toastType", "warning");
+            session.setAttribute("toastMsg", "Vui lòng đăng nhập trước khi đặt hàng.");
             resp.sendRedirect(req.getContextPath() + "/home");
             return;
         }
@@ -64,12 +71,12 @@ public class CartServlet extends NotificationServlet {
                     ShopCartDTO shopCartDTO = new ShopCartDTO();
                     shopCartDTO.setShop(entry.getValue().get(0).getProduct().getShop());
                     shopCartDTO.setItems(entry.getValue());
-                    shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey()));
+                    shopCartDTO.setVouchers(voucherDAO.getActiveVouchersByShopId(entry.getKey(), user.getUserID()));
                     return shopCartDTO;
                 }).toList();
 
                 req.setAttribute("shopCarts", shopCarts);
-                req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers());
+                req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers(user.getUserID()));
             }
             req.getRequestDispatcher("/WEB-INF/views/customer/cart/cart.jsp").forward(req, resp);
         }
@@ -106,10 +113,23 @@ public class CartServlet extends NotificationServlet {
                     Product product = productDAO.getBasicProductById(productId);
                     if (!isProductAvailable(product, json))
                         return;
-                    CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
+                    FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
 
-                    if (existingItem != null) {
-                        int newQuantity = existingItem.getQuantity() + 1;
+                    CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
+                    int currentQty = existingItem != null ? existingItem.getQuantity() : 0;
+                    int newQuantity = currentQty + 1;
+
+                    if (flashItem != null) {
+                        int remainingFlashStock = flashItem.getFsStock();
+                        if (currentQty <= remainingFlashStock && newQuantity > remainingFlashStock) {
+                            json.put("success", true);
+                            json.put("check", "flashsale_exceeded");
+                            json.put("titleModal", "Vượt số lượng Flash Sale");
+                            json.put("messageModal", "Giá bán này vượt số lượng mua tối đa chỉ " + remainingFlashStock
+                                    + " sản phẩm, giá bán sẽ thay đổi thành "
+                                    + CurrencyFormatter.format(product.getSalePrice()));
+                        }
+                    } else {
                         if (newQuantity > product.getQuantity()) {
                             json.put("success", false);
                             json.put("type", "warning");
@@ -119,6 +139,8 @@ public class CartServlet extends NotificationServlet {
                             out.print(json.toString());
                             break;
                         }
+                    }
+                    if (existingItem != null) {
                         existingItem.setQuantity(newQuantity);
                         cartItemDAO.updateQuantity(existingItem);
                         json.put("success", true);
@@ -159,6 +181,19 @@ public class CartServlet extends NotificationServlet {
                     Product product = productDAO.getBasicProductById(productId);
                     if (!isProductAvailable(product, json))
                         return;
+
+                    FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
+                    if (flashItem != null) {
+                        int available = flashItem.getFsStock();
+                        if (available <= 0) {
+                            json.put("success", false);
+                            json.put("type", "warning");
+                            json.put("title", "Hết hàng Flash Sale");
+                            json.put("message", "Sản phẩm '" + product.getTitle() + "' trong Flash Sale đã hết hàng.");
+                            out.print(json.toString());
+                            return;
+                        }
+                    }
 
                     this.cartItemDAO.updateAllChecked(user.getId(), false);
 
@@ -231,17 +266,33 @@ public class CartServlet extends NotificationServlet {
                         out.print(json.toString());
                         break;
                     }
-                    Product product = productDAO.getBasicProductById(cartItem.getProductId());
+                    Product product = productDAO.getProductWithEffectivePrice(cartItem.getProductId(), quantity);
                     if (!isProductAvailable(product, json))
                         return;
+                    FlashSaleItem flashSaleItem = flashSaleDAO
+                            .getActiveFlashSaleItemByProduct(product.getProductId());
+                    ;
+                    if (flashSaleItem != null) {
+                        int availableFlashStock = flashSaleItem.getFsStock();
 
-                    if (quantity > product.getQuantity()) {
-                        json.put("success", false);
-                        json.put("type", "warning");
-                        json.put("title", "Không đủ hàng");
-                        json.put("message", "Sản phẩm '" + product.getTitle() + "' không đủ số lượng trong kho.");
-                        out.print(json.toString());
-                        break;
+                        if (cartItem.getQuantity() <= availableFlashStock && quantity > availableFlashStock) {
+                            json.put("success", true);
+                            json.put("check", "flashsale_exceeded");
+                            json.put("title", "Vượt số lượng Flash Sale");
+                            json.put("message", "Giá bán này vượt số lượng mua tối đa chỉ " + availableFlashStock
+                                    + " sản phẩm, giá bán sẽ thay đổi thành "
+                                    + CurrencyFormatter.format(product.getSalePrice()));
+                            json.put("salePrice", product.getSalePrice());
+                        }
+                    } else {
+                        if (quantity > product.getQuantity()) {
+                            json.put("success", false);
+                            json.put("type", "warning");
+                            json.put("title", "Không đủ hàng");
+                            json.put("message", "Sản phẩm '" + product.getTitle() + "' không đủ số lượng trong kho.");
+                            out.print(json.toString());
+                            break;
+                        }
                     }
 
                     cartItem.setQuantity(quantity);
@@ -258,8 +309,7 @@ public class CartServlet extends NotificationServlet {
 
                     json.put("success", true);
                     json.put("type", "success");
-                    json.put("title", "Thành công");
-                    json.put("message", "Cập nhật số lượng thành công.");
+                    json.put("salePrice", product.getSalePrice());
 
                 } catch (Exception e) {
                     e.printStackTrace();

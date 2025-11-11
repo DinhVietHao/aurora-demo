@@ -81,7 +81,24 @@
                                     aria-labelledby="order-tab">
                                     <div class="order-content">
                                         <div class="tab-content order-body">
+
                                             <div class="order-detail">
+                                                <div
+                                                    class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                                                    <div>
+                                                        <span class="fw-semibold text-dark">
+                                                            Mã đơn hàng:
+                                                            <span
+                                                                class="text-success">#AURORA${orderItems[0].paymentId}</span>
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <a href="/order" class="button-four">
+                                                            <i class="bi bi-arrow-left me-1"></i> Trở lại
+                                                        </a>
+                                                    </div>
+
+                                                </div>
                                                 <c:forEach var="orderItem" items="${orderItems}">
                                                     <div class="order-detail__item row align-items-center mb-3">
                                                         <div class="order-detail__image col-md-2 col-4">
@@ -164,7 +181,7 @@
                                                                         class="order-detail__value order-detail__value--discount">
                                                                         -
                                                                         <fmt:formatNumber
-                                                                            value="${orderItems[0].systemVoucherDiscount}"
+                                                                            value="${orderItems[0].systemDiscount}"
                                                                             type="currency" currencySymbol="₫" />
                                                                     </td>
                                                                 </tr>

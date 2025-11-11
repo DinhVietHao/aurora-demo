@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.catalog.controller;
 
-import com.group01.aurora_demo.catalog.model.ReviewImage;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
 import com.group01.aurora_demo.catalog.model.Category;
 import com.group01.aurora_demo.catalog.dao.ReviewDAO;
@@ -13,12 +12,11 @@ import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.ServletException;
-import java.time.LocalDateTime;
 import jakarta.servlet.http.*;
 import java.util.ArrayList;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet("/home")
 public class HomeServlet extends NotificationServlet {
@@ -31,43 +29,13 @@ public class HomeServlet extends NotificationServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        setFilterAttributes(request);
         request.setCharacterEncoding("UTF-8");
-
-        String savedEmail = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("remember_account".equals(c.getName())) {
-                    savedEmail = c.getValue();
-                    break;
-                }
-            }
-        }
-
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("AUTH_USER");
-
-        if (user == null && savedEmail != null && !savedEmail.isEmpty()) {
-            user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
-            if (user != null) {
-                session.setAttribute("AUTH_USER", user);
-                session.setMaxInactiveInterval(60 * 60 * 2);
-
-                try {
-                    CartItemDAO cartItemDAO = new CartItemDAO();
-                    int cartCount = cartItemDAO.getDistinctItemCount(user.getId());
-                    session.setAttribute("cartCount", cartCount);
-                } catch (Exception e) {
-                    session.setAttribute("cartCount", 0);
-                }
-            }
-        }
-
+        setFilterAttributes(request);
+        autoLoginFromCookie(request);
         String action = request.getParameter("action") != null ? request.getParameter("action") : "home";
         switch (action) {
             case "home":
-                handleHome(request, response, user);
+                handleHome(request, response);
                 break;
 
             case "bookstore":
@@ -92,6 +60,43 @@ public class HomeServlet extends NotificationServlet {
         }
     }
 
+    private void autoLoginFromCookie(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("AUTH_USER");
+        if (user == null) {
+            String savedEmail = getCookieValue(request, "remember_account");
+            if (savedEmail != null && !savedEmail.isEmpty()) {
+                try {
+                    UserDAO userDAO = new UserDAO();
+                    user = userDAO.findByEmailAndProvider(savedEmail, "LOCAL");
+                    if (user != null) {
+                        session.setAttribute("AUTH_USER", user);
+                        session.setMaxInactiveInterval(60 * 60 * 2);
+
+                        CartItemDAO cartItemDAO = new CartItemDAO();
+                        int cartCount = cartItemDAO.getDistinctItemCount(user.getUserID());
+                        session.setAttribute("cartCount", cartCount);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[ERROR] Auto-login failed: " + e.getMessage());
+                    session.setAttribute("cartCount", 0);
+                }
+            }
+        }
+    }
+
+    private String getCookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if (name.equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
     private void setFilterAttributes(HttpServletRequest request) {
         request.setAttribute("categories", productDAO.getCategories());
         request.setAttribute("authors", productDAO.getAuthors());
@@ -113,18 +118,36 @@ public class HomeServlet extends NotificationServlet {
         return page;
     }
 
-    private void handleHome(HttpServletRequest request, HttpServletResponse response, User user) {
+    private void handleHome(HttpServletRequest request, HttpServletResponse response) {
         try {
-            List<Product> suggestedProducts = (user != null)
-                    ? productDAO.getSuggestedProductsForCustomer(user.getId())
-                    : productDAO.getSuggestedProductsForGuest();
-            if (suggestedProducts.isEmpty())
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("AUTH_USER");
+
+            List<Product> suggestedProducts;
+            if (user != null) {
+                suggestedProducts = productDAO.getSuggestedProductsForCustomer(user.getUserID());
+                if (suggestedProducts == null || suggestedProducts.isEmpty()) {
+                    suggestedProducts = productDAO.getSuggestedProductsForGuest();
+                }
+            } else {
                 suggestedProducts = productDAO.getSuggestedProductsForGuest();
+            }
 
             List<Product> latestProducts = productDAO.getLatestProducts(36);
 
-            request.setAttribute("suggestedProducts", suggestedProducts);
-            request.setAttribute("latestProducts", latestProducts);
+            Map<String, Object> flashSaleData = productDAO.getFlashSaleProducts();
+
+            request.setAttribute("suggestedProducts", suggestedProducts != null ? suggestedProducts : List.of());
+            request.setAttribute("latestProducts", latestProducts != null ? latestProducts : List.of());
+
+            if (flashSaleData != null) {
+                request.setAttribute("flashSaleProducts", flashSaleData.get("products"));
+                request.setAttribute("flashSaleEndAt", flashSaleData.get("flashSaleEndAt"));
+                request.setAttribute("currentServerTime", flashSaleData.get("currentServerTime"));
+            } else {
+                request.setAttribute("flashSaleProducts", List.of());
+            }
+
             request.getRequestDispatcher("/WEB-INF/views/home/home.jsp").forward(request, response);
         } catch (Exception e) {
             System.out.println("Error in \"handleHome\" function: " + e.getMessage());
@@ -177,6 +200,10 @@ public class HomeServlet extends NotificationServlet {
                     request.setAttribute("shop", shop);
                 }
 
+                // Load Flash Sale info
+                Map<String, Object> flashSaleInfo = productDAO.getFlashSaleInfoForProduct(id);
+                request.setAttribute("flashSaleInfo", flashSaleInfo);
+
                 // Load reviews
                 int reviewsPerPage = 10;
                 ReviewDAO reviewDAO = new ReviewDAO();
@@ -187,12 +214,6 @@ public class HomeServlet extends NotificationServlet {
                 int totalReviews = reviewDAO.countReviewsByProductIdWithFilter(id, null, null, null);
 
                 int totalReviewPages = (int) Math.ceil((double) totalReviews / reviewsPerPage);
-
-                if (reviews.isEmpty()) {
-                    reviews = createMockReviews();
-                    totalReviews = reviews.size();
-                    totalReviewPages = 1;
-                }
 
                 request.setAttribute("reviews", reviews);
                 request.setAttribute("currentPage", 1);
@@ -308,67 +329,4 @@ public class HomeServlet extends NotificationServlet {
         request.getRequestDispatcher("/WEB-INF/views/catalog/books/bookstore.jsp").forward(request, response);
     }
 
-    private List<Review> createMockReviews() {
-        List<Review> mockReviews = new ArrayList<>();
-
-        // Review 1
-        Review r1 = new Review();
-        r1.setReviewId(1L);
-        r1.setRating(5);
-        r1.setComment("Sách rất hay, nội dung bổ ích và hấp dẫn. Giao hàng nhanh, đóng gói cẩn thận!");
-        r1.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(5)));
-
-        User u1 = new User();
-        u1.setFullName("Nguyễn Văn A");
-        u1.setAvatarUrl(null);
-        r1.setUser(u1);
-
-        List<ReviewImage> imgs1 = new ArrayList<>();
-        ReviewImage img1 = new ReviewImage();
-        img1.setUrl("review-example-1.jpg");
-        imgs1.add(img1);
-
-        ReviewImage img2 = new ReviewImage();
-        img2.setUrl("review-example-2.jpg");
-        imgs1.add(img2);
-
-        ReviewImage img3 = new ReviewImage();
-        img3.setUrl("review-example-3.jpg");
-        imgs1.add(img3);
-        r1.setImages(imgs1);
-
-        mockReviews.add(r1);
-
-        // Review 2
-        Review r2 = new Review();
-        r2.setReviewId(2L);
-        r2.setRating(4);
-        r2.setComment("Chất lượng sách tốt, giá hợp lý. Nhưng hơi lâu mới nhận được hàng.");
-        r2.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(3)));
-
-        User u2 = new User();
-        u2.setFullName("Trần Thị B");
-        u2.setAvatarUrl(null);
-        r2.setUser(u2);
-        r2.setImages(new ArrayList<>());
-
-        mockReviews.add(r2);
-
-        // Review 3
-        Review r3 = new Review();
-        r3.setReviewId(3L);
-        r3.setRating(5);
-        r3.setComment("Tuyệt vời! Đây là cuốn sách hay nhất tôi từng đọc. Cảm ơn shop!");
-        r3.setCreatedAt(Timestamp.valueOf(LocalDateTime.now().minusDays(2)));
-
-        User u3 = new User();
-        u3.setFullName("Lê Văn C");
-        u3.setAvatarUrl(null);
-        r3.setUser(u3);
-        r3.setImages(new ArrayList<>());
-
-        mockReviews.add(r3);
-
-        return mockReviews;
-    }
 }

@@ -1,6 +1,5 @@
 package com.group01.aurora_demo.cart.dao;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,22 +10,114 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
+import com.group01.aurora_demo.auth.model.User;
+import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
+import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
+import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.model.OrderItemVATInfo;
+import com.group01.aurora_demo.catalog.model.Product;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
+import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
+import com.group01.aurora_demo.shop.dao.VoucherDAO;
 
 public class OrderShopDAO {
+    private VoucherDAO voucherDAO;
+    private OrderItemDAO orderItemDAO;
+    private ProductDAO productDAO;
+    private UserVoucherDAO userVoucherDAO;
+    private PaymentDAO paymentDAO;
+    private FlashSaleDAO flashSaleDAO;
 
-    public List<OrderDTO> getOrderShopsByOrderId(long orderId) {
-        List<OrderDTO> orderShops = new ArrayList<>();
+    public OrderShopDAO() {
+        this.voucherDAO = new VoucherDAO();
+        this.orderItemDAO = new OrderItemDAO();
+        this.productDAO = new ProductDAO();
+        this.userVoucherDAO = new UserVoucherDAO();
+        this.paymentDAO = new PaymentDAO();
+        this.flashSaleDAO = new FlashSaleDAO();
+
+    }
+
+    public List<OrderShopDTO> getOrderShopsByPaymentId(long paymentId) {
+        List<OrderShopDTO> orderShops = new ArrayList<>();
         String sql = """
+                    SELECT
+                        os.OrderShopID,
+                        os.PaymentID,
+                        os.Subtotal,
+                        os.ShippingFee,
+                        os.ShopDiscount,
+                        os.SystemShippingDiscount,
+                        os.SystemDiscount,
+                        p.ProductID,
+                        p.Title AS ProductName,
+                        img.Url AS ImageUrl,
+                        oi.Quantity,
+                        oi.OriginalPrice,
+                        oi.SalePrice,
+                        os.CreatedAt
+                    FROM OrderShops os
+                    JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                    JOIN Products p ON oi.ProductID = p.ProductID
+                    JOIN ProductImages img ON p.ProductID = img.ProductID
+                    WHERE os.PaymentID = ?
+                      AND img.IsPrimary = 1
+                    ORDER BY os.OrderShopID;
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, paymentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderShopDTO orderShop = new OrderShopDTO();
+                    orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
+                    orderShop.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                    orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                    // --- Shop info ---
+                    orderShop.setShopShippingFee(rs.getDouble("ShippingFee"));
+                    orderShop.setShopDiscount(rs.getDouble("ShopDiscount"));
+                    orderShop.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                    orderShop.setSystemDiscount(rs.getDouble("SystemDiscount"));
+
+                    // --- Product info ---
+                    orderShop.setProductId(rs.getLong("ProductID"));
+                    orderShop.setProductName(rs.getString("ProductName"));
+                    orderShop.setImageUrl(rs.getString("ImageUrl"));
+                    orderShop.setQuantity(rs.getInt("Quantity"));
+                    orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                    orderShop.setSalePrice(rs.getDouble("SalePrice"));
+
+                    orderShops.add(orderShop);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return orderShops;
+    }
+
+    public List<OrderShopDTO> getOrderShopsByStatus(long userId, String status) {
+        List<OrderShopDTO> orderShops = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("""
                 SELECT
-                    os.OrderID,
                     os.OrderShopID,
+                    os.PaymentID,
                     s.Name AS ShopName,
+                    s.ShopId,
                     os.Status AS ShopStatus,
+                    os.CreatedAt,
                     os.UpdatedAt,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
@@ -35,31 +126,51 @@ public class OrderShopDAO {
                     oi.Quantity,
                     oi.OriginalPrice,
                     oi.SalePrice,
-                    oi.Subtotal
+                    oi.Subtotal,
+                    oi.OrderItemID,
+                    CASE
+                        WHEN EXISTS (SELECT 1 FROM Reviews r WHERE r.OrderItemID = oi.OrderItemID)
+                        THEN CAST(1 AS BIT)
+                        ELSE CAST(0 AS BIT)
+                    END AS IsReviewed
                 FROM OrderShops os
                 JOIN Shops s ON os.ShopID = s.ShopID
                 JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                 JOIN Products p ON oi.ProductID = p.ProductID
                 JOIN ProductImages img ON p.ProductID = img.ProductID
-                WHERE os.OrderID = ?
+                WHERE os.UserID = ?
                   AND img.IsPrimary = 1
-                ORDER BY os.UpdatedAt DESC
-                """;
-
+                """);
+        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+            if (status.equalsIgnoreCase("waiting_ship")) {
+                sql.append(" AND (os.Status = 'WAITING_SHIP' OR os.Status = 'CONFIRM') ");
+            } else if (status.equalsIgnoreCase("returned")) {
+                sql.append(
+                        " AND (os.Status = 'RETURNED_REQUESTED' OR os.Status = 'RETURNED' OR os.Status = 'RETURNED_REJECTED') ");
+            } else {
+                sql.append(" AND os.Status = ? ");
+            }
+        }
+        sql.append(" ORDER BY os.UpdatedAt DESC");
         try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, orderId);
+                PreparedStatement ps = cn.prepareStatement(sql.toString())) {
+            ps.setLong(1, userId);
+            if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+                if (!status.equalsIgnoreCase("waiting_ship") && !status.equalsIgnoreCase("returned")) {
+                    ps.setString(2, status.toUpperCase());
+                }
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    OrderDTO orderShop = new OrderDTO();
-
-                    orderShop.setOrderId(rs.getLong("OrderID"));
+                    OrderShopDTO orderShop = new OrderShopDTO();
                     orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
                     orderShop.setShopName(rs.getString("ShopName"));
+                    orderShop.setShopId(rs.getLong("ShopId"));
                     orderShop.setShopStatus(rs.getString("ShopStatus"));
-                    orderShop.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    orderShop.setCreatedAt(rs.getDate("CreatedAt"));
+                    orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                     orderShop.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 
                     // --- Product ---
@@ -70,11 +181,13 @@ public class OrderShopDAO {
                     orderShop.setOriginalPrice(rs.getDouble("OriginalPrice"));
                     orderShop.setSalePrice(rs.getDouble("SalePrice"));
                     orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                    orderShop.setOrderItemId(rs.getLong("OrderItemID"));
+                    orderShop.setIsReviewed(rs.getBoolean("IsReviewed"));
 
                     boolean canReturn = false;
-                    if (orderShop.getUpdateAt() != null && "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())) {
+                    if (orderShop.getUpdatedAt() != null && "COMPLETED".equalsIgnoreCase(orderShop.getShopStatus())) {
                         ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
-                        LocalDate updateDate = orderShop.getUpdateAt().toInstant().atZone(zone).toLocalDate();
+                        LocalDate updateDate = orderShop.getUpdatedAt().toInstant().atZone(zone).toLocalDate();
                         long days = ChronoUnit.DAYS.between(updateDate, LocalDate.now(zone));
                         canReturn = days >= 0 && days < 7;
                     }
@@ -84,42 +197,71 @@ public class OrderShopDAO {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Error in getOrderShopsByOrderId: " + e.getMessage());
+            System.out.println("Error in getOrderShopsByStatus: " + e.getMessage());
         }
 
         return orderShops;
     }
 
-    public long createOrderShop(Connection conn, OrderShop orderShop) {
-        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
-        // This method needs refactoring to use the correct voucher columns.
+    public long createOrderShop(Connection conn, OrderShop orderShop) throws SQLException {
         String sql = """
-                    INSERT INTO OrderShops(OrderID, ShopID, Subtotal,
-                                           Discount, SystemVoucherDiscount, SystemShippingDiscount, ShippingFee, FinalAmount, [Status], CreatedAt)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    INSERT INTO OrderShops (
+                        UserID, ShopID, PaymentID, Address,
+                        VoucherShopID, VoucherDiscountID, VoucherShipID,
+                        Subtotal, ShopDiscount, SystemDiscount,
+                        ShippingFee, SystemShippingDiscount, FinalAmount,
+                        Status, CreatedAt, UpdatedAt
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setLong(1, orderShop.getOrderId());
+            ps.setLong(1, orderShop.getUserId());
             ps.setLong(2, orderShop.getShopId());
+            ps.setLong(3, orderShop.getPaymentId());
+            ps.setString(4, orderShop.getAddress());
+            if (orderShop.getVoucherShopId() != null)
+                ps.setLong(5, orderShop.getVoucherShopId());
+            else
+                ps.setNull(5, Types.BIGINT);
+            if (orderShop.getVoucherDiscountId() != null)
+                ps.setLong(6, orderShop.getVoucherDiscountId());
+            else
+                ps.setNull(6, Types.BIGINT);
+            if (orderShop.getVoucherShipId() != null)
+                ps.setLong(7, orderShop.getVoucherShipId());
+            else
+                ps.setNull(7, Types.BIGINT);
+            ps.setDouble(8, orderShop.getSubtotal());
+            ps.setDouble(9, orderShop.getShopDiscount());
+            ps.setDouble(10, orderShop.getSystemDiscount());
+            ps.setDouble(11, orderShop.getShippingFee());
+            ps.setDouble(12, orderShop.getSystemShippingDiscount());
+            ps.setDouble(13, orderShop.getFinalAmount());
+            ps.setString(14, orderShop.getStatus());
 
-            ps.setDouble(3, orderShop.getSubtotal());
-            ps.setDouble(4, orderShop.getDiscount());
-            ps.setDouble(5, orderShop.getSystemVoucherDiscount());
-            ps.setDouble(6, orderShop.getSystemShippingDiscount());
-            ps.setDouble(7, orderShop.getShippingFee());
-            ps.setDouble(8, orderShop.getFinalAmount());
-            ps.setString(9, orderShop.getStatus());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next())
                     return rs.getLong(1);
             }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+
         }
         return -1;
+    }
+
+    public boolean updateOrderShopStatusByPaymentId(long paymentId, String newStatus) {
+        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE PaymentID = ?";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, paymentId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean updateOrderShopStatus(long orderShopId, String newStatus) {
@@ -135,33 +277,23 @@ public class OrderShopDAO {
         }
     }
 
-    public boolean updateOrderShopStatusByOrderId(long orderId, String newStatus) {
-        String sql = "UPDATE OrderShops SET Status = ?, UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()) WHERE OrderID = ?";
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
-            ps.setLong(2, orderId);
+    public boolean cancelOrderShop(Connection conn, long orderShopId, String reason) {
+        String sql = """
+                    UPDATE OrderShops
+                    SET Status = 'CANCELLED',
+                        CancelReason = ?,
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopID = ?
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setLong(2, orderShopId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
-    }
-
-    public boolean cancelOrderShop(Long orderShopId, String cancelReason) {
-        String sql = "{CALL CancelOrderShop(?, ?)}";
-
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                CallableStatement cs = conn.prepareCall(sql)) {
-
-            cs.setLong(1, orderShopId);
-            cs.setString(2, cancelReason);
-            cs.execute();
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return false;
     }
 
     public boolean returnOrderShop(long orderShopId, String returnReason) {
@@ -204,40 +336,205 @@ public class OrderShopDAO {
         }
     }
 
-    public int autoCancelPendingPaymentOrders() {
-        String sql = "SELECT OrderShopID FROM OrderShops WHERE Status = 'PENDING_PAYMENT' AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1";
-        int count = 0;
+    public int autoCancelPendingPayments() {
+        String sql = """
+                    SELECT PaymentID, TransactionRef
+                    FROM Payments
+                    WHERE Status = 'PENDING_PAYMENT'
+                      AND DATEDIFF(HOUR, UpdatedAt, GETDATE()) >= 1;
+                """;
+        int cancelledCount = 0;
 
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ResultSet rs = ps.executeQuery()) {
 
+            conn.setAutoCommit(false);
+
             while (rs.next()) {
-                Long orderShopId = rs.getLong("OrderShopID");
-                if (cancelOrderShop(orderShopId, "Quá thời hạn thanh toán")) {
-                    count++;
+                long paymentId = rs.getLong("PaymentID");
+                String transactionRef = rs.getString("TransactionRef");
+
+                try {
+                    List<OrderShop> orderShops = getPendingOrdersByPaymentId(conn, paymentId);
+
+                    for (OrderShop orderShop : orderShops) {
+
+                        cancelOrderShop(conn, orderShop.getOrderShopId(), "Quá thời hạn thanh toán");
+
+                        if (orderShop.getVoucherShopId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
+                        }
+
+                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShop.getOrderShopId());
+                        for (OrderItem item : items) {
+                            if (item.getFlashSaleItemId() != null) {
+                                flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                            } else {
+                                productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                            }
+                        }
+
+                        List<OrderShop> activeShop = getActiveShopsByPaymentId(conn, paymentId);
+                        if (activeShop.isEmpty()) {
+                            if (orderShop.getVoucherDiscountId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                            }
+                            if (orderShop.getVoucherShipId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                            }
+                        }
+                    }
+
+                    paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
+                    cancelledCount++;
+                    System.out.println("Tự động hủy Payment #" + paymentId + " do quá hạn thanh toán.");
+
+                } catch (SQLException ex) {
+                    conn.rollback();
+                    System.err.println("Rollback thất bại cho Payment #" + paymentId);
+                    ex.printStackTrace();
                 }
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return cancelledCount;
+    }
+
+    public List<OrderShop> getPendingOrdersByPaymentId(Connection conn, long paymentId) throws SQLException {
+        List<OrderShop> list = new ArrayList<>();
+
+        String sql = """
+                    SELECT
+                        OrderShopID,
+                        UserID,
+                        PaymentID,
+                        VoucherShopID,
+                        VoucherDiscountID,
+                        VoucherShipID,
+                        Status
+                    FROM OrderShops
+                    WHERE PaymentID = ? AND Status = 'PENDING_PAYMENT';
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, paymentId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderShop orderShop = new OrderShop();
+                    orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                    orderShop.setUserId(rs.getLong("UserID"));
+                    orderShop.setPaymentId(rs.getLong("PaymentID"));
+                    orderShop.setVoucherShopId((Long) rs.getObject("VoucherShopID"));
+                    orderShop.setVoucherDiscountId((Long) rs.getObject("VoucherDiscountID"));
+                    orderShop.setVoucherShipId((Long) rs.getObject("VoucherShipID"));
+                    orderShop.setStatus(rs.getString("Status"));
+                    list.add(orderShop);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    public boolean rollbackFailedPaymentByPaymentId(long paymentId) {
+        String sql = "SELECT OrderShopID FROM OrderShops WHERE PaymentID = ? AND Status = 'PENDING_PAYMENT'";
+        boolean success = false;
+
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, paymentId);
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    while (rs.next()) {
+                        Long orderShopId = rs.getLong("OrderShopID");
+
+                        OrderShop orderShop = findByOrderShopId(conn, orderShopId);
+                        if (orderShop == null)
+                            continue;
+
+                        boolean cancelled = cancelOrderShop(conn, orderShopId, "Thanh toán thất bại");
+                        if (!cancelled)
+                            continue;
+
+                        if (orderShop.getVoucherShopId() != null) {
+                            userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShopId(),
+                                    orderShop.getUserId());
+                            voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShopId());
+                        }
+
+                        List<OrderItem> items = orderItemDAO.getItemsByOrderShopId(conn, orderShopId);
+                        for (OrderItem item : items) {
+                            if (item.getFlashSaleItemId() != null) {
+                                flashSaleDAO.restoreFsItem(conn, item.getFlashSaleItemId(), item.getQuantity());
+                            } else {
+                                productDAO.restoreStock(conn, item.getProductId(), item.getQuantity());
+                            }
+
+                        }
+
+                        List<OrderShop> activeShop = getActiveShopsByPaymentId(conn,
+                                orderShop.getPaymentId());
+                        if (activeShop.isEmpty()) {
+
+                            if (orderShop.getVoucherDiscountId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherDiscountId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherDiscountId());
+                            }
+                            if (orderShop.getVoucherShipId() != null) {
+                                userVoucherDAO.restoreUserVoucher(conn, orderShop.getVoucherShipId(),
+                                        orderShop.getUserId());
+                                voucherDAO.decreaseUsageCount(conn, orderShop.getVoucherShipId());
+                            }
+                        }
+                    }
+                    conn.commit();
+                    success = true;
+
+                }
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return count;
+
+        return success;
     }
 
-    public OrderShop findById(Connection conn, long orderShopId) throws SQLException {
+    public OrderShop findByOrderShopId(Connection conn, long orderShopId) throws SQLException {
         String sql = """
                 SELECT
                     OrderShopID,
-                    OrderID,
+                    UserID,
                     ShopID,
+                    PaymentID,
                     Status,
                     Subtotal,
                     ShippingFee,
-                    Discount,
+                    ShopDiscount,
                     FinalAmount,
-                    VoucherID,
+                    VoucherShopID,
+                    VoucherDiscountID,
+                    VoucherShipID,
                     CancelReason,
-                    UpdateAt
+                    UpdatedAt
                 FROM OrderShops
                 WHERE OrderShopID = ?
                 """;
@@ -248,16 +545,20 @@ public class OrderShopDAO {
                 if (rs.next()) {
                     OrderShop shop = new OrderShop();
                     shop.setOrderShopId(rs.getLong("OrderShopID"));
-                    shop.setOrderId(rs.getLong("OrderID"));
+                    shop.setUserId(rs.getLong("UserID"));
                     shop.setShopId(rs.getLong("ShopID"));
+                    shop.setPaymentId(rs.getLong("PaymentID"));
                     shop.setStatus(rs.getString("Status"));
                     shop.setSubtotal(rs.getDouble("Subtotal"));
                     shop.setShippingFee(rs.getDouble("ShippingFee"));
-                    shop.setDiscount(rs.getDouble("Discount"));
+                    shop.setShopDiscount(rs.getDouble("ShopDiscount"));
                     shop.setFinalAmount(rs.getDouble("FinalAmount"));
-                    shop.setVoucherId(rs.getObject("VoucherID") != null ? rs.getLong("VoucherID") : null);
+                    shop.setVoucherShopId(rs.getObject("VoucherShopID") != null ? rs.getLong("VoucherShopID") : null);
+                    shop.setVoucherDiscountId(
+                            rs.getObject("VoucherDiscountID") != null ? rs.getLong("VoucherDiscountID") : null);
+                    shop.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
                     shop.setCancelReason(rs.getString("CancelReason"));
-                    shop.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    shop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                     return shop;
                 }
             }
@@ -265,31 +566,29 @@ public class OrderShopDAO {
         return null;
     }
 
-    public List<OrderShop> getActiveShopsByOrderId(Connection conn, long orderId) throws SQLException {
-        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
+    public List<OrderShop> getActiveShopsByPaymentId(Connection conn, long paymentId) throws SQLException {
         String sql = """
-                SELECT
-                    OrderShopID, OrderID, ShopID, Subtotal, ShippingFee,
-                    Discount, FinalAmount, Status, VoucherShopID
+                 SELECT
+                    OrderShopID, ShopID, Subtotal, ShippingFee,
+                    ShopDiscount, FinalAmount, Status, VoucherShopID
                 FROM OrderShops
-                WHERE OrderID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
+                WHERE PaymentID = ? AND Status NOT IN ('CANCELLED', 'RETURNED', 'RETURNED_REJECTED')
                 """;
 
         List<OrderShop> list = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, orderId);
+            ps.setLong(1, paymentId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShop s = new OrderShop();
                     s.setOrderShopId(rs.getLong("OrderShopID"));
-                    s.setOrderId(rs.getLong("OrderID"));
                     s.setShopId(rs.getLong("ShopID"));
                     s.setSubtotal(rs.getDouble("Subtotal"));
                     s.setShippingFee(rs.getDouble("ShippingFee"));
-                    s.setDiscount(rs.getDouble("Discount"));
+                    s.setShopDiscount(rs.getDouble("ShopDiscount"));
                     s.setFinalAmount(rs.getDouble("FinalAmount"));
                     s.setStatus(rs.getString("Status"));
-                    s.setVoucherId(rs.getLong("VoucherShopID")); // Using VoucherShopID as primary voucher
+                    s.setVoucherShopId(rs.getLong("VoucherShopID"));
                     list.add(s);
                 }
             }
@@ -297,61 +596,924 @@ public class OrderShopDAO {
         return list;
     }
 
-    public boolean update(Connection conn, OrderShop shop) throws SQLException {
-        // NOTE: VoucherID field is deprecated. OrderShops table has VoucherShopID, VoucherDiscountID, VoucherShipID instead.
-        // This method needs refactoring to use the correct voucher columns.
+    public List<OrderShop> getAllShopsByOrderShopId(Connection conn, long orderShopId) throws SQLException {
         String sql = """
-                UPDATE OrderShops
-                SET
-                    Status = ?,
-                    CancelReason = ?,
-                    FinalAmount = ?,
-                    UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
-                    Discount = ?,
-                    ShippingFee = ?
+                SELECT
+                    OrderShopID, ShopID, Subtotal, ShippingFee,
+                    ShopDiscount, FinalAmount, Status, VoucherShipID
+                FROM OrderShops
                 WHERE OrderShopID = ?
                 """;
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, shop.getStatus());
-            ps.setString(2, shop.getCancelReason());
-            ps.setDouble(3, shop.getFinalAmount());
-            ps.setDouble(4, shop.getDiscount());
-            ps.setDouble(5, shop.getShippingFee());
-            ps.setLong(6, shop.getOrderShopId());
-
-            return ps.executeUpdate() > 0;
-        }
-    }
-
-    public List<OrderShop> getAllShopsByOrderId(Connection conn, long orderId) throws SQLException {
-        String sql = """
-                SELECT
-                    OrderShopID, OrderID, ShopID, Subtotal, ShippingFee,
-                    Discount, FinalAmount, Status, VoucherID
-                FROM OrderShops
-                WHERE OrderID = ?
-                """;
 
         List<OrderShop> list = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, orderId);
+            ps.setLong(1, orderShopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     OrderShop s = new OrderShop();
                     s.setOrderShopId(rs.getLong("OrderShopID"));
-                    s.setOrderId(rs.getLong("OrderID"));
                     s.setShopId(rs.getLong("ShopID"));
                     s.setSubtotal(rs.getDouble("Subtotal"));
                     s.setShippingFee(rs.getDouble("ShippingFee"));
-                    s.setDiscount(rs.getDouble("Discount"));
+                    s.setShopDiscount(rs.getDouble("ShopDiscount"));
                     s.setFinalAmount(rs.getDouble("FinalAmount"));
                     s.setStatus(rs.getString("Status"));
-                    s.setVoucherId(rs.getObject("VoucherID") != null ? rs.getLong("VoucherID") : null);
+                    s.setVoucherShipId(rs.getObject("VoucherShipID") != null ? rs.getLong("VoucherShipID") : null);
                     list.add(s);
                 }
             }
         }
         return list;
     }
+
+    public List<OrderShop> getOrderShopByShopId(long shopId) throws SQLException {
+        String sql = """
+                SELECT
+                    os.OrderShopID,
+                    os.UserID,
+                    os.ShopID,
+                    os.Status AS ShopStatus,
+                    os.FinalAmount,
+                    os.Subtotal,
+                    os.ShopDiscount,
+                    os.SystemDiscount,
+                    os.ShippingFee,
+                    os.SystemShippingDiscount,
+                    os.CreatedAt,
+                    os.UpdatedAt,
+                    u.FullName AS CustomerName,
+                    oi.OrderItemID,
+                    oi.ProductID,
+                    oi.Quantity,
+                    oi.OriginalPrice AS ItemOriginalPrice,
+                    oi.SalePrice AS ItemSalePrice,
+                    oi.Subtotal AS ItemSubtotal,
+                    oi.VATRate,
+                    p.Title,
+                    p.OriginalPrice AS ProductOriginalPrice,
+                    p.SalePrice AS ProductSalePrice,
+                    pi.Url AS PrimaryImageUrl
+                FROM OrderShops os
+                JOIN Users u ON os.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.ShopID = ? AND os.Status <> 'PENDING_PAYMENT'
+                ORDER BY os.CreatedAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                Map<Long, OrderShop> orderShopMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    long orderShopId = rs.getLong("OrderShopID");
+                    OrderShop os = orderShopMap.get(orderShopId);
+                    if (os == null) {
+                        os = new OrderShop();
+                        os.setOrderShopId(orderShopId);
+                        os.setUserId(rs.getLong("UserID"));
+                        os.setShopId(rs.getLong("ShopID"));
+                        os.setStatus(rs.getString("ShopStatus"));
+                        os.setFinalAmount(rs.getDouble("FinalAmount"));
+                        os.setSubtotal(rs.getDouble("Subtotal"));
+                        os.setShopDiscount(rs.getDouble("ShopDiscount"));
+                        os.setSystemDiscount(rs.getDouble("SystemDiscount"));
+                        os.setShippingFee(rs.getDouble("ShippingFee"));
+                        os.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                        os.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                        os.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
+                        os.setItems(new ArrayList<>());
+
+                        User user = new User();
+                        user.setFullName(rs.getString("CustomerName"));
+                        os.setUser(user);
+
+                        orderShopMap.put(orderShopId, os);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("ItemOriginalPrice"));
+                        item.setSalePrice(rs.getDouble("ItemSalePrice"));
+                        item.setSubtotal(rs.getDouble("ItemSubtotal"));
+                        item.setVatRate(rs.getDouble("VATRate"));
+
+                        // Gán thông tin sản phẩm
+                        Product product = new Product();
+                        product.setProductId(rs.getLong("ProductID"));
+                        product.setTitle(rs.getString("Title"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+
+                        item.setProduct(product);
+
+                        os.getItems().add(item);
+                    }
+                }
+
+                return new ArrayList<>(orderShopMap.values());
+            }
+        }
+    }
+
+    public OrderShop getOrderShopDetail(Long orderShopId) throws Exception {
+        String sql = """
+                SELECT
+                    os.OrderShopID,
+                    os.UserID,
+                    os.ShopID,
+                    os.Address,
+                    os.VoucherShopID,
+                    os.VoucherDiscountID,
+                    os.VoucherShipID,
+                    os.Subtotal,
+                    os.ShopDiscount,
+                    os.SystemDiscount,
+                    os.ShippingFee,
+                    os.SystemShippingDiscount,
+                    os.FinalAmount,
+                    os.Status,
+                    os.CreatedAt,
+                    os.UpdatedAt,
+                    os.CancelReason,
+                    os.ReturnReason,
+                    u.FullName AS CustomerName,
+                    u.Email AS CustomerEmail,
+                    oi.OrderItemID,
+                    oi.ProductID,
+                    oi.Quantity,
+                    oi.OriginalPrice,
+                    oi.SalePrice,
+                    oi.Subtotal AS ItemSubtotal,
+                    oi.VatRate,
+                    p.Title AS ProductTitle,
+                    p.SalePrice AS ProductSalePrice,
+                    pi.Url AS ProductImage
+                FROM OrderShops os
+                JOIN Users u ON os.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.OrderShopID = ?
+                ORDER BY oi.OrderItemID
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery()) {
+
+                OrderShop orderShop = null;
+                List<OrderItem> items = new ArrayList<>();
+
+                while (rs.next()) {
+                    if (orderShop == null) {
+                        orderShop = new OrderShop();
+                        orderShop.setOrderShopId(rs.getLong("OrderShopID"));
+                        orderShop.setUserId(rs.getLong("UserID"));
+                        orderShop.setShopId(rs.getLong("ShopID"));
+                        orderShop.setAddress(rs.getString("Address"));
+                        orderShop.setVoucherShopId(rs.getObject("VoucherShopID", Long.class));
+                        orderShop.setVoucherDiscountId(rs.getObject("VoucherDiscountID", Long.class));
+                        orderShop.setVoucherShipId(rs.getObject("VoucherShipID", Long.class));
+                        orderShop.setSubtotal(rs.getDouble("Subtotal"));
+                        orderShop.setShopDiscount(rs.getDouble("ShopDiscount"));
+                        orderShop.setSystemDiscount(rs.getDouble("SystemDiscount"));
+                        orderShop.setShippingFee(rs.getDouble("ShippingFee"));
+                        orderShop.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                        orderShop.setFinalAmount(rs.getDouble("FinalAmount"));
+                        orderShop.setStatus(rs.getString("Status"));
+                        orderShop.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                        orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
+                        orderShop.setCancelReason(rs.getString("CancelReason"));
+                        orderShop.setReturnReason(rs.getString("ReturnReason"));
+
+                        // User info
+                        User user = new User();
+                        user.setFullName(rs.getString("CustomerName"));
+                        user.setEmail(rs.getString("CustomerEmail"));
+                        orderShop.setUser(user);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("ItemSubtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setTitle(rs.getString("ProductTitle"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("ProductImage"));
+                        item.setProduct(product);
+
+                        items.add(item);
+                    }
+                }
+
+                if (orderShop != null) {
+                    orderShop.setItems(items);
+                } else {
+                    System.out.println("Không tìm thấy dữ liệu cho OrderShopID = " + orderShopId);
+                }
+
+                return orderShop;
+            }
+        }
+    }
+
+    public Map<String, Integer> getOrderShopCountsByShopId(Long shopId) throws SQLException {
+        String sql = """
+                    SELECT
+                        CASE
+                            WHEN Status LIKE 'RETURNED%' THEN 'RETURNED_GROUP'
+                            ELSE Status
+                        END AS StatusGroup,
+                        COUNT(*) AS Count
+                    FROM OrderShops
+                    WHERE ShopID = ?
+                    GROUP BY
+                        CASE
+                            WHEN Status LIKE 'RETURNED%' THEN 'RETURNED_GROUP'
+                            ELSE Status
+                        END
+                """;
+
+        Map<String, Integer> counts = new HashMap<>();
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                counts.put(rs.getString("StatusGroup"), rs.getInt("Count"));
+            }
+        }
+        return counts;
+    }
+
+    public int countOrderShopByShop(Long shopId) {
+        String sql = "SELECT COUNT(*) FROM OrderShops WHERE ShopID = ? AND [Status] NOT IN ('PENDING_PAYMENT')";
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<OrderShop> getOrderShopByShopIdAndStatus(long shopId, String status) throws SQLException {
+        String sql = """
+                SELECT
+                    os.OrderShopID,
+                    os.ShopID,
+                    os.UserID,
+                    os.Status AS ShopStatus,
+                    os.Subtotal,
+                    os.ShopDiscount,
+                    os.SystemDiscount,
+                    os.ShippingFee,
+                    os.SystemShippingDiscount,
+                    os.FinalAmount,
+                    os.CreatedAt,
+                    os.UpdatedAt,
+                    os.CancelReason,
+                    os.ReturnReason,
+
+                    u.FullName AS CustomerName,
+                    u.Email AS CustomerEmail,
+
+                    oi.OrderItemID,
+                    oi.ProductID,
+                    oi.Quantity,
+                    oi.OriginalPrice,
+                    oi.SalePrice,
+                    oi.Subtotal AS ItemSubtotal,
+                    oi.VatRate,
+
+                    p.Title AS ProductTitle,
+                    p.OriginalPrice AS ProductOriginalPrice,
+                    p.SalePrice AS ProductSalePrice,
+                    pi.Url AS PrimaryImageUrl
+
+                FROM OrderShops os
+                JOIN Users u ON os.UserID = u.UserID
+                LEFT JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
+                LEFT JOIN Products p ON oi.ProductID = p.ProductID
+                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                WHERE os.ShopID = ? AND os.Status LIKE ? AND os.Status <> 'PENDING_PAYMENT'
+                ORDER BY os.CreatedAt DESC
+                """;
+
+        try (Connection cn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setString(2, status + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                Map<Long, OrderShop> orderShopMap = new LinkedHashMap<>();
+
+                while (rs.next()) {
+                    long orderShopId = rs.getLong("OrderShopID");
+
+                    OrderShop os = orderShopMap.get(orderShopId);
+                    if (os == null) {
+                        os = new OrderShop();
+                        os.setOrderShopId(orderShopId);
+                        os.setShopId(rs.getLong("ShopID"));
+                        os.setUserId(rs.getLong("UserID"));
+                        os.setStatus(rs.getString("ShopStatus"));
+                        os.setSubtotal(rs.getDouble("Subtotal"));
+                        os.setShopDiscount(rs.getDouble("ShopDiscount"));
+                        os.setSystemDiscount(rs.getDouble("SystemDiscount"));
+                        os.setShippingFee(rs.getDouble("ShippingFee"));
+                        os.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
+                        os.setFinalAmount(rs.getDouble("FinalAmount"));
+                        os.setCreatedAt(rs.getTimestamp("CreatedAt"));
+                        os.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
+                        os.setCancelReason(rs.getString("CancelReason"));
+                        os.setReturnReason(rs.getString("ReturnReason"));
+
+                        User user = new User();
+                        user.setFullName(rs.getString("CustomerName"));
+                        user.setEmail(rs.getString("CustomerEmail"));
+                        os.setUser(user);
+
+                        os.setItems(new ArrayList<>());
+                        orderShopMap.put(orderShopId, os);
+                    }
+
+                    long orderItemId = rs.getLong("OrderItemID");
+                    if (!rs.wasNull()) {
+                        OrderItem item = new OrderItem();
+                        item.setOrderItemId(orderItemId);
+                        item.setOrderShopId(orderShopId);
+                        item.setProductId(rs.getLong("ProductID"));
+                        item.setQuantity(rs.getInt("Quantity"));
+                        item.setOriginalPrice(rs.getDouble("OriginalPrice"));
+                        item.setSalePrice(rs.getDouble("SalePrice"));
+                        item.setSubtotal(rs.getDouble("ItemSubtotal"));
+                        item.setVatRate(rs.getDouble("VatRate"));
+
+                        Product product = new Product();
+                        product.setProductId(rs.getLong("ProductID"));
+                        product.setTitle(rs.getString("ProductTitle"));
+                        product.setOriginalPrice(rs.getDouble("ProductOriginalPrice"));
+                        product.setSalePrice(rs.getDouble("ProductSalePrice"));
+                        product.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
+                        item.setProduct(product);
+
+                        os.getItems().add(item);
+                    }
+                }
+                return new ArrayList<>(orderShopMap.values());
+            }
+        }
+    }
+
+    public boolean updateOrderShopStatusByBR(long orderShopId, String newStatus) {
+        String selectSql = """
+                    SELECT
+                        os.VoucherShopId,
+                        os.VoucherDiscountId,
+                        os.VoucherShipId,
+                        os.FinalAmount,
+                        os.PaymentID
+                    FROM OrderShops os
+                    WHERE os.OrderShopId = ?
+                """;
+
+        String updateOrderSql = """
+                    UPDATE OrderShops
+                    SET Status = ?,
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopId = ?
+                """;
+
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        // 🔹 Kiểm tra sản phẩm có trong Flash Sale đang ACTIVE hay không
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        // 🔹 Hoàn tồn kho Flash Sale
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        // 🔹 Hoàn tồn kho sản phẩm thường
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
+                """;
+
+        // 🔹 Giảm usage count của voucher
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement psSelect = conn.prepareStatement(selectSql)) {
+
+            conn.setAutoCommit(false);
+
+            // 🔹 1. Lấy thông tin đơn hàng
+            psSelect.setLong(1, orderShopId);
+            ResultSet rs = psSelect.executeQuery();
+
+            Long voucherShopId = null;
+            Long voucherDiscountId = null;
+            Long voucherShipId = null;
+            Long paymentId = null;
+            double shopFinalAmount = 0;
+
+            if (rs.next()) {
+                voucherShopId = rs.getLong("VoucherShopId");
+                voucherDiscountId = rs.getLong("VoucherDiscountId");
+                voucherShipId = rs.getLong("VoucherShipId");
+                paymentId = rs.getLong("PaymentID");
+                shopFinalAmount = rs.getDouble("FinalAmount");
+            } else {
+                System.err.println("⚠️ Không tìm thấy đơn hàng #" + orderShopId);
+                return false;
+            }
+
+            // 🔹 2. Cập nhật trạng thái đơn hàng
+            try (PreparedStatement psUpdateOrder = conn.prepareStatement(updateOrderSql)) {
+                psUpdateOrder.setString(1, newStatus);
+                psUpdateOrder.setLong(2, orderShopId);
+                psUpdateOrder.executeUpdate();
+            }
+
+            // 🔹 3. Hoàn lại tồn kho & trừ SoldCount
+            try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                psItems.setLong(1, orderShopId);
+
+                try (ResultSet rsItems = psItems.executeQuery()) {
+                    while (rsItems.next()) {
+                        long productId = rsItems.getLong("ProductID");
+                        int quantity = rsItems.getInt("Quantity");
+
+                        // Kiểm tra Flash Sale
+                        try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                            psCheckFS.setLong(1, productId);
+
+                            try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                if (rsFS.next()) {
+                                    long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                    // 🔸 Flash Sale ACTIVE → hoàn về FlashSaleItems & trừ sold count
+                                    try (PreparedStatement psRestoreFS = conn
+                                            .prepareStatement(restoreFlashSaleStockSql)) {
+                                        psRestoreFS.setInt(1, quantity);
+                                        psRestoreFS.setInt(2, quantity);
+                                        psRestoreFS.setInt(3, quantity);
+                                        psRestoreFS.setLong(4, flashSaleItemId);
+                                        psRestoreFS.executeUpdate();
+                                    }
+
+                                    System.out.printf(
+                                            "♻️ Hoàn %d SP #%d về FlashSaleItemID=%d (đồng thời trừ SoldCount)%n",
+                                            quantity, productId, flashSaleItemId);
+
+                                } else {
+                                    // 🔸 Không trong Flash Sale → hoàn về Products & trừ sold count
+                                    try (PreparedStatement psRestoreP = conn.prepareStatement(restoreProductStockSql)) {
+                                        psRestoreP.setInt(1, quantity); // Quantity +=
+                                        psRestoreP.setInt(2, quantity); // SoldCount >= ?
+                                        psRestoreP.setInt(3, quantity); // SoldCount - ?
+                                        psRestoreP.setInt(4, quantity); // Kiểm tra status
+                                        psRestoreP.setLong(5, productId);
+                                        psRestoreP.executeUpdate();
+                                    }
+
+                                    System.out.printf("🔙 Hoàn %d SP #%d về kho thường (đồng thời trừ SoldCount)%n",
+                                            quantity, productId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 🔹 4. Hoàn lại voucher
+            try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                if (voucherShopId != null && voucherShopId > 0) {
+                    psRestoreVoucher.setLong(1, voucherShopId);
+                    psRestoreVoucher.executeUpdate();
+                }
+                if (voucherDiscountId != null && voucherDiscountId > 0) {
+                    psRestoreVoucher.setLong(1, voucherDiscountId);
+                    psRestoreVoucher.executeUpdate();
+                }
+                if (voucherShipId != null && voucherShipId > 0) {
+                    psRestoreVoucher.setLong(1, voucherShipId);
+                    psRestoreVoucher.executeUpdate();
+                }
+            }
+
+            // 🔹 5. Hoàn tiền
+            PaymentDAO paymentDAO = new PaymentDAO();
+            boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
+            if (!refunded) {
+                conn.rollback();
+                System.err.printf("⚠️ Refund thất bại cho OrderShopID=%d%n", orderShopId);
+                return false;
+            }
+
+            conn.commit();
+            System.out.printf("✅ Đơn #%d cập nhật sang '%s' và trừ SoldCount thành công!%n",
+                    orderShopId, newStatus);
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public int cancelExpiredOrders() {
+        String selectSql = """
+                    SELECT os.OrderShopId, os.PaymentID, os.VoucherShopID, os.FinalAmount
+                    FROM OrderShops os
+                    WHERE os.Status = 'PENDING'
+                    AND DATEDIFF(DAY, os.CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
+                """;
+
+        String cancelOrderSql = """
+                    UPDATE OrderShops
+                    SET Status = 'CANCELLED',
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME()),
+                        CancelReason = N'Hủy do quá hạn xác nhận đơn.'
+                    WHERE OrderShopId = ?
+                """;
+
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
+                """;
+
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        int cancelledCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement psSelect = conn.prepareStatement(selectSql);
+                ResultSet rs = psSelect.executeQuery()) {
+
+            conn.setAutoCommit(false);
+
+            while (rs.next()) {
+                long orderShopId = rs.getLong("OrderShopId");
+                long paymentId = rs.getLong("PaymentID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
+                Long voucherId = rs.getLong("VoucherShopID");
+                if (rs.wasNull())
+                    voucherId = null;
+
+                // 🔹 1. Hủy đơn hàng
+                try (PreparedStatement psCancel = conn.prepareStatement(cancelOrderSql)) {
+                    psCancel.setLong(1, orderShopId);
+                    psCancel.executeUpdate();
+                }
+
+                // 🔹 2. Xử lý từng sản phẩm trong đơn
+                try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                    psItems.setLong(1, orderShopId);
+
+                    try (ResultSet rsItems = psItems.executeQuery()) {
+                        while (rsItems.next()) {
+                            long productId = rsItems.getLong("ProductID");
+                            int quantity = rsItems.getInt("Quantity");
+
+                            // Kiểm tra xem sản phẩm có trong Flash Sale ACTIVE không
+                            try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                                psCheckFS.setLong(1, productId);
+
+                                try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                    if (rsFS.next()) {
+                                        // 🔸 Có Flash Sale ACTIVE → hoàn về FlashSaleItems và trừ SoldCount tại đó
+                                        long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                        try (PreparedStatement psRestoreFS = conn
+                                                .prepareStatement(restoreFlashSaleStockSql)) {
+                                            psRestoreFS.setInt(1, quantity); // hoàn kho flash sale
+                                            psRestoreFS.setInt(2, quantity); // giảm soldCount
+                                            psRestoreFS.setInt(3, quantity);
+                                            psRestoreFS.setLong(4, flashSaleItemId);
+                                            psRestoreFS.executeUpdate();
+                                        }
+                                    } else {
+                                        // 🔸 Không có → hoàn về Products và trừ SoldCount ở bảng Products
+                                        try (PreparedStatement psRestoreP = conn
+                                                .prepareStatement(restoreProductStockSql)) {
+                                            psRestoreP.setInt(1, quantity); // hoàn kho
+                                            psRestoreP.setInt(2, quantity); // giảm soldCount
+                                            psRestoreP.setInt(3, quantity);
+                                            psRestoreP.setInt(4, quantity); // kiểm tra trạng thái sản phẩm
+                                            psRestoreP.setLong(5, productId);
+                                            psRestoreP.executeUpdate();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 🔹 3. Hoàn voucher (nếu có)
+                if (voucherId != null && voucherId > 0) {
+                    try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                        psRestoreVoucher.setLong(1, voucherId);
+                        psRestoreVoucher.executeUpdate();
+                    }
+                }
+
+                // 🔹 4. Gọi hoàn tiền
+                PaymentDAO paymentDAO = new PaymentDAO();
+                boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
+
+                if (!refunded) {
+                    System.err.println("⚠️ Partial refund failed for OrderShopID=" + orderShopId);
+                }
+
+                cancelledCount++;
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return cancelledCount;
+    }
+
+    public int autoApproveReturnRequests() {
+        String selectSql = """
+                    SELECT OrderShopID, VoucherShopID, FinalAmount, PaymentID
+                    FROM OrderShops
+                    WHERE Status = 'RETURNED_REQUESTED'
+                      AND DATEDIFF(DAY, CreatedAt, DATEADD(HOUR, 7, SYSUTCDATETIME())) >= 3
+                """;
+
+        String updateStatusSql = """
+                    UPDATE OrderShops
+                    SET Status = 'RETURNED',
+                        UpdatedAt = DATEADD(HOUR, 7, SYSUTCDATETIME())
+                    WHERE OrderShopID = ?
+                """;
+
+        String selectOrderItemsSql = """
+                    SELECT oi.ProductID, oi.Quantity
+                    FROM OrderItems oi
+                    WHERE oi.OrderShopId = ?
+                """;
+
+        String checkFlashSaleItemSql = """
+                    SELECT fsi.FlashSaleItemID
+                    FROM FlashSaleItems fsi
+                    JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
+                    WHERE fsi.ProductID = ? AND fs.Status = 'ACTIVE'
+                """;
+
+        String restoreFlashSaleStockSql = """
+                    UPDATE FlashSaleItems
+                    SET FsStock = FsStock + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END
+                    WHERE FlashSaleItemID = ?
+                """;
+
+        String restoreProductStockSql = """
+                    UPDATE Products
+                    SET Quantity = Quantity + ?,
+                        SoldCount = CASE WHEN SoldCount >= ? THEN SoldCount - ? ELSE 0 END,
+                        Status = CASE
+                                     WHEN (Quantity = 0 OR Status = 'OUT_OF_STOCK')
+                                          AND (Quantity + ?) > 0 THEN 'ACTIVE'
+                                     ELSE Status
+                                 END
+                    WHERE ProductID = ?
+                """;
+
+        String restoreVoucherSql = """
+                    UPDATE Vouchers
+                    SET UsageCount = CASE WHEN UsageCount > 0 THEN UsageCount - 1 ELSE 0 END
+                    WHERE VoucherID = ?
+                """;
+
+        int autoApprovedCount = 0;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement psSelect = conn.prepareStatement(selectSql);
+                ResultSet rs = psSelect.executeQuery()) {
+
+            conn.setAutoCommit(false);
+
+            while (rs.next()) {
+                long orderShopId = rs.getLong("OrderShopID");
+                long paymentId = rs.getLong("PaymentID");
+                double shopFinalAmount = rs.getDouble("FinalAmount");
+                Long voucherId = rs.getLong("VoucherShopID");
+                if (rs.wasNull())
+                    voucherId = null;
+
+                try {
+                    // ✅ 1. Cập nhật trạng thái đơn hàng
+                    try (PreparedStatement psUpdate = conn.prepareStatement(updateStatusSql)) {
+                        psUpdate.setLong(1, orderShopId);
+                        psUpdate.executeUpdate();
+                    }
+
+                    // ✅ 2. Hoàn lại tồn kho + trừ SoldCount
+                    try (PreparedStatement psItems = conn.prepareStatement(selectOrderItemsSql)) {
+                        psItems.setLong(1, orderShopId);
+
+                        try (ResultSet rsItems = psItems.executeQuery()) {
+                            while (rsItems.next()) {
+                                long productId = rsItems.getLong("ProductID");
+                                int quantity = rsItems.getInt("Quantity");
+
+                                try (PreparedStatement psCheckFS = conn.prepareStatement(checkFlashSaleItemSql)) {
+                                    psCheckFS.setLong(1, productId);
+
+                                    try (ResultSet rsFS = psCheckFS.executeQuery()) {
+                                        if (rsFS.next()) {
+                                            // 🔸 Sản phẩm thuộc Flash Sale ACTIVE
+                                            long flashSaleItemId = rsFS.getLong("FlashSaleItemID");
+
+                                            try (PreparedStatement psRestoreFS = conn
+                                                    .prepareStatement(restoreFlashSaleStockSql)) {
+                                                psRestoreFS.setInt(1, quantity); // hoàn kho flash sale
+                                                psRestoreFS.setInt(2, quantity); // trừ soldCount
+                                                psRestoreFS.setInt(3, quantity);
+                                                psRestoreFS.setLong(4, flashSaleItemId);
+                                                psRestoreFS.executeUpdate();
+                                            }
+
+                                            System.out.println("♻️ Hoàn " + quantity + " SP #" + productId
+                                                    + " về FlashSaleItemID=" + flashSaleItemId + " (giảm SoldCount)");
+                                        } else {
+                                            // 🔸 Không thuộc Flash Sale → hoàn về Products
+                                            try (PreparedStatement psRestoreP = conn
+                                                    .prepareStatement(restoreProductStockSql)) {
+                                                psRestoreP.setInt(1, quantity); // hoàn kho
+                                                psRestoreP.setInt(2, quantity); // trừ soldCount
+                                                psRestoreP.setInt(3, quantity);
+                                                psRestoreP.setInt(4, quantity);
+                                                psRestoreP.setLong(5, productId);
+                                                psRestoreP.executeUpdate();
+                                            }
+
+                                            System.out.println(
+                                                    "🔙 Hoàn " + quantity + " SP #" + productId
+                                                            + " về kho thường (giảm SoldCount).");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ✅ 3. Khôi phục voucher (nếu có)
+                    if (voucherId != null && voucherId > 0) {
+                        try (PreparedStatement psRestoreVoucher = conn.prepareStatement(restoreVoucherSql)) {
+                            psRestoreVoucher.setLong(1, voucherId);
+                            psRestoreVoucher.executeUpdate();
+                        }
+                    }
+
+                    // ✅ 4. Hoàn tiền lại cho khách
+                    PaymentDAO paymentDAO = new PaymentDAO();
+                    boolean refunded = paymentDAO.partialRefund(conn, paymentId, shopFinalAmount);
+                    if (!refunded) {
+                        System.err.println("⚠️ Refund failed for OrderShopID=" + orderShopId);
+                        conn.rollback();
+                        continue;
+                    }
+
+                    autoApprovedCount++;
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    conn.rollback();
+                }
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return autoApprovedCount;
+    }
+
+    public double getTotalVATByOrderShopId(long orderShopId) {
+        double totalVAT = 0.0;
+
+        String sql = """
+                SELECT
+                    SUM(oi.Subtotal * ISNULL(v.VATRate, 0) / 100.0) AS VatAmount
+                FROM OrderItems oi
+                JOIN ProductCategory pc ON oi.ProductID = pc.ProductID AND pc.IsPrimary = 1
+                JOIN Category c ON pc.CategoryID = c.CategoryID
+                JOIN VAT v ON c.VATCode = v.VATCode
+                WHERE oi.OrderShopID = ?
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    totalVAT = rs.getDouble("VatAmount");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return totalVAT;
+    }
+
 }

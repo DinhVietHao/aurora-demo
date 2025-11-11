@@ -9,7 +9,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.group01.aurora_demo.cart.dao.dto.OrderDTO;
+import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 
@@ -48,21 +48,26 @@ public class OrderItemDAO {
         return -1;
     }
 
-    public List<OrderItem> getItemsByOrderShopId(Long orderShopId) {
-        String sql = "SELECT ProductID, Quantity FROM OrderItems WHERE OrderShopID = ?";
+    public List<OrderItem> getItemsByOrderShopId(Connection conn, Long orderShopId) {
+        String sql = "SELECT OrderItemID, ProductID, Quantity, FlashSaleItemID FROM OrderItems WHERE OrderShopID = ?";
         List<OrderItem> items = new ArrayList<>();
 
-        try (Connection conn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setLong(1, orderShopId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery();) {
 
-            while (rs.next()) {
-                OrderItem item = new OrderItem();
-                item.setProductId(rs.getLong("ProductID"));
-                item.setQuantity(rs.getInt("Quantity"));
-                items.add(item);
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setOrderItemId(rs.getLong("OrderItemID"));
+                    item.setProductId(rs.getLong("ProductID"));
+                    item.setQuantity(rs.getInt("Quantity"));
+                    long flashSaleId = rs.getLong("FlashSaleItemID");
+                    if (!rs.wasNull()) {
+                        item.setFlashSaleItemId(flashSaleId);
+                    }
+                    items.add(item);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -71,18 +76,42 @@ public class OrderItemDAO {
         return items;
     }
 
-    public List<OrderDTO> getOrderItemsByOrderShopId(long orderShopId) {
-        List<OrderDTO> orderItems = new ArrayList<>();
+    public List<OrderItem> getOrderItems(Long orderShopId) {
+        String sql = "SELECT ProductID, Quantity FROM OrderItems WHERE OrderShopID = ?";
+        List<OrderItem> items = new ArrayList<>();
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery();) {
+
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setProductId(rs.getLong("ProductID"));
+                    item.setQuantity(rs.getInt("Quantity"));
+                    items.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return items;
+    }
+
+    public List<OrderShopDTO> getOrderItemsByOrderShopId(long orderShopId) {
+        List<OrderShopDTO> orderItems = new ArrayList<>();
         String sql = """
                 SELECT
-                    os.OrderID,
                     os.OrderShopID,
+                    os.PaymentID,
                     s.Name AS ShopName,
                     os.Status AS ShopStatus,
-                    os.UpdateAt,
-                    os.Discount AS ShopDiscount,
+                    os.UpdatedAt,
+                    os.ShopDiscount AS ShopDiscount,
                     os.ShippingFee AS ShopShippingFee,
-                    os.SystemVoucherDiscount,
+                    os.SystemDiscount,
                     os.SystemShippingDiscount,
                     os.FinalAmount AS ShopFinalAmount,
                     p.ProductID,
@@ -99,7 +128,7 @@ public class OrderItemDAO {
                 JOIN ProductImages img ON p.ProductID = img.ProductID
                 WHERE os.OrderShopID = ?
                   AND img.IsPrimary = 1
-                ORDER BY os.UpdateAt DESC
+                ORDER BY os.UpdatedAt DESC
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -109,12 +138,12 @@ public class OrderItemDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    OrderDTO order = new OrderDTO();
-                    order.setOrderId(rs.getLong("OrderID"));
+                    OrderShopDTO order = new OrderShopDTO();
                     order.setOrderShopId(rs.getLong("OrderShopID"));
+                    order.setPaymentId(rs.getLong("PaymentID"));
                     order.setShopName(rs.getString("ShopName"));
                     order.setShopStatus(rs.getString("ShopStatus"));
-                    order.setUpdateAt(rs.getTimestamp("UpdateAt"));
+                    order.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
 
                     // --- Sản phẩm ---
                     order.setProductId(rs.getLong("ProductID"));
@@ -128,7 +157,7 @@ public class OrderItemDAO {
                     // --- Shop ---
                     order.setShopDiscount(rs.getDouble("ShopDiscount"));
                     order.setShopShippingFee(rs.getDouble("ShopShippingFee"));
-                    order.setSystemVoucherDiscount(rs.getDouble("SystemVoucherDiscount"));
+                    order.setSystemDiscount(rs.getDouble("SystemDiscount"));
                     order.setSystemShippingDiscount(rs.getDouble("SystemShippingDiscount"));
                     order.setShopFinalAmount(rs.getDouble("ShopFinalAmount"));
 

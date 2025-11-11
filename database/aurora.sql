@@ -1,4 +1,5 @@
-﻿CREATE TABLE Roles
+﻿
+CREATE TABLE Roles
 (
     RoleCode NVARCHAR(20) NOT NULL PRIMARY KEY,
     RoleName NVARCHAR(100) NOT NULL
@@ -55,7 +56,7 @@ CREATE TABLE Shops
     ShopID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
     Name NVARCHAR(150) NOT NULL UNIQUE,
     Description NVARCHAR(255) NULL,
-    RatingAvg DECIMAL(3,2) NOT NULL,
+    RatingAvg DECIMAL(3,2) NOT NULL DEFAULT 0,
     [Status] NVARCHAR(20) NOT NULL,
     OwnerUserID BIGINT NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
@@ -96,22 +97,33 @@ CREATE TABLE Products
     Description NVARCHAR(MAX) NULL,
     OriginalPrice DECIMAL(12,2) NOT NULL,
     SalePrice DECIMAL(12,2) NOT NULL,
+    PreFlashSalePrice DECIMAL(12,2) NULL,
     SoldCount BIGINT NOT NULL DEFAULT 0,
     Quantity INT NOT NULL,
     PublisherID BIGINT NULL,
-    [Status] NVARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    [Status] NVARCHAR
+    (20) NOT NULL DEFAULT 'ACTIVE',
     PublishedDate DATE NULL,
-    Weight DECIMAL(10,2) NOT NULL,
-    RejectReason NVARCHAR(255) NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_Products_Shop      FOREIGN KEY (ShopID)      REFERENCES Shops(ShopID),
-    CONSTRAINT FK_Products_Publisher FOREIGN KEY (PublisherID) REFERENCES Publishers(PublisherID)
+    Weight DECIMAL
+    (10,2) NOT NULL,
+    RejectReason NVARCHAR
+    (255) NULL,
+    CreatedAt DATETIME2
+    (6) NOT NULL DEFAULT SYSUTCDATETIME
+    (),
+    CONSTRAINT FK_Products_Shop      FOREIGN KEY
+    (ShopID)      REFERENCES Shops
+    (ShopID),
+    CONSTRAINT FK_Products_Publisher FOREIGN KEY
+    (PublisherID) REFERENCES Publishers
+    (PublisherID)
 );
 
 CREATE TABLE ProductCategory
 (
     ProductID BIGINT NOT NULL,
     CategoryID BIGINT NOT NULL,
+    IsPrimary BIT NOT NULL DEFAULT 0,
     CONSTRAINT PK_ProductCategory PRIMARY KEY (ProductID, CategoryID),
     CONSTRAINT FK_ProductCategory_Product  FOREIGN KEY (ProductID)  REFERENCES Products(ProductID),
     CONSTRAINT FK_ProductCategory_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID)
@@ -215,64 +227,44 @@ CREATE TABLE UserVouchers
     CONSTRAINT FK_UserVouchers_User    FOREIGN KEY (UserID)    REFERENCES Users(UserID)
 );
 
-CREATE TABLE Orders
+CREATE TABLE Payments
 (
-    OrderID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    UserID BIGINT NOT NULL,
-    Address NVARCHAR(255) NOT NULL DEFAULT N'',
-    VoucherDiscountID BIGINT NULL,
-    -- voucher giảm giá hệ thống
-    VoucherShipID BIGINT NULL,
-    -- voucher freeship hệ thống
-    TotalAmount DECIMAL(12,2) NOT NULL,
-    -- tổng tiền hàng
-    DiscountAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    -- giảm giá từ voucher/khuyến mãi
-    TotalShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
-    -- phí giao hàng gốc
-    ShippingDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    -- giảm phí ship (voucher freeship)
-    FinalAmount DECIMAL(12,2) NOT NULL,
-    -- tổng tiền cuối cùng, backend tự tính
-    OrderStatus NVARCHAR(20) NOT NULL,
-    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
+    PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Amount DECIMAL(12,2) NOT NULL,
+    RefundedAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    TransactionRef NVARCHAR(100) NOT NULL,
+    Status NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    DeliveredAt DATETIME2(6) NULL,
-    CancelledAt DATETIME2(6) NULL,
-    CONSTRAINT FK_Orders_User FOREIGN KEY (UserID) REFERENCES Users(UserID),
-    CONSTRAINT FK_Orders_VoucherDiscount FOREIGN KEY (VoucherDiscountID) REFERENCES Vouchers(VoucherID),
-    CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID)
+    UpdatedAt DATETIME2(6) NULL
 );
-
-SELECT *
-FROM OrderShops
 
 CREATE TABLE OrderShops
 (
     OrderShopID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    OrderID BIGINT NOT NULL,
+    UserID BIGINT NOT NULL,
     ShopID BIGINT NOT NULL,
-    VoucherID BIGINT NULL,
-    -- voucher của shop (nếu có)
+    PaymentID BIGINT NOT NULL,
+    Address NVARCHAR(255) NOT NULL DEFAULT N'',
+    VoucherShopID BIGINT NULL,
+    VoucherDiscountID BIGINT NULL,
+    VoucherShipID BIGINT NULL,
     Subtotal DECIMAL(12,2) NOT NULL,
-    -- tổng tiền hàng của shop
-    Discount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    -- giảm giá của shop
-    TotalShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
-    -- phí ship riêng (nếu cần)
-    FinalAmount DECIMAL(12,2) NOT NULL,
-    -- backend tự tính
-    [Status] NVARCHAR(20) NOT NULL,
-    --  PENDING,SHIPPING, WAITING_SHIP,  COMPLETED, CANCELLED , RETURNED
+    ShopDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    SystemDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    ShippingFee DECIMAL(12,2) NOT NULL DEFAULT 0,
     SystemShippingDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    SystemVoucherDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    UpdateAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+    FinalAmount DECIMAL(12,2) NOT NULL,
+    [Status] NVARCHAR(20) NOT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedAt DATETIME2(6) NULL,
     CancelReason NVARCHAR(255) NULL,
     ReturnReason NVARCHAR(255) NULL,
-    CONSTRAINT FK_OrderShops_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
-    CONSTRAINT FK_OrderShops_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
-    CONSTRAINT FK_OrderShops_Voucher FOREIGN KEY (VoucherID) REFERENCES Vouchers(VoucherID)
+    CONSTRAINT FK_Orders_User FOREIGN KEY (UserID) REFERENCES Users(UserID),
+    CONSTRAINT FK_Orders_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID),
+    CONSTRAINT FK_Orders_VoucherShop FOREIGN KEY (VoucherShopID) REFERENCES Vouchers(VoucherID),
+    CONSTRAINT FK_Orders_VoucherDiscount FOREIGN KEY (VoucherDiscountID) REFERENCES Vouchers(VoucherID),
+    CONSTRAINT FK_Orders_VoucherShip FOREIGN KEY (VoucherShipID) REFERENCES Vouchers(VoucherID),
+    CONSTRAINT FK_OrderShops_Payment FOREIGN KEY (PaymentID) REFERENCES Payments(PaymentID)
 );
 
 CREATE TABLE OrderItems
@@ -290,6 +282,7 @@ CREATE TABLE OrderItems
     CONSTRAINT FK_OrderItems_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID),
     CONSTRAINT FK_OrderItems_Flash     FOREIGN KEY (FlashSaleItemID) REFERENCES FlashSaleItems(FlashSaleItemID)
 );
+
 CREATE TABLE FlashSales
 (
     FlashSaleID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -297,7 +290,7 @@ CREATE TABLE FlashSales
     StartAt DATETIME2(6) NOT NULL,
     EndAt DATETIME2(6) NOT NULL,
     [Status] NVARCHAR(20) NOT NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
+    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
 CREATE TABLE FlashSaleItems
@@ -310,52 +303,10 @@ CREATE TABLE FlashSaleItems
     FsStock INT NOT NULL,
     PerUserLimit INT NULL,
     ApprovalStatus NVARCHAR(20) NOT NULL,
+    SoldCount BIGINT NOT NULL DEFAULT 0,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_FSI_FlashSale FOREIGN KEY (FlashSaleID) REFERENCES FlashSales(FlashSaleID),
     CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
-);
-
-
-CREATE TABLE Payments
-(
-    PaymentID BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    OrderID BIGINT NOT NULL UNIQUE,
-    Amount DECIMAL(12,2) NOT NULL,
-    RefundedAmount DECIMAL(12,2) NOT NULL DEFAULT 0,
-    TransactionRef NVARCHAR(100) NOT NULL,
-    Status NVARCHAR(20) NOT NULL,
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_Payments_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
-);
-
-
-
--- Bảng lưu số dư của admin/shop
-CREATE TABLE AccountBalances
-(
-    AccountID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    OwnerType NVARCHAR(20) NOT NULL CHECK (OwnerType IN ('ADMIN', 'SHOP')),
-    OwnerID BIGINT NULL,
-    -- NULL nếu là ADMIN, chứa ShopID nếu là SHOP
-    Balance DECIMAL(18,2) NOT NULL DEFAULT 0,
-    CONSTRAINT FK_AccountBalances_Shop FOREIGN KEY (OwnerID) REFERENCES Shops(ShopID)
-);
-
--- Bảng ghi nhận thay đổi số dư
-CREATE TABLE BalanceChanges
-(
-    ChangeID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    AccountID BIGINT NOT NULL,
-    ChangeAmount DECIMAL(18,2) NOT NULL,
-    ActionType NVARCHAR(50) NOT NULL,
-    -- ví dụ: ORDER_PAYMENT, REFUND, BONUS
-    OrderID BIGINT NULL,
-    -- tham chiếu tới đơn hàng (nếu có)
-    TransactionRef NVARCHAR(100) NOT NULL,
-    -- mã giao dịch duy nhất
-    CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
-    CONSTRAINT FK_BalanceChanges_Account FOREIGN KEY (AccountID) REFERENCES AccountBalances(AccountID),
-    CONSTRAINT FK_BalanceChanges_Order FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
 );
 
 CREATE TABLE Reviews
@@ -394,21 +345,15 @@ CREATE TABLE Notifications
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
 
-
 INSERT INTO Roles
-    (RoleCode, RoleName)
 VALUES
     (N'CUSTOMER', N'Khách hàng'),
     (N'SELLER', N'Người bán'),
     (N'ADMIN', N'Quản trị');
 
 INSERT INTO VAT
-    (VATCode, VATRate, Description)
 VALUES
-    (N'VAT5', 5.00, N'Thuế VAT 5%');
-INSERT INTO VAT
-    (VATCode, VATRate, Description)
-VALUES
+    (N'VAT5', 5.00, N'Thuế VAT 5%'),
     (N'VAT10', 10.00, N'Thuế VAT 10%');
 
 INSERT INTO Category
@@ -438,25 +383,23 @@ VALUES
     (N'Nhà cửa', N'VAT10'),
     (N'Nghệ thuật', N'VAT10'),
     (N'Tôn giáo', N'VAT5'),
-    (N'Trinh Thám', N'VAT5');
+    (N'Trinh thám', N'VAT5');
 
 INSERT INTO FlashSales
     (Name, StartAt, EndAt, [Status])
 VALUES
-    -- 1️⃣ Đang diễn ra
-    (N'Flash Sale Halloween 2025',
-        '2025-10-20 00:00:00',
-        '2025-10-25 23:59:59',
-        'ACTIVE'),
+    (N'Flash Sale Halloween 2025', '2025-10-20 00:00:00', '2025-10-25 23:59:59', 'ACTIVE'),
+    (N'Black Friday 2025', '2025-11-29 00:00:00', '2025-11-30 23:59:59', 'SCHEDULED'),
+    (N'Flash Sale Trung Thu 2025', '2025-09-01 00:00:00', '2025-09-03 23:59:59', 'ENDED');
 
-    -- 2️⃣ Đã lên lịch (chưa bắt đầu)
-    (N'Black Friday 2025',
-        '2025-11-29 00:00:00',
-        '2025-11-30 23:59:59',
-        'SCHEDULED'),
-
-    -- 3️⃣ Đã kết thúc
-    (N'Flash Sale Trung Thu 2025',
-        '2025-09-01 00:00:00',
-        '2025-09-03 23:59:59',
-        'ENDED');
+CREATE TABLE Documents
+(
+    DocumentID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    Source NVARCHAR(100) NOT NULL,
+    SourceID BIGINT NULL,
+    Title NVARCHAR(255) NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    Embedding NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    UpdatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
+);

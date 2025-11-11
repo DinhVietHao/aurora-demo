@@ -4,7 +4,6 @@ import java.util.Date;
 
 public class Payment {
     private long paymentId;
-    private long orderId;
     private double amount;
     private double refundedAmount;
     private String transactionRef;
@@ -25,14 +24,6 @@ public class Payment {
 
     public void setPaymentId(long paymentId) {
         this.paymentId = paymentId;
-    }
-
-    public long getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(long orderId) {
-        this.orderId = orderId;
     }
 
     public double getAmount() {

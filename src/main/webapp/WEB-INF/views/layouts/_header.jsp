@@ -4,6 +4,8 @@
             <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
                 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 
+                <jsp:include page="/WEB-INF/views/layouts/_chatbot.jsp" />
+
                 <header class="header">
                     <div class="container">
                         <div class="row header-content">
@@ -47,7 +49,9 @@
                                                 <button class="header-user dropdown-toggle" type="button"
                                                     data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="bi bi-person-circle me-1"></i>
-                                                    <c:out value="${sessionScope.AUTH_USER.fullName}" />
+                                                    <span id="headerFullName">
+                                                        <c:out value="${sessionScope.AUTH_USER.fullName}" />
+                                                    </span>
                                                 </button>
                                                 <ul class="dropdown-menu dropdown-menu-end">
                                                     <li><a class="dropdown-item" href="<c:url value='/profile'/>">Thông

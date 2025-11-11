@@ -57,6 +57,14 @@ addToCartBtn.addEventListener("click", () => {
         if (cartCountBadge) {
           cartCountBadge.innerText = data.cartCount;
         }
+
+        if (data.check === "flashsale_exceeded") {
+          const modalEl = document.getElementById("flashSaleModal");
+          const flashSaleModal = new bootstrap.Modal(modalEl);
+          document.getElementById("flashSaleMessage").textContent =
+            data.messageModal;
+          flashSaleModal.show();
+        }
       } else {
         toast({
           title: data.title,
@@ -128,3 +136,184 @@ buyNow.addEventListener("click", () => {
       buyNow.innerHTML = originalText;
     });
 });
+
+// Edit review
+const editModalEl = document.getElementById("editReviewModal");
+if (editModalEl) {
+  const editModal = new bootstrap.Modal(editModalEl);
+  const editForm = document.getElementById("editReviewForm");
+  const editReviewId = document.getElementById("editReviewId");
+  const editComment = document.getElementById("editReviewComment");
+  const editFileInput = document.getElementById("editReviewImages");
+  const editPreviewContainer = document.getElementById("editPreviewImages");
+  const submitEditBtn = document.getElementById("submitEditReviewBtn");
+
+  document.body.addEventListener("click", function (e) {
+    const button = e.target.closest(".btn-open-edit-review");
+    if (button) {
+      const reviewId = button.dataset.reviewId;
+      const rating = parseInt(button.dataset.rating);
+      const comment = button.dataset.comment;
+
+      editReviewId.value = reviewId;
+      editComment.value = comment;
+
+      resetEditRatingStars();
+      const starInput = editForm.querySelector(
+        `input[name="rating"][value="${rating}"]`
+      );
+
+      if (starInput) {
+        starInput.checked = true;
+      }
+
+      editFileInput.value = "";
+      editPreviewContainer.innerHTML = "";
+
+      const reviewContainer = button.closest(".col");
+      if (reviewContainer) {
+        const oldImages = reviewContainer.querySelectorAll(
+          ".comment-review img"
+        );
+
+        oldImages.forEach((img) => {
+          const imgClone = img.cloneNode(true);
+
+          imgClone.removeAttribute("data-bs-toggle");
+          imgClone.removeAttribute("data-bs-target");
+          imgClone.removeAttribute("data-bs-slide-to");
+
+          imgClone.style.width = "80px";
+          imgClone.style.height = "80px";
+          imgClone.style.objectFit = "cover";
+          imgClone.style.borderRadius = "5px";
+          imgClone.style.cursor = "default";
+
+          imgClone.classList.add("old-review-image");
+          editPreviewContainer.appendChild(imgClone);
+        });
+      }
+    }
+  });
+
+  editFileInput.addEventListener("change", function () {
+    editPreviewContainer.innerHTML = "";
+    const files = Array.from(this.files);
+    if (files.length > 5) {
+      toast({
+        title: "Lỗi",
+        message: "Bạn chỉ được chọn tối đa 5 hình ảnh.",
+        type: "error",
+      });
+      this.value = "";
+      return;
+    }
+
+    files.forEach((file) => {
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const img = document.createElement("img");
+          img.src = e.target.result;
+          img.style.width = "80px";
+          img.style.height = "80px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "5px";
+          editPreviewContainer.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  });
+
+  editForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const selectedRating = editForm.querySelector(
+      'input[name="rating"]:checked'
+    );
+
+    if (!selectedRating) {
+      toast({
+        title: "Thiếu thông tin",
+        message: "Vui lòng chọn số sao.",
+        type: "warning",
+      });
+      return;
+    }
+
+    submitEditBtn.disabled = true;
+    submitEditBtn.innerHTML =
+      '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+
+    const formData = new FormData(editForm);
+    formData.append("action", "update");
+
+    try {
+      const res = await fetch("/review", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast({
+          title: "Thành công",
+          message: data.message,
+          type: "success",
+        });
+        editModal.hide();
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast({
+          title: "Thất bại",
+          message: data.message,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        message: "Không thể kết nối máy chủ: " + error.message,
+        type: "error",
+      });
+    } finally {
+      submitEditBtn.disabled = false;
+      submitEditBtn.innerHTML = "Lưu thay đổi";
+    }
+  });
+
+  function resetEditRatingStars() {
+    const stars = editForm.querySelectorAll('input[name="rating"]');
+    stars.forEach((star) => (star.checked = false));
+  }
+}
+
+const style = document.createElement("style");
+style.innerHTML = `
+    .rating-stars-edit { 
+        display: inline-block; 
+        direction: rtl; 
+    }
+    .rating-stars-edit input[type="radio"] { 
+        display: none; 
+    }
+    .rating-stars-edit label { 
+        font-size: 2rem; 
+        color: #ccc; 
+        cursor: pointer; 
+        transition: color 0.2s; 
+        padding: 0 0.1em; 
+    }
+    .rating-stars-edit:not(:hover) input[type="radio"]:checked ~ label,
+    .rating-stars-edit:hover input[type="radio"]:hover ~ label,
+    .rating-stars-edit input[type="radio"]:checked ~ label,
+    .rating-stars-edit input[type="radio"]:hover ~ label { 
+        color: #fcc800; 
+    }
+`;
+document.head.appendChild(style);
