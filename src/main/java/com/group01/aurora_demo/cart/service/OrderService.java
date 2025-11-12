@@ -1,7 +1,6 @@
 package com.group01.aurora_demo.cart.service;
 
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,12 +12,10 @@ import com.group01.aurora_demo.cart.dao.OrderItemDAO;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.dao.PaymentDAO;
 import com.group01.aurora_demo.cart.dao.dto.CheckoutSummaryDTO;
-import com.group01.aurora_demo.cart.dao.dto.OrderShopDTO;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.model.OrderItem;
 import com.group01.aurora_demo.cart.model.OrderShop;
 import com.group01.aurora_demo.cart.model.Payment;
-import com.group01.aurora_demo.cart.utils.OrderShopUtils;
 import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;

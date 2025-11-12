@@ -44,12 +44,27 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             window.location.href = "/cart";
           } else {
-            toast({
-              title: data.title,
-              message: data.message,
-              type: data.type,
-              duration: 4000,
-            });
+            if (
+              data.messages &&
+              Array.isArray(data.messages) &&
+              data.messages.length
+            ) {
+              data.messages.forEach((msg) => {
+                toast({
+                  title: data.title,
+                  message: msg,
+                  type: data.type,
+                  duration: 4000,
+                });
+              });
+            } else {
+              toast({
+                title: data.title,
+                message: data.message,
+                type: data.type,
+                duration: 4000,
+              });
+            }
           }
         })
         .catch((err) => {
