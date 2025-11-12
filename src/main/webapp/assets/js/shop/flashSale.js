@@ -73,22 +73,26 @@ document.addEventListener("DOMContentLoaded", () => {
       li.dataset.quantity = p.quantity || 0;
       li.dataset.price = p.salePrice || p.price || 0;
 
-      const firstCategory =
-        p.categoryNames?.split(",")[0]?.trim() || "Không phân loại";
-      const priceText = (p.salePrice || p.price || 0).toLocaleString();
+      const category = p.categoryNames || "Không phân loại";
+      const price = (p.salePrice || p.price || 0).toLocaleString();
 
       li.innerHTML = `
-        <img src="http://localhost:8080/assets/images/catalog/products/${
-          p.imageUrl || "no-image.jpg"
-        }" alt="${p.productName || ""}"
-          class="rounded border flex-shrink-0" style="width:64px;height:74px;object-fit:cover;">
-        <div class="flex-grow-1 text-start">
-          <div class="fw-semibold text-truncate">${p.productName || ""}</div>
-          <small class="text-muted">${priceText} đ</small>
-        </div>
-        <div class="text-muted">SL: ${p.quantity || 0}</div>
-        <span class="badge bg-light text-dark border">${firstCategory}</span>
-      `;
+      <img src="http://localhost:8080/assets/images/catalog/products/${
+        p.imageUrl || "no-image.jpg"
+      }" 
+        alt="${p.productName || ""}"
+        class="rounded border flex-shrink-0"
+        style="width:64px;height:74px;object-fit:cover;">
+
+      <div class="flex-grow-1 text-start">
+        <div class="fw-semibold text-truncate">${p.productName || ""}</div>
+        <small class="text-muted">${price} đ</small>
+      </div>
+
+      <div class="text-muted">SL: ${p.quantity || 0}</div>
+      <span class="badge bg-light text-dark border">${category}</span>
+    `;
+
       productList.appendChild(li);
     });
 

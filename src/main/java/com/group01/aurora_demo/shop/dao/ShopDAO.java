@@ -4,6 +4,7 @@ import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
 import com.group01.aurora_demo.shop.model.DailyRevenue;
+import com.group01.aurora_demo.shop.model.RevenueDetail;
 import com.group01.aurora_demo.shop.model.Shop;
 import java.sql.*;
 import java.time.LocalDate;
@@ -369,33 +370,196 @@ public class ShopDAO {
 
     public List<DailyRevenue> getRevenueRange(long shopId, LocalDate startDate, LocalDate endDate) {
         List<DailyRevenue> list = new ArrayList<>();
+
         String sql = """
                     SELECT
-                        CAST(CreatedAt AS DATE) AS OrderDate,
-                        SUM(FinalAmount) AS TotalRevenue
-                    FROM OrderShops
-                    WHERE ShopID = ?
-                    AND Status = 'COMPLETED'
-                    AND CreatedAt IS NOT NULL
-                    AND CreatedAt BETWEEN ? AND ?
-                    GROUP BY CAST(CreatedAt AS DATE)
+                        CAST(o.UpdatedAt AS DATE) AS OrderDate,
+                        SUM(
+                            CASE
+                                WHEN (
+                                    COALESCE(o.Subtotal, 0)
+                                    - COALESCE(o.ShopDiscount, 0)
+                                    - 3000
+                                    - COALESCE(v.TotalVAT, 0)
+                                ) < 0 THEN 0
+                                ELSE (
+                                    COALESCE(o.Subtotal, 0)
+                                    - COALESCE(o.ShopDiscount, 0)
+                                    - 3000
+                                    - COALESCE(v.TotalVAT, 0)
+                                )
+                            END
+                        ) AS TotalRevenue
+                    FROM OrderShops o
+                    LEFT JOIN (
+                        SELECT
+                            oi.OrderShopID,
+                            SUM(oi.Subtotal * oi.VATRate / 100.0) AS TotalVAT
+                        FROM OrderItems oi
+                        GROUP BY oi.OrderShopID
+                    ) v ON o.OrderShopID = v.OrderShopID
+                    WHERE o.ShopID = ?
+                      AND o.Status = 'COMPLETED'
+                      AND o.UpdatedAt BETWEEN ? AND ?
+                    GROUP BY CAST(o.UpdatedAt AS DATE)
                     ORDER BY OrderDate;
                 """;
-        try (Connection conn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = conn.prepareStatement(sql);
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, shopId);
-            ps.setTimestamp(2, java.sql.Timestamp.valueOf(startDate.atStartOfDay()));
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf(endDate.atTime(23, 59, 59, 999_000_000)));
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                DailyRevenue dr = new DailyRevenue();
-                dr.setDate(rs.getDate("OrderDate"));
-                dr.setRevenue(rs.getDouble("TotalRevenue"));
-                list.add(dr);
+            ps.setTimestamp(2, Timestamp.valueOf(startDate.atStartOfDay()));
+            ps.setTimestamp(3, Timestamp.valueOf(endDate.atTime(23, 59, 59, 999_000_000)));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    DailyRevenue dr = new DailyRevenue();
+                    dr.setDate(rs.getDate("OrderDate"));
+                    dr.setRevenue(rs.getDouble("TotalRevenue"));
+                    list.add(dr);
+                }
             }
-        } catch (Exception e) {
-            System.out.println("[ERROR] ShopDAO.getRevenueRange: " + e.getMessage());
+
+        } catch (SQLException e) {
+            System.err.println("[ERROR] getRevenueRange: " + e.getMessage());
         }
+
+        return list;
+    }
+
+    public double getTotalRevenueByRange(long shopId, LocalDate startDate, LocalDate endDate) {
+        double totalRevenue = 0.0;
+
+        String sql = """
+                    SELECT
+                        SUM(
+                            CASE
+                                WHEN (
+                                    COALESCE(o.Subtotal, 0)
+                                    - COALESCE(o.ShopDiscount, 0)
+                                    - 3000
+                                    - COALESCE(v.TotalVAT, 0)
+                                ) < 0 THEN 0
+                                ELSE (
+                                    COALESCE(o.Subtotal, 0)
+                                    - COALESCE(o.ShopDiscount, 0)
+                                    - 3000
+                                    - COALESCE(v.TotalVAT, 0)
+                                )
+                            END
+                        ) AS TotalRevenue
+                    FROM OrderShops o
+                    LEFT JOIN (
+                        SELECT
+                            oi.OrderShopID,
+                            SUM(oi.Subtotal * oi.VATRate / 100.0) AS TotalVAT
+                        FROM OrderItems oi
+                        GROUP BY oi.OrderShopID
+                    ) v ON o.OrderShopID = v.OrderShopID
+                    WHERE o.ShopID = ?
+                      AND o.Status = 'COMPLETED'
+                      AND o.UpdatedAt BETWEEN ? AND ?
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setTimestamp(2, Timestamp.valueOf(startDate.atStartOfDay()));
+            ps.setTimestamp(3, Timestamp.valueOf(endDate.atTime(23, 59, 59, 999_000_000)));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    totalRevenue = rs.getDouble("TotalRevenue");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return totalRevenue;
+    }
+
+    public List<RevenueDetail> getRevenueDetails(long shopId, LocalDate startDate, LocalDate endDate) {
+        List<RevenueDetail> list = new ArrayList<>();
+
+        String sql = """
+                SELECT
+                    o.OrderShopID,
+                    o.OrderShopID AS OrderCode,
+                    o.UpdatedAt AS CompletedAt,
+                    o.Subtotal,
+                    o.ShopDiscount,
+                    o.ShippingFee,
+                    o.FinalAmount,
+                    u.FullName AS CustomerName,
+                    COALESCE(v.TotalVAT, 0) AS TotalVAT,
+                    (SELECT COUNT(*) FROM OrderItems WHERE OrderShopID = o.OrderShopID) AS ItemCount,
+                    CASE
+                        WHEN (
+                            COALESCE(o.Subtotal, 0)
+                            - COALESCE(o.ShopDiscount, 0)
+                            - COALESCE(v.TotalVAT, 0)
+                            - 3000
+                        ) < 0 THEN 0
+                        ELSE (
+                            COALESCE(o.Subtotal, 0)
+                            - COALESCE(o.ShopDiscount, 0)
+                            - COALESCE(v.TotalVAT, 0)
+                            - 3000
+                        )
+                    END AS ShopRevenue
+                FROM OrderShops o
+                INNER JOIN Users u ON o.UserID = u.UserID
+                LEFT JOIN (
+                    SELECT
+                        oi.OrderShopID,
+                        SUM(oi.Subtotal * oi.VATRate / 100.0) AS TotalVAT
+                    FROM OrderItems oi
+                    GROUP BY oi.OrderShopID
+                ) v ON o.OrderShopID = v.OrderShopID
+                WHERE o.ShopID = ?
+                  AND o.Status = 'COMPLETED'
+                  AND o.UpdatedAt BETWEEN ? AND ?
+                ORDER BY o.UpdatedAt DESC
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, shopId);
+            ps.setTimestamp(2, Timestamp.valueOf(startDate.atStartOfDay()));
+            ps.setTimestamp(3, Timestamp.valueOf(endDate.atTime(23, 59, 59, 999_000_000)));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    RevenueDetail detail = new RevenueDetail();
+                    detail.setOrderShopId(rs.getLong("OrderShopID"));
+                    detail.setOrderCode(rs.getString("OrderCode"));
+                    detail.setCompletedAt(rs.getTimestamp("CompletedAt"));
+                    detail.setSubtotal(rs.getDouble("Subtotal"));
+                    detail.setShopDiscount(rs.getDouble("ShopDiscount"));
+                    detail.setShippingFee(rs.getDouble("ShippingFee"));
+                    detail.setFinalAmount(rs.getDouble("FinalAmount"));
+                    detail.setCustomerName(rs.getString("CustomerName"));
+                    detail.setTotalVAT(rs.getDouble("TotalVAT"));
+                    detail.setItemCount(rs.getInt("ItemCount"));
+                    detail.setShopRevenue(rs.getDouble("ShopRevenue"));
+
+                    detail.setSystemDiscount(0);
+                    detail.setSystemShippingDiscount(0);
+
+                    list.add(detail);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ERROR] getRevenueDetails: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         return list;
     }
 

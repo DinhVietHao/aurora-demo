@@ -10,7 +10,7 @@
             <head>
                 <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
                 <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
-                <link rel="stylesheet" href="${ctx}/assets/css/shop/bookDetail.css?v=1.0.2" />
+                <link rel="stylesheet" href="${ctx}/assets/css/shop/bookDetail.css?v=1.0.3" />
             </head>
 
             <body>
@@ -79,6 +79,38 @@
                                         </span>
                                     </c:if>
                                 </div>
+
+                                <!-- =============== TRẠNG THÁI SẢN PHẨM =============== -->
+                                <c:if test="${product.status == 'REJECTED'}">
+                                    <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                                        <i class="bi bi-x-circle-fill me-2 fs-5"></i>
+                                        <div>
+                                            <strong>Sản phẩm bị từ chối</strong>
+                                            <br />
+                                            <span class="text-muted">Lý do:
+                                                <c:choose>
+                                                    <c:when test="${not empty product.rejectReason}">
+                                                        <c:out value="${product.rejectReason}" />
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        Không có lý do cụ thể
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </c:if>
+
+                                <c:if test="${product.status == 'PENDING'}">
+                                    <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                                        <i class="bi bi-clock-history me-2 fs-5"></i>
+                                        <div>
+                                            <strong>Sản phẩm đang chờ duyệt</strong>
+                                            <br />
+                                            <span class="text-muted">Sản phẩm của bạn đang được xem xét bởi admin</span>
+                                        </div>
+                                    </div>
+                                </c:if>
                             </div>
 
                             <!-- =============== THÔNG TIN CHI TIẾT =============== -->
@@ -149,20 +181,24 @@
                             </div>
 
                             <!-- =============== THANH TIẾN ĐỘ =============== -->
-                            <div class="progress-box">
-                                <div class="progress">
-                                    <div class="progress-bar"
-                                        style="width: ${product.quantity != null && product.quantity > 0 ? (product.soldCount * 100 / product.quantity) : 0}%;">
+                            <!-- Chỉ hiển thị khi status không phải PENDING hoặc REJECTED -->
+                            <c:if test="${product.status != 'PENDING' && product.status != 'REJECTED'}">
+                                <div class="progress-box">
+                                    <div class="progress">
+                                        <div class="progress-bar"
+                                            style="width: ${product.quantity != null && product.quantity > 0 ? (product.soldCount * 100 / (product.quantity + product.soldCount)) : 0}%;">
+                                        </div>
+                                    </div>
+                                    <div class="progress-label">
+                                        Đã bán <b>${product.soldCount}</b> / <b>${product.quantity +
+                                            product.soldCount}</b>
+                                        sản phẩm (
+                                        <fmt:formatNumber
+                                            value="${product.quantity > 0 ? (product.soldCount * 100 / (product.quantity + product.soldCount)) : 0}"
+                                            maxFractionDigits="0" />%)
                                     </div>
                                 </div>
-                                <div class="progress-label">
-                                    Đã bán <b>${product.soldCount}</b> / <b>${product.quantity + product.soldCount}</b>
-                                    sản phẩm (
-                                    <fmt:formatNumber
-                                        value="${product.quantity > 0 ? (product.soldCount * 100 / (product.quantity + product.soldCount)) : 0}"
-                                        maxFractionDigits="0" />%)
-                                </div>
-                            </div>
+                            </c:if>
                         </div>
                     </div>
                 </div>

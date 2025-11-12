@@ -11,7 +11,7 @@
                 <head>
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.2">
                 </head>
 
                 <body class="sb-nav-fixed" data-page="shop-products">
@@ -244,6 +244,15 @@
                                                                 </button>
                                                                 <c:choose>
                                                                     <c:when test="${p.status eq 'ACTIVE'}">
+                                                                        <button
+                                                                            class="btn btn-sm btn-outline-warning me-1"
+                                                                            title="Ngừng bán" data-bs-toggle="modal"
+                                                                            data-bs-target="#confirmDeactivateModal"
+                                                                            onclick="setDeactivateModal('${p.productId}', '${fn:escapeXml(p.title)}')">
+                                                                            <i class="bi bi-slash-circle"></i>
+                                                                        </button>
+                                                                    </c:when>
+                                                                    <c:when test="${p.status eq 'OUT_OF_STOCK'}">
                                                                         <button
                                                                             class="btn btn-sm btn-outline-warning me-1"
                                                                             title="Ngừng bán" data-bs-toggle="modal"
@@ -1291,7 +1300,7 @@
 
                     <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                     <script src="${ctx}/assets/js/shop/datatables-simple-demo.js"></script>
-                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.1"></script>
+                    <script src="${ctx}/assets/js/shop/productManagement.js?v=1.0.2"></script>
                     <script src="${ctx}/assets/js/shop/productManage.js?v=1.0.2"></script>
                     <script>
                         function setDeactivateModal(productId, productName) {

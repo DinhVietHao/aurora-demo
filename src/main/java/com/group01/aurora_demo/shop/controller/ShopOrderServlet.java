@@ -72,7 +72,6 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
                             if ("COMPLETED".equalsIgnoreCase(orderShop.getStatus())) {
                                 Date completedDate = orderShop.getUpdatedAt();
                                 if (completedDate != null) {
-                                    // 🔹 Chuyển Date -> LocalDateTime
                                     LocalDateTime completedAt = completedDate.toInstant()
                                             .atZone(ZoneId.systemDefault())
                                             .toLocalDateTime();
@@ -82,14 +81,16 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
                                     long remainHours = 168 - hoursPassed;
 
                                     double totalPrice = orderShop.getSubtotal();
+                                    double AmoutShopreceived = orderShop.getSubtotal() + orderShop.getShippingFee()
+                                            - orderShop.getShopDiscount();
                                     double shipFee = orderShop.getShippingFee();
                                     double voucherShop = orderShop.getShopDiscount();
                                     double platformFee = 3000;
                                     double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
 
                                     if (hoursPassed >= 168) {
-                                        double receivedAmount = totalPrice + shipFee - voucherShop - platformFee
-                                                - totalVAT;
+                                        double receivedAmount = totalPrice - shipFee - voucherShop - platformFee
+                                                - totalVAT + shipFee;
                                         if (receivedAmount < 0)
                                             receivedAmount = 0;
 
@@ -103,6 +104,7 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
                                         request.setAttribute("remainHours", remainH);
                                         request.setAttribute("isReceived", false);
                                     }
+                                    request.setAttribute("AmoutShopreceived", AmoutShopreceived);
                                     request.setAttribute("totalPrice", totalPrice);
                                     request.setAttribute("shipFee", shipFee);
                                     request.setAttribute("voucherShop", voucherShop);
@@ -239,9 +241,8 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
 
 //                     if (updated) {
 
-//                         Set<String> notifiableStatuses = Set.of(
-//                                 "CONFIRM", "SHIPPING", "COMPLETED",
-//                                 "CANCELLED", "RETURNED", "RETURNED_REJECTED", "WAITING_SHIP");
+                        Set<String> notifiableStatuses = Set.of(
+                                "CONFIRM", "CANCELLED", "RETURNED", "RETURNED_REJECTED");
 
 //                         boolean shouldSendEmail = notifiableStatuses
 //                                 .contains(newStatus != null ? newStatus.toUpperCase() : "");
@@ -254,85 +255,73 @@ import com.group01.aurora_demo.shop.dao.ShopDAO;
                                 String customerEmail = orderShop.getUser().getEmail();
                                 String customerName = orderShop.getUser().getFullName();
 
-//                                 String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
-//                                 String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);
-//                                 emailService.sendHtml(customerEmail, subject, html);
+                                String subject = "Cập nhật đơn hàng #" + orderShopId + " - Aurora";
+                                String html = renderOrderStatusEmail(customerName, orderShopId, newStatus);
+                                emailService.sendHtml(customerEmail, subject, html);
 
-//                             } catch (Exception ex) {
-//                                 ex.printStackTrace();
-//                                 request.setAttribute("errorMessage",
-//                                         "⚠️ Không thể gửi email xác nhận đơn hàng: " + ex.getMessage());
-//                             }
-//                         }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                request.setAttribute("errorMessage",
+                                        "⚠️ Không thể gửi email xác nhận đơn hàng: " + ex.getMessage());
+                            }
+                        }
 
-//                         request.setAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
-//                     } else {
-//                         request.setAttribute("errorMessage", "Không thể cập nhật trạng thái đơn hàng!");
-//                     }
-//                     if (newStatus.equals("RETURNED_REJECTED")) {
-//                         newStatus = "RETURNED";
-//                     }
-//                     request.setAttribute("status", newStatus);
-//                     response.sendRedirect(request.getContextPath() + "/shop/orders?status=" + newStatus);
-//                     break;
-//             }
+                        request.setAttribute("successMessage", "Cập nhật trạng thái đơn hàng thành công!");
+                    } else {
+                        request.setAttribute("errorMessage", "Không thể cập nhật trạng thái đơn hàng!");
+                    }
+                    if (newStatus.equals("RETURNED_REJECTED")) {
+                        newStatus = "RETURNED";
+                    }
+                    request.setAttribute("status", newStatus);
+                    response.sendRedirect(request.getContextPath() + "/shop/orders?status=" + newStatus);
+                    break;
+            }
 
-//         } catch (Exception e) {
-//             e.printStackTrace();
-//             request.setAttribute("errorMessage", "Lỗi xử lý yêu cầu: " + e.getMessage());
-//             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request, response);
-//         }
-//     }
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Lỗi xử lý yêu cầu: " + e.getMessage());
+            request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request, response);
+        }
+    }
 
-//     private String renderOrderStatusEmail(String name, long orderId, String status) {
-//         String statusLabel;
-//         String message;
+    private String renderOrderStatusEmail(String name, long orderId, String status) {
+        String statusLabel;
+        String message;
 
-//         switch (status.toUpperCase()) {
-//             case "CONFIRM" -> {
-//                 statusLabel = "Đơn hàng đang chờ xác nhận của bạn";
-//                 message = "Đơn hàng của bạn đã được người bán xác nhận. Chúng tôi đang đợi bạn xác nhận đơn hàng được giao thành công.";
-//             }
-//             case "SHIPPING" -> {
-//                 statusLabel = "Đơn hàng đã giao cho đơn vị vận chuyển";
-//                 message = "Đơn hàng của bạn đã giao cho đơn vị vận chuyển, chúng tôi sẽ giao đơn hàng cho bạn sớm nhất có thể!";
-//             }
-//             case "WAITING_SHIP" -> {
-//                 statusLabel = "Đơn hàng đang được giao";
-//                 message = "Đơn hàng của bạn đang trên đường đến địa chỉ nhận. Hãy chuẩn bị để nhận hàng nhé!";
-//             }
-//             case "COMPLETED" -> {
-//                 statusLabel = "Đơn hàng đã hoàn tất";
-//                 message = "Cảm ơn bạn đã tin tưởng Aurora! Rất mong sớm được phục vụ bạn trong những lần mua sắm tiếp theo.";
-//             }
-//             case "CANCELLED" -> {
-//                 statusLabel = "Đơn hàng đã bị hủy";
-//                 message = "Rất tiếc, đơn hàng của bạn đã bị hủy. Nếu đây là sự nhầm lẫn, bạn có thể đặt lại bất cứ lúc nào.";
-//             }
-//             case "RETURNED" -> {
-//                 statusLabel = "Xác nhận trả hàng thành công";
-//                 message = "Chúng tôi đã xác nhận yêu cầu trả hàng của bạn. Sản phẩm sẽ được xử lý hoàn trả theo chính sách của Aurora.";
-//             }
-//             case "RETURNED_REJECTED" -> {
-//                 statusLabel = "Yêu cầu trả hàng bị từ chối";
-//                 message = "Rất tiếc, yêu cầu trả hàng của bạn không được chấp nhận. Vui lòng liên hệ chủ shop để biết thêm chi tiết.";
-//             }
-//             default -> {
-//                 statusLabel = "Đơn hàng đang được xử lý";
-//                 message = "Đơn hàng của bạn hiện đang được xử lý. Chúng tôi sẽ thông báo cho bạn ngay khi có cập nhật mới.";
-//             }
-//         }
+        switch (status.toUpperCase()) {
+            case "CONFIRM" -> {
+                statusLabel = "Đơn hàng đang chờ xác nhận của bạn";
+                message = "Đơn hàng của bạn đã được người bán xác nhận. Chúng tôi đang đợi bạn xác nhận đơn hàng được giao thành công.";
+            }
+            case "CANCELLED" -> {
+                statusLabel = "Đơn hàng đã bị hủy";
+                message = "Rất tiếc, đơn hàng của bạn đã bị hủy. Nếu đây là sự nhầm lẫn, bạn có thể đặt lại bất cứ lúc nào.";
+            }
+            case "RETURNED" -> {
+                statusLabel = "Xác nhận trả hàng thành công";
+                message = "Chúng tôi đã xác nhận yêu cầu trả hàng của bạn. Sản phẩm sẽ được xử lý hoàn trả theo chính sách của Aurora.";
+            }
+            case "RETURNED_REJECTED" -> {
+                statusLabel = "Yêu cầu trả hàng bị từ chối";
+                message = "Rất tiếc, yêu cầu trả hàng của bạn không được chấp nhận. Vui lòng liên hệ chủ shop để biết thêm chi tiết.";
+            }
+            default -> {
+                statusLabel = "Đơn hàng đang được xử lý";
+                message = "Đơn hàng của bạn hiện đang được xử lý. Chúng tôi sẽ thông báo cho bạn ngay khi có cập nhật mới.";
+            }
+        }
 
-//         return """
-//                     <div style="font-family:Arial,sans-serif; color:#333; line-height:1.6;">
-//                         <h2>Xin chào %s,</h2>
-//                         <p>Đơn hàng <b>#%d</b> của bạn đã được cập nhật trạng thái:</p>
-//                         <h3 style="color:#007bff;">%s</h3>
-//                         <p>%s</p>
-//                         <p style="margin-top:20px;">Cảm ơn bạn đã mua sắm tại <b>Aurora</b>.</p>
-//                         <p>Trân trọng,<br/>Đội ngũ Aurora</p>
-//                     </div>
-//                 """.formatted(name, orderId, statusLabel, message);
-//     }
+        return """
+                    <div style="font-family:Arial,sans-serif; color:#333; line-height:1.6;">
+                        <h2>Xin chào %s,</h2>
+                        <p>Đơn hàng <b>#%d</b> của bạn đã được cập nhật trạng thái:</p>
+                        <h3 style="color:#007bff;">%s</h3>
+                        <p>%s</p>
+                        <p style="margin-top:20px;">Cảm ơn bạn đã mua sắm tại <b>Aurora</b>.</p>
+                        <p>Trân trọng,<br/>Đội ngũ Aurora</p>
+                    </div>
+                """.formatted(name, orderId, statusLabel, message);
+    }
 
-// }
+}

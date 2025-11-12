@@ -47,19 +47,22 @@
                                         <div class="col-xl-3 col-md-6">
                                             <div class="card stats-card stats-card-primary mb-4">
                                                 <div class="card-body">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="stats-icon">
-                                                            <i class="bi bi-graph-up"></i>
-                                                        </div>
-                                                        <div class="ms-3">
-                                                            <div class="stats-label">Tổng doanh thu</div>
-                                                            <div class="stats-value">
-                                                                <fmt:formatNumber value="${shop.totalRevenue}"
-                                                                    type="currency" currencySymbol="₫"
-                                                                    maxFractionDigits="0" groupingUsed="true" />
+                                                    <a href="${ctx}/shop?action=revenueHistory&startDate=${startDate}&endDate=${endDate}"
+                                                        class="text-decoration-none">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="stats-icon">
+                                                                <i class="bi bi-graph-up"></i>
+                                                            </div>
+                                                            <div class="ms-3">
+                                                                <div class="stats-label text-light">Tổng doanh thu</div>
+                                                                <div class="stats-value text-light">
+                                                                    <fmt:formatNumber value="${totalRevenue}"
+                                                                        type="currency" currencySymbol="₫"
+                                                                        maxFractionDigits="0" groupingUsed="true" />
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>

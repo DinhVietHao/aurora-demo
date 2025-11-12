@@ -45,7 +45,7 @@
                                                         role="alert">
                                                         <i class="bi bi-check2-circle fs-4 me-2"></i>
                                                         <div>
-                                                            <strong>Shop đã nhận được:</strong>
+                                                            <strong>💰 Tổng doanh thu: </strong>
                                                             <span class="fs-5 text-success fw-bold">
                                                                 <fmt:formatNumber value="${receivedAmount}"
                                                                     pattern="#,##0" /> ₫
@@ -88,7 +88,10 @@
                                                         <p><strong>Phí VAT trừ:</strong> -
                                                             <fmt:formatNumber value="${totalVAT}" pattern="#,##0" /> ₫
                                                         </p>
-                                                        <p><strong>Phí vận chuyển:</strong> +
+                                                        <p><strong>Phí vận chuyển của khách hàng:</strong> +
+                                                            <fmt:formatNumber value="${shipFee}" pattern="#,##0" /> ₫
+                                                        </p>
+                                                        <p><strong>Phí vận chuyển đưa cho shipper:</strong> -
                                                             <fmt:formatNumber value="${shipFee}" pattern="#,##0" /> ₫
                                                         </p>
                                                         <p><strong>Voucher shop:</strong> -
@@ -100,10 +103,6 @@
                                                             ₫
                                                         </p>
                                                         <hr>
-                                                        <h5 class="text-success fw-bold">💰 Tổng doanh thu thực nhận:
-                                                            <fmt:formatNumber value="${receivedAmount}"
-                                                                pattern="#,##0" /> ₫
-                                                        </h5>
                                                     </div>
                                                 </c:when>
 

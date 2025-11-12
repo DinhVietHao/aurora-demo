@@ -676,7 +676,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then((data) => {
           console.log("🟢 [DEBUG] Raw JSON data:", data);
-          const { product, updateMode } = data || {};
+          const { product, updateMode, status } = data || {};
 
           if (!product) {
             console.warn("⚠️ [DEBUG] product is null/undefined in response");
@@ -691,7 +691,8 @@ document.addEventListener("DOMContentLoaded", () => {
             "🟢 [DEBUG] Calling handleUpdateMode, mode =",
             updateMode
           );
-          handleUpdateMode(updateMode);
+          handleUpdateMode(updateMode, status);
+
           const hiddenMode = document.getElementById("updateMode");
           if (hiddenMode) hiddenMode.value = updateMode || "";
         })
@@ -802,8 +803,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function handleUpdateMode(mode) {
-    console.debug("[DEBUG] handleUpdateMode() mode =", mode);
+  function handleUpdateMode(mode, status) {
+    console.debug(
+      "[DEBUG] handleUpdateMode() mode =",
+      mode,
+      "status =",
+      status
+    );
 
     const modalSelector = "#updateProductModal";
     const formControls = Array.from(
@@ -836,23 +842,37 @@ document.addEventListener("DOMContentLoaded", () => {
         .forEach((b) => (b.disabled = !enabled));
     }
 
-    // --- Reset form: enable all first ---
+    // --- Reset all controls to enabled ---
     formControls.forEach((el) => (el.disabled = false));
     if (submitBtn) submitBtn.disabled = false;
     setPreviewEnabled(true);
     setAuthorRemoveEnabled(true);
 
-    // --- Apply mode rules ---
+    // --- Apply mode logic ---
+    if (status === "OUT_OF_STOCK") {
+      console.debug("[DEBUG] Product is OUT_OF_STOCK → disable all fields");
+      formControls.forEach((el) => (el.disabled = true));
+      setPreviewEnabled(false);
+      setAuthorRemoveEnabled(false);
+      if (submitBtn) submitBtn.disabled = true;
+
+      showNotice(
+        "Sản phẩm đã hết hàng — không thể chỉnh sửa thông tin.",
+        "danger"
+      );
+      return;
+    }
+
     if (mode === "FULL") {
       console.debug("[DEBUG] FULL mode: enable everything");
       formControls.forEach((el) => (el.disabled = false));
       setPreviewEnabled(true);
       setAuthorRemoveEnabled(true);
       if (submitBtn) submitBtn.disabled = false;
+
       showNotice("Bạn có thể chỉnh sửa toàn bộ thông tin sản phẩm.", "success");
     } else if (mode === "PARTIAL") {
       console.debug("[DEBUG] PARTIAL mode: limit some fields");
-      formControls.forEach((el) => (el.disabled = true));
 
       const allowedIds = new Set([
         "productDescriptionUpdate",
@@ -865,7 +885,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ]);
 
       formControls.forEach((el) => {
-        if (el.id && allowedIds.has(el.id)) el.disabled = false;
+        el.disabled = !(el.id && allowedIds.has(el.id));
       });
 
       setPreviewEnabled(true);
