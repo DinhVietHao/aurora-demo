@@ -193,7 +193,7 @@
                     </c:when>
                     <c:otherwise>
                       <img src="${ctx}/assets/images/branding/books.gif" alt="Books" class="flash-sale-title-badge"
-                        style="width: 12%; top: -118%;" />
+                        style="width: 12%; top: -55%;" />
                     </c:otherwise>
                   </c:choose>
                 </h4>
