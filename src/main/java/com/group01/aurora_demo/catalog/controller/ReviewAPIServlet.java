@@ -21,13 +21,30 @@ public class ReviewAPIServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        JSONObject responseData = new JSONObject();
-        try {
-            PrintWriter out = response.getWriter();
 
-            long productId = Long.parseLong(request.getParameter("productId"));
-            int page = Integer.parseInt(request.getParameter("page"));
-            int limit = Integer.parseInt(request.getParameter("limit"));
+        JSONObject responseData = new JSONObject();
+        PrintWriter out = null;
+        try {
+            out = response.getWriter();
+            String productIdParam = request.getParameter("productId");
+            String pageParam = request.getParameter("page");
+            String limitParam = request.getParameter("limit");
+            if (productIdParam == null || pageParam == null || limitParam == null) {
+                responseData.put("success", false);
+                responseData.put("message", "Missing required parameters");
+                out.print(responseData.toString());
+                return;
+            }
+
+            long productId = Long.parseLong(productIdParam);
+            int page = Integer.parseInt(pageParam);
+            int limit = Integer.parseInt(limitParam);
+            if (productId <= 0 || page <= 0 || limit <= 0 || limit > 100) {
+                responseData.put("success", false);
+                responseData.put("message", "Invalid parameter values");
+                out.print(responseData.toString());
+                return;
+            }
 
             String ratingParam = request.getParameter("rating");
             String filterParam = request.getParameter("filter");
@@ -35,9 +52,15 @@ public class ReviewAPIServlet extends HttpServlet {
             Integer filterRating = null;
             Boolean hasComment = null;
             Boolean hasImage = null;
-
             if (ratingParam != null && !ratingParam.equals("all")) {
-                filterRating = Integer.parseInt(ratingParam);
+                try {
+                    filterRating = Integer.parseInt(ratingParam);
+                    if (filterRating < 1 || filterRating > 5) {
+                        filterRating = null;
+                    }
+                } catch (NumberFormatException e) {
+                    System.err.println("[ERROR - Line 69] ReviewAPIServlet: " + e.getMessage());
+                }
             }
 
             if ("comment".equals(filterParam)) {
@@ -63,41 +86,52 @@ public class ReviewAPIServlet extends HttpServlet {
             responseData.put("totalReviews", totalReviews);
 
             out.print(responseData.toString());
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             responseData.put("success", false);
-            responseData.put("message", e.getMessage());
+            responseData.put("message", "Invalid number format: " + e.getMessage());
+            if (out != null)
+                out.print(responseData.toString());
+        } catch (Exception e) {
+            System.err.println("[ERROR - Line 101] ReviewAPIServlet: " + e.getMessage());
+            responseData.put("success", false);
+            responseData.put("message", "Internal server error: " + e.getMessage());
+            if (out != null)
+                out.print(responseData.toString());
         }
     }
 
     private JSONArray convertReviewsToJSON(List<Review> reviews) {
         JSONArray reviewsArray = new JSONArray();
-
         for (Review review : reviews) {
-            JSONObject reviewObj = new JSONObject();
-            reviewObj.put("reviewId", review.getReviewId());
-            reviewObj.put("rating", review.getRating());
-            reviewObj.put("comment", review.getComment() != null ? review.getComment() : "");
-            reviewObj.put("createdAt", dateFormat.format(review.getCreatedAt()));
+            try {
+                JSONObject reviewObj = new JSONObject();
+                reviewObj.put("reviewId", review.getReviewId());
+                reviewObj.put("rating", review.getRating());
+                reviewObj.put("comment", review.getComment() != null ? review.getComment() : "");
+                reviewObj.put("createdAt", dateFormat.format(review.getCreatedAt()));
 
-            JSONObject userObj = new JSONObject();
-            userObj.put("userId", review.getUser().getUserID());
-            userObj.put("fullName", review.getUser().getFullName());
-            userObj.put("avatarUrl", review.getUser().getAvatarUrl() != null
-                    ? review.getUser().getAvatarUrl()
-                    : "");
-            reviewObj.put("user", userObj);
+                JSONObject userObj = new JSONObject();
+                userObj.put("userId", review.getUser().getUserID());
+                userObj.put("fullName", review.getUser().getFullName());
+                userObj.put("avatarUrl", review.getUser().getAvatarUrl() != null
+                        ? review.getUser().getAvatarUrl()
+                        : "");
+                reviewObj.put("user", userObj);
 
-            JSONArray imagesArray = new JSONArray();
-            if (review.getImages() != null) {
-                for (ReviewImage img : review.getImages()) {
-                    JSONObject imgObj = new JSONObject();
-                    imgObj.put("imageId", img.getReviewImageId());
-                    imgObj.put("url", img.getUrl());
-                    imagesArray.put(imgObj);
+                JSONArray imagesArray = new JSONArray();
+                if (review.getImages() != null) {
+                    for (ReviewImage img : review.getImages()) {
+                        JSONObject imgObj = new JSONObject();
+                        imgObj.put("imageId", img.getReviewImageId());
+                        imgObj.put("url", img.getUrl());
+                        imagesArray.put(imgObj);
+                    }
                 }
+                reviewObj.put("images", imagesArray);
+                reviewsArray.put(reviewObj);
+            } catch (Exception e) {
+                System.err.println("[ERROR] Converting review to JSON: " + e.getMessage());
             }
-            reviewObj.put("images", imagesArray);
-            reviewsArray.put(reviewObj);
         }
         return reviewsArray;
     }

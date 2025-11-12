@@ -79,7 +79,7 @@ public class CheckoutService {
         if (systemVoucherDiscount != null && !systemVoucherDiscount.isEmpty()) {
             Voucher voucher = voucherDAO.getVoucherByCode(null, systemVoucherDiscount, false);
             if (voucher != null && !"SHIPPING".equalsIgnoreCase(voucher.getDiscountType())) {
-                String validation = voucherValidator.validate(voucher, remainingAfterShopDiscount, null, userId);
+                String validation = voucherValidator.validate(voucher, totalProduct, null, userId);
                 if (validation == null) {
                     systemDiscount = voucherValidator.calculateDiscount(voucher, remainingAfterShopDiscount);
                     if (voucher.getMaxAmount() > 0) {

@@ -10,18 +10,71 @@
 
       <head>
         <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
-        <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css" />
+        <link rel="stylesheet" href="${ctx}/assets/css/catalog/book_detail.css?v=1.0.1" />
         <link rel="stylesheet" href="${ctx}/assets/css/catalog/comment.css" />
       </head>
 
       <body>
         <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
+        <!-- Flash Sale Info -->
         <div class="container book-detail mt-3">
+          <c:if test="${flashSaleInfo.isFlashSale}">
+            <!-- Flash Sale Section -->
+            <div class="flash-sale-banner mb-4">
+              <div class="flash-sale-header">
+                <div class="flash-icon-wrapper">
+                  <img src="${ctx}/assets/images/branding/flash-sale-info.png" alt="Flash Sale" class="flash-icon">
+                </div>
+                <div class="flash-header-text" style="margin-left: -16%;">
+                  <h3 class="flash-title">FLASH SALE</h3>
+                  <p class="flash-subtitle">Giảm giá sốc - Hàng chất</p>
+                </div>
+
+                <!-- Price Section -->
+                <div class="flash-price-section">
+                  <div class="flash-price-wrapper">
+                    <span class="flash-price">
+                      <fmt:formatNumber value="${flashSaleInfo.flashPrice}" type="currency" currencySymbol="đ"
+                        groupingUsed="true" />
+                    </span>
+                    <span class="flash-discount-badge">-${flashSaleInfo.discountPercent}%</span>
+                  </div>
+                  <div class="original-price">
+                    <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
+                      groupingUsed="true" />
+                  </div>
+                </div>
+
+                <!-- Countdown Timer -->
+                <div class="flash-countdown-wrapper">
+                  <div class="countdown-timer" data-end-time="${flashSaleInfo.endAt.time}">
+                    <div class="time-box">
+                      <span class="time-value days">00</span>
+                      <span class="time-label">NGÀY</span>
+                    </div>
+                    <div class="time-box">
+                      <span class="time-value hours">00</span>
+                      <span class="time-label">GIỜ</span>
+                    </div>
+                    <div class="time-box">
+                      <span class="time-value minutes">00</span>
+                      <span class="time-label">PHÚT</span>
+                    </div>
+                    <div class="time-box">
+                      <span class="time-value seconds">00</span>
+                      <span class="time-label">GIÂY</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </c:if>
+
           <div class="row justify-content-evenly">
             <div class="col-md-5">
               <div class="book-detail-images">
-                <div class="product-image mb-3">
+                <div class="product-image mb-3 position-relative">
                   <c:if test="${not empty product.images}">
                     <img id="mainImage" src="${ctx}/assets/images/catalog/products/${product.images[0].url}" alt="Sách"
                       class="img-fluid border"
@@ -133,6 +186,16 @@
                 </h6>
                 <h4 class="title">
                   <c:out value="${product.title}" />
+                  <c:choose>
+                    <c:when test="${flashSaleInfo.isFlashSale}">
+                      <img src="${ctx}/assets/images/branding/flash-sale-title.gif" alt="Flash Sale"
+                        class="flash-sale-title-badge" />
+                    </c:when>
+                    <c:otherwise>
+                      <img src="${ctx}/assets/images/branding/books.gif" alt="Books" class="flash-sale-title-badge"
+                        style="width: 12%; top: -118%;" />
+                    </c:otherwise>
+                  </c:choose>
                 </h4>
 
                 <div class="mb-2 rating">
@@ -155,21 +218,36 @@
                   </span>
                 </div>
 
-                <div class="mb-3">
-                  <span class="price">
-                    <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
-                      groupingUsed="true" />
-                  </span>
-                  <c:if test="${product.discountPercent != 0}">
-                    <span class="discount">-
-                      <c:out value="${product.discountPercent}" />%
-                    </span>
-                    <span class="text-muted text-decoration-line-through">
-                      <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
-                        groupingUsed="true" />
-                    </span>
-                  </c:if>
-                </div>
+                <c:choose>
+                  <c:when test="${flashSaleInfo.isFlashSale}">
+                    <div class="mb-3">
+                      <img src="https://em-content.zobj.net/source/animated-noto-color-emoji/427/fire_1f525.gif"
+                        alt="Fire" class="fire-icon" />
+                      <span class="old-price-faded">
+                        <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
+                          groupingUsed="true" />
+                      </span>
+                    </div>
+                  </c:when>
+
+                  <c:otherwise>
+                    <div class="mb-3">
+                      <span class="price">
+                        <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
+                          groupingUsed="true" />
+                      </span>
+                      <c:if test="${product.discountPercent != 0}">
+                        <span class="discount">-
+                          <c:out value="${product.discountPercent}" />%
+                        </span>
+                        <span class="text-muted text-decoration-line-through">
+                          <fmt:formatNumber value="${product.originalPrice}" type="currency" currencySymbol="đ"
+                            groupingUsed="true" />
+                        </span>
+                      </c:if>
+                    </div>
+                  </c:otherwise>
+                </c:choose>
               </div>
 
               <!-- Thông tin chi tiết sách -->
@@ -301,36 +379,42 @@
                 </div>
 
                 <input type="hidden" id="product-id" value="${product.productId}">
-                <input type="hidden" id="context-path" value="${ctx}">
+                <input type="hidden" id="context-path" value="${empty ctx ? '' : ctx}">
 
-                <div class="col-md-9 d-flex align-items-center">
+                <div class="col-md-9 d-flex align-items-center" style="margin-bottom: 35px">
                   <div class="comment-filter">
-                    <a href="#" data-rating="all"
+                    <button type="button" data-rating="all"
                       class="button-outline ${empty selectedRating || selectedRating == 'all' ? 'active' : ''}">
                       Tất Cả
-                    </a>
-                    <a href="#" data-rating="5" class="button-outline ${selectedRating == '5' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-rating="5"
+                      class="button-outline ${selectedRating == '5' ? 'active' : ''}">
                       5 Sao
-                    </a>
-                    <a href="#" data-rating="4" class="button-outline ${selectedRating == '4' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-rating="4"
+                      class="button-outline ${selectedRating == '4' ? 'active' : ''}">
                       4 Sao
-                    </a>
-                    <a href="#" data-rating="3" class="button-outline ${selectedRating == '3' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-rating="3"
+                      class="button-outline ${selectedRating == '3' ? 'active' : ''}">
                       3 Sao
-                    </a>
-                    <a href="#" data-rating="2" class="button-outline ${selectedRating == '2' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-rating="2"
+                      class="button-outline ${selectedRating == '2' ? 'active' : ''}">
                       2 Sao
-                    </a>
-                    <a href="#" data-rating="1" class="button-outline ${selectedRating == '1' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-rating="1"
+                      class="button-outline ${selectedRating == '1' ? 'active' : ''}">
                       1 Sao
-                    </a>
-                    <a href="#" data-filter="comment"
+                    </button>
+                    <button type="button" data-filter="comment"
                       class="button-outline ${selectedFilter == 'comment' ? 'active' : ''}">
                       Có Bình Luận
-                    </a>
-                    <a href="#" data-filter="image" class="button-outline ${selectedFilter == 'image' ? 'active' : ''}">
+                    </button>
+                    <button type="button" data-filter="image"
+                      class="button-outline ${selectedFilter == 'image' ? 'active' : ''}">
                       Có Hình Ảnh
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -373,14 +457,7 @@
                                       Sửa
                                     </a>
                                   </li>
-                                  <li>
-                                    <hr class="dropdown-divider">
-                                  </li>
                                 </c:if>
-                                <li>
-                                  <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                    data-bs-target="#reportModal">Báo cáo</a>
-                                </li>
                               </ul>
                             </div>
                           </div>
@@ -625,8 +702,9 @@
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.2"></script>
-        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js"></script>
-        <script src="${ctx}/assets/js/catalog/comment.js"></script>
+        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js?v=1.0.2"></script>
+        <script src="${ctx}/assets/js/catalog/comment.js?v=1.0.2"></script>
+        <script src="${ctx}/assets/js/catalog/flash_sale_countdown.js?v=1.0.2"></script>
       </body>
 
       </html>
