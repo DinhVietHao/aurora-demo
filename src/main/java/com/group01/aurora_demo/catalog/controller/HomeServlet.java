@@ -22,7 +22,6 @@ import java.util.Map;
 public class HomeServlet extends NotificationServlet {
 
     private ProductDAO productDAO = new ProductDAO();
-    private UserDAO userDAO = new UserDAO();
     private ShopDAO shopDAO = new ShopDAO();
     private static final int LIMIT = 12;
 
@@ -102,6 +101,10 @@ public class HomeServlet extends NotificationServlet {
         request.setAttribute("authors", productDAO.getAuthors());
         request.setAttribute("publishers", productDAO.getPublishers());
         request.setAttribute("languages", productDAO.getLanguages());
+
+        Map<String, Double> priceRange = productDAO.getPriceRange();
+        request.setAttribute("minPriceDB", priceRange.get("minPrice"));
+        request.setAttribute("maxPriceDB", priceRange.get("maxPrice"));
     }
 
     private int getPage(HttpServletRequest request) {

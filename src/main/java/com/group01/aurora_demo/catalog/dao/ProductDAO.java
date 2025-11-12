@@ -343,6 +343,33 @@ public class ProductDAO {
         return 0;
     }
 
+    public Map<String, Double> getPriceRange() {
+        Map<String, Double> priceRange = new HashMap<>();
+        String sql = """
+                    SELECT
+                        MIN(SalePrice) AS MinPrice,
+                        MAX(SalePrice) AS MaxPrice
+                    FROM Products
+                    WHERE Status = 'ACTIVE'
+                """;
+        try (Connection cn = DataSourceProvider.get().getConnection()) {
+            PreparedStatement ps = cn.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                priceRange.put("minPrice", rs.getDouble("MinPrice"));
+                priceRange.put("maxPrice", rs.getDouble("MaxPrice"));
+            } else {
+                priceRange.put("minPrice", 0.0);
+                priceRange.put("maxPrice", 1000000.0);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error in getPriceRange: " + e.getMessage());
+            priceRange.put("minPrice", 0.0);
+            priceRange.put("maxPrice", 1000000.0);
+        }
+        return priceRange;
+    }
+
     public List<String> getCategories() {
         List<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT c.Name FROM Category c "
