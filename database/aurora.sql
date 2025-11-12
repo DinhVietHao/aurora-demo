@@ -255,6 +255,7 @@ CREATE TABLE OrderShops
     SystemShippingDiscount DECIMAL(12,2) NOT NULL DEFAULT 0,
     FinalAmount DECIMAL(12,2) NOT NULL,
     [Status] NVARCHAR(20) NOT NULL,
+    PlatformFee DECIMAL(12,2) NOT NULL DEFAULT 0,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     UpdatedAt DATETIME2(6) NULL,
     CancelReason NVARCHAR(255) NULL,
@@ -403,3 +404,18 @@ CREATE TABLE Documents
     CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
     UpdatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
 );
+
+CREATE TABLE [dbo].[Setting]
+(
+    [SettingID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [SettingKey] NVARCHAR(100) NOT NULL,
+    [SettingValue] NVARCHAR(MAX) NULL,
+    [Description] NVARCHAR(500) NULL,
+    [CreatedAt] DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
+    [UpdatedAt] DATETIME2(7) NULL
+);
+
+INSERT INTO [dbo].[Setting]
+    ([SettingKey], [SettingValue], [Description], [CreatedAt])
+VALUES
+    (N'Platform_fee', N'5', N'Phí sàn theo đơn hàng', SYSUTCDATETIME());

@@ -342,9 +342,15 @@ public class ShopServlet extends HttpServlet {
             List<RevenueDetail> revenueDetails = shopDAO.getRevenueDetails(shopId, startDate, endDate);
             double totalRevenue = shopDAO.getTotalRevenueByRange(shopId, startDate, endDate);
 
+            // Tính tổng phí sàn
+            double totalPlatformFee = revenueDetails.stream()
+                    .mapToDouble(RevenueDetail::getPlatformFee)
+                    .sum();
+
             request.setAttribute("shop", shop);
             request.setAttribute("revenueDetails", revenueDetails);
             request.setAttribute("totalRevenue", totalRevenue);
+            request.setAttribute("totalPlatformFee", totalPlatformFee);
             request.setAttribute("startDate", java.sql.Date.valueOf(startDate));
             request.setAttribute("endDate", java.sql.Date.valueOf(endDate));
 

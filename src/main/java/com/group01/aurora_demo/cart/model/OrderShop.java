@@ -25,6 +25,15 @@ public class OrderShop {
     private Date updatedAt;
     private String cancelReason;
     private String returnReason;
+    private double platformFee;
+
+    public double getPlatformFee() {
+        return platformFee;
+    }
+
+    public void setPlatformFee(double platformFee) {
+        this.platformFee = platformFee;
+    }
 
     private String customerName;
 

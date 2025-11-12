@@ -85,7 +85,7 @@ public class ShopOrderServlet extends HttpServlet {
                                             - orderShop.getShopDiscount();
                                     double shipFee = orderShop.getShippingFee();
                                     double voucherShop = orderShop.getShopDiscount();
-                                    double platformFee = 3000;
+                                    double platformFee = (orderShop.getSubtotal() * orderShop.getPlatformFee()) / 100;
                                     double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
 
                                     if (hoursPassed >= 168) {
