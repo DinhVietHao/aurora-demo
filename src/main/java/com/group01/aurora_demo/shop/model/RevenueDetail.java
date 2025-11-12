@@ -16,6 +16,7 @@ public class RevenueDetail {
     private double shopRevenue;
     private String customerName;
     private int itemCount;
+    private double platformFee;
 
     public Long getOrderShopId() {
         return orderShopId;
@@ -121,8 +122,11 @@ public class RevenueDetail {
         this.itemCount = itemCount;
     }
 
-    // Calculated method
     public double getPlatformFee() {
-        return 3000.0;
+        return platformFee;
+    }
+
+    public void setPlatformFee(double platformFee) {
+        this.platformFee = platformFee;
     }
 }

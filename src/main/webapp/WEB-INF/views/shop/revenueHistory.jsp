@@ -63,7 +63,7 @@
                                                                 <span class="summary-label">Tổng giá trị đơn:</span>
                                                                 <span class="summary-value text-info">
                                                                     <fmt:formatNumber
-                                                                        value="${totalRevenue + (fn:length(revenueDetails) * 3000)}"
+                                                                        value="${totalRevenue + totalPlatformFee}"
                                                                         type="currency" currencySymbol="₫"
                                                                         maxFractionDigits="0" groupingUsed="true" />
                                                                 </span>
@@ -273,8 +273,12 @@
                                                                                     </td>
                                                                                 </tr>
                                                                                 <tr>
-                                                                                    <td class="fw-bold">Phí nền tảng (cố
-                                                                                        định):</td>
+                                                                                    <td class="fw-bold">Phí nền tảng
+                                                                                        (
+                                                                                        <fmt:formatNumber
+                                                                                            value="${detail.platformFee / detail.subtotal * 100}"
+                                                                                            maxFractionDigits="2" />%):
+                                                                                    </td>
                                                                                     <td class="text-end text-info">
                                                                                         -
                                                                                         <fmt:formatNumber

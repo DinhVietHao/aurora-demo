@@ -748,6 +748,7 @@ public class OrderShopDAO {
                     os.UpdatedAt,
                     os.CancelReason,
                     os.ReturnReason,
+                    os.PlatformFee,
                     u.FullName AS CustomerName,
                     u.Email AS CustomerEmail,
                     oi.OrderItemID,
@@ -799,6 +800,7 @@ public class OrderShopDAO {
                         orderShop.setUpdatedAt(rs.getTimestamp("UpdatedAt"));
                         orderShop.setCancelReason(rs.getString("CancelReason"));
                         orderShop.setReturnReason(rs.getString("ReturnReason"));
+                        orderShop.setPlatformFee(rs.getDouble("PlatformFee"));
 
                         // User info
                         User user = new User();
@@ -1490,11 +1492,10 @@ public class OrderShopDAO {
 
         String sql = """
                 SELECT
-                    SUM(oi.Subtotal * ISNULL(v.VATRate, 0) / 100.0) AS VatAmount
+                    SUM(oi.Subtotal * ISNULL(oi.VATRate, 0) / 100.0) AS VatAmount
                 FROM OrderItems oi
                 JOIN ProductCategory pc ON oi.ProductID = pc.ProductID AND pc.IsPrimary = 1
                 JOIN Category c ON pc.CategoryID = c.CategoryID
-                JOIN VAT v ON c.VATCode = v.VATCode
                 WHERE oi.OrderShopID = ?
                 """;
 
