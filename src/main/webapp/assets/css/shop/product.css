@@ -367,3 +367,44 @@ h1 {
 .invalid-feedback {
   color: var(--color-three);
 }
+
+/* Điều chỉnh độ rộng các cột trong bảng */
+.table thead th:nth-child(1) {
+  width: 40%; /* Cột "Sách" - giảm từ mặc định xuống */
+}
+
+.table thead th:nth-child(2) {
+  width: 12%; /* Cột "Thể loại" */
+}
+
+.table thead th:nth-child(3) {
+  width: 15%; /* Cột "Giá bán" */
+}
+
+.table thead th:nth-child(4) {
+  width: 8%; /* Cột "Số lượng" */
+}
+
+.table thead th:nth-child(5) {
+  width: 10%; /* Cột "Trạng thái" */
+}
+
+.table thead th:nth-child(6) {
+  width: 15%; /* Cột "Thao tác" - tăng lên để chứa các nút */
+  min-width: 180px; /* Đảm bảo độ rộng tối thiểu */
+}
+
+/* Căn chỉnh các nút trong cột thao tác */
+.table tbody td:last-child {
+  white-space: nowrap; /* Không cho các nút xuống dòng */
+}
+
+/* Giảm khoảng cách giữa các nút */
+.table tbody td:last-child .btn {
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.table tbody td:last-child .btn:last-child {
+  margin-right: 0;
+}

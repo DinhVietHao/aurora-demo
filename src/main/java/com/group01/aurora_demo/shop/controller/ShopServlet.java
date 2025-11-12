@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.shop.model.DailyRevenue;
+import com.group01.aurora_demo.shop.model.RevenueDetail;
 import com.group01.aurora_demo.shop.model.Shop;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -96,6 +97,8 @@ public class ShopServlet extends HttpServlet {
                 shop = shopDAO.getShopByUserId(user.getId());
                 request.setAttribute("shop", shop);
                 request.getRequestDispatcher("/WEB-INF/views/shop/shop.jsp").forward(request, response);
+            } else if (action.equalsIgnoreCase("revenueHistory")) {
+                handleRevenueHistory(request, response, user);
             } else {
                 json.put("status", "ERROR");
                 json.put("message", "Action không hợp lệ.");
@@ -316,6 +319,40 @@ public class ShopServlet extends HttpServlet {
         if (minutes < 10080)
             return (minutes / 1440) + " ngày trước";
         return (minutes / 10080) + " tuần trước";
+    }
+
+    private void handleRevenueHistory(HttpServletRequest request, HttpServletResponse response, User user) {
+        try {
+            long shopId = shopDAO.getShopIdByUserId(user.getId());
+            Shop shop = shopDAO.getShopByUserId(user.getId());
+
+            LocalDate today = LocalDate.now();
+            LocalDate defaultStart = today.minusDays(6);
+            String startParam = request.getParameter("startDate");
+            String endParam = request.getParameter("endDate");
+
+            LocalDate startDate = (startParam != null && !startParam.isEmpty()) ? LocalDate.parse(startParam)
+                    : defaultStart;
+            LocalDate endDate = (endParam != null && !endParam.isEmpty()) ? LocalDate.parse(endParam) : today;
+
+            if (endDate.isAfter(today)) {
+                endDate = today;
+            }
+
+            List<RevenueDetail> revenueDetails = shopDAO.getRevenueDetails(shopId, startDate, endDate);
+            double totalRevenue = shopDAO.getTotalRevenueByRange(shopId, startDate, endDate);
+
+            request.setAttribute("shop", shop);
+            request.setAttribute("revenueDetails", revenueDetails);
+            request.setAttribute("totalRevenue", totalRevenue);
+            request.setAttribute("startDate", java.sql.Date.valueOf(startDate));
+            request.setAttribute("endDate", java.sql.Date.valueOf(endDate));
+
+            request.getRequestDispatcher("/WEB-INF/views/shop/revenueHistory.jsp").forward(request, response);
+        } catch (Exception e) {
+            System.out.println("Error in handleRevenueHistory: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void handleUpdateShopProfile(HttpServletRequest request, HttpServletResponse response, JSONObject json,

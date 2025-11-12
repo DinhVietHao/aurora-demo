@@ -1,0 +1,84 @@
+.dashboard-title {
+  color: #164e3f;
+  font-weight: 700;
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #164e3f 0%, #1a6b4f 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(22, 78, 63, 0.2);
+}
+
+.summary-card .card-body {
+  padding: 2rem;
+}
+
+.summary-item {
+  margin-bottom: 1rem;
+}
+
+.summary-label {
+  display: block;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.summary-value {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.revenue-table {
+  font-size: 0.95rem;
+}
+
+.revenue-table thead th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  padding: 1rem 0.75rem;
+}
+
+.revenue-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.revenue-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: scale(1.01);
+}
+
+.customer-info {
+  font-weight: 500;
+}
+
+.table-responsive {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.modal-body table {
+  margin-bottom: 0;
+}
+
+.modal-body table tr td:first-child {
+  width: 50%;
+}
+
+@media (max-width: 768px) {
+  .summary-card .row {
+    flex-direction: column;
+  }
+
+  .summary-card .col-md-4 {
+    margin-bottom: 1rem;
+  }
+
+  .revenue-table {
+    font-size: 0.85rem;
+  }
+}
