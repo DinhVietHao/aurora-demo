@@ -11,7 +11,7 @@
                 <head>
                     <jsp:include page="/WEB-INF/views/layouts/_head.jsp" />
                     <link rel="stylesheet" href="${ctx}/assets/css/shop/shop_products.css?v=1.0.1" />
-                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.1">
+                    <link rel="stylesheet" href="${ctx}/assets/css/shop/product.css?v=1.0.2">
                 </head>
 
                 <body class="sb-nav-fixed" data-page="shop-products">

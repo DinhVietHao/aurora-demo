@@ -72,7 +72,6 @@ public class ShopOrderServlet extends HttpServlet {
                             if ("COMPLETED".equalsIgnoreCase(orderShop.getStatus())) {
                                 Date completedDate = orderShop.getUpdatedAt();
                                 if (completedDate != null) {
-                                    // 🔹 Chuyển Date -> LocalDateTime
                                     LocalDateTime completedAt = completedDate.toInstant()
                                             .atZone(ZoneId.systemDefault())
                                             .toLocalDateTime();

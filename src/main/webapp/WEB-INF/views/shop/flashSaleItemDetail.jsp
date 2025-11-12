@@ -157,8 +157,8 @@
                         const noDataMsg = document.getElementById("noDataMessage");
 
                         // ✅ Giả sử backend render sẵn JSON labels và data
-                        // const labels = ${revenueLabelsJson != null ? revenueLabelsJson : "[]"};
-                        // const data = ${revenueValuesJson != null ? revenueValuesJson : "[]"};
+                        // const labels = ${ revenueLabelsJson != null ? revenueLabelsJson : "[]"};
+                        // const data = ${ revenueValuesJson != null ? revenueValuesJson : "[]"};
 
                         console.log("Labels:", labels);
                         console.log("Data:", data);
