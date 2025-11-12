@@ -59,7 +59,7 @@ public class UserManagementServlet extends HttpServlet {
         int pageSize = parseInt(req.getParameter("pageSize"), 10);
 
         // Fetch users based on filters
-        List<User> users;
+        // List<User> users;
         int totalUsers;
 
         if (searchKeyword.isEmpty() && status.isEmpty() && role.isEmpty()) {
