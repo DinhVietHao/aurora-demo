@@ -20,6 +20,7 @@ import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.dao.VATDao;
 import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.profile.model.Address;
@@ -38,6 +39,7 @@ public class OrderService {
     private UserVoucherDAO userVoucherDAO;
     private ProductDAO productDAO;
     private FlashSaleDAO flashSaleDAO;
+    private VATDao vatDao;
 
     public OrderService() {
         this.orderShopDAO = new OrderShopDAO();
@@ -50,6 +52,7 @@ public class OrderService {
         this.userVoucherDAO = new UserVoucherDAO();
         this.productDAO = new ProductDAO();
         this.flashSaleDAO = new FlashSaleDAO();
+        this.vatDao = new VATDao();
     }
 
     public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
@@ -225,7 +228,8 @@ public class OrderService {
                     orderItem.setOriginalPrice(item.getProduct().getOriginalPrice());
                     orderItem.setSalePrice(item.getProduct().getSalePrice());
                     orderItem.setSubtotal(item.getQuantity() * item.getProduct().getSalePrice());
-                    orderItem.setVatRate(0);
+                    double vatRate = this.vatDao.getVATRateFromPrimaryCategory(conn, item.getProduct().getProductId());
+                    orderItem.setVatRate(vatRate);
 
                     FlashSaleItem flashItem = flashSaleDAO
                             .getActiveFlashSaleItemByProduct(item.getProduct().getProductId());
