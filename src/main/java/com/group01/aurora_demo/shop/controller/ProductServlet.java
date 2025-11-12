@@ -137,6 +137,8 @@ public class ProductServlet extends HttpServlet {
                                 || "INACTIVE".equalsIgnoreCase(product.getStatus())
                                 || "REJECTED".equalsIgnoreCase(product.getStatus())) {
                             updateMode = "FULL";
+                        } else if ("OUT_OF_STOCK".equalsIgnoreCase(product.getStatus())) {
+                            updateMode = "NONE";
                         } else if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
                             if (!isInFlashSale) {
                                 updateMode = "PARTIAL";
@@ -147,6 +149,7 @@ public class ProductServlet extends HttpServlet {
                         Map<String, Object> responseData = new HashMap<>();
                         responseData.put("product", product);
                         responseData.put("updateMode", updateMode);
+                        responseData.put("status", product.getStatus());
                         Gson gson = new GsonBuilder()
                                 .registerTypeAdapter(LocalDateTime.class, new TypeAdapter<LocalDateTime>() {
                                     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
