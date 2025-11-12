@@ -1,11 +1,16 @@
 package com.group01.aurora_demo.shop.controller;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import com.group01.aurora_demo.auth.model.User;
 import com.group01.aurora_demo.cart.dao.OrderShopDAO;
 import com.group01.aurora_demo.cart.model.OrderShop;
+import com.group01.aurora_demo.catalog.model.OrderItemVATInfo;
 import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.shop.dao.ShopDAO;
 
@@ -55,10 +60,67 @@ public class ShopOrderServlet extends HttpServlet {
                             OrderShop orderShop = orderShopDAO.getOrderShopDetail(orderShopId);
                             if (orderShop == null) {
                                 request.setAttribute("errorMessage", "Không tìm thấy thông tin đơn hàng này!");
+                                request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
+                                        response);
+                                break;
                             }
+
                             request.setAttribute("phone", orderShop.getAddress().split("-")[0].trim());
                             request.setAttribute("address", orderShop.getAddress().split("-")[1].trim());
                             request.setAttribute("orderShop", orderShop);
+
+                            if ("COMPLETED".equalsIgnoreCase(orderShop.getStatus())) {
+                                Date completedDate = orderShop.getUpdatedAt();
+                                if (completedDate != null) {
+                                    LocalDateTime completedAt = completedDate.toInstant()
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDateTime();
+
+                                    LocalDateTime now = LocalDateTime.now();
+                                    long hoursPassed = ChronoUnit.HOURS.between(completedAt, now);
+                                    long remainHours = 168 - hoursPassed;
+
+                                    double totalPrice = orderShop.getSubtotal();
+                                    double AmoutShopreceived = orderShop.getSubtotal() + orderShop.getShippingFee()
+                                            - orderShop.getShopDiscount();
+                                    double shipFee = orderShop.getShippingFee();
+                                    double voucherShop = orderShop.getShopDiscount();
+                                    double platformFee = 3000;
+                                    double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
+
+                                    if (hoursPassed >= 168) {
+                                        double receivedAmount = totalPrice - shipFee - voucherShop - platformFee
+                                                - totalVAT + shipFee;
+                                        if (receivedAmount < 0)
+                                            receivedAmount = 0;
+
+                                        request.setAttribute("receivedAmount", receivedAmount);
+                                        request.setAttribute("isReceived", true);
+                                    } else {
+                                        long remainDays = remainHours / 24;
+                                        long remainH = remainHours % 24;
+
+                                        request.setAttribute("remainDays", remainDays);
+                                        request.setAttribute("remainHours", remainH);
+                                        request.setAttribute("isReceived", false);
+                                    }
+                                    request.setAttribute("AmoutShopreceived", AmoutShopreceived);
+                                    request.setAttribute("totalPrice", totalPrice);
+                                    request.setAttribute("shipFee", shipFee);
+                                    request.setAttribute("voucherShop", voucherShop);
+                                    request.setAttribute("platformFee", platformFee);
+                                    request.setAttribute("totalVAT", totalVAT);
+                                    LocalDateTime expectedReceiveAt = completedAt.plusDays(7);
+                                    request.setAttribute("completedAt", completedAt);
+                                    request.setAttribute("expectedReceiveAt", expectedReceiveAt);
+
+                                } else {
+                                    request.setAttribute("isReceived", false);
+                                }
+                            } else {
+                                request.setAttribute("isReceived", false);
+                            }
+
                             request.getRequestDispatcher("/WEB-INF/views/shop/orderDetail.jsp").forward(request,
                                     response);
                             break;
@@ -180,8 +242,7 @@ public class ShopOrderServlet extends HttpServlet {
                     if (updated) {
 
                         Set<String> notifiableStatuses = Set.of(
-                                "CONFIRM", "SHIPPING", "COMPLETED",
-                                "CANCELLED", "RETURNED", "RETURNED_REJECTED", "WAITING_SHIP");
+                                "CONFIRM", "CANCELLED", "RETURNED", "RETURNED_REJECTED");
 
                         boolean shouldSendEmail = notifiableStatuses
                                 .contains(newStatus != null ? newStatus.toUpperCase() : "");
@@ -232,18 +293,6 @@ public class ShopOrderServlet extends HttpServlet {
             case "CONFIRM" -> {
                 statusLabel = "Đơn hàng đang chờ xác nhận của bạn";
                 message = "Đơn hàng của bạn đã được người bán xác nhận. Chúng tôi đang đợi bạn xác nhận đơn hàng được giao thành công.";
-            }
-            case "SHIPPING" -> {
-                statusLabel = "Đơn hàng đã giao cho đơn vị vận chuyển";
-                message = "Đơn hàng của bạn đã giao cho đơn vị vận chuyển, chúng tôi sẽ giao đơn hàng cho bạn sớm nhất có thể!";
-            }
-            case "WAITING_SHIP" -> {
-                statusLabel = "Đơn hàng đang được giao";
-                message = "Đơn hàng của bạn đang trên đường đến địa chỉ nhận. Hãy chuẩn bị để nhận hàng nhé!";
-            }
-            case "COMPLETED" -> {
-                statusLabel = "Đơn hàng đã hoàn tất";
-                message = "Cảm ơn bạn đã tin tưởng Aurora! Rất mong sớm được phục vụ bạn trong những lần mua sắm tiếp theo.";
             }
             case "CANCELLED" -> {
                 statusLabel = "Đơn hàng đã bị hủy";

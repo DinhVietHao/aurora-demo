@@ -137,6 +137,8 @@ public class ProductServlet extends HttpServlet {
                                 || "INACTIVE".equalsIgnoreCase(product.getStatus())
                                 || "REJECTED".equalsIgnoreCase(product.getStatus())) {
                             updateMode = "FULL";
+                        } else if ("OUT_OF_STOCK".equalsIgnoreCase(product.getStatus())) {
+                            updateMode = "NONE";
                         } else if ("ACTIVE".equalsIgnoreCase(product.getStatus())) {
                             if (!isInFlashSale) {
                                 updateMode = "PARTIAL";
@@ -147,6 +149,7 @@ public class ProductServlet extends HttpServlet {
                         Map<String, Object> responseData = new HashMap<>();
                         responseData.put("product", product);
                         responseData.put("updateMode", updateMode);
+                        responseData.put("status", product.getStatus());
                         Gson gson = new GsonBuilder()
                                 .registerTypeAdapter(LocalDateTime.class, new TypeAdapter<LocalDateTime>() {
                                     private final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -247,6 +250,10 @@ public class ProductServlet extends HttpServlet {
 
                     String[] authorNames = request.getParameterValues("authors");
                     String[] categoryIdParams = request.getParameterValues("CategoryIDs");
+                    String primaryCategoryIdParam = request.getParameter("PrimaryCategoryID");
+                    Long primaryCategoryId = (primaryCategoryIdParam != null && !primaryCategoryIdParam.isBlank())
+                            ? Long.parseLong(primaryCategoryIdParam)
+                            : null;
 
                     String publisherName = request.getParameter("PublisherName");
                     String publishedDateStr = request.getParameter("PublishedDate");
@@ -320,11 +327,17 @@ public class ProductServlet extends HttpServlet {
                             if (cid != null && !cid.isBlank()) {
                                 Category c = new Category();
                                 c.setCategoryId(Long.parseLong(cid));
+                                if (primaryCategoryId != null && primaryCategoryId.equals(c.getCategoryId())) {
+                                    c.setPrimary(true);
+                                } else {
+                                    c.setPrimary(false);
+                                }
                                 categoryList.add(c);
                             }
                         }
                     }
                     product.setCategories(categoryList);
+
                     if (productDAO.insertProduct(product) != 0) {
                         response.sendRedirect(
                                 request.getContextPath() + "/shop/product?action=view&message=create_success");
@@ -424,6 +437,11 @@ public class ProductServlet extends HttpServlet {
                         Date publishedDate = (publishedDateStr != null && !publishedDateStr.isEmpty())
                                 ? Date.valueOf(publishedDateStr)
                                 : null;
+                        String primaryCategoryIdParam = request.getParameter("PrimaryCategoryIDUpdate");
+                        Long primaryCategoryIdUpdate = (primaryCategoryIdParam != null
+                                && !primaryCategoryIdParam.isBlank())
+                                        ? Long.parseLong(primaryCategoryIdParam)
+                                        : null;
 
                         String translator = request.getParameter("Translator");
                         String version = request.getParameter("Version");
@@ -487,7 +505,10 @@ public class ProductServlet extends HttpServlet {
                         if (categoryIds != null) {
                             for (String cid : categoryIds) {
                                 if (cid != null && !cid.isBlank()) {
-                                    categoryDAO.addCategoryToProduct(productId, Long.parseLong(cid));
+                                    long categoryId = Long.parseLong(cid);
+                                    boolean isPrimary = (primaryCategoryIdUpdate != null
+                                            && categoryId == primaryCategoryIdUpdate);
+                                    categoryDAO.addCategoryToProduct(productId, categoryId, isPrimary);
                                 }
                             }
                         }

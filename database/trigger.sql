@@ -418,9 +418,9 @@ END;
 GO
 
 -----------------------------------------------------------
--- TRIGGER: Khi Flash Sale thay đổi trạng thái
+-- TRIGGER: Khi Flash Sale thay đổi trạng thái (chỉ xử lý khi kết thúc)
 -----------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_UpdateProductSalePrice_OnFlashSaleStatusChange
+CREATE OR ALTER TRIGGER trg_UpdateProduct_OnFlashSaleEnd
 ON FlashSales
 AFTER UPDATE
 AS
@@ -428,31 +428,10 @@ BEGIN
     SET NOCOUNT ON;
 
     -------------------------------------------------------
-    -- 🔹 Khi Flash Sale bắt đầu → áp dụng giá Flash
-    -------------------------------------------------------
-    UPDATE p
-    SET 
-        p.PreFlashSalePrice = 
-            CASE 
-                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
-                ELSE p.PreFlashSalePrice 
-            END,
-        p.SalePrice = fsi.FlashPrice
-    FROM Products p
-        INNER JOIN FlashSaleItems fsi ON p.ProductID = fsi.ProductID
-            AND fsi.ApprovalStatus = 'APPROVED'
-        INNER JOIN inserted i ON fsi.FlashSaleID = i.FlashSaleID
-        INNER JOIN deleted d ON i.FlashSaleID = d.FlashSaleID
-    WHERE 
-        i.[Status] = 'ACTIVE'
-        AND d.[Status] <> 'ACTIVE';
-
-    -------------------------------------------------------
-    -- 🔹 Khi Flash Sale kết thúc → khôi phục giá gốc, hoàn hàng tồn,
-    --    và cộng dồn SoldCount từ FlashSaleItems vào Products.SoldCount
+    -- 🔹 Khi Flash Sale kết thúc → hoàn hàng tồn và cộng dồn SoldCount
     -------------------------------------------------------
 
-    -- Tạo bảng tạm lưu lại các item sẽ xử lý (tránh mất fsStock do reset sớm)
+    -- Tạo bảng tạm lưu lại các item cần xử lý
     DECLARE @ToRestore TABLE (
         ProductID BIGINT,
         FlashSaleItemID BIGINT,
@@ -472,21 +451,15 @@ BEGIN
         AND fsi.fsStock > 0
         AND fsi.ApprovalStatus = 'APPROVED';
 
-    -- ✅ Cập nhật giá, hoàn kho, và cộng dồn soldCount vào products
+    -- ✅ Cập nhật sản phẩm: hoàn kho và cộng dồn soldCount
     UPDATE p
     SET 
-        p.SalePrice = 
-            CASE 
-                WHEN p.PreFlashSalePrice IS NOT NULL THEN p.PreFlashSalePrice 
-                ELSE p.SalePrice 
-            END,
-        p.PreFlashSalePrice = NULL,
         p.Quantity = p.Quantity + t.fsStock,
         p.SoldCount = p.SoldCount + t.soldCount
     FROM Products p
         INNER JOIN @ToRestore t ON p.ProductID = t.ProductID;
 
-    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0 (giữ SoldCount trong FlashSaleItems để làm lịch sử)
+    -- ✅ Sau khi hoàn tất, reset lại fsStock = 0
     UPDATE fsi
     SET fsi.fsStock = 0
     FROM FlashSaleItems fsi
@@ -494,105 +467,18 @@ BEGIN
 END;
 GO
 
-
-
-
------------------------------------------------------------
--- TRIGGER 2️⃣: Khi sản phẩm được duyệt (APPROVED)
------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_ApplyFlashPrice_OnItemApproved
-ON FlashSaleItems
+ 
+CREATE TRIGGER TRG_UpdateProductStatusWhenOutOfStock
+ON Products
 AFTER UPDATE
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    -------------------------------------------------------
-    -- 🔹 Khi một sản phẩm được duyệt và Flash Sale đang ACTIVE
-    -------------------------------------------------------
+    
     UPDATE p
-    SET 
-        p.PreFlashSalePrice = 
-            CASE 
-                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
-                ELSE p.PreFlashSalePrice 
-            END,
-        p.SalePrice = i.FlashPrice
+    SET p.Status = 'OUT_OF_STOCK'
     FROM Products p
-        INNER JOIN inserted i
-        ON p.ProductID = i.ProductID
-        INNER JOIN deleted d
-        ON i.FlashSaleItemID = d.FlashSaleItemID
-        INNER JOIN FlashSales fs
-        ON fs.FlashSaleID = i.FlashSaleID
-    WHERE i.ApprovalStatus = 'APPROVED'
-        AND d.ApprovalStatus <> 'APPROVED'
-        AND fs.Status = 'ACTIVE';
--- ✅ chỉ áp dụng khi Flash Sale đang hoạt động
+    INNER JOIN inserted i ON p.ProductID = i.ProductID
+    WHERE i.Quantity = 0;
 END;
-GO
-
------------------------------------------------------------
--- TRIGGER 3️⃣: Theo dõi biến động số lượng fsStock
------------------------------------------------------------
-CREATE OR ALTER TRIGGER trg_UpdatePrice_OnStockChange
-ON FlashSaleItems
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    -------------------------------------------------------
-    -- 🔹 1. Khi fsStock giảm xuống 0 → khôi phục giá gốc
-    -------------------------------------------------------
-    UPDATE p
-    SET 
-        p.SalePrice = 
-            CASE 
-                WHEN p.PreFlashSalePrice IS NOT NULL THEN p.PreFlashSalePrice 
-                ELSE p.SalePrice 
-            END,
-        p.PreFlashSalePrice = NULL
-    FROM Products p
-        INNER JOIN inserted i ON p.ProductID = i.ProductID
-        INNER JOIN deleted d ON i.FlashSaleItemID = d.FlashSaleItemID
-        INNER JOIN FlashSales fs ON fs.FlashSaleID = i.FlashSaleID
-    WHERE 
-        i.fsStock = 0 -- ✅ mới cập nhật thành 0
-        AND d.fsStock > 0 -- ✅ trước đó vẫn còn hàng
-        AND i.ApprovalStatus = 'APPROVED'
-        AND fs.Status = 'ACTIVE';
-    -- ✅ chỉ khi Flash Sale đang hoạt động
-
-    -------------------------------------------------------
-    -- 🔹 2. Khi fsStock tăng lại > 0 → áp dụng giá flash
-    -------------------------------------------------------
-    UPDATE p
-    SET 
-        p.PreFlashSalePrice = 
-            CASE 
-                WHEN p.PreFlashSalePrice IS NULL THEN p.SalePrice 
-                ELSE p.PreFlashSalePrice 
-            END,
-        p.SalePrice = i.FlashPrice
-    FROM Products p
-        INNER JOIN inserted i ON p.ProductID = i.ProductID
-        INNER JOIN deleted d ON i.FlashSaleItemID = d.FlashSaleItemID
-        INNER JOIN FlashSales fs ON fs.FlashSaleID = i.FlashSaleID
-    WHERE 
-        i.fsStock > 0 -- ✅ có hàng trở lại
-        AND d.fsStock = 0 -- ✅ trước đó hết hàng
-        AND i.ApprovalStatus = 'APPROVED'
-        AND fs.Status = 'ACTIVE';
--- ✅ chỉ khi Flash Sale đang hoạt động
-END;
-GO
-
-DROP TRIGGER IF EXISTS trg_UpdateProductSalePrice_OnFlashSaleStatusChange;
-GO
-
-DROP TRIGGER IF EXISTS trg_ApplyFlashPrice_OnItemApproved;
-GO
-
-DROP TRIGGER IF EXISTS trg_UpdatePrice_OnStockChange;
 GO

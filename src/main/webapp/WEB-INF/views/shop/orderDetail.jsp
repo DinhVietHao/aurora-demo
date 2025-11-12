@@ -36,6 +36,102 @@
                                             </ol>
                                         </nav>
                                     </div>
+                                    <div class="card-body">
+                                        <c:if test="${orderShop.status == 'COMPLETED'}">
+                                            <c:choose>
+                                                <c:when test="${isReceived}">
+                                                    <!-- ✅ Sau 7 ngày: Hiển thị chi tiết doanh thu -->
+                                                    <div class="alert alert-success d-flex align-items-center mb-3"
+                                                        role="alert">
+                                                        <i class="bi bi-check2-circle fs-4 me-2"></i>
+                                                        <div>
+                                                            <strong>💰 Tổng doanh thu: </strong>
+                                                            <span class="fs-5 text-success fw-bold">
+                                                                <fmt:formatNumber value="${receivedAmount}"
+                                                                    pattern="#,##0" /> ₫
+                                                            </span>
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                Khoản thanh toán đã được chuyển sau 7 ngày kể từ khi đơn
+                                                                hàng hoàn tất.
+                                                            </small>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Bảng chi tiết -->
+                                                    <table class="table table-bordered mt-3">
+                                                        <tbody>
+                                                            <c:forEach var="item" items="${vatList}">
+                                                                <tr>
+                                                                    <td>${item.productName}</td>
+                                                                    <td>${item.quantity}</td>
+                                                                    <td>
+                                                                        <fmt:formatNumber value="${item.salePrice}"
+                                                                            pattern="#,##0" /> ₫
+                                                                    </td>
+                                                                    <td>${item.vatRate}%</td>
+                                                                    <td>
+                                                                        <fmt:formatNumber
+                                                                            value="${item.salePrice * item.quantity * (1 - item.vatRate / 100)}"
+                                                                            pattern="#,##0" /> ₫
+                                                                    </td>
+                                                                </tr>
+                                                            </c:forEach>
+                                                        </tbody>
+                                                    </table>
+
+                                                    <div class="mt-3">
+                                                        <hr>
+                                                        <p><strong>Tổng tiền hàng:</strong>
+                                                            <fmt:formatNumber value="${totalPrice}" pattern="#,##0" /> ₫
+                                                        </p>
+                                                        <p><strong>Phí VAT trừ:</strong> -
+                                                            <fmt:formatNumber value="${totalVAT}" pattern="#,##0" /> ₫
+                                                        </p>
+                                                        <p><strong>Phí vận chuyển của khách hàng:</strong> +
+                                                            <fmt:formatNumber value="${shipFee}" pattern="#,##0" /> ₫
+                                                        </p>
+                                                        <p><strong>Phí vận chuyển đưa cho shipper:</strong> -
+                                                            <fmt:formatNumber value="${shipFee}" pattern="#,##0" /> ₫
+                                                        </p>
+                                                        <p><strong>Voucher shop:</strong> -
+                                                            <fmt:formatNumber value="${voucherShop}" pattern="#,##0" />
+                                                            ₫
+                                                        </p>
+                                                        <p><strong>Phí sàn:</strong> -
+                                                            <fmt:formatNumber value="${platformFee}" pattern="#,##0" />
+                                                            ₫
+                                                        </p>
+                                                        <hr>
+                                                    </div>
+                                                </c:when>
+
+                                                <c:otherwise>
+                                                    <!-- ⏳ Trong 7 ngày chờ thanh toán -->
+                                                    <div class="alert alert-warning d-flex align-items-center mb-0"
+                                                        role="alert">
+                                                        <i class="bi bi-hourglass-split fs-4 me-2"></i>
+                                                        <div>
+                                                            Thanh toán sẽ được chuyển sau
+                                                            <strong>
+                                                                <c:out value="${remainDays}" /> ngày
+                                                                <c:if test="${remainHours > 0}">
+                                                                    <c:out value="${remainHours}" /> giờ
+                                                                </c:if>
+                                                            </strong> nữa.
+                                                            <br>
+                                                            <small class="text-muted">
+                                                                Hệ thống sẽ tự động chuyển khoản sau 7 ngày kể từ khi
+                                                                đơn hàng hoàn tất.
+                                                                Trong thời gian này, khách hàng vẫn có thể yêu cầu hoàn
+                                                                trả.
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:if>
+                                    </div>
 
                                     <!-- Thông tin đơn hàng -->
                                     <div class="card mt-4 order-header-card">
@@ -289,7 +385,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
                                     </div>
 
                                     <!-- Danh sách sản phẩm -->

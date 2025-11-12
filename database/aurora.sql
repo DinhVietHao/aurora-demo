@@ -123,6 +123,7 @@ CREATE TABLE ProductCategory
 (
     ProductID BIGINT NOT NULL,
     CategoryID BIGINT NOT NULL,
+    IsPrimary BIT NOT NULL DEFAULT 0,
     CONSTRAINT PK_ProductCategory PRIMARY KEY (ProductID, CategoryID),
     CONSTRAINT FK_ProductCategory_Product  FOREIGN KEY (ProductID)  REFERENCES Products(ProductID),
     CONSTRAINT FK_ProductCategory_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID)

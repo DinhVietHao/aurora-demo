@@ -26,7 +26,6 @@ public class VoucherUsageHistoryDAO {
                 FROM OrderShops os
                 JOIN Users u ON os.UserID = u.UserID
                 WHERE os.VoucherShopID = ?
-                  AND os.Status NOT IN ('CANCELLED', 'RETURNED')
                 ORDER BY os.CreatedAt DESC
                 """;
 

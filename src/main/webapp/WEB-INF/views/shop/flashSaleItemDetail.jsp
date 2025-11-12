@@ -110,8 +110,11 @@
 
                                                     <!-- Thanh tiến độ -->
                                                     <div class="mt-3">
+                                                        <c:set var="totalStock"
+                                                            value="${item.soldCount + item.fsStock}" />
                                                         <c:set var="progress"
-                                                            value="${(item.soldCount * 100.0) / (item.fsStock > 0 ? item.fsStock : 1)}" />
+                                                            value="${(item.soldCount * 100.0) / (totalStock > 0 ? totalStock : 1)}" />
+
                                                         <div class="progress" style="height: 20px; position: relative;">
                                                             <div class="progress-bar bg-success" role="progressbar"
                                                                 style="width: ${progress}%; transition: width 0.6s;">
@@ -153,9 +156,8 @@
                         const ctxChart = document.getElementById("revenueChart");
                         const noDataMsg = document.getElementById("noDataMessage");
 
-                        // ✅ Giả sử backend render sẵn JSON labels và data
-                        // const labels = ${revenueLabelsJson != null ? revenueLabelsJson : "[]"};
-                        // const data = ${revenueValuesJson != null ? revenueValuesJson : "[]"};
+                        const labels = <c:out value="${revenueLabelsJson}" default="[]" escapeXml="false" />;
+                        const data = <c:out value="${revenueValuesJson}" default="[]" escapeXml="false" />;
 
                         console.log("Labels:", labels);
                         console.log("Data:", data);
