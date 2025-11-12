@@ -1481,35 +1481,34 @@ public class ProductDAO {
         List<ProductDTO> list = new ArrayList<>();
 
         String sql = """
-                    SELECT
-                        p.ProductID,
-                        p.Title AS ProductName,
-                        p.SalePrice,
-                        p.Quantity,
-                        p.OriginalPrice,
-                        STRING_AGG(c.Name, ', ') AS CategoryNames,
-                        pi.Url AS ImageUrl,
-                        MAX(p.CreatedAt) AS CreatedAt
-                    FROM Products p
-                    LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID
-                    LEFT JOIN Category c ON pc.CategoryID = c.CategoryID
-                    LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
-                    WHERE p.ShopID = ?
-                      AND p.Status = 'ACTIVE'
-                    GROUP BY
-                        p.ProductID,
-                        p.Title,
-                        p.SalePrice,
-                        p.Quantity,
-                        p.OriginalPrice,
-                        pi.Url
-                    ORDER BY MAX(p.CreatedAt) DESC;
+                SELECT
+                    p.ProductID,
+                    p.Title AS ProductName,
+                    p.SalePrice,
+                    p.Quantity,
+                    p.OriginalPrice,
+                    c.Name AS CategoryName, -- ✅ chỉ lấy thể loại chính
+                    pi.Url AS ImageUrl,
+                    p.CreatedAt
+                FROM Products p
+                LEFT JOIN ProductCategory pc
+                    ON p.ProductID = pc.ProductID
+                    AND pc.IsPrimary = 1  -- ✅ chỉ lấy thể loại chính
+                LEFT JOIN Category c
+                    ON pc.CategoryID = c.CategoryID
+                LEFT JOIN ProductImages pi
+                    ON p.ProductID = pi.ProductID
+                    AND pi.IsPrimary = 1
+                WHERE p.ShopID = ?
+                  AND p.Status = 'ACTIVE'
+                ORDER BY p.CreatedAt DESC;
                 """;
 
-        try (
-                Connection cn = DataSourceProvider.get().getConnection();
+        try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, shopId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     ProductDTO p = new ProductDTO();
@@ -1518,12 +1517,13 @@ public class ProductDAO {
                     p.setSalePrice(rs.getDouble("SalePrice"));
                     p.setQuantity(rs.getInt("Quantity"));
                     p.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                    p.setCategoryNames(rs.getString("CategoryNames"));
+                    p.setCategoryNames(rs.getString("CategoryName"));
                     p.setImageUrl(rs.getString("ImageUrl"));
                     list.add(p);
                 }
             }
         }
+
         return list;
     }
 

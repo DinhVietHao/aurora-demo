@@ -54,7 +54,7 @@
                                                         <div class="ms-3">
                                                             <div class="stats-label">Tổng doanh thu</div>
                                                             <div class="stats-value">
-                                                                <fmt:formatNumber value="${shop.totalRevenue}"
+                                                                <fmt:formatNumber value="${totalRevenue}"
                                                                     type="currency" currencySymbol="₫"
                                                                     maxFractionDigits="0" groupingUsed="true" />
                                                             </div>

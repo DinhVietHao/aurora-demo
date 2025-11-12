@@ -71,6 +71,7 @@ public class ShopServlet extends HttpServlet {
                 }
 
                 List<DailyRevenue> revenueList = shopDAO.getRevenueRange(shopId, startDate, endDate);
+                double totalRevenue = shopDAO.getTotalRevenueByRange(shopId, startDate, endDate);
                 long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
                 if (daysBetween > 31) {
                     request.setAttribute("warning",
@@ -86,6 +87,7 @@ public class ShopServlet extends HttpServlet {
                 request.setAttribute("now", java.sql.Date.valueOf(java.time.LocalDate.now()));
                 request.setAttribute("notifications", notifications);
                 request.setAttribute("revenueData", revenueList);
+                request.setAttribute("totalRevenue", totalRevenue);
                 request.setAttribute("startDate", startDate);
                 request.setAttribute("endDate", endDate);
 

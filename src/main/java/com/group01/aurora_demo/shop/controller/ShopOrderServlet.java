@@ -82,14 +82,16 @@ public class ShopOrderServlet extends HttpServlet {
                                     long remainHours = 168 - hoursPassed;
 
                                     double totalPrice = orderShop.getSubtotal();
+                                    double AmoutShopreceived = orderShop.getSubtotal() + orderShop.getShippingFee()
+                                            - orderShop.getShopDiscount();
                                     double shipFee = orderShop.getShippingFee();
                                     double voucherShop = orderShop.getShopDiscount();
                                     double platformFee = 3000;
                                     double totalVAT = orderShopDAO.getTotalVATByOrderShopId(orderShopId);
 
                                     if (hoursPassed >= 168) {
-                                        double receivedAmount = totalPrice + shipFee - voucherShop - platformFee
-                                                - totalVAT;
+                                        double receivedAmount = totalPrice - shipFee - voucherShop - platformFee
+                                                - totalVAT + shipFee;
                                         if (receivedAmount < 0)
                                             receivedAmount = 0;
 
@@ -103,6 +105,7 @@ public class ShopOrderServlet extends HttpServlet {
                                         request.setAttribute("remainHours", remainH);
                                         request.setAttribute("isReceived", false);
                                     }
+                                    request.setAttribute("AmoutShopreceived", AmoutShopreceived);
                                     request.setAttribute("totalPrice", totalPrice);
                                     request.setAttribute("shipFee", shipFee);
                                     request.setAttribute("voucherShop", voucherShop);
@@ -240,8 +243,7 @@ public class ShopOrderServlet extends HttpServlet {
                     if (updated) {
 
                         Set<String> notifiableStatuses = Set.of(
-                                "CONFIRM", "SHIPPING", "COMPLETED",
-                                "CANCELLED", "RETURNED", "RETURNED_REJECTED", "WAITING_SHIP");
+                                "CONFIRM", "CANCELLED", "RETURNED", "RETURNED_REJECTED");
 
                         boolean shouldSendEmail = notifiableStatuses
                                 .contains(newStatus != null ? newStatus.toUpperCase() : "");
@@ -292,18 +294,6 @@ public class ShopOrderServlet extends HttpServlet {
             case "CONFIRM" -> {
                 statusLabel = "Đơn hàng đang chờ xác nhận của bạn";
                 message = "Đơn hàng của bạn đã được người bán xác nhận. Chúng tôi đang đợi bạn xác nhận đơn hàng được giao thành công.";
-            }
-            case "SHIPPING" -> {
-                statusLabel = "Đơn hàng đã giao cho đơn vị vận chuyển";
-                message = "Đơn hàng của bạn đã giao cho đơn vị vận chuyển, chúng tôi sẽ giao đơn hàng cho bạn sớm nhất có thể!";
-            }
-            case "WAITING_SHIP" -> {
-                statusLabel = "Đơn hàng đang được giao";
-                message = "Đơn hàng của bạn đang trên đường đến địa chỉ nhận. Hãy chuẩn bị để nhận hàng nhé!";
-            }
-            case "COMPLETED" -> {
-                statusLabel = "Đơn hàng đã hoàn tất";
-                message = "Cảm ơn bạn đã tin tưởng Aurora! Rất mong sớm được phục vụ bạn trong những lần mua sắm tiếp theo.";
             }
             case "CANCELLED" -> {
                 statusLabel = "Đơn hàng đã bị hủy";
