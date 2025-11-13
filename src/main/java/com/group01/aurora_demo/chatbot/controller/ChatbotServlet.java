@@ -122,4 +122,20 @@ public class ChatbotServlet extends HttpServlet {
         return "Xin lỗi, tôi chưa có câu trả lời.";
     }
 
+    public static void main(String[] args) {
+        try {
+            ChatbotServlet chatbot = new ChatbotServlet();
+            String testPrompt = """
+                    Bạn là AuroraBot - trợ lý AI thử nghiệm.
+                    Câu hỏi của người dùng: Giới thiệu ngắn gọn về Aurora bookstore.
+                    """;
+
+            System.out.println("🔹 Đang gửi yêu cầu đến Gemini API...");
+            String result = chatbot.callGeminiAPI(testPrompt);
+            System.out.println("Phản hồi từ API:\n" + result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

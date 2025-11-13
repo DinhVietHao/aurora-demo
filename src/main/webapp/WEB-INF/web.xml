@@ -26,7 +26,7 @@
 
   <context-param>
     <param-name>GOOGLE_AI_API_KEY</param-name>
-    <param-value>AIzaSyCKJUhsGbcMm8keJ9WiEMv5Qkv2gtHuEkc</param-value>
+    <param-value>AIzaSyDJB89cHleQ4jU5aFtTgyLxL6jD1vSAO6Q</param-value>
   </context-param>
 
 </web-app>
