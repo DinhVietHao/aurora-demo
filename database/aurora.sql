@@ -97,7 +97,6 @@ CREATE TABLE Products
     Description NVARCHAR(MAX) NULL,
     OriginalPrice DECIMAL(12,2) NOT NULL,
     SalePrice DECIMAL(12,2) NOT NULL,
-    PreFlashSalePrice DECIMAL(12,2) NULL,
     SoldCount BIGINT NOT NULL DEFAULT 0,
     Quantity INT NOT NULL,
     PublisherID BIGINT NULL,
@@ -175,11 +174,6 @@ CREATE TABLE BookDetails
       FOREIGN KEY (LanguageCode) REFERENCES Languages(LanguageCode)
 );
 
-INSERT INTO Languages
-    (LanguageCode, LanguageName)
-VALUES
-    (N'vi', N'Tiếng Việt'),
-    (N'en', N'Tiếng Anh');
 
 CREATE TABLE CartItems
 (
@@ -302,12 +296,12 @@ CREATE TABLE FlashSaleItems
     ShopID BIGINT NOT NULL,
     FlashPrice DECIMAL(12,2) NOT NULL,
     FsStock INT NOT NULL,
-    PerUserLimit INT NULL,
     ApprovalStatus NVARCHAR(20) NOT NULL,
     SoldCount BIGINT NOT NULL DEFAULT 0,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME(),
     CONSTRAINT FK_FSI_FlashSale FOREIGN KEY (FlashSaleID) REFERENCES FlashSales(FlashSaleID),
-    CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID)
+    CONSTRAINT FK_FSI_Product   FOREIGN KEY (ProductID)   REFERENCES Products(ProductID),
+    CONSTRAINT FK_FlashSaleItems_Shop FOREIGN KEY (ShopID) REFERENCES Shops(ShopID)
 );
 
 CREATE TABLE Reviews
@@ -345,6 +339,35 @@ CREATE TABLE Notifications
     ReferenceID BIGINT NULL,
     CreatedAt DATETIME2(6) NOT NULL DEFAULT SYSUTCDATETIME()
 );
+
+CREATE TABLE Documents
+(
+    DocumentID BIGINT IDENTITY(1,1) PRIMARY KEY,
+    Source NVARCHAR(100) NOT NULL,
+    SourceID BIGINT NULL,
+    Title NVARCHAR(255) NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    Embedding NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
+    UpdatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
+);
+
+CREATE TABLE Setting
+(
+    SettingID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    SettingKey NVARCHAR(100) NOT NULL,
+    SettingValue NVARCHAR(MAX) NULL,
+    Description NVARCHAR(500) NULL,
+    CreatedAt DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
+    UpdatedAt DATETIME2(7) NULL
+);
+
+INSERT INTO Languages
+    (LanguageCode, LanguageName)
+VALUES
+    (N'vi', N'Tiếng Việt'),
+    (N'en', N'Tiếng Anh');
+
 
 INSERT INTO Roles
 VALUES
@@ -392,28 +415,6 @@ VALUES
     (N'Flash Sale Halloween 2025', '2025-10-20 00:00:00', '2025-10-25 23:59:59', 'ACTIVE'),
     (N'Black Friday 2025', '2025-11-29 00:00:00', '2025-11-30 23:59:59', 'SCHEDULED'),
     (N'Flash Sale Trung Thu 2025', '2025-09-01 00:00:00', '2025-09-03 23:59:59', 'ENDED');
-
-CREATE TABLE Documents
-(
-    DocumentID BIGINT IDENTITY(1,1) PRIMARY KEY,
-    Source NVARCHAR(100) NOT NULL,
-    SourceID BIGINT NULL,
-    Title NVARCHAR(255) NULL,
-    Content NVARCHAR(MAX) NOT NULL,
-    Embedding NVARCHAR(MAX) NULL,
-    CreatedAt DATETIME2 DEFAULT SYSUTCDATETIME(),
-    UpdatedAt DATETIME2 DEFAULT SYSUTCDATETIME()
-);
-
-CREATE TABLE [dbo].[Setting]
-(
-    [SettingID] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    [SettingKey] NVARCHAR(100) NOT NULL,
-    [SettingValue] NVARCHAR(MAX) NULL,
-    [Description] NVARCHAR(500) NULL,
-    [CreatedAt] DATETIME2(7) NOT NULL DEFAULT SYSUTCDATETIME(),
-    [UpdatedAt] DATETIME2(7) NULL
-);
 
 INSERT INTO [dbo].[Setting]
     ([SettingKey], [SettingValue], [Description], [CreatedAt])
