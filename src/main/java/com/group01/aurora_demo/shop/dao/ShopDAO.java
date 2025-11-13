@@ -379,13 +379,13 @@ public class ShopDAO {
                                 WHEN (
                                     COALESCE(o.Subtotal, 0)
                                     - COALESCE(o.ShopDiscount, 0)
-                                    - 3000
+                                    - (COALESCE(o.Subtotal, 0) * COALESCE(o.PlatformFee, 0) / 100.0)
                                     - COALESCE(v.TotalVAT, 0)
                                 ) < 0 THEN 0
                                 ELSE (
                                     COALESCE(o.Subtotal, 0)
                                     - COALESCE(o.ShopDiscount, 0)
-                                    - 3000
+                                    - (COALESCE(o.Subtotal, 0) * COALESCE(o.PlatformFee, 0) / 100.0)
                                     - COALESCE(v.TotalVAT, 0)
                                 )
                             END
@@ -438,13 +438,13 @@ public class ShopDAO {
                                 WHEN (
                                     COALESCE(o.Subtotal, 0)
                                     - COALESCE(o.ShopDiscount, 0)
-                                    - 3000
+                                    - (COALESCE(o.Subtotal, 0) * COALESCE(o.PlatformFee, 0) / 100.0)
                                     - COALESCE(v.TotalVAT, 0)
                                 ) < 0 THEN 0
                                 ELSE (
                                     COALESCE(o.Subtotal, 0)
                                     - COALESCE(o.ShopDiscount, 0)
-                                    - 3000
+                                    - (COALESCE(o.Subtotal, 0) * COALESCE(o.PlatformFee, 0) / 100.0)
                                     - COALESCE(v.TotalVAT, 0)
                                 )
                             END
@@ -494,21 +494,23 @@ public class ShopDAO {
                     o.ShopDiscount,
                     o.ShippingFee,
                     o.FinalAmount,
+                    o.PlatformFee,
                     u.FullName AS CustomerName,
                     COALESCE(v.TotalVAT, 0) AS TotalVAT,
                     (SELECT COUNT(*) FROM OrderItems WHERE OrderShopID = o.OrderShopID) AS ItemCount,
+                    (o.Subtotal * o.PlatformFee / 100.0) AS CalculatedPlatformFee,
                     CASE
                         WHEN (
                             COALESCE(o.Subtotal, 0)
                             - COALESCE(o.ShopDiscount, 0)
                             - COALESCE(v.TotalVAT, 0)
-                            - 3000
+                            - (o.Subtotal * o.PlatformFee / 100.0)
                         ) < 0 THEN 0
                         ELSE (
                             COALESCE(o.Subtotal, 0)
                             - COALESCE(o.ShopDiscount, 0)
                             - COALESCE(v.TotalVAT, 0)
-                            - 3000
+                            - (o.Subtotal * o.PlatformFee / 100.0)
                         )
                     END AS ShopRevenue
                 FROM OrderShops o
@@ -547,6 +549,8 @@ public class ShopDAO {
                     detail.setTotalVAT(rs.getDouble("TotalVAT"));
                     detail.setItemCount(rs.getInt("ItemCount"));
                     detail.setShopRevenue(rs.getDouble("ShopRevenue"));
+                    //
+                    detail.setPlatformFee(rs.getDouble("CalculatedPlatformFee"));
 
                     detail.setSystemDiscount(0);
                     detail.setSystemShippingDiscount(0);

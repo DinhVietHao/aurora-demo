@@ -50,7 +50,7 @@
                                                     <a href="${ctx}/shop?action=revenueHistory&startDate=${startDate}&endDate=${endDate}"
                                                         class="text-decoration-none">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="stats-icon">
+                                                            <div class="stats-icon" style="color: white">
                                                                 <i class="bi bi-graph-up"></i>
                                                             </div>
                                                             <div class="ms-3">
