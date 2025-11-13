@@ -76,7 +76,7 @@ public class ChatbotServlet extends HttpServlet {
         try {
             HttpClient client = HttpClient.newHttpClient();
             String endpoint = String.format(
-                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=%s",
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s",
                     apiKey);
 
             // Tạo JSON body
