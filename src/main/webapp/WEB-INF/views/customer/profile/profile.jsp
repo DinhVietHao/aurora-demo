@@ -231,44 +231,7 @@
                     </div>
                 </div>
 
-                <!-- Modal 1: Xác thực email cũ -->
-                <div class="modal fade" id="verifyOldEmailModal" tabindex="-1">
-                    <div class="modal-dialog custom-modal-top">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Xác thực email hiện tại</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="text-center mb-3">
-                                    Chúng tôi đã gửi mã OTP đến:<br>
-                                    <strong id="maskedOldEmail"></strong>
-                                </p>
-                                <input type="hidden" id="oldEmailHidden" />
-                                <div class="form-group mb-2">
-                                    <label for="oldEmailOtp" class="form-label">Mã OTP</label>
-                                    <label class="form-label float-end" id="oldEmailOtpTimer"></label>
-                                    <div class="input-group">
-                                        <input id="oldEmailOtp" type="number" class="form-control"
-                                            placeholder="Nhập mã OTP" maxlength="6">
-                                        <button type="button" class="btn btn-outline-secondary" id="resendOldEmailOtp">
-                                            Gửi lại
-                                        </button>
-                                    </div>
-                                    <span class="form-message"></span>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                                <button type="button" class="btn btn-primary" id="btnVerifyOldEmail" disabled>
-                                    Tiếp tục
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modal 2: Nhập email mới + Xác thực mật khẩu -->
+                <!-- Modal 1: Nhập email mới + Xác thực mật khẩu -->
                 <div class="modal fade" id="enterNewEmailModal" tabindex="-1">
                     <div class="modal-dialog custom-modal-top">
                         <div class="modal-content">
@@ -333,7 +296,7 @@
                     </div>
                 </div>
 
-                <!-- Modal 3: Xác thực email mới -->
+                <!-- Modal 2: Xác thực email mới -->
                 <div class="modal fade" id="verifyNewEmailModal" tabindex="-1">
                     <div class="modal-dialog custom-modal-top">
                         <div class="modal-content">
