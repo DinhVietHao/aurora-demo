@@ -106,18 +106,6 @@
                                                     </div>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <!-- Search -->
-                                                    <div class="header-search mb-3">
-                                                        <span class="icon">
-                                                            <i class="bi bi-search"></i>
-                                                        </span>
-                                                        <input type="text" class="form-control rounded-pill"
-                                                            placeholder="Tìm đơn hàng theo mã đơn hàng, nhà bán hoặc tên sản phẩm">
-                                                        <button class="btn btn-light btn-sm rounded-pill">
-                                                            Tìm kiếm
-                                                        </button>
-                                                    </div>
-
                                                     <div class="tab-pane fade show active " id="all" role="tabpanel">
                                                         <c:forEach var="entry" items="${orderShops}">
                                                             <div class="order-card">

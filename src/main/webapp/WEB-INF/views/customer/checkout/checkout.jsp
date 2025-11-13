@@ -23,7 +23,7 @@
                 <jsp:include page="/WEB-INF/views/layouts/_header.jsp" />
 
                 <div class="container cart">
-                    <h4 class="cart-title">Giỏ hàng</h4>
+                    <h4 class="cart-title">Mua hàng</h4>
                     <c:choose>
                         <c:when test="${empty shopCarts}">
                             <div class="text-center">
