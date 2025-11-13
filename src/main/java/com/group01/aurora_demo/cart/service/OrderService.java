@@ -20,6 +20,7 @@ import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.dao.SettingDAO;
 import com.group01.aurora_demo.catalog.dao.VATDao;
 import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -40,6 +41,7 @@ public class OrderService {
     private ProductDAO productDAO;
     private FlashSaleDAO flashSaleDAO;
     private VATDao vatDao;
+    private SettingDAO settingDAO;
 
     public OrderService() {
         this.orderShopDAO = new OrderShopDAO();
@@ -53,6 +55,7 @@ public class OrderService {
         this.productDAO = new ProductDAO();
         this.flashSaleDAO = new FlashSaleDAO();
         this.vatDao = new VATDao();
+        this.settingDAO = new SettingDAO();
     }
 
     public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
@@ -212,6 +215,8 @@ public class OrderService {
                 orderShop.setShippingFee(shopShippingFee);
                 orderShop.setFinalAmount(finalAmount);
                 orderShop.setStatus("PENDING_PAYMENT");
+                double platformFeePercentage = this.settingDAO.getPlatformFeePercentage();
+                orderShop.setPlatformFee(platformFeePercentage);
                 long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
 
                 if (orderShopId == -1) {

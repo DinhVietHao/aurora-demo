@@ -210,9 +210,9 @@ public class OrderShopDAO {
                         VoucherShopID, VoucherDiscountID, VoucherShipID,
                         Subtotal, ShopDiscount, SystemDiscount,
                         ShippingFee, SystemShippingDiscount, FinalAmount,
-                        Status, CreatedAt, UpdatedAt
+                        Status, PlatformFee, CreatedAt, UpdatedAt
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, DATEADD(HOUR, 7, SYSUTCDATETIME()), DATEADD(HOUR, 7, SYSUTCDATETIME()))
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -239,6 +239,7 @@ public class OrderShopDAO {
             ps.setDouble(12, orderShop.getSystemShippingDiscount());
             ps.setDouble(13, orderShop.getFinalAmount());
             ps.setString(14, orderShop.getStatus());
+            ps.setDouble(15, orderShop.getPlatformFee());
 
             ps.executeUpdate();
 

@@ -77,7 +77,6 @@ function calculateDiscount(total) {
 }
 
 // ====================== PRODUCT QUANTITY CALCULATION ======================
-
 function calculateTotalQuantityProducts() {
   let totalProducts = 0;
   cartBodies.forEach((row) => {
@@ -93,10 +92,51 @@ function updateBuyButton() {
   const totalItems = calculateTotalQuantityProducts();
   buyButton.textContent = `Mua Hàng (${totalItems})`;
 }
+// ====================== ALLOCATE SYSTEM VOUCHER TO SHOPS ======================
+function allocateSystemVoucherToShops(systemVoucher) {
+  if (systemVoucher <= 0) return {};
+
+  const allocation = {};
+  const allShops = document.querySelectorAll(".cart-body[data-shop-id]");
+
+  let totalAfterShopVouchers = 0;
+  const shopValues = {};
+
+  allShops.forEach((shopElement) => {
+    const shopId = shopElement.getAttribute("data-shop-id");
+    const shopTotal = calculateShopTotal(shopId);
+    const shopDiscount = calculateShopDiscount(shopTotal, shopId);
+    const valueAfterShopVoucher = shopTotal - shopDiscount;
+    console.log("Check valueAfterShopVoucher", valueAfterShopVoucher);
+
+    shopValues[shopId] = valueAfterShopVoucher;
+    totalAfterShopVouchers += valueAfterShopVoucher;
+  });
+
+  if (totalAfterShopVouchers > 0) {
+    allShops.forEach((shopElement) => {
+      const shopId = shopElement.getAttribute("data-shop-id");
+      const shopValue = shopValues[shopId] || 0;
+
+      if (shopValue > 0) {
+        const ratio = shopValue / totalAfterShopVouchers;
+        const allocatedAmount = systemVoucher * ratio;
+
+        // Sử dụng Math.min để đảm bảo không vượt quá giá trị shop
+        allocation[shopId] = Math.min(allocatedAmount, shopValue);
+      } else {
+        allocation[shopId] = 0;
+      }
+    });
+  }
+
+  return allocation;
+}
 // ====================== GET ALL DISCOUNTS ======================
 function getAllDiscounts(total) {
   let systemDiscount = calculateDiscount(total);
 
+  const systemVoucherAllocation = allocateSystemVoucherToShops(systemDiscount);
   let allShopDiscount = 0;
   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
   allShop.forEach((shopElement) => {
