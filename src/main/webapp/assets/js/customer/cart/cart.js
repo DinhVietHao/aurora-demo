@@ -51,7 +51,7 @@ function calculateTotalProduct() {
 }
 
 // ====================== VOUCHER CALCULATION ======================
-function calculateDiscount(total) {
+function calculateDiscount(total, afterShopDiscount) {
   const selectedDiscount = document.querySelector(
     'input[name="voucherDiscount"]:checked'
   );
@@ -66,8 +66,8 @@ function calculateDiscount(total) {
     if (type === "PERCENT") {
       let percent = parseInt(selectedDiscount.dataset.discount) || 0;
       let max = parseInt(selectedDiscount.dataset.max) || 0;
-      let discountAmount = (total * percent) / 100;
-      return Math.min(discountAmount, max, total);
+      let discountAmount = (afterShopDiscount * percent) / 100;
+      return Math.min(discountAmount, max, afterShopDiscount);
     } else {
       let fixedDiscount = parseInt(selectedDiscount.dataset.discount) || 0;
       return Math.min(fixedDiscount, total);
@@ -77,6 +77,7 @@ function calculateDiscount(total) {
 }
 
 // ====================== PRODUCT QUANTITY CALCULATION ======================
+
 function calculateTotalQuantityProducts() {
   let totalProducts = 0;
   cartBodies.forEach((row) => {
@@ -92,51 +93,8 @@ function updateBuyButton() {
   const totalItems = calculateTotalQuantityProducts();
   buyButton.textContent = `Mua Hàng (${totalItems})`;
 }
-// ====================== ALLOCATE SYSTEM VOUCHER TO SHOPS ======================
-function allocateSystemVoucherToShops(systemVoucher) {
-  if (systemVoucher <= 0) return {};
-
-  const allocation = {};
-  const allShops = document.querySelectorAll(".cart-body[data-shop-id]");
-
-  let totalAfterShopVouchers = 0;
-  const shopValues = {};
-
-  allShops.forEach((shopElement) => {
-    const shopId = shopElement.getAttribute("data-shop-id");
-    const shopTotal = calculateShopTotal(shopId);
-    const shopDiscount = calculateShopDiscount(shopTotal, shopId);
-    const valueAfterShopVoucher = shopTotal - shopDiscount;
-    console.log("Check valueAfterShopVoucher", valueAfterShopVoucher);
-
-    shopValues[shopId] = valueAfterShopVoucher;
-    totalAfterShopVouchers += valueAfterShopVoucher;
-  });
-
-  if (totalAfterShopVouchers > 0) {
-    allShops.forEach((shopElement) => {
-      const shopId = shopElement.getAttribute("data-shop-id");
-      const shopValue = shopValues[shopId] || 0;
-
-      if (shopValue > 0) {
-        const ratio = shopValue / totalAfterShopVouchers;
-        const allocatedAmount = systemVoucher * ratio;
-
-        // Sử dụng Math.min để đảm bảo không vượt quá giá trị shop
-        allocation[shopId] = Math.min(allocatedAmount, shopValue);
-      } else {
-        allocation[shopId] = 0;
-      }
-    });
-  }
-
-  return allocation;
-}
 // ====================== GET ALL DISCOUNTS ======================
 function getAllDiscounts(total) {
-  let systemDiscount = calculateDiscount(total);
-
-  const systemVoucherAllocation = allocateSystemVoucherToShops(systemDiscount);
   let allShopDiscount = 0;
   const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
   allShop.forEach((shopElement) => {
@@ -160,6 +118,8 @@ function getAllDiscounts(total) {
       }
     }
   });
+  let afterShopDiscount = total - allShopDiscount;
+  let systemDiscount = calculateDiscount(total, afterShopDiscount);
 
   return { systemDiscount, allShopDiscount };
 }
@@ -168,8 +128,11 @@ function updateCartSummary() {
   let total = calculateTotalProduct();
   let { systemDiscount, allShopDiscount } = getAllDiscounts(total);
 
-  discountElement.innerText =
-    "-" + formatCurrency(systemDiscount + allShopDiscount);
+  let totalDiscount = systemDiscount + allShopDiscount;
+  if (totalDiscount > total) {
+    totalDiscount = total;
+  }
+  discountElement.innerText = "-" + formatCurrency(totalDiscount);
 
   totalProductPrice.textContent = formatCurrency(total);
   let sum = Math.max(total - systemDiscount - allShopDiscount, 0);
@@ -564,8 +527,6 @@ buyButton.addEventListener("click", () => {
   window.location.href = "/checkout";
 });
 
-updateCartSummary();
-
 // ====================== DELETE CARTITEM HANDLER ======================
 const deleteCartItem = document.querySelectorAll(".button-delete");
 const confirmDeleteCartItem = document.getElementById("confirmDeleteCartItem");
@@ -919,4 +880,5 @@ window.addEventListener("DOMContentLoaded", () => {
   loadSavedVouchers();
   loadSystemVouchers();
   refreshShopVoucher();
+  updateCartSummary();
 });

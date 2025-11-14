@@ -96,6 +96,17 @@ public class OrderService {
 
             // Tính phí ship từng shop
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
+            for (Map.Entry<Long, Double> entry : shopShippingFees.entrySet()) {
+                if (entry.getValue() == -1) {
+                    return new ServiceResponse(
+                            "error",
+                            "Không thể tính phí vận chuyển",
+                            "Hệ thống không thể tính phí vận chuyển từ GHN. Vui lòng thử lại sau.",
+                            "",
+                            0.0);
+                }
+            }
+
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
             // Khởi tạo thanh toán
