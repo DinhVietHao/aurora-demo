@@ -20,6 +20,7 @@ import com.group01.aurora_demo.cart.utils.ServiceResponse;
 import com.group01.aurora_demo.cart.utils.VoucherValidator;
 import com.group01.aurora_demo.catalog.dao.FlashSaleDAO;
 import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.catalog.dao.SettingDAO;
 import com.group01.aurora_demo.catalog.dao.VATDao;
 import com.group01.aurora_demo.catalog.model.FlashSaleItem;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
@@ -40,6 +41,7 @@ public class OrderService {
     private ProductDAO productDAO;
     private FlashSaleDAO flashSaleDAO;
     private VATDao vatDao;
+    private SettingDAO settingDAO;
 
     public OrderService() {
         this.orderShopDAO = new OrderShopDAO();
@@ -53,6 +55,7 @@ public class OrderService {
         this.productDAO = new ProductDAO();
         this.flashSaleDAO = new FlashSaleDAO();
         this.vatDao = new VATDao();
+        this.settingDAO = new SettingDAO();
     }
 
     public ServiceResponse createOrder(User user, Address address, Voucher voucherDiscount,
@@ -93,12 +96,23 @@ public class OrderService {
 
             // Tính phí ship từng shop
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
+            for (Map.Entry<Long, Double> entry : shopShippingFees.entrySet()) {
+                if (entry.getValue() == -1) {
+                    return new ServiceResponse(
+                            "error",
+                            "Không thể tính phí vận chuyển",
+                            "Hệ thống không thể tính phí vận chuyển từ GHN. Vui lòng thử lại sau.",
+                            "",
+                            0.0);
+                }
+            }
+
             Map<Long, Voucher> shopVoucherCache = new HashMap<>();
 
             // Khởi tạo thanh toán
             Payment payment = new Payment();
             payment.setAmount(summary.getFinalAmount());
-            String transactionRef = "SYS-" + System.currentTimeMillis() + "-" + user.getUserID();
+            String transactionRef = "AURORA" + System.currentTimeMillis() + user.getUserID();
             payment.setTransactionRef(transactionRef);
             payment.setStatus("PENDING_PAYMENT");
             long paymentId = this.paymentDAO.createPayment(conn, payment);
@@ -212,6 +226,8 @@ public class OrderService {
                 orderShop.setShippingFee(shopShippingFee);
                 orderShop.setFinalAmount(finalAmount);
                 orderShop.setStatus("PENDING_PAYMENT");
+                double platformFeePercentage = this.settingDAO.getPlatformFeePercentage();
+                orderShop.setPlatformFee(platformFeePercentage);
                 long orderShopId = this.orderShopDAO.createOrderShop(conn, orderShop);
 
                 if (orderShopId == -1) {
