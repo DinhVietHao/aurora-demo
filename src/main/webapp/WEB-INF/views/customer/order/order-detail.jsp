@@ -14,7 +14,7 @@
 
                 <!-- CSS riêng trang Cart -->
                 <link rel="stylesheet" href="${ctx}/assets/css/customer/profile/information_account.css">
-                <link rel="stylesheet" href="${ctx}/assets/css/customer/order/order.css?v=1.0.1">
+                <link rel="stylesheet" href="${ctx}/assets/css/customer/order/order.css?v=1.0.2">
             </head>
 
             <body>
