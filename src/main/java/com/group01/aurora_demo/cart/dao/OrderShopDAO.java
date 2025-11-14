@@ -354,8 +354,6 @@ public class OrderShopDAO {
 
             while (rs.next()) {
                 long paymentId = rs.getLong("PaymentID");
-                String transactionRef = rs.getString("TransactionRef");
-
                 try {
                     List<OrderShop> orderShops = getPendingOrdersByPaymentId(conn, paymentId);
 
@@ -393,7 +391,7 @@ public class OrderShopDAO {
                         }
                     }
 
-                    paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionRef);
+                    paymentDAO.updatePaymentStatusById(paymentId, "FAILED", "0");
                     cancelledCount++;
                     System.out.println("Tự động hủy Payment #" + paymentId + " do quá hạn thanh toán.");
 

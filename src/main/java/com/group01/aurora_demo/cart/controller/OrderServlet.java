@@ -205,6 +205,7 @@ public class OrderServlet extends NotificationServlet {
                     resp.sendRedirect(req.getContextPath() + "/order?status=pending");
                     return;
                 }
+                this.paymentDAO.updatePaymentStatusById(paymentId, "FAILED", transactionNo);
                 boolean rollbackSuccess = this.orderShopDAO.rollbackFailedPaymentByPaymentId(paymentId);
                 if (!rollbackSuccess) {
                     session.setAttribute("toastType", "error");

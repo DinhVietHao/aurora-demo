@@ -112,7 +112,7 @@ public class OrderService {
             // Khởi tạo thanh toán
             Payment payment = new Payment();
             payment.setAmount(summary.getFinalAmount());
-            String transactionRef = "SYS-" + System.currentTimeMillis() + "-" + user.getUserID();
+            String transactionRef = "AURORA" + System.currentTimeMillis() + user.getUserID();
             payment.setTransactionRef(transactionRef);
             payment.setStatus("PENDING_PAYMENT");
             long paymentId = this.paymentDAO.createPayment(conn, payment);
