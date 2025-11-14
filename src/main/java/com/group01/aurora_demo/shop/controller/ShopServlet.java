@@ -324,7 +324,7 @@ public class ShopServlet extends HttpServlet {
     private void handleRevenueHistory(HttpServletRequest request, HttpServletResponse response, User user) {
         try {
             long shopId = shopDAO.getShopIdByUserId(user.getId());
-            Shop shop = shopDAO.getShopByUserId(user.getId());
+            
 
             LocalDate today = LocalDate.now();
             LocalDate defaultStart = today.minusDays(6);
@@ -346,8 +346,7 @@ public class ShopServlet extends HttpServlet {
             double totalPlatformFee = revenueDetails.stream()
                     .mapToDouble(RevenueDetail::getPlatformFee)
                     .sum();
-
-            request.setAttribute("shop", shop);
+            
             request.setAttribute("revenueDetails", revenueDetails);
             request.setAttribute("totalRevenue", totalRevenue);
             request.setAttribute("totalPlatformFee", totalPlatformFee);
