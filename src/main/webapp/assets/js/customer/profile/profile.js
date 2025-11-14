@@ -214,23 +214,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const $ = (selector, parent = document) => parent.querySelector(selector);
 
   // ===== Modal Elements =====
-  const verifyOldEmailModalEl = $("#verifyOldEmailModal");
   const enterNewEmailModalEl = $("#enterNewEmailModal");
   const verifyNewEmailModalEl = $("#verifyNewEmailModal");
 
-  const verifyOldEmailModal = new bootstrap.Modal(verifyOldEmailModalEl);
-
   // ===== UI Elements =====
-  const maskedOldEmail = $("#maskedOldEmail");
   const maskedNewEmail = $("#maskedNewEmail");
-
-  const oldEmailHidden = $("#oldEmailHidden");
-  const inputOldEmailOtp = $("#oldEmailOtp");
   const inputNewEmail = $("#newEmail");
   const inputNewEmailOtp = $("#newEmailOtp");
 
   const btnChangeCurrentEmail = $('a[href="#"][data-action="changeEmail"]');
-  const btnVerifyOldEmail = $("#btnVerifyOldEmail");
   const btnSubmitNewEmail = $("#btnSubmitNewEmail");
   const btnConfirmChangeEmail = $("#btnConfirmChangeEmail");
 
@@ -243,18 +235,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ===== Lấy email hiện tại từ giao diện =====
   let currentEmail = $(".me-2.text-truncate").textContent.trim();
-  if (oldEmailHidden) oldEmailHidden.value = currentEmail;
 
   // ===== OTP Manager =====
-  const oldEmailOtpManager = window.createOtpManager({
-    sendOtpBtn: $("#resendOldEmailOtp"),
-    timerLabel: $("#oldEmailOtpTimer"),
-    otpInput: inputOldEmailOtp,
-    emailInput: oldEmailHidden,
-    modalElement: verifyOldEmailModalEl,
-    defaultPurpose: "change-email-verify-old",
-  });
-
   const newEmailOtpManager = window.createOtpManager({
     sendOtpBtn: $("#resendNewEmailOtp"),
     timerLabel: $("#newEmailOtpTimer"),
@@ -301,66 +283,25 @@ document.addEventListener("DOMContentLoaded", function () {
     oldInst.hide();
   }
 
-  // ===== Bước 1: Gửi OTP tới email hiện tại =====
+  // ===== Bước 1: Mở modal thay đổi email =====
   btnChangeCurrentEmail?.addEventListener("click", async (e) => {
     e.preventDefault();
 
-    setBtnState(btnChangeCurrentEmail, true, "Đang xử lý...");
+    // Reset modal state
+    passwordSection.style.display = "";
+    newEmailSection.style.display = "none";
+    inputCurrentPassword.value = "";
+    inputNewEmail.value = "";
+    passwordVerifyMsg.textContent = "";
+    btnSubmitNewEmail.disabled = true;
 
-    if (!currentEmail) {
-      toast({
-        title: "Không xác định email hiện tại",
-        message: "Không thể lấy email người dùng từ giao diện.",
-        type: "error",
-        duration: 3000,
-      });
-      setBtnState(btnChangeCurrentEmail, false);
-      return;
-    }
-
-    const success = await oldEmailOtpManager.sendOtp();
-
-    if (!success) {
-      toast({
-        title: "Có lỗi xảy ra!",
-        message: "Không thể gửi mã OTP tới email hiện tại.",
-        type: "error",
-        duration: 3000,
-      });
-      setBtnState(btnChangeCurrentEmail, false);
-      return;
-    }
-
-    maskedOldEmail.textContent = oldEmailOtpManager.maskEmail(currentEmail);
-    verifyOldEmailModal.show();
-    setBtnState(btnVerifyOldEmail, false);
-    setBtnState(btnChangeCurrentEmail, false);
+    // Show modal
+    const enterNewEmailModal =
+      bootstrap.Modal.getOrCreateInstance(enterNewEmailModalEl);
+    enterNewEmailModal.show();
   });
 
-  // ===== Bước 2: Xác thực OTP email cũ =====
-  btnVerifyOldEmail?.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    if (!oldEmailOtpManager.isOtpValid()) {
-      oldEmailOtpManager.showMessageForInput(
-        inputOldEmailOtp,
-        "Vui lòng nhập đúng mã OTP để tiếp tục.",
-        "failure"
-      );
-      return;
-    }
-
-    setBtnState(btnVerifyOldEmail, true);
-    swapModals(verifyOldEmailModalEl, enterNewEmailModalEl, () => {
-      passwordSection.style.display = "";
-      newEmailSection.style.display = "none";
-      inputCurrentPassword.value = "";
-      passwordVerifyMsg.textContent = "";
-      btnSubmitNewEmail.disabled = true;
-    });
-  });
-
-  // ===== Bước 3.1: Kiểm tra mật khẩu trước khi nhập email mới =====
+  // ===== Bước 2.1: Kiểm tra mật khẩu trước khi nhập email mới =====
   btnVerifyPassword?.addEventListener("click", async () => {
     const password = inputCurrentPassword.value.trim();
     if (!password || password.length < 8) {
@@ -403,7 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ===== Bước 3.2: Gửi otp tới email mới =====
+  // ===== Bước 2.2: Gửi otp tới email mới =====
   btnSubmitNewEmail?.addEventListener("click", async (e) => {
     e.preventDefault();
 
@@ -440,7 +381,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setBtnState(btnSubmitNewEmail, false);
   });
 
-  // ===== Bước 4: Xác nhận OTP email mới và cập nhật email =====
+  // ===== Bước 3: Xác nhận OTP email mới và cập nhật email =====
   btnConfirmChangeEmail?.addEventListener("click", async (e) => {
     e.preventDefault();
 
