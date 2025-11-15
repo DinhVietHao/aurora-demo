@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const container = modal.querySelector(".border.rounded.p-3");
     const hiddenInput = document.getElementById(hiddenInputId);
 
-    // Tạo phần hiển thị lỗi nếu chưa có
+    // Tạo khu vực hiển thị lỗi
     let errorMsg = container.nextElementSibling;
     if (!errorMsg || !errorMsg.classList.contains("text-danger")) {
       errorMsg = document.createElement("div");
@@ -79,19 +79,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let mainCategory = null;
 
-    // 🟢 Gắn nhãn “(Thể loại chính)”
+    // 🟢 Gán thể loại chính
     function setMainCategory(cb) {
-      // Xóa nhãn cũ
-      modal.querySelectorAll(".primary-label").forEach((el) => el.remove());
+      // Ẩn toàn bộ nhãn cũ
+      modal
+        .querySelectorAll(".primary-label")
+        .forEach((el) => (el.style.display = "none"));
       checkboxes.forEach((c) => c.classList.remove("main-category"));
 
-      const label = modal.querySelector(`label[for='${cb.id}']`);
-      if (!label) return;
-
-      const note = document.createElement("span");
-      note.textContent = " (Thể loại chính)";
-      note.classList.add("text-success", "fw-bold", "primary-label");
-      label.appendChild(note);
+      // Lấy span tương ứng
+      const span = cb.closest(".form-check").querySelector(".primary-label");
+      if (span) span.style.display = "inline";
 
       cb.classList.add("main-category");
       hiddenInput.value = cb.value;
@@ -100,10 +98,13 @@ document.addEventListener("DOMContentLoaded", function () {
       hideError();
     }
 
-    // 🔵 Xóa nhãn
+    // 🔵 Xóa thể loại chính
     function clearMainCategory() {
-      modal.querySelectorAll(".primary-label").forEach((el) => el.remove());
+      modal
+        .querySelectorAll(".primary-label")
+        .forEach((el) => (el.style.display = "none"));
       checkboxes.forEach((c) => c.classList.remove("main-category"));
+
       hiddenInput.value = "";
       mainCategory = null;
     }
@@ -118,11 +119,9 @@ document.addEventListener("DOMContentLoaded", function () {
       container.classList.remove("border-danger");
     }
 
-    // 🧠 Tick checkbox: chỉ chọn thể loại chính lần đầu
+    // 🧠 Tick checkbox: gán thể loại chính đầu tiên được chọn
     checkboxes.forEach((cb) => {
       cb.addEventListener("change", () => {
-        const label = modal.querySelector(`label[for='${cb.id}']`);
-
         if (cb.checked && !mainCategory) {
           setMainCategory(cb);
         } else if (!cb.checked && mainCategory === cb) {
@@ -131,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-    // ⚠️ Validate khi submit
+    // ⚠ Validate khi submit
     const form = document.querySelector(formSelector);
     form.addEventListener("submit", (e) => {
       if (!mainCategory) {

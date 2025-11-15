@@ -115,7 +115,7 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link ${status == 'RETURNED' ? 'active' : ''}"
                                                         href="${ctx}/shop/orders?status=RETURNED">
-                                                        Hoàn Tiền
+                                                        Trả hàng
                                                         <c:if test="${orderCountReturned > 0}">
                                                             <span class="order-count">${orderCountReturned}</span>
                                                         </c:if>

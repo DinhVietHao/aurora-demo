@@ -113,7 +113,8 @@ public class ProductServlet extends HttpServlet {
 
                     List<Product> listProduct = productDAO.getProductsByShopId(shopId);
                     List<Category> listCategoryShop = categoryDAO.getCategoriesByShopId(shopId);
-
+                    List<Category> listAllCategory = categoryDAO.getAllCategories();
+                    request.setAttribute("listAllCategory", listAllCategory);
                     request.setAttribute("listCategoryShop", listCategoryShop);
                     request.setAttribute("listProduct", listProduct);
                     request.getRequestDispatcher("/WEB-INF/views/shop/productManage.jsp").forward(request, response);
