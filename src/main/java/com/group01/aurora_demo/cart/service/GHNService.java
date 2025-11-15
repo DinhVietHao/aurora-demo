@@ -44,7 +44,6 @@ public class GHNService {
             JSONArray data = json.optJSONArray("data");
 
             if (data != null && data.length() > 0) {
-
                 return data.getJSONObject(0).getInt("service_id");
             } else {
                 System.err
