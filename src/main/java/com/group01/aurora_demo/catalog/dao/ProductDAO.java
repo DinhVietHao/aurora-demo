@@ -1709,16 +1709,31 @@ public class ProductDAO {
     }
 
     public boolean reduceQuantityProduct(long productId, int quantity) {
-        String sql = "UPDATE Products SET Quantity = Quantity - ? WHERE ProductID = ? AND Quantity >= ?";
+        String sql = """
+                    UPDATE Products
+                    SET Quantity = Quantity - ?,
+                        Status = CASE
+                                    WHEN Quantity - ? <= 0 THEN 'OUT_OF_STOCK'
+                                    ELSE 'ACTIVE'
+                                 END
+                    WHERE ProductID = ?
+                      AND Quantity >= ?
+                """;
+
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setInt(1, quantity);
-            ps.setLong(2, productId);
-            ps.setInt(3, quantity);
+            ps.setInt(2, quantity);
+            ps.setLong(3, productId);
+            ps.setInt(4, quantity);
+
             return ps.executeUpdate() > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return false;
     }
 

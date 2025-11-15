@@ -647,7 +647,7 @@ public class ProductServlet extends HttpServlet {
                             }
                         }
                     }
-                   
+
                     // available
                     if (!primarySet) {
                         if (!keptExistingIds.isEmpty()) {
