@@ -36,6 +36,14 @@
                                             aria-label="Đóng"></button>
                                     </div>
                                 </c:if>
+
+                                <c:if test="${not empty warning}">
+                                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                        ${fn:escapeXml(warning)}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                            aria-label="Đóng"></button>
+                                    </div>
+                                </c:if>
                                 <div class="container-fluid px-4">
                                     <!-- Page Header -->
                                     <div class="d-flex justify-content-between align-items-center">
