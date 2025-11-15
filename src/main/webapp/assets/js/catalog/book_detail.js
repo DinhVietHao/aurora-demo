@@ -44,7 +44,20 @@ addToCartBtn.addEventListener("click", () => {
     },
     body: "productId=" + productId,
   })
-    .then((res) => res.json())
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error(
+          "Server không trả về JSON. Có thể phiên đăng nhập đã hết hạn."
+        );
+      }
+
+      return res.json();
+    })
     .then((data) => {
       if (data.success) {
         toast({
