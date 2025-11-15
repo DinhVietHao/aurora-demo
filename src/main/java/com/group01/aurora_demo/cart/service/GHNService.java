@@ -36,6 +36,7 @@ public class GHNService {
 
             StringBuilder response = new StringBuilder();
             String line;
+
             while ((line = br.readLine()) != null)
                 response.append(line);
 
@@ -76,12 +77,10 @@ public class GHNService {
                     .put("to_district_id", toDistrict)
                     .put("to_ward_code", toWard)
                     .put("weight", weight)
-                    .put("service_id", serviceId)
+                    .put("service_id", serviceId != null ? serviceId : JSONObject.NULL)
                     .put("service_type_id", serviceTypeId != null ? serviceTypeId : JSONObject.NULL)
                     .put("items", items);
 
-            body.put("service_id", serviceId != null ? serviceId : JSONObject.NULL);
-            body.put("service_type_id", serviceTypeId != null ? serviceTypeId : JSONObject.NULL);
             URL url = new URL(API_BASE + "/fee");
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
