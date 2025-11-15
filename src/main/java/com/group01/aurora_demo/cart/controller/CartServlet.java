@@ -14,7 +14,10 @@ import jakarta.servlet.annotation.WebServlet;
 import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
+import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.cart.model.CartItem;
 import com.group01.aurora_demo.cart.utils.CurrencyFormatter;
 import com.group01.aurora_demo.catalog.controller.NotificationServlet;
@@ -31,12 +34,14 @@ public class CartServlet extends NotificationServlet {
     private VoucherDAO voucherDAO;
     private ProductDAO productDAO;
     private FlashSaleDAO flashSaleDAO;
+    private ShopDAO shopDAO;
 
     public CartServlet() {
         this.cartItemDAO = new CartItemDAO();
         this.voucherDAO = new VoucherDAO();
         this.productDAO = new ProductDAO();
         this.flashSaleDAO = new FlashSaleDAO();
+        this.shopDAO = new ShopDAO();
     }
 
     @Override
@@ -119,6 +124,26 @@ public class CartServlet extends NotificationServlet {
                         return;
                     }
 
+                    Shop shop = this.shopDAO.getShopById(product.getShopId());
+                    if (shop == null) {
+                        json.put("success", false)
+                                .put("type", "error")
+                                .put("title", "Lỗi hệ thống")
+                                .put("message", "Không tìm thấy cửa hàng.");
+                        out.print(json.toString());
+                        return;
+                    }
+
+                    if (!"ACTIVE".equalsIgnoreCase(shop.getStatus())) {
+                        json.put("success", false)
+                                .put("type", "warning")
+                                .put("title", "Cửa hàng ngừng hoạt động")
+                                .put("message",
+                                        "Cửa hàng này hiện không hoạt động hoặc chưa có hợp đồng với hệ thống.");
+                        out.print(json.toString());
+                        return;
+                    }
+
                     FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
 
                     CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);
@@ -186,6 +211,26 @@ public class CartServlet extends NotificationServlet {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
                     if (!isProductAvailable(product, json)) {
+                        out.print(json.toString());
+                        return;
+                    }
+
+                    Shop shop = this.shopDAO.getShopById(product.getShopId());
+                    if (shop == null) {
+                        json.put("success", false)
+                                .put("type", "error")
+                                .put("title", "Lỗi hệ thống")
+                                .put("message", "Không tìm thấy cửa hàng.");
+                        out.print(json.toString());
+                        return;
+                    }
+
+                    if (!"ACTIVE".equalsIgnoreCase(shop.getStatus())) {
+                        json.put("success", false)
+                                .put("type", "warning")
+                                .put("title", "Cửa hàng ngừng hoạt động")
+                                .put("message",
+                                        "Cửa hàng này hiện không hoạt động hoặc chưa có hợp đồng với hệ thống.");
                         out.print(json.toString());
                         return;
                     }
