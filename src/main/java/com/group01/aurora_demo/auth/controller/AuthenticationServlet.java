@@ -287,10 +287,17 @@ public class AuthenticationServlet extends HttpServlet {
             if (user == null || !BCrypt.checkpw(password, user.getPassword())) {
                 flag = false;
                 message = "Email hoặc mật khẩu không đúng.";
+            } else if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
+                flag = false;
+                message = "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin thông qua email: aurora.noreply.gr1@gmail.com";
+            } else if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                flag = false;
+                message = "Tài khoản của bạn hiện không khả dụng. Trạng thái: " + user.getStatus();
             } else {
                 message = handleLoginSuccess(request, response, json, user);
-                if (!message.isEmpty())
+                if (!message.isEmpty()) {
                     flag = false;
+                }
             }
         } catch (Exception e) {
             System.out.println("Error in \"handleLocalLogin\" function: " + e.getMessage());
@@ -318,9 +325,28 @@ public class AuthenticationServlet extends HttpServlet {
                 user.setFullName(ga.getName());
                 user.setPassword(hash);
                 user.setAuthProvider("GOOGLE");
+                user.setStatus("ACTIVE");
 
                 userDAO.createAccount(user);
                 user = userDAO.findByEmailAndProvider(email, "GOOGLE");
+            }
+
+            if ("LOCKED".equalsIgnoreCase(user.getStatus())) {
+                HttpSession session = request.getSession(true);
+                session.setAttribute("toastType", "error");
+                session.setAttribute("toastMsg",
+                        "Tài khoản Google của bạn đã bị khóa. Vui lòng liên hệ Admin thông qua email: aurora.noreply.gr1@gmail.com");
+                response.sendRedirect(request.getContextPath() + "/home");
+                return;
+            }
+
+            if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+                HttpSession session = request.getSession(true);
+                session.setAttribute("toastType", "warning");
+                session.setAttribute("toastMsg",
+                        "Tài khoản của bạn hiện không khả dụng. Trạng thái: " + user.getStatus());
+                response.sendRedirect(request.getContextPath() + "/home");
+                return;
             }
 
             handleLoginSuccess(request, response, null, user);

@@ -556,17 +556,43 @@
           <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
 
           <c:if test="${not empty sessionScope.toastMsg}">
+            <c:choose>
+              <c:when test='${sessionScope.toastType == "success"}'>
+                <c:set var="toastTitle" value="Thành công" />
+                <c:set var="toastDuration" value="3000" />
+              </c:when>
+              <c:when test='${sessionScope.toastType == "warning"}'>
+                <c:set var="toastTitle" value="Cảnh báo" />
+                <c:set var="toastDuration" value="3000" />
+              </c:when>
+              <c:otherwise>
+                <c:set var="toastTitle" value="Lỗi" />
+                <c:set var="toastDuration" value="8000" />
+              </c:otherwise>
+            </c:choose>
+
+            <div id="toast-data" data-title="${toastTitle}" data-message="${sessionScope.toastMsg}"
+              data-type="${sessionScope.toastType}" data-duration="${toastDuration}" style="display:none;">
+            </div>
+
             <script>
-              toast({
-                title: "${sessionScope.toastType == 'success' ? 'Thành công' : 'Cảnh báo'}",
-                message: "${sessionScope.toastMsg}",
-                type: "${sessionScope.toastType}",
-                duration: 3000
-              });
+              (function () {
+                const toastData = document.getElementById('toast-data');
+                if (toastData) {
+                  toast({
+                    title: toastData.dataset.title,
+                    message: toastData.dataset.message,
+                    type: toastData.dataset.type,
+                    duration: parseInt(toastData.dataset.duration)
+                  });
+                }
+              })();
             </script>
+
             <c:remove var="toastMsg" scope="session" />
             <c:remove var="toastType" scope="session" />
           </c:if>
+
         </body>
 
         </html>

@@ -8,15 +8,40 @@ document.addEventListener("DOMContentLoaded", function () {
   const inputEmail = document.getElementById("login-email");
   const formLogin = document.getElementById("form-login");
 
+  const errorContainer = document.getElementById("login-error-container");
+  const errorMessage = document.getElementById("login-error-message");
+
   const otpManager = window.createOtpManager({
     modalElement: loginModalEl,
   });
 
-  /** Xóa tất cả message lỗi/thông báo trên form login. */
+  /* Xóa tất cả message lỗi/thông báo trên form login. */
   function clearAllMessages() {
     [inputEmail, inputPass].forEach((i) =>
       otpManager.showMessageForInput(i, "", "")
     );
+
+    if (errorContainer) {
+      errorContainer.classList.add("d-none");
+    }
+  }
+
+  // Show error in prominent container
+  function showError(message, type = "normal") {
+    if (errorContainer && errorMessage) {
+      errorMessage.textContent = message;
+      errorContainer.classList.remove("d-none");
+
+      if (type === "critical") {
+        errorContainer.className = "alert alert-danger mb-3";
+      } else {
+        errorContainer.className = "alert alert-warning mb-3";
+      }
+
+      errorContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      otpManager.showMessageForInput(inputPass, message, "failure");
+    }
   }
 
   /**
@@ -47,6 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
     i &&
       i.addEventListener("input", () => {
         otpManager.showMessageForInput(i, "", "");
+        if (errorContainer) {
+          errorContainer.classList.add("d-none");
+        }
         setBtnDisabled(false, "Đăng nhập");
       });
   });
@@ -92,16 +120,33 @@ document.addEventListener("DOMContentLoaded", function () {
           window.location.href = data.redirect;
         }, 1200);
       } else {
-        otpManager.showMessageForInput(inputPass, data.message, "failure");
+        const errorMsg =
+          data.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+        if (
+          errorMsg.includes("khóa") ||
+          errorMsg.includes("LOCKED") ||
+          errorMsg.includes("locked")
+        ) {
+          showError(errorMsg, "critical");
+        } else if (
+          errorMsg.includes("không khả dụng") ||
+          errorMsg.includes("Trạng thái")
+        ) {
+          showError(errorMsg, "warning");
+        } else {
+          otpManager.showMessageForInput(inputPass, errorMsg, "failure");
+        }
         btnLogin.innerHTML = oldText;
+        setBtnDisabled(false);
       }
     } catch (err) {
-      otpManager.showMessageForInput(
-        inputPass,
-        "Không thể kết nối máy chủ. Vui lòng thử lại.",
-        "failure"
+      console.error("❌ Login error:", err);
+      showError(
+        "Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
+        "critical"
       );
       btnLogin.innerHTML = oldText;
+      setBtnDisabled(false);
     }
   });
 
@@ -116,5 +161,25 @@ document.addEventListener("DOMContentLoaded", function () {
   // Khi modal đóng -> reset UI (xóa lỗi, dọn input, reset nút)
   if (loginModalEl) {
     loginModalEl.addEventListener("hidden.bs.modal", resetLoginUI);
+  }
+
+  // Auto-hide error after 12 seconds
+  if (errorContainer) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class"
+        ) {
+          if (!errorContainer.classList.contains("d-none")) {
+            // Error is now visible - set auto-hide timer
+            setTimeout(() => {
+              errorContainer.classList.add("d-none");
+            }, 12000); // 12 seconds (longer for critical messages)
+          }
+        }
+      });
+    });
+    observer.observe(errorContainer, { attributes: true });
   }
 });
