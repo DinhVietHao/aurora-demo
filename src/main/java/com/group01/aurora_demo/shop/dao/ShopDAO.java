@@ -630,4 +630,24 @@ public class ShopDAO {
         }
         return null;
     }
+
+    public Shop getShopById(Long shopId) {
+        String sql = "SELECT ShopID, Name, Status FROM Shops WHERE ShopID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Shop shop = new Shop();
+                    shop.setShopId(rs.getLong("ShopID"));
+                    shop.setName(rs.getString("Name"));
+                    shop.setStatus(rs.getString("Status"));
+                    return shop;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -40,8 +40,10 @@ import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.common.service.EmailService;
 import com.group01.aurora_demo.profile.dao.AddressDAO;
 import com.group01.aurora_demo.profile.model.Address;
+import com.group01.aurora_demo.shop.dao.ShopDAO;
 import com.group01.aurora_demo.shop.dao.UserVoucherDAO;
 import com.group01.aurora_demo.shop.dao.VoucherDAO;
+import com.group01.aurora_demo.shop.model.Shop;
 import com.group01.aurora_demo.shop.model.Voucher;
 
 import jakarta.servlet.RequestDispatcher;
@@ -65,6 +67,7 @@ public class OrderServlet extends NotificationServlet {
     private UserVoucherDAO userVoucherDAO;
     private EmailService emailService;
     private FlashSaleDAO flashSaleDAO;
+    private ShopDAO shopDAO;
 
     public OrderServlet() {
         this.orderService = new OrderService();
@@ -78,6 +81,7 @@ public class OrderServlet extends NotificationServlet {
         this.userVoucherDAO = new UserVoucherDAO();
         this.emailService = new EmailService();
         this.flashSaleDAO = new FlashSaleDAO();
+        this.shopDAO = new ShopDAO();
     }
 
     @Override
@@ -482,6 +486,14 @@ public class OrderServlet extends NotificationServlet {
                     Long orderShopId = Long.parseLong(req.getParameter("orderShopId"));
                     List<OrderItem> items = orderItemDAO.getOrderItems(orderShopId);
 
+                    if (items == null || items.isEmpty()) {
+                        json.put("success", false);
+                        json.put("type", "warning");
+                        json.put("title", "Không có sản phẩm");
+                        json.put("message", "Đơn hàng không có sản phẩm để mua lại.");
+                        out.print(json.toString());
+                        break;
+                    }
                     List<String> errors = new ArrayList<>();
 
                     for (OrderItem item : items) {
@@ -492,6 +504,8 @@ public class OrderServlet extends NotificationServlet {
                             continue;
                         }
 
+                        Shop shop = this.shopDAO.getShopById(product.getShopId());
+
                         if (!"ACTIVE".equalsIgnoreCase(product.getStatus())) {
                             errors.add("Sản phẩm '" + product.getTitle() + "' hiện không được bán.");
                             continue;
@@ -499,6 +513,11 @@ public class OrderServlet extends NotificationServlet {
 
                         if (product.getQuantity() == null || product.getQuantity() <= 0) {
                             errors.add("Sản phẩm '" + product.getTitle() + "' đã hết hàng.");
+                            continue;
+                        }
+
+                        if (!"ACTIVE".equalsIgnoreCase(shop.getStatus())) {
+                            errors.add("Cửa hàng này hiện không hoạt động hoặc chưa có hợp đồng với hệ thống.");
                             continue;
                         }
 
