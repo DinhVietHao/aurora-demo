@@ -78,6 +78,7 @@ public class CartServlet extends NotificationServlet {
                 req.setAttribute("shopCarts", shopCarts);
                 req.setAttribute("systemVouchers", voucherDAO.getActiveSystemVouchers(user.getUserID()));
             }
+
             req.getRequestDispatcher("/WEB-INF/views/customer/cart/cart.jsp").forward(req, resp);
         }
     }
@@ -107,12 +108,15 @@ public class CartServlet extends NotificationServlet {
             return;
         }
         switch (path) {
+
             case "/add": {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
+
                     if (!isProductAvailable(product, json))
                         return;
+
                     FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
 
                     CartItem existingItem = cartItemDAO.getCartItem(user.getId(), productId);

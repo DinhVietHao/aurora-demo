@@ -96,6 +96,7 @@ public class OrderService {
 
             // Tính phí ship từng shop
             Map<Long, Double> shopShippingFees = this.checkoutService.calculateShippingFeePerShop(cartItems, address);
+
             for (Map.Entry<Long, Double> entry : shopShippingFees.entrySet()) {
                 if (entry.getValue() == -1) {
                     return new ServiceResponse(
@@ -163,7 +164,6 @@ public class OrderService {
                         shopDiscount = voucherValidator.calculateDiscount(shopVoucher, shopSubtotal);
                         shopVoucherCache.put(shopId, shopVoucher);
                     }
-
                 }
                 double afterShopDiscount = Math.max(0, shopSubtotal - shopDiscount);
                 totalAfterShopDiscount += afterShopDiscount;
@@ -202,6 +202,7 @@ public class OrderService {
                 if (summary.getTotalShippingFee() > 0) {
                     double ratio = shopShippingFee / summary.getTotalShippingFee();
                     systemShippingDiscountAllocated = ratio * systemShippingDiscount;
+                    systemShippingDiscountAllocated = Math.min(shopShippingFee, systemShippingDiscountAllocated);
                 }
 
                 double finalAmount = Math.max(0,
