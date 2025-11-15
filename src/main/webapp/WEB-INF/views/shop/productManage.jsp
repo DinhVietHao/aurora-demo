@@ -874,8 +874,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-body">
-                                    <form id="updateProductForm" action="/shop/product?action=update" method="POST"
-                                        enctype="multipart/form-data">
+                                    <form id="updateProductForm" method="POST" enctype="multipart/form-data">
                                         <input type="hidden" id="updateMode" name="updateMode">
                                         <input type="hidden" id="productIdUpdate" name="ProductID">
                                         <input type="hidden" id="removedImagesUpdate" name="RemovedImages">

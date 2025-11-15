@@ -84,7 +84,7 @@ public class NotificationDAO {
                 FROM Notifications
                 WHERE RecipientType = 'CUSTOMER' AND RecipientID = ?
                 ORDER BY CreatedAt DESC
-                """;
+                """; 
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);
             ps.setLong(1, userID);

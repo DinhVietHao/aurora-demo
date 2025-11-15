@@ -606,7 +606,8 @@ public class ProductServlet extends HttpServlet {
 
                     // Track if primary has been set
                     boolean primarySet = false;
-
+                    // new:6:1
+                    // imageid:1
                     // 1. Check primaryImageUpdate first (highest priority - from explicit "Set as
                     // primary" action)
                     String primaryImageUpdate = request.getParameter("primaryImageUpdate");
@@ -646,50 +647,9 @@ public class ProductServlet extends HttpServlet {
                             }
                         }
                     }
-
-                    // 2. If no primary set yet, check newPrimaryIndex for newly uploaded images
-                    if (!primarySet) {
-                        String newPrimaryIndexStr = request.getParameter("newPrimaryIndex");
-                        if (newPrimaryIndexStr != null && !newPrimaryIndexStr.isEmpty()) {
-                            try {
-                                int newIdx = Integer.parseInt(newPrimaryIndexStr);
-                                if (newIdx >= 0 && newIdx < insertedNewUrls.size()) {
-                                    String newUrl = insertedNewUrls.get(newIdx);
-                                    imageDAO.updatePrimaryImage(productId, newUrl);
-                                    product.setPrimaryImageUrl(newUrl);
-                                    primarySet = true;
-                                }
-                            } catch (NumberFormatException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    // 3. If still no primary, check legacy PrimaryImage parameter
-                    if (!primarySet) {
-                        String primaryExisting = request.getParameter("PrimaryImage");
-                        if (primaryExisting != null && !primaryExisting.isEmpty()) {
-                            try {
-                                long pid = Long.parseLong(primaryExisting);
-                                String url = existingIdToUrl.get(String.valueOf(pid));
-                                if (url != null) {
-                                    imageDAO.updatePrimaryImage(productId, url);
-                                    product.setPrimaryImageUrl(url);
-                                    primarySet = true;
-                                }
-                            } catch (NumberFormatException nfe) {
-                                // If not a number, treat as URL
-                                imageDAO.updatePrimaryImage(productId, primaryExisting);
-                                product.setPrimaryImageUrl(primaryExisting);
-                                primarySet = true;
-                            }
-                        }
-                    }
-
-                    // 4. Final fallback: if no primary set and there are images, use first
+                   
                     // available
                     if (!primarySet) {
-                        // First check kept existing images
                         if (!keptExistingIds.isEmpty()) {
                             String firstExistingId = keptExistingIds.iterator().next();
                             String url = existingIdToUrl.get(firstExistingId);
