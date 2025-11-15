@@ -453,14 +453,14 @@
                             <h6 class="mb-0 fw-bold">
                               <c:out value="${review.user.fullName}" />
                             </h6>
-                            <div class="dropdown">
-                              <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                                <i class="fa fa-ellipsis-h"></i>
-                              </button>
-                              <ul class="dropdown-menu dropdown-menu-end">
-                                <c:if
-                                  test="${not empty sessionScope.AUTH_USER && sessionScope.AUTH_USER.id == review.user.id}">
+                            <c:if
+                              test="${not empty sessionScope.AUTH_USER && sessionScope.AUTH_USER.id == review.user.id}">
+                              <div class="dropdown">
+                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
+                                  aria-expanded="false">
+                                  <i class="fa fa-ellipsis-h"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
                                   <li>
                                     <a class="dropdown-item btn-open-edit-review" href="#" data-bs-toggle="modal"
                                       data-bs-target="#editReviewModal" data-review-id="${review.reviewId}"
@@ -468,9 +468,9 @@
                                       Sửa
                                     </a>
                                   </li>
-                                </c:if>
-                              </ul>
-                            </div>
+                                </ul>
+                              </div>
+                            </c:if>
                           </div>
                           <small class="text-muted">
                             <fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
@@ -713,7 +713,7 @@
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.2"></script>
-        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js?v=1.0.2"></script>
+        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js"></script>
         <script src="${ctx}/assets/js/catalog/comment.js?v=1.0.2"></script>
         <script src="${ctx}/assets/js/catalog/flash_sale_countdown.js?v=1.0.2"></script>
       </body>
