@@ -1508,13 +1508,6 @@
     width: 24px;
     height: 24px;
   }
-<<<<<<< HEAD
-
-  .flash-sale-card .title {
-    font-size: 0.75rem;
-  }
-}
-=======
   
   .progress-text {
     font-size: 0.75rem;
@@ -1568,4 +1561,59 @@
   }
 }
 /* --- End Flash Sale ---*/
->>>>>>> ab448c961d5d8718ed651fa0953b1b3bd3a302e5
+
+#login-error-container {
+    border-left: 4px solid;
+    animation: slideDown 0.3s ease-out;
+    margin-bottom: 1rem;
+}
+
+#login-error-container.alert-danger {
+    background-color: #fff5f5;
+    border-left-color: #dc3545;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+#login-error-container.alert-warning {
+    background-color: #fffbf0;
+    border-left-color: #ffc107;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+#login-error-container .bi {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+#login-error-message {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-height: 100px;
+    overflow-y: auto;
+    word-wrap: break-word;
+}
+
+/* Animation for error appearance */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #login-error-container {
+        font-size: 0.9rem;
+    }
+    
+    #login-error-message {
+        max-height: 80px;
+    }
+}

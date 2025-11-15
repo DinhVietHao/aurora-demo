@@ -101,7 +101,7 @@
                     <div class="modal-body">
                         <div class="row auth-form">
                             <div class="col-12 col-lg-6 auth-form-left">
-                                <a href="./home.html">
+                                <a href="${ctx}/home">
                                     <img class="auth-form-logo"
                                         src="<c:url value='/assets/images/branding/logo-header.png'/>" alt="Aurora" />
                                     <h4 class="auth-form-title text-center">
@@ -113,6 +113,12 @@
                                 </a>
                             </div>
                             <div class="col-12 col-lg-6 auth-form-right">
+                                <!-- ✅ Add error message container -->
+                                <div id="login-error-container" class="alert alert-danger d-none" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <span id="login-error-message"></span>
+                                </div>
+
                                 <form class="auth-form-form" id="form-login">
                                     <div class="form-group mb-2">
                                         <label for="login-email" class="form-label">Email</label>
