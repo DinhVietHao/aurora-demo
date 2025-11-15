@@ -50,6 +50,7 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
+                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 JOIN ProductCategory pc ON p.ProductID = pc.ProductID
                 LEFT JOIN OrderItems oi2 ON p.ProductID = oi2.ProductID
                 LEFT JOIN Reviews r ON oi2.OrderItemID = r.OrderItemID
@@ -70,6 +71,7 @@ public class ProductDAO {
                     WHERE ci.UserID = ?
                 )
                 AND p.Status = 'ACTIVE'
+                AND s.Status = 'ACTIVE'
                 AND p.ProductID NOT IN (
                     -- Loại trừ sản phẩm đã mua
                     SELECT oi.ProductID
@@ -114,11 +116,12 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
+                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
                 LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.Status = 'ACTIVE'
+                WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
                          p.SoldCount, img.Url, pub.Name
                 ORDER BY p.SoldCount DESC, AvgRating DESC;
@@ -149,11 +152,12 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
+                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
                 LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.Status = 'ACTIVE'
+                WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
                 ORDER BY MAX(p.CreatedAt) DESC
                     """;
@@ -172,7 +176,7 @@ public class ProductDAO {
     }
 
     public int countAllProducts() {
-        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE'";
+        String sql = "SELECT COUNT(*) FROM Products p INNER JOIN Shops s ON p.ShopID = s.ShopID WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'";
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -186,7 +190,7 @@ public class ProductDAO {
     }
 
     public int countProductsWithSold() {
-        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE' AND SoldCount > 0";
+        String sql = "SELECT COUNT(*) FROM Products p INNER JOIN Shops s ON p.ShopID = s.ShopID WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE' AND p.SoldCount > 0";
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -234,6 +238,7 @@ public class ProductDAO {
                   pub.Name AS PublisherName,
                   p.CreatedAt
                 FROM Products p
+                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN (
                     SELECT oi.ProductID, AVG(CAST(r.Rating AS FLOAT)) AS AvgRating
                     FROM OrderItems oi
@@ -242,7 +247,7 @@ public class ProductDAO {
                 ) r ON r.ProductID = p.ProductID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.[Status] = 'ACTIVE'
+                WHERE p.[Status] = 'ACTIVE' AND s.Status = 'ACTIVE'
                 """
                 + " ORDER BY " + orderBy + " "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;";
@@ -274,6 +279,7 @@ public class ProductDAO {
         String sql = "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                 + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
                 + "FROM Products p "
+                + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                 + "LEFT JOIN ("
                 + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
                 + "    FROM OrderItems oi "
@@ -288,7 +294,7 @@ public class ProductDAO {
                 + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                 + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
                 + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
-                + "AND p.Status = 'ACTIVE' "
+                + "AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE' "
                 + "ORDER BY p.ProductID "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
@@ -317,6 +323,7 @@ public class ProductDAO {
         }
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT COUNT(DISTINCT p.ProductID) FROM Products p "
+                + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                 + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
                 + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
                 + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
@@ -324,7 +331,7 @@ public class ProductDAO {
                 + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                 + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
                 + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
-                + "AND p.Status = 'ACTIVE'";
+                + "AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'";
 
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -448,6 +455,7 @@ public class ProductDAO {
                 "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                         + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
                         + "FROM Products p "
+                        + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                         + "LEFT JOIN ("
                         + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
                         + "    FROM OrderItems oi "
@@ -462,7 +470,7 @@ public class ProductDAO {
                         + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                         + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
                         + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
-                        + "WHERE p.Status = 'ACTIVE' ");
+                        + "WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'");
 
         // Add filter conditions dynamically
         if (category != null && !category.isEmpty()) {
@@ -531,6 +539,7 @@ public class ProductDAO {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(DISTINCT p.ProductID) "
                         + "FROM Products p "
+                        + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                         + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
                         + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
                         + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
@@ -538,7 +547,7 @@ public class ProductDAO {
                         + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                         + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
                         + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
-                        + "WHERE p.Status = 'ACTIVE' ");
+                        + "WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'");
 
         // Add filter conditions dynamically (same as getAllProductsByFilter)
         if (category != null && !category.isEmpty()) {
@@ -1514,13 +1523,13 @@ public class ProductDAO {
                     p.SalePrice,
                     p.Quantity,
                     p.OriginalPrice,
-                    c.Name AS CategoryName, -- ✅ chỉ lấy thể loại chính
+                    c.Name AS CategoryName,
                     pi.Url AS ImageUrl,
                     p.CreatedAt
                 FROM Products p
                 LEFT JOIN ProductCategory pc
                     ON p.ProductID = pc.ProductID
-                    AND pc.IsPrimary = 1  -- ✅ chỉ lấy thể loại chính
+                    AND pc.IsPrimary = 1
                 LEFT JOIN Category c
                     ON pc.CategoryID = c.CategoryID
                 LEFT JOIN ProductImages pi
@@ -1575,6 +1584,7 @@ public class ProductDAO {
                             ELSE 1
                         END AS SortPriority
                     FROM Products p
+                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     INNER JOIN ProductCategory pc ON p.ProductID = pc.ProductID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
@@ -1587,6 +1597,7 @@ public class ProductDAO {
                     WHERE pc.CategoryID IN (%s)
                       AND p.ProductID <> ?
                       AND p.Status = 'ACTIVE'
+                      AND s.Status = 'ACTIVE'
                     GROUP BY
                         p.ProductID,
                         p.Title,
@@ -1630,6 +1641,7 @@ public class ProductDAO {
                         img.Url AS PrimaryImageUrl,
                         pub.Name AS PublisherName
                     FROM Products p
+                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
                         FROM OrderItems oi
@@ -1638,7 +1650,7 @@ public class ProductDAO {
                     ) r ON r.ProductID = p.ProductID
                     LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                     ORDER BY p.CreatedAt DESC
                     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
                 """;
@@ -1670,6 +1682,7 @@ public class ProductDAO {
                         img.Url AS PrimaryImageUrl,
                         pub.Name AS PublisherName
                     FROM Products p
+                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
                         FROM OrderItems oi
@@ -1678,7 +1691,7 @@ public class ProductDAO {
                     ) r ON r.ProductID = p.ProductID
                     LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                     ORDER BY p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection()) {
@@ -1802,10 +1815,11 @@ public class ProductDAO {
                         p.SalePrice,
                         p.Quantity AS ProductStock
                     FROM Products p
+                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     INNER JOIN FlashSaleItems fsi ON p.ProductID = fsi.ProductID
                     INNER JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
                     WHERE p.ProductID = ?
-                      AND fs.Status = 'ACTIVE'
+                      AND fs.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
                       AND fsi.ApprovalStatus = 'APPROVED'
                       AND fs.EndAt > SYSUTCDATETIME()
                 """;
