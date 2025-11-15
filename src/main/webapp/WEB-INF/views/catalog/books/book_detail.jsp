@@ -71,6 +71,14 @@
             </div>
           </c:if>
 
+          <!-- Show "Flash Sale Sold Out" badge if applicable -->
+          <c:if test="${flashSaleInfo.flashSaleOutOfStock}">
+            <div class="alert alert-warning mb-4" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <strong>Flash Sale đã hết hàng!</strong> Sản phẩm vẫn có sẵn với giá thông thường.
+            </div>
+          </c:if>
+
           <div class="row justify-content-evenly">
             <div class="col-md-5">
               <div class="book-detail-images">
@@ -218,8 +226,10 @@
                   </span>
                 </div>
 
+                <!-- Updated pricing section -->
                 <c:choose>
                   <c:when test="${flashSaleInfo.isFlashSale}">
+                    <!-- Flash Sale price with fire icon -->
                     <div class="mb-3">
                       <img src="https://em-content.zobj.net/source/animated-noto-color-emoji/427/fire_1f525.gif"
                         alt="Fire" class="fire-icon" />
@@ -231,6 +241,7 @@
                   </c:when>
 
                   <c:otherwise>
+                    <!-- Normal pricing -->
                     <div class="mb-3">
                       <span class="price">
                         <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
@@ -442,14 +453,14 @@
                             <h6 class="mb-0 fw-bold">
                               <c:out value="${review.user.fullName}" />
                             </h6>
-                            <div class="dropdown">
-                              <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                                <i class="fa fa-ellipsis-h"></i>
-                              </button>
-                              <ul class="dropdown-menu dropdown-menu-end">
-                                <c:if
-                                  test="${not empty sessionScope.AUTH_USER && sessionScope.AUTH_USER.id == review.user.id}">
+                            <c:if
+                              test="${not empty sessionScope.AUTH_USER && sessionScope.AUTH_USER.id == review.user.id}">
+                              <div class="dropdown">
+                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown"
+                                  aria-expanded="false">
+                                  <i class="fa fa-ellipsis-h"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
                                   <li>
                                     <a class="dropdown-item btn-open-edit-review" href="#" data-bs-toggle="modal"
                                       data-bs-target="#editReviewModal" data-review-id="${review.reviewId}"
@@ -457,9 +468,9 @@
                                       Sửa
                                     </a>
                                   </li>
-                                </c:if>
-                              </ul>
-                            </div>
+                                </ul>
+                              </div>
+                            </c:if>
                           </div>
                           <small class="text-muted">
                             <fmt:formatDate value="${review.createdAt}" pattern="yyyy-MM-dd HH:mm" />
@@ -702,7 +713,7 @@
 
         <!-- JS riêng của trang -->
         <script src="${ctx}/assets/js/catalog/book_detail.js?v=1.0.2"></script>
-        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js?v=1.0.2"></script>
+        <script src="${ctx}/assets/js/catalog/review-filter-ajax.js"></script>
         <script src="${ctx}/assets/js/catalog/comment.js?v=1.0.2"></script>
         <script src="${ctx}/assets/js/catalog/flash_sale_countdown.js?v=1.0.2"></script>
       </body>

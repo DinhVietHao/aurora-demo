@@ -549,7 +549,6 @@ public class ShopDAO {
                     detail.setTotalVAT(rs.getDouble("TotalVAT"));
                     detail.setItemCount(rs.getInt("ItemCount"));
                     detail.setShopRevenue(rs.getDouble("ShopRevenue"));
-                    //
                     detail.setPlatformFee(rs.getDouble("CalculatedPlatformFee"));
 
                     detail.setSystemDiscount(0);
@@ -567,4 +566,68 @@ public class ShopDAO {
         return list;
     }
 
+    public Long getShopIdByProductId(long productId) {
+        String sql = "SELECT ShopID FROM Products WHERE ProductID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("ShopID");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] ShopDAO#getShopIdByProductId: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Long getShopIdByOrderShopId(long orderShopId) {
+        String sql = "SELECT ShopID FROM OrderShops WHERE OrderShopID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, orderShopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("ShopID");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] ShopDAO#getShopIdByOrderShopId: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Long getShopIdByVoucherId(long voucherId) {
+        String sql = "SELECT ShopID FROM Vouchers WHERE VoucherID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, voucherId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    long shopId = rs.getLong("ShopID");
+                    return rs.wasNull() ? null : shopId;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] ShopDAO#getShopIdByVoucherId: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public Long getShopIdByFlashSaleItemId(long flashSaleItemId) {
+        String sql = "SELECT ShopID FROM FlashSaleItems WHERE FlashSaleItemID = ?";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, flashSaleItemId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("ShopID");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] ShopDAO#getShopIdByFlashSaleItemId: " + e.getMessage());
+        }
+        return null;
+    }
 }

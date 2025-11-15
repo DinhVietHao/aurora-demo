@@ -143,7 +143,7 @@ class ReviewFilterAjax {
     });
   }
 
-  // Create review body HTML (without modal)
+  // Create review body HTML (with edit dropdown if user is owner)
   createReviewBodyHTML(review) {
     const avatarUrl = review.user.avatarUrl
       ? `${this.contextPath}/assets/images/avatars/${review.user.avatarUrl}`
@@ -158,47 +158,69 @@ class ReviewFilterAjax {
     const imagesHtml =
       review.images && review.images.length > 0
         ? `
-        <div class="d-flex gap-2 comment-review mt-2">
-          ${review.images
-            .map(
-              (img, index) => `
-            <img src="${this.contextPath}/assets/images/reviews/${img.url}" 
-                 class="review-image" 
-                 alt="review image"
-                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-                 data-bs-toggle="modal" 
-                 data-bs-target="#reviewModal${review.reviewId}"
-                 data-bs-slide-to="${index}">
-          `
-            )
-            .join("")}
-        </div>
-      `
+      <div class="d-flex gap-2 comment-review mt-2">
+        ${review.images
+          .map(
+            (img, index) => `
+          <img src="${this.contextPath}/assets/images/reviews/${img.url}" 
+               class="review-image" 
+               alt="review image"
+               style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer;"
+               data-bs-toggle="modal" 
+               data-bs-target="#reviewModal${review.reviewId}"
+               data-bs-slide-to="${index}">
+        `
+          )
+          .join("")}
+      </div>
+    `
         : "";
 
+    // Check if current user is the review owner
+    const editDropdownHtml = review.isOwner
+      ? `
+    <div class="dropdown">
+      <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fa fa-ellipsis-h"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item btn-open-edit-review" href="#" 
+             data-bs-toggle="modal" 
+             data-bs-target="#editReviewModal" 
+             data-review-id="${review.reviewId}"
+             data-rating="${review.rating}" 
+             data-comment="${this.escapeHtml(review.comment)}">
+            Sửa
+          </a>
+        </li>
+      </ul>
+    </div>
+  `
+      : "";
+
     return `
-      <div class="row comment-body">
-        <div class="col-auto comment-image">
-          <img src="${avatarUrl}" 
-               alt="avatar" 
-               style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;"
-               onerror="this.src='${
-                 this.contextPath
-               }/assets/images/common/avatar.png'">
-        </div>
-        <div class="col">
-          <div class="d-flex justify-content-between">
-            <h6 class="mb-0 fw-bold">${this.escapeHtml(
-              review.user.fullName
-            )}</h6>
-          </div>
-          <small class="text-muted">${this.formatDate(review.createdAt)}</small>
-          <div class="text-warning my-1">${starsHtml}</div>
-          <p class="mb-1">${this.escapeHtml(review.comment)}</p>
-          ${imagesHtml}
-        </div>
+    <div class="row comment-body">
+      <div class="col-auto comment-image">
+        <img src="${avatarUrl}" 
+             alt="avatar" 
+             style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;"
+             onerror="this.src='${
+               this.contextPath
+             }/assets/images/common/avatar.png'">
       </div>
-    `;
+      <div class="col">
+        <div class="d-flex justify-content-between">
+          <h6 class="mb-0 fw-bold">${this.escapeHtml(review.user.fullName)}</h6>
+          ${editDropdownHtml}
+        </div>
+        <small class="text-muted">${this.formatDate(review.createdAt)}</small>
+        <div class="text-warning my-1">${starsHtml}</div>
+        <p class="mb-1">${this.escapeHtml(review.comment)}</p>
+        ${imagesHtml}
+      </div>
+    </div>
+  `;
   }
 
   // Append modal to document body

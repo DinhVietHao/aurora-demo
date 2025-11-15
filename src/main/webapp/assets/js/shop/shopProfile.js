@@ -30,40 +30,63 @@ function handleUpdateShopProfile() {
   const formData = new FormData();
   // Shop profile data
   formData.append("action", "updateProfile");
-  formData.append("shopName", document.getElementById("shopName").value);
-  formData.append("shopPhone", document.getElementById("shopPhone").value);
-  formData.append("shopEmail", document.getElementById("shopEmail").value);
+  formData.append("shopName", document.getElementById("shopName").value.trim());
+  formData.append(
+    "shopPhone",
+    document.getElementById("shopPhone").value.trim()
+  );
+  formData.append(
+    "shopEmail",
+    document.getElementById("shopEmail").value.trim()
+  );
   formData.append(
     "shopDescription",
-    document.getElementById("shopDescription").value
+    document.getElementById("shopDescription").value.trim()
   );
 
-  // Address data
-  formData.append(
-    "cityName",
-    document.getElementById("updateProvinceNameInput").value
-  );
-  formData.append(
-    "districtName",
-    document.getElementById("updateDistrictNameInput").value
-  );
-  formData.append(
-    "wardName",
-    document.getElementById("updateWardNameInput").value
-  );
-  formData.append(
-    "provinceId",
-    document.getElementById("updateProvinceIdInput").value
-  );
-  formData.append(
-    "districtId",
-    document.getElementById("updateDistrictIdInput").value
-  );
-  formData.append(
-    "wardCode",
-    document.getElementById("updateWardCodeInput").value
-  );
-  formData.append("addressLine", document.getElementById("shopAddress").value);
+  // Get address values
+  const provinceNameInput = document
+    .getElementById("updateProvinceNameInput")
+    .value.trim();
+  const districtNameInput = document
+    .getElementById("updateDistrictNameInput")
+    .value.trim();
+  const wardNameInput = document
+    .getElementById("updateWardNameInput")
+    .value.trim();
+  const provinceIdInput = document
+    .getElementById("updateProvinceIdInput")
+    .value.trim();
+  const districtIdInput = document
+    .getElementById("updateDistrictIdInput")
+    .value.trim();
+  const wardCodeInput = document
+    .getElementById("updateWardCodeInput")
+    .value.trim();
+  const addressLine = document.getElementById("shopAddress").value.trim();
+
+  // Validate address fields before submit
+  if (!provinceIdInput || !districtIdInput || !wardCodeInput) {
+    toast({
+      title: "Lỗi!",
+      message:
+        "Vui lòng chọn đầy đủ địa chỉ (Tỉnh/Thành phố, Quận/Huyện, Phường/Xã).",
+      type: "error",
+      duration: 3000,
+    });
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnText;
+    return;
+  }
+
+  // Append address data
+  formData.append("cityName", provinceNameInput);
+  formData.append("districtName", districtNameInput);
+  formData.append("wardName", wardNameInput);
+  formData.append("provinceId", provinceIdInput);
+  formData.append("districtId", districtIdInput);
+  formData.append("wardCode", wardCodeInput);
+  formData.append("addressLine", addressLine);
 
   fetch("/shop", {
     method: "POST",
