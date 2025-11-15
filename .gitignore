@@ -1,0 +1,57 @@
+# =========================================
+# Build outputs (Java / Maven / Gradle)
+# =========================================
+/target/
+/dist/
+/build/
+/out/
+/jsp/
+/.history/
+# Jetty/Tomcat work dirs (dự phòng)
+work/
+temp/
+logs/
+
+
+# =========================================
+# Java artifacts
+# =========================================
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.h
+*~
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# =========================================
+# IDEs
+# =========================================
+
+# VS Code (giữ lại file cấu hình cần share)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# =========================================
+# OS cruft
+# =========================================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================================
+# Misc
+# =========================================
+*.orig
+*.rej

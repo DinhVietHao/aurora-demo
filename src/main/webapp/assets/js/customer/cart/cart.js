@@ -1,0 +1,884 @@
+// ====================== CART CALCULATION ======================
+const minusBtn = document.querySelectorAll(".minus");
+const plusBtn = document.querySelectorAll(".plus");
+const cartBodies = document.querySelectorAll(".cart-body .cart-body__item");
+
+const totalProductPrice = document.querySelector(
+  ".cart-pay .total-product-price"
+);
+const discountElement = document.querySelector(".cart-pay .discount");
+const shipElement = document.querySelector(".cart-pay .ship-discount");
+const totalPayment = document.querySelector(".cart-pay .total-payment");
+const shippingFeePayment = document.querySelector(".cart-pay .shipping-fee");
+const buyButton = document.querySelector(".cart-pay #cart-pay-button");
+
+const selectAllCheckbox = document.querySelector(
+  ".cart-header .cart-checkboxAll"
+);
+const productCheckboxes = document.querySelectorAll(
+  ".cart-body .cart-checkbox"
+);
+
+// ====================== FORMAT PRICE ======================
+function formatCurrency(num) {
+  return num.toLocaleString("vi-VN") + "đ";
+}
+
+// ====================== CALCULATE TOTAL ======================
+function calculateTotalProduct() {
+  let total = 0;
+  cartBodies.forEach((row) => {
+    const priceElement = row.querySelector(".unit-price");
+    const quantityElement = row.querySelector(".number");
+    const subtotalElement = row.querySelector(".subtotal");
+    const checkbox = row.querySelector(".cart-checkbox");
+
+    if (
+      priceElement &&
+      quantityElement &&
+      subtotalElement &&
+      checkbox &&
+      checkbox.checked
+    ) {
+      let price = parseInt(priceElement.textContent.replace(/\D/g, "") || 0);
+      let quantity = parseInt(quantityElement.textContent) || 1;
+      let subtotal = price * quantity;
+      subtotalElement.textContent = formatCurrency(subtotal);
+      total += subtotal;
+    }
+  });
+  return total;
+}
+
+// ====================== VOUCHER CALCULATION ======================
+function calculateDiscount(total, afterShopDiscount) {
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+
+  if (selectedDiscount) {
+    const minOrderAmount =
+      parseInt(selectedDiscount.dataset.minOrderAmount) || 0;
+    if (total < minOrderAmount) {
+      return 0;
+    }
+    let type = selectedDiscount.dataset.type;
+    if (type === "PERCENT") {
+      let percent = parseInt(selectedDiscount.dataset.discount) || 0;
+      let max = parseInt(selectedDiscount.dataset.max) || 0;
+      let discountAmount = (afterShopDiscount * percent) / 100;
+      return Math.min(discountAmount, max, afterShopDiscount);
+    } else {
+      let fixedDiscount = parseInt(selectedDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
+    }
+  }
+  return 0;
+}
+
+// ====================== PRODUCT QUANTITY CALCULATION ======================
+
+function calculateTotalQuantityProducts() {
+  let totalProducts = 0;
+  cartBodies.forEach((row) => {
+    const checkbox = row.querySelector(".cart-checkbox");
+    if (checkbox && checkbox.checked) {
+      totalProducts++;
+    }
+  });
+  return totalProducts;
+}
+
+function updateBuyButton() {
+  const totalItems = calculateTotalQuantityProducts();
+  buyButton.textContent = `Mua Hàng (${totalItems})`;
+}
+// ====================== GET ALL DISCOUNTS ======================
+function getAllDiscounts(total) {
+  let allShopDiscount = 0;
+  const allShop = document.querySelectorAll(".cart-body[data-shop-id]");
+  allShop.forEach((shopElement) => {
+    const shopId = shopElement.getAttribute("data-shop-id");
+    const selectedShopDiscount = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+
+    if (selectedShopDiscount && shopId) {
+      const shopTotal = calculateShopTotal(shopId);
+      const shopDiscount = calculateShopDiscount(shopTotal, shopId);
+      allShopDiscount += shopDiscount;
+      const shopVoucher = document.querySelector(
+        `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+      );
+      if (shopVoucher) {
+        shopVoucher.innerText =
+          shopDiscount > 0
+            ? `Đã giảm ${formatCurrency(shopDiscount)}`
+            : "Chưa áp dụng";
+      }
+    }
+  });
+  let afterShopDiscount = total - allShopDiscount;
+  let systemDiscount = calculateDiscount(total, afterShopDiscount);
+
+  return { systemDiscount, allShopDiscount };
+}
+// ====================== UPDATE SUMMARY ======================
+function updateCartSummary() {
+  let total = calculateTotalProduct();
+  let { systemDiscount, allShopDiscount } = getAllDiscounts(total);
+
+  let totalDiscount = systemDiscount + allShopDiscount;
+  if (totalDiscount > total) {
+    totalDiscount = total;
+  }
+  discountElement.innerText = "-" + formatCurrency(totalDiscount);
+
+  totalProductPrice.textContent = formatCurrency(total);
+  let sum = Math.max(total - systemDiscount - allShopDiscount, 0);
+  totalPayment.textContent = formatCurrency(sum);
+
+  // refresh lại voucher của tất cả shop mỗi lần update
+  refreshShopVoucher();
+  updateBuyButton();
+}
+
+// ====================== CHECKBOX HANDLER ======================
+document.addEventListener("DOMContentLoaded", () => {
+  const allChecked =
+    productCheckboxes.length > 0 &&
+    [...productCheckboxes].every((cb) => cb.checked);
+
+  selectAllCheckbox.checked = allChecked;
+});
+selectAllCheckbox.addEventListener("change", () => {
+  const checked = selectAllCheckbox.checked;
+  const row = document.querySelector(".cart-body__item");
+  const userId = row.dataset.userid;
+
+  productCheckboxes.forEach((cb) => (cb.checked = checked));
+
+  fetch("cart/check-all", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `userId=${userId}&checked=${checked}`,
+  });
+
+  updateCartSummary();
+});
+
+document.addEventListener("change", (e) => {
+  if (e.target.matches(".cart-checkbox")) {
+    const checkbox = e.target;
+    const row = checkbox.closest(".cart-body__item");
+    const cartItemId = row.dataset.cartitemid;
+    const checked = checkbox.checked;
+
+    fetch("cart/update-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `cartItemId=${cartItemId}&checked=${checked}`,
+    });
+
+    const allChecked = [...productCheckboxes].every((cb) => cb.checked);
+    selectAllCheckbox.checked = allChecked;
+    updateCartSummary();
+  }
+});
+// ====================== QUANTITY HANDLER ======================
+minusBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const number = btn.nextElementSibling;
+    let quantity = parseInt(number.textContent);
+    if (quantity > 1) {
+      quantity--;
+      const row = btn.closest(".cart-body__item");
+      const cartItemId = row.dataset.cartitemid;
+
+      fetch("cart/update-quantity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: `cartItemId=${cartItemId}&quantity=${quantity}`,
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            number.textContent = quantity;
+            const priceElement = row.querySelector(".unit-price");
+            priceElement.textContent = formatCurrency(data.salePrice);
+            updateCartSummary();
+          } else {
+            toast({
+              title: data.title,
+              message: data.message,
+              type: data.type,
+              duration: 3000,
+            });
+          }
+        });
+    } else {
+      const deleteCartModalEl = document.getElementById("deleteCartModal");
+      deleteCartModalEl.dataset.cartitemid = btn.dataset.cartitemid;
+      deleteCartModalEl.dataset.cartid = btn.dataset.cartid;
+
+      const deleteCartModal = new bootstrap.Modal(deleteCartModalEl);
+      deleteCartModal.show();
+    }
+  });
+});
+
+plusBtn.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const number = btn.previousElementSibling;
+    let quantity = parseInt(number.textContent);
+    quantity++;
+    const row = btn.closest(".cart-body__item");
+    const cartItemId = row.dataset.cartitemid;
+
+    fetch("cart/update-quantity", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `cartItemId=${cartItemId}&quantity=${quantity}`,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          number.textContent = quantity;
+          const priceElement = row.querySelector(".unit-price");
+          priceElement.textContent = formatCurrency(data.salePrice);
+          updateCartSummary();
+
+          if (data.check === "flashsale_exceeded") {
+            const modalEl = document.getElementById("flashSaleModal");
+            const flashSaleModal = new bootstrap.Modal(modalEl);
+            document.getElementById("flashSaleMessage").textContent =
+              data.message;
+            flashSaleModal.show();
+          }
+        } else {
+          toast({
+            title: data.title,
+            message: data.message,
+            type: data.type,
+            duration: 3000,
+          });
+        }
+      });
+  });
+});
+
+// ====================== VOUCHER HANDLER ======================
+const confirmVoucher = document.getElementById("confirmVoucher");
+
+const appliedVoucherDiscount = document.getElementById(
+  "appliedVoucherDiscount"
+);
+const voucherTextDiscount = document.getElementById("voucherTextDiscount");
+
+const appliedVoucherShip = document.getElementById("appliedVoucherShip");
+const voucherTextShip = document.getElementById("voucherTextShip");
+
+const removeVoucherDiscount = document.getElementById("removeVoucherDiscount");
+const removeVoucherShip = document.getElementById("removeVoucherShip");
+
+confirmVoucher.addEventListener("click", () => {
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+
+  let textDiscount = "";
+  let textShip = "";
+
+  if (selectedDiscount) {
+    localStorage.setItem(
+      "systemVoucherDiscount",
+      selectedDiscount.dataset.value
+    );
+    textDiscount = selectedDiscount.dataset.text;
+    voucherTextDiscount.innerText = textDiscount;
+    appliedVoucherDiscount.classList.remove("d-none");
+  }
+
+  if (selectedShip) {
+    localStorage.setItem("systemVoucherShip", selectedShip.dataset.value);
+    textShip = selectedShip.dataset.text;
+    voucherTextShip.innerText = textShip;
+    appliedVoucherShip.classList.remove("d-none");
+  }
+  const VoucherModal = bootstrap.Modal.getInstance(
+    document.getElementById("voucherModal")
+  );
+  VoucherModal.hide();
+  updateCartSummary();
+});
+
+removeVoucherDiscount.addEventListener("click", () => {
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  if (selectedDiscount) {
+    selectedDiscount.checked = false;
+    localStorage.removeItem("systemVoucherDiscount");
+  }
+  voucherTextDiscount.innerText = "";
+  appliedVoucherDiscount.classList.add("d-none");
+  updateCartSummary();
+});
+
+removeVoucherShip.addEventListener("click", () => {
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+  if (selectedShip) {
+    selectedShip.checked = false;
+    localStorage.removeItem("systemVoucherShip");
+  }
+
+  voucherTextShip.innerText = "";
+  appliedVoucherShip.classList.add("d-none");
+  updateCartSummary();
+});
+
+// ====================== CALCULATE SHOP TOTAL ======================
+function calculateShopTotal(shopId) {
+  const shopElement = document.querySelector(
+    `.cart-body[data-shop-id="${shopId}"]`
+  );
+  if (!shopElement) return 0;
+
+  let shopTotal = 0;
+
+  const items = shopElement.querySelectorAll(".cart-body__item");
+
+  items.forEach((item) => {
+    const checkbox = item.querySelector(".cart-checkbox");
+    const priceElement = item.querySelector(".unit-price");
+    const quantityElement = item.querySelector(".number");
+
+    if (checkbox && checkbox.checked && priceElement && quantityElement) {
+      let price = parseInt(priceElement.textContent.replace(/\D/g, "")) || 0;
+      let quantity = parseInt(quantityElement.textContent) || 1;
+      shopTotal += price * quantity;
+    }
+  });
+  return shopTotal;
+}
+// ====================== VOUCHER SHOP CALCULATION ======================
+function calculateShopDiscount(total, shopId) {
+  const selectedShopDiscount = document.querySelector(
+    `input[name="voucherShopDiscount_${shopId}"]:checked`
+  );
+  if (selectedShopDiscount) {
+    const minOrderAmount =
+      parseInt(selectedShopDiscount.dataset.minOrderAmount) || 0;
+    if (total < minOrderAmount) {
+      return 0;
+    }
+    let type = selectedShopDiscount.dataset.type;
+    if (type === "PERCENT") {
+      let percent = parseInt(selectedShopDiscount.dataset.discount) || 0;
+      let max = parseInt(selectedShopDiscount.dataset.max) || 0;
+      let discountAmount = (total * percent) / 100;
+      return Math.min(discountAmount, max, total);
+    } else {
+      let fixedDiscount = parseInt(selectedShopDiscount.dataset.discount) || 0;
+      return Math.min(fixedDiscount, total);
+    }
+  }
+  return 0;
+}
+
+// ====================== VOUCHER SHOP HANDLER ======================
+const confirmShopVoucher = document.querySelectorAll(".confirmShopVoucher");
+const shopVoucherModal = document.querySelectorAll('[data-bs-toggle="modal"]');
+
+shopVoucherModal.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const shopId = btn.getAttribute("data-shop-id");
+    toggleVoucherAvailability(shopId);
+  });
+});
+
+confirmShopVoucher.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const shopId = btn.getAttribute("data-shop-id");
+    const selectedShopDiscount = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+    if (selectedShopDiscount) {
+      const code = selectedShopDiscount.dataset.value;
+      localStorage.setItem(`shopVoucher_${shopId}`, code);
+      const shopVoucher = document.querySelector(
+        `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+      );
+      if (shopVoucher) {
+        const shopTotal = calculateShopTotal(shopId);
+        const discount = calculateShopDiscount(shopTotal, shopId);
+        shopVoucher.innerText =
+          discount > 0 ? `Đã giảm ${formatCurrency(discount)}` : "Chưa áp dụng";
+      }
+    }
+    const shopVoucherModalEl = document.getElementById(
+      `shopVoucherModal_${shopId}`
+    );
+    const shopVoucherModal = bootstrap.Modal.getInstance(shopVoucherModalEl);
+    shopVoucherModal.hide();
+
+    updateCartSummary();
+  });
+});
+// ====================== Check if user is condition to apply Voucher ======================
+function toggleVoucherAvailability(shopId) {
+  const shopTotal = calculateShopTotal(shopId);
+  const vouchers = document.querySelectorAll(
+    `input[name="voucherShopDiscount_${shopId}"]`
+  );
+
+  vouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
+
+    const label = voucher.closest("label");
+    if (shopTotal < minOrderAmount) {
+      if (voucher.checked) {
+        const shopVoucher = document.querySelector(
+          `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+        );
+        if (shopVoucher) {
+          shopVoucher.innerText = "Chưa đủ điều kiện";
+          localStorage.removeItem(`shopVoucher_${shopId}`);
+        }
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+    }
+  });
+}
+
+// ================== TOGGLE SYSTEM VOUCHERS ==================
+function toggleSystemVoucherAvailability() {
+  const total = calculateTotalProduct();
+  const discountVouchers = document.querySelectorAll(
+    'input[name="voucherDiscount"]'
+  );
+
+  discountVouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
+    const label = voucher.closest("label");
+    if (total < minOrderAmount) {
+      if (voucher.checked) {
+        localStorage.removeItem("systemVoucherDiscount");
+        voucherTextDiscount.innerText = "Chưa đủ điều kiện";
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+      if (voucher.checked) {
+        voucherTextDiscount.innerText = voucher.dataset.text;
+      }
+    }
+  });
+
+  // Xử lý voucher giảm phí ship
+  const shipVouchers = document.querySelectorAll('input[name="voucherShip"]');
+  shipVouchers.forEach((voucher) => {
+    const minOrderAmount = parseInt(voucher.dataset.minOrderAmount) || 0;
+    const label = voucher.closest("label");
+    if (total < minOrderAmount) {
+      if (voucher.checked) {
+        localStorage.removeItem("systemVoucherShip");
+        voucherTextShip.innerText = "Chưa đủ điều kiện ";
+      }
+      label.classList.add("disabled");
+    } else {
+      label.classList.remove("disabled");
+      if (voucher.checked) {
+        voucherTextShip.innerText = voucher.dataset.text;
+      }
+    }
+  });
+}
+
+// ====================== REFRESH SHOP VOUCHER ======================
+function refreshShopVoucher() {
+  const shopVouchers = document.querySelectorAll(".cart-body[data-shop-id]");
+  shopVouchers.forEach((shop) => {
+    const shopId = shop.getAttribute("data-shop-id");
+    toggleVoucherAvailability(shopId);
+  });
+  toggleSystemVoucherAvailability();
+}
+// ====================== Handling when users buy without selecting a product ======================
+buyButton.addEventListener("click", () => {
+  const hasChecked = [...productCheckboxes].some((cb) => cb.checked);
+  if (!hasChecked) {
+    const emptySelection = document.getElementById("emptySelectionModal");
+    const emptySelectionModal = new bootstrap.Modal(emptySelection);
+    emptySelectionModal.show();
+    return;
+  }
+  window.location.href = "/checkout";
+});
+
+// ====================== DELETE CARTITEM HANDLER ======================
+const deleteCartItem = document.querySelectorAll(".button-delete");
+const confirmDeleteCartItem = document.getElementById("confirmDeleteCartItem");
+deleteCartItem.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const deleteCartModal = document.getElementById("deleteCartModal");
+    deleteCartModal.dataset.cartitemid = btn.dataset.cartitemid;
+  });
+});
+confirmDeleteCartItem.addEventListener("click", () => {
+  const deleteCartModalEl = document.getElementById("deleteCartModal");
+  const cartItemId = deleteCartModalEl.dataset.cartitemid;
+  const cartRow = document.getElementById(`cartItemId${cartItemId}`);
+  if (cartRow) {
+    const checkbox = cartRow.querySelector(".cart-checkbox");
+    if (checkbox) {
+      checkbox.checked = false;
+    }
+  }
+  fetch("/cart/delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `cartItemId=${cartItemId}`,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        const deleteCartModal = bootstrap.Modal.getInstance(deleteCartModalEl);
+        deleteCartModal.hide();
+
+        const rowCartBodyItem = document.getElementById(
+          `cartItemId${cartItemId}`
+        );
+        if (rowCartBodyItem) {
+          const shopBody = rowCartBodyItem.closest(".cart-body");
+          rowCartBodyItem.remove();
+          if (shopBody.querySelectorAll(".cart-body__item").length === 0) {
+            shopBody.remove();
+          }
+
+          if (document.querySelectorAll(".cart-body").length === 0) {
+            const cartLeft = document.querySelector(".cart-left");
+            cartLeft.innerHTML = `
+            <div class="text-center">
+              <img src="http://localhost:8080/assets/images/common/cartEmpty.png" alt="Cart Empty">
+              <p class="text-muted">Giỏ hàng trống</p>
+              <p>Bạn tham khảo thêm các sản phẩm được Aurora gợi ý bên dưới nhé!</p>
+            </div>`;
+          }
+        }
+
+        const cartCountBadge = document.getElementById("cartCountBadge");
+        if (cartCountBadge) {
+          cartCountBadge.innerText = data.cartCount;
+        }
+        updateCartSummary();
+      }
+    });
+});
+
+// ====================== SHOP VOUCHER HANDLER =====================
+const applyVoucherShops = document.querySelectorAll(".applyVoucherShop");
+applyVoucherShops.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
+    const modal = btn.closest(".cart-shop-voucher");
+    const shopId = modal.dataset.shopId;
+    const code = modal
+      .querySelector(".voucherShopInput")
+      .value.trim()
+      .toUpperCase();
+    const msg = modal.querySelector(".voucherShopMessage");
+
+    msg.textContent = "";
+    msg.classList.remove("text-danger", "text-success", "text-warning");
+    if (!code) {
+      msg.classList.add("text-warning");
+      msg.textContent = "Vui lòng nhập mã giảm giá.";
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+    const selectedShopRadio = document.querySelector(
+      `input[name="voucherShopDiscount_${shopId}"]:checked`
+    );
+    if (selectedShopRadio && selectedShopRadio.value === code) {
+      msg.classList.add("text-warning");
+      msg.textContent = "Mã này đã áp dụng rồi.";
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      return;
+    }
+    fetch("/checkout/voucher/shop", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `shopId=${shopId}&code=${code}`,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          localStorage.setItem(`shopVoucher_${shopId}`, code);
+          const modalEl = document.getElementById(`shopVoucherModal_${shopId}`);
+          loadSavedVouchers();
+          if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+          }
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        } else {
+          localStorage.removeItem(`shopVoucher_${shopId}`);
+          msg.classList.add("text-danger");
+          msg.textContent = data.message || "Mã không hợp lệ.";
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      })
+      .catch((error) => {
+        console.error("Fetch voucher error:", error);
+        msg.classList.add("text-danger");
+        msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+        btn.innerHTML = originalText;
+      })
+      .finally(() => {
+        btn.disabled = false;
+      });
+  });
+});
+
+document.querySelectorAll('[id^="shopVoucherModal_"]').forEach((modalEl) => {
+  modalEl.addEventListener("hidden.bs.modal", () => {
+    const input = modalEl.querySelector(".voucherShopInput");
+    const msg = modalEl.querySelector(".voucherShopMessage");
+
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "voucherShopMessage";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+});
+// ====================== SYSTEM VOUCHER HANDLER ======================
+const applySystemVoucher = document.getElementById("applySystemVoucher");
+applySystemVoucher.addEventListener("click", () => {
+  applySystemVoucher.disabled = true;
+  const originalText = applySystemVoucher.innerHTML;
+  applySystemVoucher.innerHTML = `
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Áp dụng
+  `;
+  const code = document
+    .getElementById("voucherSystemInput")
+    .value.toUpperCase();
+  const msg = document.getElementById("voucherSystemMessage");
+
+  msg.textContent = "";
+  msg.classList.remove("text-danger", "text-success", "text-warning");
+  if (!code) {
+    msg.textContent = "Vui lòng nhập mã giảm giá.";
+    msg.classList.add("text-warning");
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
+    return;
+  }
+
+  const selectedDiscount = document.querySelector(
+    'input[name="voucherDiscount"]:checked'
+  );
+  const selectedShip = document.querySelector(
+    'input[name="voucherShip"]:checked'
+  );
+
+  if (
+    (selectedDiscount && selectedDiscount.value === code) ||
+    (selectedShip && selectedShip.value === code)
+  ) {
+    msg.classList.add("text-warning");
+    msg.textContent = "Mã này đã áp dụng rồi.";
+    applySystemVoucher.disabled = false;
+    applySystemVoucher.innerHTML = originalText;
+    return;
+  }
+
+  fetch("/checkout/voucher/system", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `code=${code}`,
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        console.log("Check type ", data.type);
+
+        if (data.type === "SHIPPING") {
+          localStorage.setItem("systemVoucherShip", code);
+        } else if (data.type === "AMOUNT" || data.type === "PERCENT") {
+          localStorage.setItem("systemVoucherDiscount", code);
+        }
+        loadSystemVouchers();
+        const modalEl = document.getElementById("voucherModal");
+        if (modalEl) {
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          modal.hide();
+        }
+
+        applySystemVoucher.innerHTML = originalText;
+        applySystemVoucher.disabled = false;
+      } else {
+        localStorage.removeItem("systemVoucherShip");
+        localStorage.removeItem("systemVoucherDiscount");
+        msg.classList.add("text-danger");
+        msg.textContent = data.message || "Mã không hợp lệ.";
+        applySystemVoucher.innerHTML = originalText;
+        applySystemVoucher.disabled = false;
+      }
+    })
+    .catch(() => {
+      msg.classList.add("text-danger");
+      msg.textContent = "Lỗi khi áp dụng mã giảm giá.";
+      applySystemVoucher.innerHTML = originalText;
+      applySystemVoucher.disabled = false;
+    })
+    .finally(() => {
+      applySystemVoucher.disabled = false;
+    });
+});
+
+const voucherModalEl = document.getElementById("voucherModal");
+if (voucherModalEl) {
+  voucherModalEl.addEventListener("hidden.bs.modal", () => {
+    const msg = document.getElementById("voucherSystemMessage");
+    const input = document.getElementById("voucherSystemInput");
+
+    if (msg) {
+      msg.textContent = "";
+      msg.className = "";
+    }
+    if (input) {
+      input.value = "";
+    }
+  });
+}
+// ====================== KHÔI PHỤC VOUCHER SAU KHI RELOAD ======================
+function loadSavedVouchers() {
+  document.querySelectorAll(".voucher-input-shop").forEach((input) => {
+    const shopId = input.dataset.shopId;
+    const savedCode = localStorage.getItem(`shopVoucher_${shopId}`);
+    if (savedCode) {
+      const radio = document.querySelector(
+        `input[name="voucherShopDiscount_${shopId}"][value="${savedCode}"]`
+      );
+
+      if (radio) {
+        radio.checked = true;
+
+        const selectedShopDiscount = document.querySelector(
+          `input[name="voucherShopDiscount_${shopId}"]:checked`
+        );
+
+        if (selectedShopDiscount) {
+          const shopVoucher = document.querySelector(
+            `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+          );
+
+          if (shopVoucher) {
+            const shopTotal = calculateShopTotal(shopId);
+            const discount = calculateShopDiscount(shopTotal, shopId);
+
+            shopVoucher.innerText =
+              discount > 0
+                ? `Đã giảm ${formatCurrency(discount)}`
+                : "Chưa áp dụng";
+          }
+        }
+      }
+    }
+  });
+}
+
+function loadSystemVouchers() {
+  const discountCode = localStorage.getItem("systemVoucherDiscount");
+  const shipCode = localStorage.getItem("systemVoucherShip");
+  let textDiscount = "";
+  let textShip = "";
+  if (discountCode) {
+    const discountRadio = document.querySelector(
+      `input[name="voucherDiscount"][value="${discountCode}"]`
+    );
+    if (discountRadio) {
+      discountRadio.checked = true;
+
+      textDiscount = discountRadio.dataset.text;
+      voucherTextDiscount.innerText = textDiscount;
+      appliedVoucherDiscount.classList.remove("d-none");
+    }
+  }
+
+  if (shipCode) {
+    const shipRadio = document.querySelector(
+      `input[name="voucherShip"][value="${shipCode}"]`
+    );
+    if (shipRadio) {
+      shipRadio.checked = true;
+      textShip = shipRadio.dataset.text;
+      voucherTextShip.innerText = textShip;
+      appliedVoucherShip.classList.remove("d-none");
+    }
+    const voucherModal = bootstrap.Modal.getInstance(
+      document.getElementById("voucherModal")
+    );
+    if (voucherModal) {
+      voucherModal.hide();
+    }
+  }
+}
+
+// ====================== ALLOW UNSELECT SHOP VOUCHER ON DOUBLE CLICK ======================
+document
+  .querySelectorAll('input[name^="voucherShopDiscount_"]')
+  .forEach((radio) => {
+    radio.addEventListener("click", function (e) {
+      const shopId = this.name.replace("voucherShopDiscount_", "");
+      if (this.dataset.checked === "true") {
+        this.checked = false;
+        this.dataset.checked = "false";
+
+        localStorage.removeItem(`shopVoucher_${shopId}`);
+
+        const shopVoucher = document.querySelector(
+          `.cart-body__footer[data-shop-id="${shopId}"] .shop-voucher-text`
+        );
+        if (shopVoucher) shopVoucher.innerText = "Chưa áp dụng";
+
+        updateCartSummary();
+      } else {
+        document
+          .querySelectorAll(`input[name="voucherShopDiscount_${shopId}"]`)
+          .forEach((r) => (r.dataset.checked = "false"));
+        this.dataset.checked = "true";
+      }
+    });
+  });
+window.addEventListener("DOMContentLoaded", () => {
+  loadSavedVouchers();
+  loadSystemVouchers();
+  refreshShopVoucher();
+  updateCartSummary();
+});

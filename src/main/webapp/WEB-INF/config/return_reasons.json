@@ -1,0 +1,9 @@
+[
+  { "code": "defective_product", "label": "Sản phẩm bị lỗi, hư hỏng hoặc không hoạt động" },
+  { "code": "wrong_item_received", "label": "Nhận sai sản phẩm so với đơn hàng" },
+  { "code": "missing_item", "label": "Thiếu sản phẩm trong đơn hàng" },
+  { "code": "product_not_as_described", "label": "Sản phẩm không đúng mô tả hoặc hình ảnh" },
+  { "code": "quality_issue", "label": "Chất lượng sản phẩm không đạt yêu cầu" },
+  { "code": "changed_mind_after_receiving", "label": "Đổi ý sau khi nhận hàng" },
+  { "code": "other_personal_reason", "label": "Lý do cá nhân / không còn nhu cầu sử dụng" }
+]
