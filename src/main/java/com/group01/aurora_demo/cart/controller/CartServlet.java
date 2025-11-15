@@ -113,7 +113,6 @@ public class CartServlet extends NotificationServlet {
             return;
         }
         switch (path) {
-
             case "/add": {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
@@ -430,7 +429,6 @@ public class CartServlet extends NotificationServlet {
                 out.print(json.toString());
                 break;
         }
-
     }
 
     public boolean isProductAvailable(Product product, JSONObject json) {
