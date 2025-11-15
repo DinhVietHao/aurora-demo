@@ -466,19 +466,3 @@ BEGIN
         INNER JOIN @ToRestore t ON fsi.FlashSaleItemID = t.FlashSaleItemID;
 END;
 GO
-
- 
-CREATE TRIGGER TRG_UpdateProductStatusWhenOutOfStock
-ON Products
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    UPDATE p
-    SET p.Status = 'OUT_OF_STOCK'
-    FROM Products p
-    INNER JOIN inserted i ON p.ProductID = i.ProductID
-    WHERE i.Quantity = 0;
-END;
-GO

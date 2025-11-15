@@ -25,6 +25,7 @@ public class FlashSaleDAO {
                     WHERE fsi.ProductID = ?
                       AND fs.Status = 'ACTIVE'
                       AND fs.StartAt <= ? AND fs.EndAt >= ?
+                      AND fsi.ApprovalStatus = 'APPROVED'
                 """;
 
         try (Connection cn = DataSourceProvider.get().getConnection();
