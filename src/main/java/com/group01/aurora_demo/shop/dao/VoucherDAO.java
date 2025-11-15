@@ -44,7 +44,7 @@ public class VoucherDAO {
                                     FROM UserVouchers uv
                                     WHERE uv.VoucherID = Vouchers.VoucherID
                                     AND uv.UserID = ? AND uv.Status = 'USED'
-                                ) <= PerUserLimit
+                                ) < PerUserLimit
                             )
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
@@ -103,7 +103,7 @@ public class VoucherDAO {
                             FROM UserVouchers uv
                             WHERE uv.VoucherID = Vouchers.VoucherID
                             AND uv.UserID = ? AND uv.Status = 'USED'
-                        ) <= PerUserLimit
+                        ) < PerUserLimit
                     )
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection();) {
