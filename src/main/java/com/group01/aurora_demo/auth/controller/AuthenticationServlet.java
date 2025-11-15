@@ -38,12 +38,20 @@ public class AuthenticationServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         try {
+            String error = request.getParameter("error");
+            if (error != null) {
+                response.sendRedirect(request.getContextPath() + "/home?login=1");
+                return;
+            }
+
             String code = request.getParameter("code");
             if (code != null) {
                 handleGoogleLogin(request, response, code);
             }
+
+            response.sendRedirect(request.getContextPath() + "/home");
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("Error in AuthenticationServlet.doGet: " + e.getMessage());
         }
     }
 
