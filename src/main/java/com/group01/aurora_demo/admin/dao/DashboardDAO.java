@@ -1,5 +1,6 @@
 package com.group01.aurora_demo.admin.dao;
 
+import com.group01.aurora_demo.admin.model.PlatformRevenueStats;
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import java.sql.*;
 import java.math.BigDecimal;
@@ -17,10 +18,10 @@ public class DashboardDAO {
      * Get the count of low stock products (less than or equal to the threshold)
      */
     public int getLowStockProductCount(int threshold) {
-        String sql = "SELECT COUNT(*) FROM Products WHERE Stock <= ?";
+        String sql = "SELECT COUNT(*) FROM Products WHERE Quantity <= ?";
         try (Connection conn = DataSourceProvider.get().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setInt(1, threshold);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -148,18 +149,18 @@ public class DashboardDAO {
      */
     public List<Map<String, Object>> getRecentActivities(int limit) {
         List<Map<String, Object>> activities = new ArrayList<>();
-        
-        // Recent orders
-        String orderSql = "SELECT TOP(?) 'order' AS Type, o.OrderID AS ID, " +
-                         "u.FullName AS Name, o.FinalAmount AS Value, " +
-                         "o.OrderStatus AS Status, o.CreatedAt " +
-                         "FROM Orders o " +
-                         "JOIN Users u ON o.UserID = u.UserID " +
-                         "ORDER BY o.CreatedAt DESC";
-        
+
+        // Recent orders (using OrderShops instead of Orders)
+        String orderSql = "SELECT TOP(?) 'order' AS Type, os.OrderShopID AS ID, " +
+                         "u.FullName AS Name, os.FinalAmount AS Value, " +
+                         "os.Status AS Status, os.CreatedAt " +
+                         "FROM OrderShops os " +
+                         "JOIN Users u ON os.UserID = u.UserID " +
+                         "ORDER BY os.CreatedAt DESC";
+
         try (Connection conn = DataSourceProvider.get().getConnection();
              PreparedStatement ps = conn.prepareStatement(orderSql)) {
-            
+
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -176,14 +177,15 @@ public class DashboardDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        
+
         // Recent reviews
         String reviewSql = "SELECT TOP(?) 'review' AS Type, r.ReviewID AS ID, " +
                            "u.FullName AS Name, p.Title AS ProductName, " +
-                           "r.Rating AS Value, r.Status, r.CreatedAt " +
+                           "r.Rating AS Value, r.CreatedAt " +
                            "FROM Reviews r " +
                            "JOIN Users u ON r.UserID = u.UserID " +
-                           "JOIN Products p ON r.ProductID = p.ProductID " +
+                           "LEFT JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID " +
+                           "LEFT JOIN Products p ON oi.ProductID = p.ProductID " +
                            "ORDER BY r.CreatedAt DESC";
         
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -198,7 +200,6 @@ public class DashboardDAO {
                     activity.put("name", rs.getString("Name"));
                     activity.put("productName", rs.getString("ProductName"));
                     activity.put("value", rs.getInt("Value"));
-                    activity.put("status", rs.getString("Status"));
                     activity.put("createdAt", rs.getTimestamp("CreatedAt"));
                     activities.add(activity);
                 }
@@ -216,5 +217,138 @@ public class DashboardDAO {
         
         // Return only the requested number of activities
         return activities.size() > limit ? activities.subList(0, limit) : activities;
+    }
+
+    /**
+     * Get platform revenue statistics including monthly shop fees and tax revenue
+     *
+     * @return PlatformRevenueStats object containing revenue breakdown
+     */
+    public PlatformRevenueStats getPlatformRevenueStats() {
+        PlatformRevenueStats stats = new PlatformRevenueStats();
+
+        try (Connection conn = DataSourceProvider.get().getConnection()) {
+            // Step 1: Get active shop count
+            String shopCountSql = "SELECT COUNT(*) FROM Shops WHERE Status = 'ACTIVE'";
+            try (PreparedStatement ps = conn.prepareStatement(shopCountSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    stats.setActiveShopCount(rs.getInt(1));
+                }
+            }
+
+            // Step 2: Get platform fee setting
+            String feeSql = "SELECT SettingValue FROM Setting WHERE SettingKey = 'Platform_fee'";
+            try (PreparedStatement ps = conn.prepareStatement(feeSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String feeValue = rs.getString("SettingValue");
+                    if (feeValue != null && !feeValue.trim().isEmpty()) {
+                        try {
+                            BigDecimal monthlyFee = new BigDecimal(feeValue);
+                            stats.setMonthlyFeePerShop(monthlyFee);
+
+                            // Calculate total monthly fees
+                            BigDecimal totalMonthlyFees = monthlyFee.multiply(
+                                new BigDecimal(stats.getActiveShopCount())
+                            );
+                            stats.setTotalMonthlyFees(totalMonthlyFees);
+                        } catch (NumberFormatException e) {
+                            System.err.println("Invalid Platform_fee value: " + feeValue);
+                            stats.setMonthlyFeePerShop(BigDecimal.ZERO);
+                            stats.setTotalMonthlyFees(BigDecimal.ZERO);
+                        }
+                    }
+                }
+            }
+
+            // Step 3: Calculate tax revenue from completed orders
+            // VATRate is already stored in OrderItems table at purchase time
+            String taxSql = "SELECT ISNULL(SUM(oi.SalePrice * oi.Quantity * oi.VATRate / 100), 0) AS TotalTaxRevenue " +
+                           "FROM OrderItems oi " +
+                           "INNER JOIN OrderShops os ON oi.OrderShopID = os.OrderShopID " +
+                           "WHERE os.Status IN ('DELIVERED', 'COMPLETED')";
+            try (PreparedStatement ps = conn.prepareStatement(taxSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal taxRevenue = rs.getBigDecimal("TotalTaxRevenue");
+                    stats.setTotalTaxRevenue(taxRevenue != null ? taxRevenue : BigDecimal.ZERO);
+                }
+            }
+
+            // Step 4: Calculate order commission fees (PlatformFee from OrderShops)
+            // PlatformFee is already calculated at checkout based on system fee percentage
+            String orderFeeSql = "SELECT ISNULL(SUM(PlatformFee), 0) AS TotalOrderFees " +
+                                "FROM OrderShops " +
+                                "WHERE Status IN ('DELIVERED', 'COMPLETED')";
+            try (PreparedStatement ps = conn.prepareStatement(orderFeeSql);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal orderFees = rs.getBigDecimal("TotalOrderFees");
+                    stats.setTotalOrderFees(orderFees != null ? orderFees : BigDecimal.ZERO);
+                }
+            }
+
+            // Step 5: Calculate grand total = Tax Revenue + Order Commission Fees
+            // Note: We're excluding monthly fees as they might not be implemented yet
+            BigDecimal grandTotal = stats.getTotalTaxRevenue().add(stats.getTotalOrderFees());
+            stats.setGrandTotalRevenue(grandTotal);
+
+        } catch (SQLException e) {
+            System.err.println("Error calculating platform revenue statistics: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return stats;
+    }
+
+    /**
+     * Get tax details by shop for admin dashboard
+     * Returns list of shops with their tax information
+     */
+    public List<Map<String, Object>> getShopTaxDetails() {
+        List<Map<String, Object>> shopTaxList = new ArrayList<>();
+
+        String sql = """
+                SELECT
+                    s.ShopID,
+                    s.Name AS ShopName,
+                    COUNT(DISTINCT os.OrderShopID) AS TotalOrders,
+                    SUM(os.Subtotal) AS TotalSubtotal,
+                    SUM(os.FinalAmount) AS TotalRevenue,
+                    SUM(os.FinalAmount * 0.05) AS TotalTax,
+                    SUM(os.FinalAmount * 0.95) AS ShopEarnings
+                FROM Shops s
+                LEFT JOIN OrderShops os ON s.ShopID = os.ShopID
+                    AND os.Status IN ('DELIVERED', 'COMPLETED')
+                    AND os.CreatedAt >= DATEADD(MONTH, -1, GETDATE())
+                WHERE s.Status = 'ACTIVE'
+                GROUP BY s.ShopID, s.Name
+                HAVING COUNT(DISTINCT os.OrderShopID) > 0
+                ORDER BY TotalRevenue DESC
+                """;
+
+        try (Connection conn = DataSourceProvider.get().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> shopTax = new LinkedHashMap<>();
+                shopTax.put("shopId", rs.getLong("ShopID"));
+                shopTax.put("shopName", rs.getString("ShopName"));
+                shopTax.put("totalOrders", rs.getInt("TotalOrders"));
+                shopTax.put("totalSubtotal", rs.getBigDecimal("TotalSubtotal"));
+                shopTax.put("totalRevenue", rs.getBigDecimal("TotalRevenue"));
+                shopTax.put("totalTax", rs.getBigDecimal("TotalTax"));
+                shopTax.put("shopEarnings", rs.getBigDecimal("ShopEarnings"));
+                shopTaxList.add(shopTax);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting shop tax details: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return shopTaxList;
     }
 }

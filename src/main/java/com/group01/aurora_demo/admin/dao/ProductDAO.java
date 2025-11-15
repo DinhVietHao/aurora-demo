@@ -1,17 +1,15 @@
-package com.group01.aurora_demo.catalog.dao;
+package com.group01.aurora_demo.admin.dao;
 
 import com.group01.aurora_demo.common.config.DataSourceProvider;
 import com.group01.aurora_demo.catalog.model.BookDetail;
 import com.group01.aurora_demo.catalog.model.Category;
-import com.group01.aurora_demo.catalog.model.Language;
+
 import com.group01.aurora_demo.catalog.dao.dto.ProductDTO;
 import com.group01.aurora_demo.catalog.model.Author;
 import com.group01.aurora_demo.catalog.model.Publisher;
 import com.group01.aurora_demo.catalog.model.Product;
-import com.group01.aurora_demo.catalog.model.ProductImage;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +38,7 @@ public class ProductDAO {
 
     public List<Product> getSuggestedProductsForCustomer(Long userId) {
         String sql = """
-                SELECT
+                SELECT TOP 10
                     p.ProductID,
                     p.Title,
                     p.SalePrice,
@@ -50,7 +48,6 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
-                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 JOIN ProductCategory pc ON p.ProductID = pc.ProductID
                 LEFT JOIN OrderItems oi2 ON p.ProductID = oi2.ProductID
                 LEFT JOIN Reviews r ON oi2.OrderItemID = r.OrderItemID
@@ -59,10 +56,11 @@ public class ProductDAO {
                 WHERE pc.CategoryID IN (
                     -- Thể loại từ lịch sử mua (hoàn thành)
                     SELECT DISTINCT pc2.CategoryID
-                    FROM OrderShops os
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
                     JOIN ProductCategory pc2 ON oi.ProductID = pc2.ProductID
-                    WHERE os.UserID = ? AND os.Status = N'SUCCESS'
+                    WHERE o.UserID = ? AND o.OrderStatus IN (N'SUCCESS')
                     UNION
                     -- Thể loại từ giỏ hàng
                     SELECT DISTINCT pc3.CategoryID
@@ -71,13 +69,13 @@ public class ProductDAO {
                     WHERE ci.UserID = ?
                 )
                 AND p.Status = 'ACTIVE'
-                AND s.Status = 'ACTIVE'
                 AND p.ProductID NOT IN (
                     -- Loại trừ sản phẩm đã mua
                     SELECT oi.ProductID
-                    FROM OrderShops os
+                    FROM Orders o
+                    JOIN OrderShops os ON o.OrderID = os.OrderID
                     JOIN OrderItems oi ON os.OrderShopID = oi.OrderShopID
-                    WHERE os.UserID = ?
+                    WHERE o.UserID = ?
                     UNION
                     -- Loại trừ sản phẩm trong giỏ
                     SELECT ci.ProductID
@@ -85,7 +83,7 @@ public class ProductDAO {
                     WHERE ci.UserID = ?
                 )
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
-                ORDER BY p.SoldCount DESC, AvgRating DESC;
+                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
                     """;
         List<Product> products = new ArrayList<>();
         try (Connection conn = DataSourceProvider.get().getConnection()) {
@@ -106,7 +104,7 @@ public class ProductDAO {
 
     public List<Product> getSuggestedProductsForGuest() {
         String sql = """
-                SELECT
+                SELECT TOP 10
                     p.ProductID,
                     p.Title,
                     p.SalePrice,
@@ -116,15 +114,14 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
-                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
                 LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
+                WHERE p.Status = 'ACTIVE'
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice,
                          p.SoldCount, img.Url, pub.Name
-                ORDER BY p.SoldCount DESC, AvgRating DESC;
+                ORDER BY p.SoldCount DESC, ISNULL(AVG(r.Rating), 0) DESC;
                 """;
         List<Product> products = new ArrayList<>();
         try (Connection conn = DataSourceProvider.get().getConnection();
@@ -152,15 +149,15 @@ public class ProductDAO {
                     img.Url AS PrimaryImageUrl,
                     pub.Name AS PublisherName
                 FROM Products p
-                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN OrderItems oi ON p.ProductID = oi.ProductID
                 LEFT JOIN Reviews r ON oi.OrderItemID = r.OrderItemID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
+                WHERE p.Status = 'ACTIVE'
                 GROUP BY p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, img.Url, pub.Name
                 ORDER BY MAX(p.CreatedAt) DESC
                     """;
+
         try (Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
             ps.setInt(1, limit);
@@ -176,7 +173,7 @@ public class ProductDAO {
     }
 
     public int countAllProducts() {
-        String sql = "SELECT COUNT(*) FROM Products p INNER JOIN Shops s ON p.ShopID = s.ShopID WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'";
+        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE'";
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -190,7 +187,7 @@ public class ProductDAO {
     }
 
     public int countProductsWithSold() {
-        String sql = "SELECT COUNT(*) FROM Products p INNER JOIN Shops s ON p.ShopID = s.ShopID WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE' AND p.SoldCount > 0";
+        String sql = "SELECT COUNT(*) FROM Products WHERE Status = 'ACTIVE' AND SoldCount > 0";
         try (Connection conn = DataSourceProvider.get().getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql);
                 ResultSet rs = stmt.executeQuery()) {
@@ -238,7 +235,6 @@ public class ProductDAO {
                   pub.Name AS PublisherName,
                   p.CreatedAt
                 FROM Products p
-                INNER JOIN Shops s ON p.ShopID = s.ShopID
                 LEFT JOIN (
                     SELECT oi.ProductID, AVG(CAST(r.Rating AS FLOAT)) AS AvgRating
                     FROM OrderItems oi
@@ -247,7 +243,7 @@ public class ProductDAO {
                 ) r ON r.ProductID = p.ProductID
                 LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                 LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                WHERE p.[Status] = 'ACTIVE' AND s.Status = 'ACTIVE'
+                WHERE p.[Status] = 'ACTIVE'
                 """
                 + " ORDER BY " + orderBy + " "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;";
@@ -279,7 +275,6 @@ public class ProductDAO {
         String sql = "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                 + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
                 + "FROM Products p "
-                + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                 + "LEFT JOIN ("
                 + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
                 + "    FROM OrderItems oi "
@@ -294,7 +289,7 @@ public class ProductDAO {
                 + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                 + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
                 + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
-                + "AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE' "
+                + "AND p.Status = 'ACTIVE' "
                 + "ORDER BY p.ProductID "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
 
@@ -323,7 +318,6 @@ public class ProductDAO {
         }
         String searchPattern = "%" + keyword.trim() + "%";
         String sql = "SELECT COUNT(DISTINCT p.ProductID) FROM Products p "
-                + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                 + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
                 + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
                 + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
@@ -331,7 +325,7 @@ public class ProductDAO {
                 + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                 + "WHERE (p.Title LIKE ? OR p.Description LIKE ? OR a.AuthorName LIKE ? "
                 + "OR pub.Name LIKE ? OR c.Name LIKE ?) "
-                + "AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'";
+                + "AND p.Status = 'ACTIVE'";
 
         try (Connection cn = DataSourceProvider.get().getConnection()) {
             PreparedStatement ps = cn.prepareStatement(sql);
@@ -348,33 +342,6 @@ public class ProductDAO {
             System.out.println("Error in countSearchResultsByKeyword: " + e.getMessage());
         }
         return 0;
-    }
-
-    public Map<String, Double> getPriceRange() {
-        Map<String, Double> priceRange = new HashMap<>();
-        String sql = """
-                    SELECT
-                        MIN(SalePrice) AS MinPrice,
-                        MAX(SalePrice) AS MaxPrice
-                    FROM Products
-                    WHERE Status = 'ACTIVE'
-                """;
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                priceRange.put("minPrice", rs.getDouble("MinPrice"));
-                priceRange.put("maxPrice", rs.getDouble("MaxPrice"));
-            } else {
-                priceRange.put("minPrice", 0.0);
-                priceRange.put("maxPrice", 1000000.0);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error in getPriceRange: " + e.getMessage());
-            priceRange.put("minPrice", 0.0);
-            priceRange.put("maxPrice", 1000000.0);
-        }
-        return priceRange;
     }
 
     public List<String> getCategories() {
@@ -455,7 +422,6 @@ public class ProductDAO {
                 "SELECT DISTINCT p.ProductID, p.Title, p.SalePrice, p.OriginalPrice, p.SoldCount, "
                         + "ISNULL(r.AvgRating, 0) AS AvgRating, img.Url AS PrimaryImageUrl, pub.Name AS PublisherName "
                         + "FROM Products p "
-                        + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                         + "LEFT JOIN ("
                         + "    SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating "
                         + "    FROM OrderItems oi "
@@ -470,7 +436,7 @@ public class ProductDAO {
                         + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                         + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
                         + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
-                        + "WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'");
+                        + "WHERE p.Status = 'ACTIVE' ");
 
         // Add filter conditions dynamically
         if (category != null && !category.isEmpty()) {
@@ -539,7 +505,6 @@ public class ProductDAO {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(DISTINCT p.ProductID) "
                         + "FROM Products p "
-                        + "INNER JOIN Shops s ON p.ShopID = s.ShopID "
                         + "LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID "
                         + "LEFT JOIN BookAuthors ba ON p.ProductID = ba.ProductID "
                         + "LEFT JOIN Authors a ON ba.AuthorID = a.AuthorID "
@@ -547,7 +512,7 @@ public class ProductDAO {
                         + "LEFT JOIN Category c ON pc.CategoryID = c.CategoryID "
                         + "LEFT JOIN BookDetails bd ON p.ProductID = bd.ProductID "
                         + "LEFT JOIN Languages l ON bd.LanguageCode = l.LanguageCode "
-                        + "WHERE p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'");
+                        + "WHERE p.Status = 'ACTIVE' ");
 
         // Add filter conditions dynamically (same as getAllProductsByFilter)
         if (category != null && !category.isEmpty()) {
@@ -857,79 +822,6 @@ public class ProductDAO {
         return 0;
     }
 
-    // ----- Phạm Thanh Lượng -----
-
-    public List<Product> getProductsByShopId(long shopId)
-            throws SQLException {
-        List<Product> list = new ArrayList<>();
-
-        String sql = """
-                SELECT p.ProductID, p.ShopID, p.Title, p.Description,
-                p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
-                p.PublisherID, p.PublishedDate, p.Weight, p.CreatedAt, p.status,
-                b.Translator, b.[Version], b.CoverType, b.Pages,
-                b.LanguageCode, b.[Size], b.ISBN,
-                pi.Url AS PrimaryImageUrl
-                FROM Products p
-                LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
-                LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
-                WHERE p.ShopID = ?
-                ORDER BY p.CreatedAt DESC
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, shopId);
-            CategoryDAO cateDAO = new CategoryDAO();
-            AuthorDAO authorDAO = new AuthorDAO();
-            ImageDAO imageDAO = new ImageDAO();
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Product p = new Product();
-                    p.setProductId(rs.getLong("ProductID"));
-                    p.setShopId(rs.getLong("ShopID"));
-                    p.setTitle(rs.getString("Title"));
-                    p.setDescription(rs.getString("Description"));
-                    p.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                    p.setSalePrice(rs.getDouble("SalePrice"));
-                    p.setSoldCount(rs.getLong("SoldCount"));
-                    p.setQuantity(rs.getInt("Quantity"));
-                    p.setAuthors(authorDAO.getAuthorsByProductId(p.getProductId()));
-                    p.setCategories(cateDAO.getCategoriesByProductId(p.getProductId()));
-                    p.setStatus(rs.getString("status"));
-
-                    long publisherId = rs.getLong("PublisherID");
-                    if (!rs.wasNull()) {
-                        p.setPublisherId(publisherId);
-                    }
-
-                    p.setPublishedDate(rs.getDate("PublishedDate"));
-                    p.setWeight(rs.getDouble("Weight"));
-                    p.setCreatedAt(rs.getDate("CreatedAt"));
-                    p.setPrimaryImageUrl(rs.getString("PrimaryImageUrl"));
-
-                    // Gán BookDetail
-                    BookDetail b = new BookDetail();
-                    b.setProductId(rs.getLong("ProductID"));
-                    b.setTranslator(rs.getString("Translator"));
-                    b.setVersion(rs.getString("Version"));
-                    b.setCoverType(rs.getString("CoverType"));
-                    b.setPages(rs.getInt("Pages"));
-                    b.setLanguageCode(rs.getString("LanguageCode"));
-                    b.setSize(rs.getString("Size"));
-                    b.setIsbn(rs.getString("ISBN"));
-                    p.setBookDetail(b);
-
-                    p.setImageUrls(imageDAO.getListImageUrlsByProductId(p.getProductId()));
-
-                    list.add(p);
-                }
-            }
-        }
-        return list;
-    }
-
     public int countProductsByShopId(long shopId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM Products WHERE ShopID = ?";
         try (Connection cn = DataSourceProvider.get().getConnection();
@@ -963,8 +855,8 @@ public class ProductDAO {
                 """;
 
         String sqlInsertCategory = """
-                INSERT INTO ProductCategory (ProductID, CategoryID, IsPrimary)
-                VALUES (?, ?, ?)
+                INSERT INTO ProductCategory (ProductID, CategoryID)
+                VALUES (?, ?)
                 """;
 
         String sqlInsertAuthor = """
@@ -1045,7 +937,6 @@ public class ProductDAO {
                     for (Category c : product.getCategories()) {
                         ps.setLong(1, productId);
                         ps.setLong(2, c.getCategoryId());
-                        ps.setBoolean(3, c.isPrimary());
                         ps.executeUpdate();
                     }
                 }
@@ -1133,146 +1024,6 @@ public class ProductDAO {
         return 0;
     }
 
-    public Product getProductById(long productId) {
-        Product product = null;
-        String sql = """
-                    SELECT
-                        p.ProductID, p.ShopID, p.Title, p.Description,
-                        p.OriginalPrice, p.SalePrice, p.SoldCount, p.Quantity,
-                        p.Status, p.PublishedDate, p.Weight,
-                        p.RejectReason, p.CreatedAt,
-                        p.PublisherID, pub.Name AS PublisherName,
-                        b.Translator, b.Version, b.CoverType, b.Pages,
-                        b.LanguageCode, l.LanguageName, b.[Size], b.ISBN,
-                        (SELECT AVG(CAST(r.Rating AS FLOAT))
-                         FROM Reviews r
-                         INNER JOIN OrderItems oi ON r.OrderItemID = oi.OrderItemID
-                         WHERE oi.ProductID = p.ProductID) AS AvgRating
-                    FROM Products p
-                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    LEFT JOIN BookDetails b ON p.ProductID = b.ProductID
-                    LEFT JOIN Languages l ON b.LanguageCode = l.LanguageCode
-                    WHERE p.ProductID = ?
-                """;
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, productId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                product = new Product();
-                product.setProductId(rs.getLong("ProductID"));
-                product.setShopId(rs.getLong("ShopID"));
-                product.setTitle(rs.getString("Title"));
-                product.setDescription(rs.getString("Description"));
-                product.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                product.setSalePrice(rs.getDouble("SalePrice"));
-                product.setSoldCount(rs.getLong("SoldCount"));
-                product.setQuantity(rs.getInt("Quantity"));
-                product.setStatus(rs.getString("Status"));
-                product.setPublishedDate(rs.getDate("PublishedDate"));
-                product.setWeight(rs.getDouble("Weight"));
-                product.setRejectReason(rs.getString("RejectReason"));
-                product.setCreatedAt(rs.getDate("CreatedAt"));
-                product.setPublisherId(rs.getLong("PublisherID"));
-
-                // Set avgRating (default to 0.0 if null)
-                Double avgRating = rs.getDouble("AvgRating");
-                product.setAvgRating(rs.wasNull() ? 0.0 : avgRating);
-
-                // Publisher (N:1)
-                if (rs.getString("PublisherName") != null) {
-                    Publisher pub = new Publisher();
-                    pub.setPublisherId(rs.getLong("PublisherID"));
-                    pub.setName(rs.getString("PublisherName"));
-                    product.setPublisher(pub);
-                }
-
-                // BookDetail (1:1)
-                BookDetail bd = new BookDetail();
-                bd.setProductId(productId);
-                bd.setTranslator(rs.getString("Translator"));
-                bd.setVersion(rs.getString("Version"));
-                bd.setCoverType(rs.getString("CoverType"));
-
-                int pages = rs.getInt("Pages");
-                bd.setPages(rs.wasNull() ? null : pages);
-
-                bd.setLanguageCode(rs.getString("LanguageCode"));
-                bd.setSize(rs.getString("Size"));
-                bd.setIsbn(rs.getString("ISBN"));
-
-                // Language object
-                if (rs.getString("LanguageCode") != null) {
-                    Language lang = new Language();
-                    lang.setLanguageCode(rs.getString("LanguageCode"));
-                    lang.setLanguageName(rs.getString("LanguageName"));
-                    bd.setLanguage(lang);
-                }
-
-                product.setBookDetail(bd);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("❌ Error in getProductById main query: " + e.getMessage());
-        }
-
-        if (product == null)
-            return null;
-
-        // Load Authors
-        try {
-            AuthorDAO authorDAO = new AuthorDAO();
-            product.setAuthors(authorDAO.getAuthorsByProductId(productId));
-        } catch (SQLException e) {
-            System.err.println("⚠ Error loading authors: " + e.getMessage());
-        }
-
-        // Load Categories
-        try {
-            CategoryDAO cateDAO = new CategoryDAO();
-            product.setCategories(cateDAO.getCategoriesByProductId(productId));
-        } catch (SQLException e) {
-            System.err.println("⚠ Error loading categories: " + e.getMessage());
-        }
-
-        // Load Images
-        List<ProductImage> images = new ArrayList<>();
-        String imgSql = """
-                    SELECT ImageID, Url, IsPrimary
-                    FROM ProductImages
-                    WHERE ProductID = ?
-                    ORDER BY IsPrimary DESC, ImageID ASC
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(imgSql)) {
-
-            ps.setLong(1, productId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                ProductImage img = new ProductImage();
-                img.setImageId(rs.getLong("ImageID"));
-                img.setProductId(productId);
-                img.setUrl(rs.getString("Url"));
-                img.setIsPrimary(rs.getBoolean("IsPrimary"));
-                images.add(img);
-            }
-
-        } catch (SQLException e) {
-            System.err.println("⚠ Error loading product images: " + e.getMessage());
-        }
-
-        product.setImages(images);
-        product.setPrimaryImageUrl(images.stream()
-                .filter(ProductImage::getIsPrimary)
-                .map(ProductImage::getUrl)
-                .findFirst()
-                .orElse(images.isEmpty() ? null : images.get(0).getUrl()));
-
-        return product;
-    }
-
     public boolean updateStock(Connection conn, long productId, int quantity) {
         String sql = """
                     UPDATE Products
@@ -1352,63 +1103,6 @@ public class ProductDAO {
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
-        return product;
-    }
-
-    public Product getProductWithEffectivePrice(long productId, int requestedQuantity) {
-        Product product = null;
-
-        String sql = """
-                SELECT
-                    p.ProductID,
-                    p.ShopID,
-                    p.Title,
-                    p.OriginalPrice,
-                    p.SalePrice,
-                    p.Quantity,
-                    p.SoldCount,
-                    p.Status,
-                    fsi.FlashPrice,
-                    fsi.FsStock,
-                    fs.Status AS FlashStatus
-                FROM Products p
-                LEFT JOIN FlashSaleItems fsi ON fsi.ProductID = p.ProductID
-                LEFT JOIN FlashSales fs ON fs.FlashSaleID = fsi.FlashSaleID
-                WHERE p.ProductID = ?
-                  AND (fs.Status = 'ACTIVE' OR fs.Status IS NULL)
-                """;
-
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setLong(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    product = new Product();
-                    product.setProductId(rs.getLong("ProductID"));
-                    product.setShopId(rs.getLong("ShopID"));
-                    product.setTitle(rs.getString("Title"));
-                    product.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                    product.setSalePrice(rs.getDouble("SalePrice"));
-                    product.setQuantity(rs.getInt("Quantity"));
-                    product.setSoldCount(rs.getLong("SoldCount"));
-                    product.setStatus(rs.getString("Status"));
-
-                    String flashStatus = rs.getString("FlashStatus");
-                    if ("ACTIVE".equalsIgnoreCase(flashStatus)) {
-                        double flashPrice = rs.getDouble("FlashPrice");
-                        if (!rs.wasNull()) {
-                            int fsStock = rs.getInt("FsStock");
-                            if (requestedQuantity <= fsStock) {
-                                product.setSalePrice(flashPrice);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         return product;
     }
 
@@ -1517,34 +1211,35 @@ public class ProductDAO {
         List<ProductDTO> list = new ArrayList<>();
 
         String sql = """
-                SELECT
-                    p.ProductID,
-                    p.Title AS ProductName,
-                    p.SalePrice,
-                    p.Quantity,
-                    p.OriginalPrice,
-                    c.Name AS CategoryName,
-                    pi.Url AS ImageUrl,
-                    p.CreatedAt
-                FROM Products p
-                LEFT JOIN ProductCategory pc
-                    ON p.ProductID = pc.ProductID
-                    AND pc.IsPrimary = 1
-                LEFT JOIN Category c
-                    ON pc.CategoryID = c.CategoryID
-                LEFT JOIN ProductImages pi
-                    ON p.ProductID = pi.ProductID
-                    AND pi.IsPrimary = 1
-                WHERE p.ShopID = ?
-                  AND p.Status = 'ACTIVE'
-                ORDER BY p.CreatedAt DESC;
+                    SELECT
+                        p.ProductID,
+                        p.Title AS ProductName,
+                        p.SalePrice,
+                        p.Quantity,
+                        p.OriginalPrice,
+                        STRING_AGG(c.Name, ', ') AS CategoryNames,
+                        pi.Url AS ImageUrl,
+                        MAX(p.CreatedAt) AS CreatedAt
+                    FROM Products p
+                    LEFT JOIN ProductCategory pc ON p.ProductID = pc.ProductID
+                    LEFT JOIN Category c ON pc.CategoryID = c.CategoryID
+                    LEFT JOIN ProductImages pi ON p.ProductID = pi.ProductID AND pi.IsPrimary = 1
+                    WHERE p.ShopID = ?
+                      AND p.Status = 'ACTIVE'
+                    GROUP BY
+                        p.ProductID,
+                        p.Title,
+                        p.SalePrice,
+                        p.Quantity,
+                        p.OriginalPrice,
+                        pi.Url
+                    ORDER BY MAX(p.CreatedAt) DESC;
                 """;
 
-        try (Connection cn = DataSourceProvider.get().getConnection();
+        try (
+                Connection cn = DataSourceProvider.get().getConnection();
                 PreparedStatement ps = cn.prepareStatement(sql)) {
-
             ps.setLong(1, shopId);
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     ProductDTO p = new ProductDTO();
@@ -1553,13 +1248,12 @@ public class ProductDAO {
                     p.setSalePrice(rs.getDouble("SalePrice"));
                     p.setQuantity(rs.getInt("Quantity"));
                     p.setOriginalPrice(rs.getDouble("OriginalPrice"));
-                    p.setCategoryNames(rs.getString("CategoryName"));
+                    p.setCategoryNames(rs.getString("CategoryNames"));
                     p.setImageUrl(rs.getString("ImageUrl"));
                     list.add(p);
                 }
             }
         }
-
         return list;
     }
 
@@ -1584,7 +1278,6 @@ public class ProductDAO {
                             ELSE 1
                         END AS SortPriority
                     FROM Products p
-                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     INNER JOIN ProductCategory pc ON p.ProductID = pc.ProductID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
@@ -1597,7 +1290,6 @@ public class ProductDAO {
                     WHERE pc.CategoryID IN (%s)
                       AND p.ProductID <> ?
                       AND p.Status = 'ACTIVE'
-                      AND s.Status = 'ACTIVE'
                     GROUP BY
                         p.ProductID,
                         p.Title,
@@ -1641,7 +1333,6 @@ public class ProductDAO {
                         img.Url AS PrimaryImageUrl,
                         pub.Name AS PublisherName
                     FROM Products p
-                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
                         FROM OrderItems oi
@@ -1650,7 +1341,7 @@ public class ProductDAO {
                     ) r ON r.ProductID = p.ProductID
                     LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
                     ORDER BY p.CreatedAt DESC
                     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
                 """;
@@ -1682,7 +1373,6 @@ public class ProductDAO {
                         img.Url AS PrimaryImageUrl,
                         pub.Name AS PublisherName
                     FROM Products p
-                    INNER JOIN Shops s ON p.ShopID = s.ShopID
                     LEFT JOIN (
                         SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS AvgRating
                         FROM OrderItems oi
@@ -1691,7 +1381,7 @@ public class ProductDAO {
                     ) r ON r.ProductID = p.ProductID
                     LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
                     LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
+                    WHERE p.ShopID = ? AND p.Status = 'ACTIVE'
                     ORDER BY p.SoldCount DESC, ISNULL(r.AvgRating, 0) DESC
                 """;
         try (Connection cn = DataSourceProvider.get().getConnection()) {
@@ -1708,200 +1398,23 @@ public class ProductDAO {
         return products;
     }
 
-    public boolean reduceQuantityProduct(long productId, int quantity) {
-        String sql = """
-                    UPDATE Products
-                    SET Quantity = Quantity - ?,
-                        Status = CASE
-                                    WHEN Quantity - ? <= 0 THEN 'OUT_OF_STOCK'
-                                    ELSE 'ACTIVE'
-                                 END
-                    WHERE ProductID = ?
-                      AND Quantity >= ?
-                """;
+    /**
+     * Get the count of products created in the last n days
+     */
+    public int getProductCountLastDays(int days) {
+        String sql = "SELECT COUNT(*) FROM Products WHERE CreatedAt >= DATEADD(DAY, -?, GETDATE())";
+        try (Connection conn = DataSourceProvider.get().getConnection();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        try (Connection cn = DataSourceProvider.get().getConnection();
-                PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setInt(1, quantity);
-            ps.setInt(2, quantity);
-            ps.setLong(3, productId);
-            ps.setInt(4, quantity);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    public Map<String, Object> getFlashSaleProducts() {
-        Map<String, Object> result = new HashMap<>();
-        List<Map<String, Object>> products = new ArrayList<>();
-        String sql = """
-                    SELECT
-                        p.ProductID,
-                        p.Title,
-                        p.OriginalPrice,
-                        fsi.FlashPrice,
-                        fsi.FsStock,
-                        fsi.SoldCount,
-                        fs.StartAt,
-                        fs.EndAt,
-                        img.Url AS PrimaryImageUrl,
-                        pub.Name AS PublisherName,
-                        ISNULL(r.Rating, 0) AS AvgRating,
-                        CAST((fsi.SoldCount * 100.0 / NULLIF(fsi.FsStock, 0)) AS INT) AS SoldPercent
-                    FROM FlashSales fs
-                    JOIN FlashSaleItems fsi ON fs.FlashSaleID = fsi.FlashSaleID
-                    JOIN Products p ON fsi.ProductID = p.ProductID
-                    LEFT JOIN ProductImages img ON p.ProductID = img.ProductID AND img.IsPrimary = 1
-                    LEFT JOIN Publishers pub ON p.PublisherID = pub.PublisherID
-                    LEFT JOIN (
-                        SELECT oi.ProductID, AVG(CAST(rv.Rating AS FLOAT)) AS Rating
-                        FROM OrderItems oi
-                        JOIN Reviews rv ON oi.OrderItemID = rv.OrderItemID
-                        GROUP BY oi.ProductID
-                    ) r ON r.ProductID = p.ProductID
-                    WHERE fs.[Status] = 'ACTIVE'
-                    AND fsi.ApprovalStatus = 'APPROVED'
-                    AND p.[Status] = 'ACTIVE'
-                    AND fs.EndAt > SYSUTCDATETIME()
-                    ORDER BY fsi.SoldCount DESC, p.SoldCount DESC;
-                """;
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
-            Timestamp endAt = null;
-            while (rs.next()) {
-                Map<String, Object> item = new LinkedHashMap<>();
-                item.put("productId", rs.getLong("ProductID"));
-                item.put("title", rs.getString("Title"));
-                item.put("originalPrice", rs.getDouble("OriginalPrice"));
-                item.put("flashPrice", rs.getDouble("FlashPrice"));
-                item.put("fsStock", rs.getInt("FsStock"));
-                item.put("soldCount", rs.getLong("SoldCount"));
-                item.put("startAt", rs.getTimestamp("StartAt"));
-                item.put("endAt", rs.getTimestamp("EndAt"));
-                item.put("imageUrl", rs.getString("PrimaryImageUrl"));
-                item.put("publisherName", rs.getString("PublisherName"));
-                item.put("avgRating", rs.getDouble("AvgRating"));
-                item.put("soldPercent", rs.getInt("SoldPercent"));
-
-                double discountPercent = ((rs.getDouble("OriginalPrice") - rs.getDouble("FlashPrice"))
-                        / rs.getDouble("OriginalPrice")) * 100;
-                item.put("discountPercent", (int) discountPercent);
-
-                int remaining = rs.getInt("FsStock") - (int) rs.getLong("SoldCount");
-                item.put("remaining", Math.max(0, remaining));
-                products.add(item);
-
-                if (endAt == null) {
-                    endAt = rs.getTimestamp("EndAt");
+            ps.setInt(1, days);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
                 }
             }
-
-            result.put("products", products);
-            result.put("flashSaleEndAt", endAt);
-            result.put("currentServerTime", System.currentTimeMillis());
         } catch (SQLException e) {
-            System.err.println("Error in getActiveFlashSaleProductsWithTime: " + e.getMessage());
-            result.put("products", new ArrayList<>());
-            result.put("flashSaleEndAt", null);
-            result.put("currentServerTime", System.currentTimeMillis());
+            System.out.println("Error in getProductCountLastDays: " + e.getMessage());
         }
-        return result;
-    }
-
-    public Map<String, Object> getFlashSaleInfoForProduct(long productId) {
-        Map<String, Object> flashSaleInfo = new HashMap<>();
-        String sql = """
-                    SELECT
-                        fs.FlashSaleID,
-                        fs.Name AS FlashSaleName,
-                        fs.StartAt,
-                        fs.EndAt,
-                        fsi.FlashPrice,
-                        fsi.FsStock,
-                        fsi.SoldCount,
-                        p.OriginalPrice,
-                        p.SalePrice,
-                        p.Quantity AS ProductStock
-                    FROM Products p
-                    INNER JOIN Shops s ON p.ShopID = s.ShopID
-                    INNER JOIN FlashSaleItems fsi ON p.ProductID = fsi.ProductID
-                    INNER JOIN FlashSales fs ON fsi.FlashSaleID = fs.FlashSaleID
-                    WHERE p.ProductID = ?
-                      AND fs.Status = 'ACTIVE' AND s.Status = 'ACTIVE'
-                      AND fsi.ApprovalStatus = 'APPROVED'
-                      AND fs.EndAt > SYSUTCDATETIME()
-                """;
-        try (Connection cn = DataSourceProvider.get().getConnection()) {
-            PreparedStatement ps = cn.prepareStatement(sql);
-            ps.setLong(1, productId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                int fsStock = rs.getInt("FsStock");
-                int soldCount = rs.getInt("SoldCount");
-                int remaining = fsStock - soldCount;
-                int productStock = rs.getInt("ProductStock");
-
-                // Check if flash sale is out of stock
-                if (remaining <= 0) {
-                    // Flash Sale đã hết hàng → Return normal pricing
-                    flashSaleInfo.put("isFlashSale", false);
-                    flashSaleInfo.put("flashSaleOutOfStock", true);
-                    flashSaleInfo.put("originalPrice", rs.getDouble("OriginalPrice"));
-                    flashSaleInfo.put("salePrice", rs.getDouble("SalePrice"));
-
-                    // Calculate normal discount percent
-                    double originalPrice = rs.getDouble("OriginalPrice");
-                    double salePrice = rs.getDouble("SalePrice");
-                    int normalDiscountPercent = (int) (((originalPrice - salePrice) / originalPrice) * 100);
-                    flashSaleInfo.put("discountPercent", normalDiscountPercent);
-
-                    return flashSaleInfo;
-                }
-
-                // Flash Sale còn hàng → Show flash sale info
-                flashSaleInfo.put("isFlashSale", true);
-                flashSaleInfo.put("flashSaleOutOfStock", false);
-                flashSaleInfo.put("flashSaleId", rs.getLong("FlashSaleID"));
-                flashSaleInfo.put("flashSaleName", rs.getString("FlashSaleName"));
-                flashSaleInfo.put("startAt", rs.getTimestamp("StartAt"));
-                flashSaleInfo.put("endAt", rs.getTimestamp("EndAt"));
-                flashSaleInfo.put("flashPrice", rs.getDouble("FlashPrice"));
-                flashSaleInfo.put("fsStock", fsStock);
-                flashSaleInfo.put("soldCount", soldCount);
-                flashSaleInfo.put("remaining", remaining);
-                flashSaleInfo.put("originalPrice", rs.getDouble("OriginalPrice"));
-                flashSaleInfo.put("salePrice", rs.getDouble("SalePrice"));
-                flashSaleInfo.put("productStock", productStock);
-
-                // Calculate flash sale discount percent
-                double originalPrice = rs.getDouble("OriginalPrice");
-                double flashPrice = rs.getDouble("FlashPrice");
-                int discountPercent = (int) (((originalPrice - flashPrice) / originalPrice) * 100);
-                flashSaleInfo.put("discountPercent", discountPercent);
-
-                // Calculate sold percent
-                int soldPercent = fsStock > 0 ? (soldCount * 100 / fsStock) : 0;
-                flashSaleInfo.put("soldPercent", soldPercent);
-
-                // Current server time
-                flashSaleInfo.put("currentServerTime", System.currentTimeMillis());
-            } else {
-                // No active flash sale
-                flashSaleInfo.put("isFlashSale", false);
-                flashSaleInfo.put("flashSaleOutOfStock", false);
-            }
-        } catch (SQLException e) {
-            System.err.println("Error in getFlashSaleInfoForProduct: " + e.getMessage());
-            flashSaleInfo.put("isFlashSale", false);
-            flashSaleInfo.put("flashSaleOutOfStock", false);
-        }
-        return flashSaleInfo;
+        return 0;
     }
 }

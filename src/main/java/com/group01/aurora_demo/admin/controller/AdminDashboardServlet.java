@@ -7,7 +7,8 @@ import java.util.Map;
 
 import com.group01.aurora_demo.admin.dao.DashboardDAO;
 import com.group01.aurora_demo.admin.dao.OrderDAO;
-import com.group01.aurora_demo.catalog.dao.ProductDAO;
+import com.group01.aurora_demo.admin.model.PlatformRevenueStats;
+import com.group01.aurora_demo.admin.dao.ProductDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,10 +27,10 @@ public class AdminDashboardServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // Fetch basic statistics
+        // Fetch basic statistics (using OrderShops table)
         int totalOrders = orderDAO.getOrderCount();
-        int pendingOrders = orderDAO.getOrderCountByStatus("pending");
-        int newOrdersToday = orderDAO.getOrderCountByStatus("pending");
+        int pendingOrders = orderDAO.getOrderCountByStatus("PENDING");
+        int newOrdersToday = orderDAO.getOrderCountByStatus("PENDING");
         int totalProducts = productDAO.countProducts();
         int lowStockProducts = dashboardDAO.getLowStockProductCount(5);
 
@@ -47,11 +48,26 @@ public class AdminDashboardServlet extends HttpServlet {
             revenueChangePercent = (previousPeriod > 0) ? ((currentPeriod - previousPeriod) / previousPeriod) * 100 : 0;
         }
 
-        // Order change percentage (simplified)
-        double orderChangePercent = 8.2; // In a real system, calculate this
+        // Order change percentage - Compare last 7 days vs previous 7 days
+        double orderChangePercent = 0;
+        int ordersLast7Days = orderDAO.getOrderCountLastDays(7);
+        int ordersLast14Days = orderDAO.getOrderCountLastDays(14);
+        int ordersPrevious7Days = ordersLast14Days - ordersLast7Days;
 
-        // Product change percentage
-        double productChangePercent = -2.1; // In a real system, calculate this
+        if (ordersPrevious7Days > 0) {
+            orderChangePercent = ((ordersLast7Days - ordersPrevious7Days) / (double) ordersPrevious7Days) * 100;
+        }
+
+        // Product change percentage - Compare last 30 days vs previous 30 days
+        double productChangePercent = 0;
+        int productsLast30Days = productDAO.getProductCountLastDays(30);
+        int productsLast60Days = productDAO.getProductCountLastDays(60);
+        int productsPrevious30Days = productsLast60Days - productsLast30Days;
+
+        if (productsPrevious30Days > 0) {
+            productChangePercent = ((productsLast30Days - productsPrevious30Days) / (double) productsPrevious30Days)
+                    * 100;
+        }
 
         // Get average rating
         double avgRating = dashboardDAO.getAverageProductRating();
@@ -61,6 +77,12 @@ public class AdminDashboardServlet extends HttpServlet {
 
         // Get recent activities
         List<Map<String, Object>> recentActivities = dashboardDAO.getRecentActivities(5);
+
+        // Get platform revenue statistics
+        PlatformRevenueStats platformRevenue = dashboardDAO.getPlatformRevenueStats();
+
+        // Get shop tax details
+        List<Map<String, Object>> shopTaxDetails = dashboardDAO.getShopTaxDetails();
 
         // Set attributes for the JSP
         req.setAttribute("totalOrders", totalOrders);
@@ -80,6 +102,8 @@ public class AdminDashboardServlet extends HttpServlet {
         req.setAttribute("avgRating", avgRating);
         req.setAttribute("dailyRevenue", dailyRevenue);
         req.setAttribute("recentActivities", recentActivities);
+        req.setAttribute("platformRevenue", platformRevenue);
+        req.setAttribute("shopTaxDetails", shopTaxDetails);
 
         // Forward to JSP
         req.getRequestDispatcher("/WEB-INF/views/admin/adminDashboard.jsp").forward(req, resp);

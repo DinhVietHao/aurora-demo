@@ -268,6 +268,29 @@ public class VoucherManagementServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/vouchers?error=invalid_voucher_id");
             return;
         }
+        
+        // Check if this is just a status update
+        String action = request.getParameter("action");
+        if ("update_status".equals(action)) {
+            try {
+                long id = Long.parseLong(voucherId);
+                String newStatus = request.getParameter("status");
+                
+                if (newStatus != null && !newStatus.isEmpty()) {
+                    boolean success = voucherDAO.updateVoucherStatus(id, newStatus);
+                    if (success) {
+                        response.sendRedirect(request.getContextPath() + "/admin/vouchers/view?id=" + id + "&success=status_updated");
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/admin/vouchers/view?id=" + id + "&error=status_update_failed");
+                    }
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.sendRedirect(request.getContextPath() + "/admin/vouchers/view?id=" + voucherId + "&error=" + e.getMessage());
+                return;
+            }
+        }
 
         try {
             long id = Long.parseLong(voucherId);

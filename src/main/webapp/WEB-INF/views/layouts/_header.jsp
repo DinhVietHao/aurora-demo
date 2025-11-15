@@ -67,6 +67,17 @@
                                                             <i class="bi bi-people"></i> <span>Kênh người bán</span>
                                                         </a>
                                                     </li>
+                                                    <c:if test="${not empty sessionScope.AUTH_USER 
+                                                            and sessionScope.AUTH_USER.roles != null 
+                                                            and sessionScope.AUTH_USER.roles.contains('ADMIN')}">
+                                                        <li>
+                                                            <a class="dropdown-item"
+                                                                href="<c:url value='/admin/dashboard'/>">
+                                                                <i class="bi bi-speedometer2"></i> <span>Quản trị hệ
+                                                                    thống</span>
+                                                            </a>
+                                                        </li>
+                                                    </c:if>
                                                     <li>
                                                         <hr class="dropdown-divider">
                                                     </li>

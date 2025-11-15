@@ -100,15 +100,14 @@ public class ShopDAO {
     }
 
     /**
-     * Load all shop statuses from ShopStatus table
+     * Load all shop statuses - trả về tiếng Việt theo database
      */
     public List<String> loadStatuses() throws SQLException {
         List<String> statuses = new ArrayList<>();
-        try (Connection cn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = cn.prepareStatement("SELECT StatusCode FROM ShopStatus ORDER BY StatusCode")) {
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) statuses.add(rs.getString(1));
-        }
+        statuses.add("PENDING");
+        statuses.add("ACTIVE");
+        statuses.add("APPROVED");
+        statuses.add("REJECTED");
         return statuses;
     }
 

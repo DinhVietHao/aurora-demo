@@ -1,6 +1,6 @@
 package com.group01.aurora_demo.admin.controller;
 
-import com.group01.aurora_demo.auth.dao.UserDAO;
+import com.group01.aurora_demo.admin.dao.UserDAO;
 import com.group01.aurora_demo.auth.model.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -59,21 +59,21 @@ public class UserManagementServlet extends HttpServlet {
         int pageSize = parseInt(req.getParameter("pageSize"), 10);
 
         // Fetch users based on filters
-        // List<User> users;
+        List<User> users;
         int totalUsers;
 
         if (searchKeyword.isEmpty() && status.isEmpty() && role.isEmpty()) {
             // No filters - get all users
-            // users = userDAO.getAllUsers(page, pageSize);
+            users = userDAO.getAllUsers(page, pageSize);
             totalUsers = userDAO.countUsers();
         } else {
             // Apply filters
-            // users = userDAO.searchUsers(searchKeyword, status, role, page, pageSize);
+            users = userDAO.searchUsers(searchKeyword, status, role, page, pageSize);
             totalUsers = userDAO.countSearchResults(searchKeyword, status, role);
         }
 
         // Set attributes for JSP
-        // req.setAttribute("users", users);
+        req.setAttribute("users", users);
         req.setAttribute("page", page);
         req.setAttribute("pageSize", pageSize);
         req.setAttribute("total", totalUsers);
@@ -85,6 +85,7 @@ public class UserManagementServlet extends HttpServlet {
         req.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(req, resp);
     }
 
+
     /**
      * Toggle user account status (lock/unlock)
      */
@@ -95,13 +96,40 @@ public class UserManagementServlet extends HttpServlet {
             return;
         }
 
+        // Prevent duplicate requests by checking session
+        String sessionKey = "toggle_status_" + userID;
+        Long lastToggleTime = (Long) req.getSession().getAttribute(sessionKey);
+        long currentTime = System.currentTimeMillis();
+
+        // If toggled within last 2 seconds, ignore (likely duplicate click)
+        if (lastToggleTime != null && (currentTime - lastToggleTime) < 2000) {
+            // For AJAX requests, return success but don't do anything
+            if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
+                resp.setStatus(HttpServletResponse.SC_OK);
+                return;
+            }
+            resp.sendRedirect(req.getContextPath() + "/admin/users");
+            return;
+        }
+
         boolean success = userDAO.toggleUserStatus(userID);
         if (!success) {
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to update user status");
             return;
         }
 
-        // Redirect back to the user list
+        // Store toggle time in session
+        req.getSession().setAttribute(sessionKey, currentTime);
+
+        // For AJAX requests, return success status
+        if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) {
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setContentType("application/json");
+            resp.getWriter().write("{\"success\": true}");
+            return;
+        }
+
+        // Redirect back to the user list for normal requests
         resp.sendRedirect(req.getContextPath() + "/admin/users");
     }
 

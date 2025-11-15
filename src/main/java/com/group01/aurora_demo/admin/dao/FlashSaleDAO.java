@@ -48,12 +48,11 @@ public class FlashSaleDAO {
     }
 
     public List<String> loadStatuses() throws SQLException {
+        // Sử dụng enum thay vì query từ bảng FlashSaleStatus (đã bị xóa)
         List<String> statuses = new ArrayList<>();
-        try (Connection cn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = cn.prepareStatement("SELECT StatusCode FROM FlashSaleStatus ORDER BY StatusCode")) {
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) statuses.add(rs.getString(1));
-        }
+        statuses.add("ACTIVE");
+        statuses.add("SCHEDULED");
+        statuses.add("ENDED");
         return statuses;
     }
 
@@ -253,12 +252,11 @@ public class FlashSaleDAO {
     }
 
     public List<String> loadApprovalStatuses() throws SQLException {
+        // Sử dụng enum thay vì query từ bảng FlashSaleItemApprovalStatus (đã bị xóa)
         List<String> statuses = new ArrayList<>();
-        try (Connection cn = DataSourceProvider.get().getConnection();
-             PreparedStatement ps = cn.prepareStatement("SELECT StatusCode FROM FlashSaleItemApprovalStatus ORDER BY StatusCode")) {
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) statuses.add(rs.getString(1));
-        }
+        statuses.add("PENDING");
+        statuses.add("APPROVED");
+        statuses.add("REJECTED");
         return statuses;
     }
 
