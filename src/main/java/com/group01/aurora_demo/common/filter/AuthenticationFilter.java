@@ -43,7 +43,6 @@ public class AuthenticationFilter implements Filter {
     private static final Set<String> AUTH_REQUIRED_PATHS = Set.of(
             "/profile",
             "/address",
-            "/cart",
             "/checkout",
             "/order",
             "/review");

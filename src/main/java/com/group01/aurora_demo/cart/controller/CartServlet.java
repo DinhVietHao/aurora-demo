@@ -90,7 +90,7 @@ public class CartServlet extends NotificationServlet {
         PrintWriter out = resp.getWriter();
         JSONObject json = new JSONObject();
 
-        HttpSession session = req.getSession();
+        HttpSession session = req.getSession(false);
         User user = (User) session.getAttribute("AUTH_USER");
         if (user == null) {
             json.put("success", false);
