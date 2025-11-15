@@ -13,7 +13,7 @@
 
         <!-- Project CSS -->
         <link rel="stylesheet" href="${ctx}/assets/css/common/globals.css?v=1.0.1" />
-        <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.1" />
+        <link rel="stylesheet" href="${ctx}/assets/css/catalog/home.css?v=1.0.2" />
         <link rel="stylesheet" href="${ctx}/assets/css/auth/auth_form.css?v=1.0.1" />
         <link rel="stylesheet" href="${ctx}/assets/css/common/toast.css?v=1.0.1" />
         <link rel="stylesheet" href="${ctx}/assets/css/shop/sidebar.css?v=1.0.1" />
