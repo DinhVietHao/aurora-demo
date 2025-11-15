@@ -247,9 +247,18 @@ public class AuthenticationServlet extends HttpServlet {
                 response.addCookie(cookie);
             }
 
-            if (json != null) {
-                json.put("redirect", request.getContextPath() + "/home");
+            String redirectUrl = request.getContextPath() + "/home";
+            if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                if (user.getRoles().contains("ADMIN")) {
+                    redirectUrl = request.getContextPath() + "/admin/dashboard";
+                }
             }
+
+            if (json != null) {
+                json.put("redirect", redirectUrl);
+            }
+
+            session.setAttribute("loginRedirectUrl", redirectUrl);
         } catch (Exception e) {
             System.out.println("Error in \"handleLoginSuccess\" function: " + e.getMessage());
             msg = "Error in \"handleLoginSuccess\" function: " + e.getMessage();
@@ -307,7 +316,17 @@ public class AuthenticationServlet extends HttpServlet {
             }
 
             handleLoginSuccess(request, response, null, user);
-            response.sendRedirect(request.getContextPath() + "/home");
+            HttpSession session = request.getSession(false);
+            String redirectUrl = request.getContextPath() + "/home";
+            if (session != null) {
+                String savedRedirect = (String) session.getAttribute("loginRedirectUrl");
+                if (savedRedirect != null && !savedRedirect.isEmpty()) {
+                    redirectUrl = savedRedirect;
+                    session.removeAttribute("loginRedirectUrl");
+                }
+            }
+
+            response.sendRedirect(redirectUrl);
         } catch (Exception e) {
             System.out.println("Error in \"handleLocalLogin\" function: " + e.getMessage());
         }
