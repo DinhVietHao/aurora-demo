@@ -324,7 +324,6 @@ public class ShopServlet extends HttpServlet {
     private void handleRevenueHistory(HttpServletRequest request, HttpServletResponse response, User user) {
         try {
             long shopId = shopDAO.getShopIdByUserId(user.getId());
-            
 
             LocalDate today = LocalDate.now();
             LocalDate defaultStart = today.minusDays(6);
@@ -346,7 +345,7 @@ public class ShopServlet extends HttpServlet {
             double totalPlatformFee = revenueDetails.stream()
                     .mapToDouble(RevenueDetail::getPlatformFee)
                     .sum();
-            
+
             request.setAttribute("revenueDetails", revenueDetails);
             request.setAttribute("totalRevenue", totalRevenue);
             request.setAttribute("totalPlatformFee", totalPlatformFee);
@@ -381,14 +380,44 @@ public class ShopServlet extends HttpServlet {
                 String districtName = request.getParameter("districtName");
                 String wardName = request.getParameter("wardName");
 
-                int provinceId = Integer.parseInt(request.getParameter("provinceId"));
-                int districtId = Integer.parseInt(request.getParameter("districtId"));
-                String wardCode = request.getParameter("wardCode");
+                String provinceIdParam = request.getParameter("provinceId");
+                String districtIdParam = request.getParameter("districtId");
+                String wardCodeParam = request.getParameter("wardCode");
                 String addressLine = request.getParameter("addressLine");
 
                 if (shopName == null || shopName.trim().isEmpty()) {
                     flag = false;
                     message = "Tên shop không được để trống.";
+                }
+
+                if (flag && (provinceIdParam == null || provinceIdParam.trim().isEmpty())) {
+                    flag = false;
+                    message = "Vui lòng chọn Tỉnh/Thành phố.";
+                }
+
+                if (flag && (districtIdParam == null || districtIdParam.trim().isEmpty())) {
+                    flag = false;
+                    message = "Vui lòng chọn Quận/Huyện.";
+                }
+
+                if (flag && (wardCodeParam == null || wardCodeParam.trim().isEmpty())) {
+                    flag = false;
+                    message = "Vui lòng chọn Phường/Xã.";
+                }
+
+                int provinceId = 0;
+                int districtId = 0;
+                String wardCode = "";
+
+                if (flag) {
+                    try {
+                        provinceId = Integer.parseInt(provinceIdParam.trim());
+                        districtId = Integer.parseInt(districtIdParam.trim());
+                        wardCode = wardCodeParam.trim();
+                    } catch (NumberFormatException e) {
+                        flag = false;
+                        message = "Thông tin địa chỉ không hợp lệ. Vui lòng chọn lại.";
+                    }
                 }
 
                 Shop currentShop = shopDAO.getShopByUserId(user.getId());
@@ -425,10 +454,15 @@ public class ShopServlet extends HttpServlet {
                     }
                 }
             }
-        } catch (Exception e) {
-            System.out.println("Error in \"handleUpdateShopProfile\" function: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("NumberFormatException in handleUpdateShopProfile: " + e.getMessage());
             flag = false;
-            message = "Error in \"handleUpdateShopProfile\" function: " + e.getMessage();
+            message = "Dữ liệu địa chỉ không hợp lệ. Vui lòng kiểm tra lại.";
+        } catch (Exception e) {
+            System.err.println("Error in \"handleUpdateShopProfile\" function: " + e.getMessage());
+            e.printStackTrace();
+            flag = false;
+            message = "Đã xảy ra lỗi. Vui lòng thử lại sau.";
         } finally {
             json.put("success", flag);
             json.put("message", message);

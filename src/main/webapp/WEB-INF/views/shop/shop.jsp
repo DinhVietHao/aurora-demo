@@ -68,6 +68,7 @@
                                                             <span class="form-message"></span>
                                                         </div>
 
+                                                        <!-- Address Select Fields -->
                                                         <div class="row mb-3">
                                                             <!-- Province Select -->
                                                             <div class="col-md-4 form-group">
@@ -76,9 +77,10 @@
                                                                 </label>
                                                                 <select class="form-select" id="updateProvince"
                                                                     name="city">
-                                                                    <!-- <option value="">Chọn Tỉnh/Thành phố</option> -->
-                                                                    <option value="${shop.pickupAddress.provinceId}">
-                                                                        ${shop.pickupAddress.city}</option>
+                                                                    <option value="${shop.pickupAddress.provinceId}"
+                                                                        selected>
+                                                                        ${shop.pickupAddress.city}
+                                                                    </option>
                                                                 </select>
                                                                 <span class="form-message"></span>
                                                             </div>
@@ -90,9 +92,10 @@
                                                                 </label>
                                                                 <select id="updateDistrict" class="form-select"
                                                                     name="district" disabled>
-                                                                    <!-- <option value="">-- Chọn Quận/Huyện --</option> -->
-                                                                    <option value="${shop.pickupAddress.districtId}">
-                                                                        ${shop.pickupAddress.district}</option>
+                                                                    <option value="${shop.pickupAddress.districtId}"
+                                                                        selected>
+                                                                        ${shop.pickupAddress.district}
+                                                                    </option>
                                                                 </select>
                                                                 <span class="form-message"></span>
                                                             </div>
@@ -104,25 +107,30 @@
                                                                 </label>
                                                                 <select class="form-select" id="updateWard" name="ward"
                                                                     disabled>
-                                                                    <!-- <option value="">-- Chọn Phường/Xã --</option> -->
-                                                                    <option value="${shop.pickupAddress.wardCode}">
-                                                                        ${shop.pickupAddress.ward}</option>
+                                                                    <option value="${shop.pickupAddress.wardCode}"
+                                                                        selected>
+                                                                        ${shop.pickupAddress.ward}
+                                                                    </option>
                                                                 </select>
                                                                 <span class="form-message"></span>
                                                             </div>
 
+                                                            <!-- Hidden inputs with default values from shop data -->
                                                             <input type="hidden" id="updateProvinceNameInput"
-                                                                name="cityName">
+                                                                name="cityName" value="${shop.pickupAddress.city}">
                                                             <input type="hidden" id="updateDistrictNameInput"
-                                                                name="districtName">
+                                                                name="districtName"
+                                                                value="${shop.pickupAddress.district}">
                                                             <input type="hidden" id="updateWardNameInput"
-                                                                name="wardName">
+                                                                name="wardName" value="${shop.pickupAddress.ward}">
                                                             <input type="hidden" id="updateProvinceIdInput"
-                                                                name="provinceId">
+                                                                name="provinceId"
+                                                                value="${shop.pickupAddress.provinceId}">
                                                             <input type="hidden" id="updateDistrictIdInput"
-                                                                name="districtId">
+                                                                name="districtId"
+                                                                value="${shop.pickupAddress.districtId}">
                                                             <input type="hidden" id="updateWardCodeInput"
-                                                                name="wardCode">
+                                                                name="wardCode" value="${shop.pickupAddress.wardCode}">
                                                         </div>
 
                                                         <div class="mb-3 form-group">
