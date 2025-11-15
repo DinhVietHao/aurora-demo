@@ -114,8 +114,10 @@ public class CartServlet extends NotificationServlet {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
 
-                    if (!isProductAvailable(product, json))
+                    if (!isProductAvailable(product, json)) {
+                        out.print(json.toString());
                         return;
+                    }
 
                     FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
 
@@ -183,8 +185,10 @@ public class CartServlet extends NotificationServlet {
                 try {
                     long productId = Long.parseLong(req.getParameter("productId"));
                     Product product = productDAO.getBasicProductById(productId);
-                    if (!isProductAvailable(product, json))
+                    if (!isProductAvailable(product, json)) {
+                        out.print(json.toString());
                         return;
+                    }
 
                     FlashSaleItem flashItem = flashSaleDAO.getActiveFlashSaleItemByProduct(productId);
                     if (flashItem != null) {
@@ -271,8 +275,10 @@ public class CartServlet extends NotificationServlet {
                         break;
                     }
                     Product product = productDAO.getProductWithEffectivePrice(cartItem.getProductId(), quantity);
-                    if (!isProductAvailable(product, json))
+                    if (!isProductAvailable(product, json)) {
+                        out.print(json.toString());
                         return;
+                    }
                     FlashSaleItem flashSaleItem = flashSaleDAO
                             .getActiveFlashSaleItemByProduct(product.getProductId());
                     ;
