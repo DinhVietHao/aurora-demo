@@ -341,62 +341,80 @@
                 <jsp:include page="/WEB-INF/views/layouts/_scripts.jsp" />
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+                <!-- Hidden data element for daily revenue -->
+                <div id="revenue-chart-data" style="display:none;"
+                    data-revenue='{"dates":[<c:forEach var="entry" items="${dailyRevenue}" varStatus="status">"${entry.key}"<c:if test="${!status.last}">,</c:if></c:forEach>],"values":[<c:forEach var="entry" items="${dailyRevenue}" varStatus="status">${entry.value}<c:if test="${!status.last}">,</c:if></c:forEach>]}'>
+                </div>
+
                 <script>
                     // Chart initialization
                     document.addEventListener('DOMContentLoaded', function () {
-                        // Extract data from JSP
-                        const dailyRevenue = {
-            < c: forEach var="entry" items = "${dailyRevenue}" varStatus = "status" >
-                            "${entry.key}": ${ entry.value } <c:if test="${!status.last}">,</c:if>
-            </c: forEach >
-        };
+                        // Get data from hidden element
+                        const chartDataEl = document.getElementById('revenue-chart-data');
+                        if (!chartDataEl) {
+                            console.error('Revenue chart data not found');
+                            return;
+                        }
 
-                    // Sort keys chronologically
-                    const sortedDates = Object.keys(dailyRevenue).sort();
-                    const labels = sortedDates.map(date => {
-                        const parts = date.split('-');
-                        return `${parts[2]}/${parts[1]}`;  // Format as DD/MM
-                    });
-                    const values = sortedDates.map(date => dailyRevenue[date]);
+                        try {
+                            const chartData = JSON.parse(chartDataEl.dataset.revenue);
+                            const dates = chartData.dates;
+                            const values = chartData.values;
 
-                    // Initialize chart
-                    const ctx = document.getElementById('revenueChart');
-                    const revenueChart = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Doanh thu (đ)',
-                                data: values,
-                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        callback: function (value) {
-                                            return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
-                                        }
-                                    }
-                                }
-                            },
-                            plugins: {
-                                tooltip: {
-                                    callbacks: {
-                                        label: function (context) {
-                                            return new Intl.NumberFormat('vi-VN').format(context.raw) + 'đ';
-                                        }
-                                    }
-                                }
+                            // Format dates as DD/MM
+                            const labels = dates.map(date => {
+                                const parts = date.split('-');
+                                return `${parts[2]}/${parts[1]}`;
+                            });
+
+                            // Initialize chart
+                            const ctx = document.getElementById('revenueChart');
+                            if (!ctx) {
+                                console.error('Revenue chart canvas not found');
+                                return;
                             }
+
+                            const revenueChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        label: 'Doanh thu (đ)',
+                                        data: values,
+                                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: true,
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function (value) {
+                                                    return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
+                                                }
+                                            }
+                                        }
+                                    },
+                                    plugins: {
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function (context) {
+                                                    return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.raw) + 'đ';
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        } catch (error) {
+                            console.error('Error initializing revenue chart:', error);
                         }
                     });
-    });
                 </script>
             </body>
 

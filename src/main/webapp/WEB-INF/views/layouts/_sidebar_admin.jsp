@@ -52,6 +52,17 @@
                             <div class="sb-nav-link-icon"><i class="bi bi-lightning-charge"></i></div>
                             Flash sales
                         </a>
+                        <div class="sb-sidenav-menu-heading">Hệ thống</div>
+                        <a class="nav-link" href="<c:url value='/admin/category-management'/>">
+                            <div class="sb-nav-link-icon"><i class="bi bi-folder"></i></div>
+                            Danh mục
+                        </a>
+
+                        <a class="nav-link" href="<c:url value='/admin/vat-management'/>">
+                            <div class="sb-nav-link-icon"><i class="bi bi-percent"></i></div>
+                            VAT
+                        </a>
+
                     </div>
                 </div>
                 <div class="sb-sidenav-footer">
