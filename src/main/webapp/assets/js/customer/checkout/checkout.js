@@ -595,8 +595,6 @@ function loadSavedVouchers() {
       }
     }
   });
-
-  syncWithServer();
 }
 
 function loadSystemVouchers() {
@@ -634,7 +632,6 @@ function loadSystemVouchers() {
       voucherModal.hide();
     }
   }
-  syncWithServer();
 }
 
 const btnPlaceOrder = document.getElementById("btnPlaceOrder");
@@ -745,4 +742,5 @@ window.addEventListener("DOMContentLoaded", () => {
   loadSavedVouchers();
   loadSystemVouchers();
   refreshShopVoucher();
+  syncWithServer();
 });
