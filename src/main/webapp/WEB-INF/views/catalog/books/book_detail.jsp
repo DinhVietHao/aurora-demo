@@ -71,6 +71,14 @@
             </div>
           </c:if>
 
+          <!-- Show "Flash Sale Sold Out" badge if applicable -->
+          <c:if test="${flashSaleInfo.flashSaleOutOfStock}">
+            <div class="alert alert-warning mb-4" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <strong>Flash Sale đã hết hàng!</strong> Sản phẩm vẫn có sẵn với giá thông thường.
+            </div>
+          </c:if>
+
           <div class="row justify-content-evenly">
             <div class="col-md-5">
               <div class="book-detail-images">
@@ -218,8 +226,10 @@
                   </span>
                 </div>
 
+                <!-- Updated pricing section -->
                 <c:choose>
                   <c:when test="${flashSaleInfo.isFlashSale}">
+                    <!-- Flash Sale price with fire icon -->
                     <div class="mb-3">
                       <img src="https://em-content.zobj.net/source/animated-noto-color-emoji/427/fire_1f525.gif"
                         alt="Fire" class="fire-icon" />
@@ -231,6 +241,7 @@
                   </c:when>
 
                   <c:otherwise>
+                    <!-- Normal pricing -->
                     <div class="mb-3">
                       <span class="price">
                         <fmt:formatNumber value="${product.salePrice}" type="currency" currencySymbol="đ"
