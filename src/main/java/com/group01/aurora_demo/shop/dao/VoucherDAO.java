@@ -93,7 +93,7 @@ public class VoucherDAO {
                         Status,
                         UsageCount
                     FROM Vouchers WHERE IsShopVoucher = 0
-                    AND StartAt <= SYSUTCDATETIME() AND EndAt >= SYSUTCDATETIME()
+                    AND StartAt <= DATEADD(HOUR, 7, SYSUTCDATETIME()) AND EndAt >= DATEADD(HOUR, 7, SYSUTCDATETIME())
                     AND  (UsageLimit IS NULL OR UsageCount < UsageLimit)
                     AND [Status] = 'ACTIVE'
                     AND (
